@@ -37,7 +37,7 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Start server
-httpServer.listen(config.PORT, () => {
+httpServer.listen(config.PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://localhost:${config.PORT}`);
   console.log(`📡 API endpoints:`);
   console.log(`   - http://localhost:${config.PORT}/api/test`);
