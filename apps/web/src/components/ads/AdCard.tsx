@@ -79,7 +79,7 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                     </div>
                 )}
                 <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl font-bold text-rose-600">{formatPrice(ad.price)}</span>
+                    <span className="text-xl font-bold text-green-600">{formatPrice(ad.price)}</span>
                     {ad.condition && (
                         <span className={`rounded-full font-semibold px-3 py-1 text-xs ${ad.condition === 'new'
                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
@@ -116,7 +116,7 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
             href={`/${lang}/ad/${adUrl}`}
             className="group block bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg no-underline text-inherit"
         >
-            <div className="relative w-full h-36 bg-gray-100">
+            <div className="relative w-full h-32 sm:h-36 bg-gray-100">
                 {ad.isFeatured && (
                     <div className="absolute top-1.5 left-1.5 bg-amber-500 text-white rounded font-semibold z-10 px-2 py-0.5 text-[10px]">⭐</div>
                 )}
@@ -147,31 +147,34 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
                     </div>
                 )}
             </div>
-            <div className="p-2.5">
-                <h3 className="text-sm font-semibold mb-2 text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap">
+            <div className="p-2 sm:p-2.5">
+                {/* Title - single line truncated */}
+                <h3 className="text-[10px] sm:text-sm font-semibold mb-1 text-gray-900 truncate">
                     {ad.title}
                 </h3>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <span className="text-[10px]">{ad.categoryIcon || '📁'}</span>
-                        <span className="truncate">{ad.categoryName}</span>
-                    </div>
-                    <div className="text-right">
-                        <span className="text-base font-bold text-rose-600">{formatPrice(ad.price)}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px]">
-                        <span className="font-medium text-gray-800 truncate max-w-[100px]">{ad.sellerName}</span>
-                        {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                            <img src="/golden-badge.png" alt="Verified Business" className="w-3 h-3 flex-shrink-0" />
-                        )}
-                        {(ad.accountType === 'individual' && ad.individualVerified) && (
-                            <img src="/blue-badge.png" alt="Verified Individual" className="w-3 h-3 flex-shrink-0" />
-                        )}
-                    </div>
-                    <div className="flex items-center justify-end gap-0.5 text-[11px] text-gray-400">
-                        <span>🕐</span>
-                        <span>{formatDateTime(ad.publishedAt || ad.createdAt)}</span>
-                    </div>
+                {/* Category - single line */}
+                <div className="flex items-center gap-1 text-[11px] text-gray-500 mb-1">
+                    <span className="text-[10px] flex-shrink-0">{ad.categoryIcon || '📁'}</span>
+                    <span className="truncate">{ad.categoryName}</span>
+                </div>
+                {/* Price - prominent */}
+                <div className="text-xs sm:text-sm font-bold text-green-600 mb-1">
+                    {formatPrice(ad.price)}
+                </div>
+                {/* Seller info */}
+                <div className="flex items-center gap-1 text-[10px] sm:text-[11px] mb-0.5">
+                    <span className="font-medium text-gray-700 truncate max-w-[90px]">{ad.sellerName}</span>
+                    {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
+                        <img src="/golden-badge.png" alt="Verified Business" className="w-3 h-3 flex-shrink-0" />
+                    )}
+                    {(ad.accountType === 'individual' && ad.individualVerified) && (
+                        <img src="/blue-badge.png" alt="Verified Individual" className="w-3 h-3 flex-shrink-0" />
+                    )}
+                </div>
+                {/* Timestamp */}
+                <div className="flex items-center gap-0.5 text-[10px] text-gray-400">
+                    <span>🕐</span>
+                    <span className="truncate">{formatDateTime(ad.publishedAt || ad.createdAt)}</span>
                 </div>
             </div>
         </Link>

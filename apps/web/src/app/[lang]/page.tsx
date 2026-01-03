@@ -224,33 +224,33 @@ export default async function HomePage({ params }: HomePageProps) {
     <div className="min-h-screen">
       {/* Hero Section with Enhanced Design */}
       <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden">
-        {/* Animated background shapes */}
-        <div className="absolute inset-0 opacity-20">
+        {/* Animated background shapes - hidden on mobile for cleaner look */}
+        <div className="absolute inset-0 opacity-20 hidden sm:block">
           <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse [animation-delay:1s]" />
         </div>
 
         {/* Content */}
-        <div className="relative max-w-7xl mx-auto px-4 py-12 md:py-20 text-center text-white">
-          <h1 className="text-3xl md:text-4xl xl:text-5xl font-bold mb-3 md:mb-4 animate-fade-in-up">
+        <div className="relative max-w-7xl mx-auto px-4 py-6 sm:py-8 md:py-12 lg:py-20 text-center text-white">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-3 md:mb-4 animate-fade-in-up">
             Buy, Sell, and Rent Across Nepal
           </h1>
-          <p className="text-base md:text-lg opacity-90 mb-6 md:mb-8">
+          <p className="text-sm sm:text-base md:text-lg opacity-90 mb-4 sm:mb-6 md:mb-8">
             Nepal&apos;s Leading Classifieds Marketplace
           </p>
 
           {/* Enhanced Search Bar */}
           <HeroSearch lang={lang} />
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          {/* CTA Buttons - Stack on mobile, row on larger screens */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center items-center w-full sm:w-auto">
             {/* Animated Post Free Ad Button */}
             <Link
               href={`/${lang}/post-ad`}
-              className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-8 py-4 rounded-xl font-bold hover:from-green-500 hover:via-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-green-500/50 hover:scale-105 no-underline"
+              className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold hover:from-green-500 hover:via-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-green-500/50 hover:scale-105 no-underline"
             >
-              {/* Glow Effect */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
+              {/* Glow Effect - hidden on mobile */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300 hidden sm:block"></div>
               {/* Button Content */}
               <div className="relative flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,12 +260,13 @@ export default async function HomePage({ params }: HomePageProps) {
                 <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
               </div>
             </Link>
+            {/* Browse All Ads - Orange gradient to match design */}
             <Link
               href={`/${lang}/all-ads`}
-              className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-rose-400 via-rose-500 to-red-500 text-white px-8 py-4 rounded-xl font-bold hover:from-rose-500 hover:via-rose-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-rose-500/50 hover:scale-105 no-underline"
+              className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-500 text-white w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold hover:from-orange-500 hover:via-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-orange-500/50 hover:scale-105 no-underline"
             >
-              {/* Glow Effect */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-rose-400 via-rose-500 to-red-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
+              {/* Glow Effect - hidden on mobile */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300 hidden sm:block"></div>
               {/* Button Content */}
               <div className="relative flex items-center gap-2">
                 <span>Browse All Ads</span>
@@ -302,33 +303,50 @@ export default async function HomePage({ params }: HomePageProps) {
           {/* Main Content Column */}
           <div>
             {/* Categories Section */}
-            <div className="py-12 md:py-16">
-              <div className="flex justify-between items-end mb-6 md:mb-8">
+            <div className="py-6 sm:py-8 md:py-12 lg:py-16">
+              <div className="flex justify-between items-end mb-4 sm:mb-6 md:mb-8">
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">
+                  <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1 md:mb-2">
                     Browse Categories
                   </h2>
-                  <p className="text-sm md:text-base text-gray-500">
+                  <p className="text-xs sm:text-sm md:text-base text-gray-500">
                     Find what you&apos;re looking for
                   </p>
                 </div>
                 <Link
                   href={`/${lang}/all-ads`}
-                  className="text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 no-underline transition-colors"
+                  className="text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 no-underline transition-colors text-sm sm:text-base"
                 >
                   View All
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+              {/* Mobile: 2x2 grid showing first 4 categories */}
+              <div className="sm:hidden">
+                <div className="grid grid-cols-4 gap-2">
+                  {normalizedCategories.slice(0, 4).map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/${lang}/ads/category/${category.slug}`}
+                      className="flex flex-col items-center justify-center bg-white rounded-xl px-2 py-3 border border-gray-200 hover:border-rose-500 hover:bg-rose-50 transition-all no-underline shadow-sm"
+                    >
+                      <span className="text-xl mb-1">{category.icon || '📁'}</span>
+                      <span className="font-medium text-gray-800 text-[11px] text-center leading-tight">{category.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Desktop: Grid layout */}
+              <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                 {normalizedCategories.map((category) => (
                   <Link
                     key={category.id}
                     href={`/${lang}/ads/category/${category.slug}`}
-                    className="group bg-white rounded-2xl p-6 text-center border-2 border-gray-100 hover:border-rose-500 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 no-underline"
+                    className="group bg-white rounded-2xl p-4 sm:p-6 text-center border-2 border-gray-100 hover:border-rose-500 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 no-underline"
                   >
                     <div className="text-5xl mb-3 transition-transform duration-300 group-hover:scale-110">
                       {category.icon || '📁'}
@@ -342,17 +360,17 @@ export default async function HomePage({ params }: HomePageProps) {
             </div>
 
             {/* Latest Ads Section */}
-            <div className="py-8 md:py-12 mb-8 md:mb-12">
-              <div className="flex justify-between items-center mb-6 md:mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+            <div className="py-6 sm:py-8 md:py-12 mb-6 sm:mb-8 md:mb-12">
+              <div className="flex justify-between items-center mb-4 sm:mb-6 md:mb-8">
+                <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900">
                   Latest Ads
                 </h2>
                 <Link
                   href={`/${lang}/all-ads`}
-                  className="text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 no-underline transition-colors"
+                  className="text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 no-underline transition-colors text-sm sm:text-base"
                 >
                   View All Ads
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </Link>
@@ -375,16 +393,16 @@ export default async function HomePage({ params }: HomePageProps) {
                   </Link>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
                   {latestAdCards.map((ad, index) => (
                     <React.Fragment key={ad.id}>
                       <AdCard
                         lang={lang}
                         ad={ad}
                       />
-                      {/* In-Feed Ad after 3rd card */}
-                      {index === 2 && (
-                        <div className="flex justify-center items-center bg-gray-50 rounded-xl p-4">
+                      {/* In-Feed Ad after every 4 cards (2 rows on mobile) - spans full width */}
+                      {index === 3 && (
+                        <div className="col-span-2 md:col-span-3 flex justify-center items-center bg-gray-50 rounded-xl p-4">
                           <AdBanner slot="homeInFeed" size="mediumRectangle" autoExpand />
                         </div>
                       )}

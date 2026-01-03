@@ -14,10 +14,94 @@ export default function Footer({ lang }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <footer className="bg-white md:bg-gradient-to-br md:from-gray-900 md:via-gray-800 md:to-gray-900 text-gray-700 md:text-white border-t border-gray-200 md:border-none">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 md:py-12">
+
+        {/* Mobile: Two-column grid layout like Bikroy */}
+        <div className="md:hidden">
+          {/* Row 1: Quick Links & Help */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 mb-6">
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-900 mb-3">Quick Links</h4>
+              <ul className="space-y-2">
+                <li><Link href={`/${lang}/all-ads`} className="text-sm text-gray-600 hover:text-rose-500">Browse All Ads</Link></li>
+                <li><Link href={`/${lang}/post-ad`} className="text-sm text-gray-600 hover:text-rose-500">Post Free Ad</Link></li>
+                <li><Link href={`/${lang}/shops`} className="text-sm text-gray-600 hover:text-rose-500">Verified Shops</Link></li>
+                <li><Link href={`/${lang}/dashboard`} className="text-sm text-gray-600 hover:text-rose-500">My Dashboard</Link></li>
+                <li><Link href={`/${lang}/verification`} className="text-sm text-gray-600 hover:text-rose-500">Get Verified</Link></li>
+              </ul>
+            </div>
+            {/* Help & Support */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-900 mb-3">Help & Support</h4>
+              <ul className="space-y-2">
+                <li><Link href={`/${lang}/help`} className="text-sm text-gray-600 hover:text-rose-500">Help Center</Link></li>
+                <li><Link href={`/${lang}/faq`} className="text-sm text-gray-600 hover:text-rose-500">FAQ</Link></li>
+                <li><Link href={`/${lang}/support`} className="text-sm text-gray-600 hover:text-rose-500">Support Tickets</Link></li>
+                <li><Link href={`/${lang}/contact`} className="text-sm text-gray-600 hover:text-rose-500">Contact Us</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Row 2: About & Contact */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 mb-6">
+            {/* About */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-900 mb-3">About</h4>
+              <ul className="space-y-2">
+                <li><Link href={`/${lang}/support/privacy-policy`} className="text-sm text-gray-600 hover:text-rose-500">Privacy Policy</Link></li>
+                <li><Link href={`/${lang}/support/terms-of-service`} className="text-sm text-gray-600 hover:text-rose-500">Terms & Conditions</Link></li>
+              </ul>
+            </div>
+            {/* Contact */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-900 mb-3">Contact</h4>
+              <ul className="space-y-2">
+                <li className="text-sm text-gray-600">Kathmandu, Nepal</li>
+                <li><a href="tel:+977-1-4567890" className="text-sm text-gray-600 hover:text-rose-500">+977-1-4567890</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Row 3: Download App */}
+          <div className="mb-6">
+            <h4 className="text-sm font-bold text-gray-900 mb-3">Download Our App</h4>
+            <div className="flex gap-2">
+              <a href="#" className="hover:opacity-80 transition-opacity">
+                <Image src="/PlayStore.png" alt="Get it on Google Play" width={120} height={36} className="h-9 w-auto" unoptimized />
+              </a>
+              <a href="#" className="hover:opacity-80 transition-opacity">
+                <Image src="/Appstore.png" alt="Download on App Store" width={120} height={36} className="h-9 w-auto" unoptimized />
+              </a>
+            </div>
+          </div>
+
+          {/* Social Icons - Centered */}
+          <div className="flex justify-center space-x-4 mb-6">
+            <a href="https://facebook.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600" aria-label="Facebook">
+              <FontAwesomeIcon icon={faFacebookF} className="w-5 h-5" />
+            </a>
+            <a href="https://instagram.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-pink-600" aria-label="Instagram">
+              <FontAwesomeIcon icon={faInstagram} className="w-5 h-5" />
+            </a>
+            <a href="https://tiktok.com/@thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-black" aria-label="TikTok">
+              <FontAwesomeIcon icon={faTiktok} className="w-5 h-5" />
+            </a>
+            <a href="https://youtube.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-red-600" aria-label="YouTube">
+              <FontAwesomeIcon icon={faYoutube} className="w-5 h-5" />
+            </a>
+          </div>
+
+          {/* Copyright - Centered */}
+          <div className="text-center border-t border-gray-200 pt-4">
+            <p className="text-xs text-gray-500">&copy; {currentYear} ThuluBazaar. All rights reserved.</p>
+          </div>
+        </div>
+
+        {/* Desktop: Original 4-column layout */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
 
           {/* Company Info */}
           <div className="space-y-4">
@@ -128,53 +212,44 @@ export default function Footer({ lang }: FooterProps) {
             </ul>
           </div>
 
-          {/* Popular Categories */}
+          {/* Help & Support */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-white">Popular Categories</h4>
+            <h4 className="text-lg font-semibold mb-4 text-white">Help & Support</h4>
             <ul className="space-y-2.5">
               <li>
                 <Link
-                  href={`/${lang}/ads/category/vehicles`}
+                  href={`/${lang}/help`}
                   className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  Vehicles
+                  Help Center
                 </Link>
               </li>
               <li>
                 <Link
-                  href={`/${lang}/ads/category/electronics`}
+                  href={`/${lang}/faq`}
                   className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  Electronics
+                  FAQ
                 </Link>
               </li>
               <li>
                 <Link
-                  href={`/${lang}/ads/category/real-estate`}
+                  href={`/${lang}/support`}
                   className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  Real Estate
+                  Support Tickets
                 </Link>
               </li>
               <li>
                 <Link
-                  href={`/${lang}/ads/category/jobs`}
+                  href={`/${lang}/contact`}
                   className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  Jobs
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`/${lang}/ads/category/services`}
-                  className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
-                >
-                  <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  Services
+                  Contact Us
                 </Link>
               </li>
             </ul>
@@ -240,8 +315,8 @@ export default function Footer({ lang }: FooterProps) {
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-gray-800">
+      {/* Bottom Bar - Desktop only */}
+      <div className="hidden md:block border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
 
