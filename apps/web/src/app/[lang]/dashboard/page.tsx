@@ -6,11 +6,7 @@ import {
   IndividualVerificationForm,
   BusinessVerificationForm,
 } from '@/components/verification';
-import {
-  DashboardStats,
-  AdsList,
-  useDashboardData,
-} from '@/components/dashboard';
+import { DashboardStats, AdsList, useDashboardData } from '@/components/dashboard';
 
 export default function DashboardPage() {
   const params = useParams<{ lang: string }>();
@@ -82,57 +78,40 @@ export default function DashboardPage() {
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
-          {/* Breadcrumb */}
-          <div className="flex gap-2 text-sm text-white/80 mb-6">
-            <Link href={`/${lang}`} className="hover:text-white transition-colors">
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-white font-medium">Dashboard</span>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 relative z-10">
+          {/* Breadcrumb - Hidden visually but kept for SEO/accessibility */}
+          <nav aria-label="Breadcrumb" className="sr-only">
+            <ol>
+              <li>
+                <Link href={`/${lang}`}>Home</Link>
+              </li>
+              <li aria-current="page">Dashboard</li>
+            </ol>
+          </nav>
 
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white to-white/90">
+          {/* Header with Stats - Title left, Stats right */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="md:flex-shrink-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-white to-white/90">
                 My Dashboard
               </h1>
-              <p className="text-xl text-white/90">
+              <p className="text-sm md:text-base text-white/80">
                 Welcome back, <span className="font-semibold">{session?.user?.name}</span>!
               </p>
             </div>
-            <Link
-              href={`/${lang}/post-ad`}
-              className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-10 py-5 rounded-2xl font-black text-lg hover:from-green-500 hover:via-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-2xl hover:shadow-green-500/50 hover:scale-110 animate-pulse"
-            >
-              {/* Glow Effect */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
 
-              {/* Button Content */}
-              <div className="relative flex items-center gap-3">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                </div>
-                <span className="tracking-wide">POST FREE AD</span>
-                <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-              </div>
-            </Link>
+            {/* Stats Cards - Centered in remaining space */}
+            <div className="md:flex-1 md:flex md:justify-center">
+              <DashboardStats stats={stats} lang={lang} inline />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 pb-12">
+      <div className="max-w-7xl mx-auto px-4 pb-8 md:pb-12">
         {/* Error Message */}
         {error && (
-          <div className="mt-6 bg-red-50 border-2 border-red-300 text-red-700 p-4 rounded-2xl shadow-lg animate-pulse">
+          <div className="bg-red-50 border-2 border-red-300 text-red-700 p-4 rounded-2xl shadow-lg animate-pulse mb-6">
             <div className="flex items-center gap-3">
               <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -145,9 +124,6 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-
-        {/* Stats Cards */}
-        <DashboardStats stats={stats} lang={lang} />
 
         {/* Ads List */}
         <AdsList

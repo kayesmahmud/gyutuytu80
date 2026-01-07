@@ -12,7 +12,7 @@ export interface Ad {
   isApproved?: boolean;
   statusReason?: string;
   views: number;
-  created_at: string;
+  createdAt: string;
   images?: Array<{
     file_path?: string;
     filePath?: string;
