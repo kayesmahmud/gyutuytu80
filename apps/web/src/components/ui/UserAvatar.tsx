@@ -57,7 +57,7 @@ export function UserAvatar({
     md: { container: 'w-10 h-10', text: 'text-sm' },
     lg: { container: 'w-12 h-12', text: 'text-base' },
     xl: { container: 'w-16 h-16', text: 'text-lg' },
-    '2xl': { container: 'w-[120px] h-[120px] sm:w-[150px] sm:h-[150px]', text: 'text-3xl sm:text-4xl' },
+    '2xl': { container: 'w-[80px] h-[80px] sm:w-[120px] sm:h-[120px]', text: 'text-2xl sm:text-3xl' },
   };
 
   // Border classes
@@ -71,7 +71,7 @@ export function UserAvatar({
   const initials = getInitials(name);
   const defaultSize = { container: 'w-10 h-10', text: 'text-sm' };
   const sizeClass = sizeClasses[size] ?? defaultSize;
-  const borderClass = showBorder ? `border-2 ${size === '2xl' ? 'border-4 sm:border-[5px]' : ''} ${borderClasses[borderColor] ?? ''}` : '';
+  const borderClass = showBorder ? `border-2 ${size === '2xl' ? 'border-[3px] sm:border-4' : ''} ${borderClasses[borderColor] ?? ''}` : '';
 
   // Show fallback if no image or image failed to load
   if (!imageUrl || imageError) {

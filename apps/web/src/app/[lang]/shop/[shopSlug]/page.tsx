@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ShopProfileClient from './ShopProfileClient';
 import ShopSidebar from './ShopSidebar';
 import ShopEmptyState from './ShopEmptyState';
+import ReportShopButton from './ReportShopButton';
 import { AdCard } from '@/components/ads';
 import { getShopProfile, buildShopMetadata } from '@/lib/shops';
 
@@ -164,7 +165,7 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
                 <ShopEmptyState shopId={shop.id} lang={lang} />
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
                 {ads.map((ad) => (
                   <AdCard
                     key={ad.id}
@@ -195,6 +196,15 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
                 ))}
               </div>
             )}
+
+            {/* Report Shop Button - Mobile only, after products */}
+            <div className="lg:hidden flex justify-end mt-6">
+              <ReportShopButton
+                shopId={shop.id}
+                shopName={shop.businessName || shop.fullName}
+                lang={lang}
+              />
+            </div>
           </div>
         </div>
       </div>

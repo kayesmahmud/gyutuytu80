@@ -91,15 +91,15 @@ export function AdsList({
   onMarkAsSold,
 }: AdsListProps) {
   return (
-    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden border border-gray-100">
       {/* Header Section */}
-      <div className="px-8 pt-8 pb-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
-        <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+      <div className="px-4 sm:px-8 pt-4 sm:pt-8 pb-4 sm:pb-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+        <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">My Listings</h2>
-            <p className="text-gray-600">Manage and track all your advertisements</p>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-0.5 sm:mb-1">My Listings</h2>
+            <p className="text-sm sm:text-base text-gray-600">Manage and track all your advertisements</p>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-4 py-2 rounded-full">
+          <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600 bg-gray-100 px-4 py-2 rounded-full">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -112,20 +112,20 @@ export function AdsList({
           </div>
         </div>
 
-        {/* Modern Tabs */}
-        <div className="flex gap-2 flex-wrap">
+        {/* Modern Tabs - 2x2 grid on mobile, flex wrap on desktop */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {TAB_CONFIG.map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`group relative px-6 py-3 rounded-xl font-semibold cursor-pointer transition-all duration-300 ${
+              className={`group relative w-full sm:w-auto px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold cursor-pointer transition-all duration-300 text-xs sm:text-base ${
                 activeTab === tab.id
                   ? `bg-gradient-to-r ${tab.activeGradient} text-white shadow-lg ${tab.activeShadow}`
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              <span className="flex items-center gap-2">
-                {tab.icon}
+              <span className="flex items-center justify-center sm:justify-start gap-1 sm:gap-2">
+                <span className="[&>svg]:w-4 [&>svg]:h-4 sm:[&>svg]:w-5 sm:[&>svg]:h-5">{tab.icon}</span>
                 {tab.label} ({getAdCountByStatus(userAds, tab.id)})
               </span>
             </button>
@@ -134,7 +134,7 @@ export function AdsList({
       </div>
 
       {/* Ads Grid */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {filteredAds.length === 0 ? (
           <EmptyAds lang={lang} />
         ) : (

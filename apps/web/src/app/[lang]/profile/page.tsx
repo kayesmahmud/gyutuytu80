@@ -82,32 +82,21 @@ export default function ProfilePage() {
       {/* Header Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <nav className="flex items-center gap-2 text-sm">
-              <Link href={`/${lang}`} className="text-gray-500 hover:text-primary transition-colors">
-                Home
-              </Link>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              <Link href={`/${lang}/dashboard`} className="text-gray-500 hover:text-primary transition-colors">
-                Dashboard
-              </Link>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              <span className="text-gray-900 font-medium">Profile</span>
-            </nav>
-            <Link
-              href={`/${lang}/dashboard`}
-              className="text-sm text-gray-600 hover:text-primary transition-colors flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back
+          <nav className="flex items-center gap-2 text-sm">
+            <Link href={`/${lang}`} className="text-gray-500 hover:text-primary transition-colors">
+              Home
             </Link>
-          </div>
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <Link href={`/${lang}/dashboard`} className="text-gray-500 hover:text-primary transition-colors">
+              Dashboard
+            </Link>
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="text-gray-900 font-medium">Profile</span>
+          </nav>
         </div>
       </div>
 

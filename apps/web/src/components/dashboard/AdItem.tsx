@@ -23,9 +23,9 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
 
   return (
     <>
-    <div className="group flex flex-col md:flex-row md:items-center gap-4 p-5 rounded-2xl border-2 border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-white to-gray-50/50">
+    <div className="group flex flex-row flex-wrap md:flex-nowrap md:items-center gap-3 md:gap-4 p-3 md:p-5 rounded-xl md:rounded-2xl border-2 border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-white to-gray-50/50">
       {/* Thumbnail Image */}
-      <div className="w-full md:w-28 h-28 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 relative shadow-md group-hover:shadow-xl transition-shadow duration-300">
+      <div className="w-20 h-20 md:w-28 md:h-28 rounded-lg md:rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 relative shadow-md group-hover:shadow-xl transition-shadow duration-300">
         {ad.images && ad.images.length > 0 ? (
           <Image
             src={getImageUrl(ad.images[0]?.file_path || ad.images[0]?.filePath || ad.images[0]?.filename, 'ads') || ''}
@@ -58,14 +58,14 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
       <div className="flex-1 min-w-0">
         <Link
           href={`/${lang}/ad/${ad.slug}`}
-          className="text-gray-900 no-underline font-bold text-lg hover:text-indigo-600 transition-colors line-clamp-2 block mb-2"
+          className="text-gray-900 no-underline font-bold text-sm md:text-lg hover:text-indigo-600 transition-colors line-clamp-1 md:line-clamp-2 block mb-1 md:mb-2"
         >
           {ad.title}
         </Link>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 md:gap-3 flex-wrap text-xs md:text-sm">
           <StatusBadge status={ad.status} size="sm" showIcon />
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-1 md:gap-2 text-gray-500">
+            <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -73,10 +73,11 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            <span>{formatDateTime(new Date(ad.createdAt))}</span>
+            <span className="hidden md:inline">{formatDateTime(new Date(ad.createdAt))}</span>
+            <span className="md:hidden">{new Date(ad.createdAt).toLocaleDateString()}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-1 md:gap-2 text-gray-500">
+            <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -90,7 +91,7 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
               />
             </svg>
-            <span>{ad.views || 0} views</span>
+            <span>{ad.views || 0}</span>
           </div>
         </div>
 
@@ -157,43 +158,43 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
       </div>
 
       {/* Price and Actions - Responsive layout */}
-      <div className="flex flex-col gap-3 mt-3 md:mt-0 md:flex-row md:items-center md:gap-4">
+      <div className="w-full md:w-auto flex flex-col gap-2 md:gap-3 md:flex-row md:items-center md:gap-4">
         {/* Price */}
         <div className="flex items-center justify-between md:justify-end md:text-right">
-          <span className="text-xs text-gray-500 md:hidden">Price</span>
+          <span className="text-[10px] text-gray-500 md:hidden">Price</span>
           <div>
             <div className="hidden md:block text-xs text-gray-500 mb-1">Price</div>
-            <div className="text-xl md:text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            <div className="text-base md:text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
               {formatPrice(ad.price)}
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5 md:gap-2">
           {/* Active ads: Promote on top, View/Sold/Delete in row below */}
           {ad.status === 'active' && (
             <>
               {/* Promote button - Full width, prominent */}
               <button
                 onClick={() => setShowPromoteModal(true)}
-                className="w-full inline-flex items-center justify-center gap-2 py-2.5 md:py-3 px-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-600 text-white border-none rounded-xl cursor-pointer text-sm md:text-base font-semibold hover:from-purple-600 hover:via-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
+                className="w-full inline-flex items-center justify-center gap-1.5 md:gap-2 py-2 md:py-3 px-3 md:px-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-600 text-white border-none rounded-lg md:rounded-xl cursor-pointer text-xs md:text-base font-semibold hover:from-purple-600 hover:via-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02]"
                 title="Promote this ad"
               >
-                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span>Promote</span>
               </button>
 
               {/* View, Sold, Delete - 3 equal buttons in row */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 md:gap-2">
                 <Link
                   href={`/${lang}/ad/${ad.slug}`}
-                  className="inline-flex items-center justify-center gap-1.5 py-2 px-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg no-underline text-xs md:text-sm font-medium hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                  className="inline-flex items-center justify-center gap-1 md:gap-1.5 py-1.5 md:py-2 px-1.5 md:px-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md md:rounded-lg no-underline text-[10px] md:text-sm font-medium hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
                   title="View this ad"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
@@ -201,20 +202,20 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
                 </Link>
                 <button
                   onClick={() => onMarkAsSold(ad.id)}
-                  className="inline-flex items-center justify-center gap-1.5 py-2 px-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none rounded-lg cursor-pointer text-xs md:text-sm font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
+                  className="inline-flex items-center justify-center gap-1 md:gap-1.5 py-1.5 md:py-2 px-1.5 md:px-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none rounded-md md:rounded-lg cursor-pointer text-[10px] md:text-sm font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
                   title="Mark as sold"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span>Sold</span>
                 </button>
                 <button
                   onClick={() => onDelete(ad.id)}
-                  className="inline-flex items-center justify-center gap-1.5 py-2 px-2 bg-red-50 text-red-600 border border-red-200 rounded-lg cursor-pointer text-xs md:text-sm font-medium hover:bg-red-100 transition-colors"
+                  className="inline-flex items-center justify-center gap-1 md:gap-1.5 py-1.5 md:py-2 px-1.5 md:px-2 bg-red-50 text-red-600 border border-red-200 rounded-md md:rounded-lg cursor-pointer text-[10px] md:text-sm font-medium hover:bg-red-100 transition-colors"
                   title="Delete this ad"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                   <span>Delete</span>

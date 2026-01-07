@@ -99,7 +99,7 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-red-500 to-rose-500 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -125,7 +125,7 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           {success ? (
             /* Success State */
             <div className="text-center py-8">
