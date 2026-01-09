@@ -64,12 +64,12 @@ export default function AdDetailClient({ images, lang }: AdDetailClientProps) {
               src={displayImages[selectedImageIndex] || '/placeholder-ad.png'}
               alt={`Image ${selectedImageIndex + 1}`}
               fill
+              unoptimized
               sizes="(min-width: 1024px) 800px, (min-width: 640px) 600px, 100vw"
               className={`object-contain transition-opacity duration-150 ${
                 isTransitioning ? 'opacity-0' : 'opacity-100'
               }`}
               priority
-              unoptimized
             />
           )}
         </div>
@@ -131,8 +131,8 @@ export default function AdDetailClient({ images, lang }: AdDetailClientProps) {
                   alt={`Thumbnail ${index + 1}`}
                   width={100}
                   height={100}
-                  className="w-full h-full object-cover"
                   unoptimized
+                  className="w-full h-full object-cover"
                 />
               )}
 

@@ -100,7 +100,6 @@ function FavoriteAdCard({ favorite, lang, onRemove }: FavoriteAdCardProps) {
               fill
               className="object-cover hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 640px) 96px, 112px"
-              unoptimized
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

@@ -152,7 +152,7 @@ export default function FeaturedAdsCarousel({ ads, lang }: FeaturedAdsCarouselPr
                     {/* Golden Badge for Verified Business */}
                     {ad.accountType === 'business' && ad.businessVerificationStatus === 'approved' && (
                       <img
-                        src="/golden-badge.png"
+                        src="/golden-badge.svg"
                         alt="Verified Business"
                         title="Verified Business"
                         className="w-4 h-4"
@@ -161,7 +161,7 @@ export default function FeaturedAdsCarousel({ ads, lang }: FeaturedAdsCarouselPr
                     {/* Blue Badge for Verified Individual */}
                     {ad.accountType === 'individual' && (ad.individualVerified || ad.businessVerificationStatus === 'verified') && (
                       <img
-                        src="/blue-badge.png"
+                        src="/blue-badge.svg"
                         alt="Verified Individual Seller"
                         title="Verified Individual Seller"
                         className="w-4 h-4"

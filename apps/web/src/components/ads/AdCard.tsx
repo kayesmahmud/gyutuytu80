@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { formatPrice, formatDateTime } from '@thulobazaar/utils';
 import { getImageUrl } from '@/lib/images/imageUrl';
 
@@ -56,11 +57,13 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                     </div>
                 )}
                 {imageUrl ? (
-                    <img
+                    <Image
                         src={imageUrl}
                         alt={ad.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        fill
+                        unoptimized
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-5xl text-gray-600">
@@ -97,10 +100,10 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                     <div className="flex items-center gap-1">
                         <span className="font-medium text-gray-800">{ad.sellerName}</span>
                         {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                            <img src="/golden-badge.png" alt="Verified Business" className="w-4 h-4 flex-shrink-0" />
+                            <img src="/golden-badge.svg" alt="Verified Business" className="w-4 h-4 flex-shrink-0" />
                         )}
                         {(ad.accountType === 'individual' && ad.individualVerified) && (
-                            <img src="/blue-badge.png" alt="Verified Individual" className="w-4 h-4 flex-shrink-0" />
+                            <img src="/blue-badge.svg" alt="Verified Individual" className="w-4 h-4 flex-shrink-0" />
                         )}
                     </div>
                 </div>
@@ -135,11 +138,13 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
                     </div>
                 )}
                 {imageUrl ? (
-                    <img
+                    <Image
                         src={imageUrl}
                         alt={ad.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        fill
+                        unoptimized
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        sizes="50vw"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-4xl text-gray-600">
@@ -165,10 +170,10 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
                 <div className="flex items-center gap-1 text-[10px] sm:text-[11px] mb-0.5">
                     <span className="font-medium text-gray-700 truncate max-w-[90px]">{ad.sellerName}</span>
                     {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                        <img src="/golden-badge.png" alt="Verified Business" className="w-3 h-3 flex-shrink-0" />
+                        <img src="/golden-badge.svg" alt="Verified Business" className="w-3 h-3 flex-shrink-0" />
                     )}
                     {(ad.accountType === 'individual' && ad.individualVerified) && (
-                        <img src="/blue-badge.png" alt="Verified Individual" className="w-3 h-3 flex-shrink-0" />
+                        <img src="/blue-badge.svg" alt="Verified Individual" className="w-3 h-3 flex-shrink-0" />
                     )}
                 </div>
                 {/* Timestamp */}
@@ -198,7 +203,7 @@ export default function AdCard({ ad, lang = 'en', variant = 'default' }: AdCardP
             >
                 <div className="relative w-full h-32 bg-gray-100">
                     {imageUrl ? (
-                        <img src={imageUrl} alt={ad.title} className="w-full h-full object-cover" />
+                        <Image src={imageUrl} alt={ad.title} fill unoptimized className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-3xl text-gray-600">{ad.categoryIcon || '📦'}</div>
                     )}
@@ -227,7 +232,7 @@ export default function AdCard({ ad, lang = 'en', variant = 'default' }: AdCardP
                         </div>
                     )}
                     {imageUrl ? (
-                        <img src={imageUrl} alt={ad.title} className="w-full h-full object-cover" />
+                        <Image src={imageUrl} alt={ad.title} fill unoptimized className="object-cover" sizes="35vw" />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-4xl text-gray-600">{ad.categoryIcon || '📦'}</div>
                     )}
@@ -239,10 +244,10 @@ export default function AdCard({ ad, lang = 'en', variant = 'default' }: AdCardP
                         <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
                             <span className="font-medium text-gray-800 truncate max-w-[80px]">{ad.sellerName}</span>
                             {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                                <img src="/golden-badge.png" alt="Verified Business" className="w-3 h-3" />
+                                <img src="/golden-badge.svg" alt="Verified Business" className="w-3 h-3" />
                             )}
                             {(ad.accountType === 'individual' && ad.individualVerified) && (
-                                <img src="/blue-badge.png" alt="Verified Individual" className="w-3 h-3" />
+                                <img src="/blue-badge.svg" alt="Verified Individual" className="w-3 h-3" />
                             )}
                         </div>
                     </div>

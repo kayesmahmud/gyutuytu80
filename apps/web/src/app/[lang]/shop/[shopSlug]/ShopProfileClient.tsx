@@ -402,7 +402,7 @@ export default function ShopProfileClient({
               {/* Golden Badge for Business Verified */}
               {(businessVerificationStatus === 'verified' || businessVerificationStatus === 'approved') && (
                 <NextImage
-                  src="/golden-badge.png"
+                  src="/golden-badge.svg"
                   alt="Verified Business"
                   title="Verified Business Account"
                   width={32}
@@ -413,7 +413,7 @@ export default function ShopProfileClient({
               {/* Blue Badge for Individual Verified (but not business verified) */}
               {individualVerified && businessVerificationStatus !== 'verified' && businessVerificationStatus !== 'approved' && (
                 <NextImage
-                  src="/blue-badge.png"
+                  src="/blue-badge.svg"
                   alt="Verified Seller"
                   title="Verified Individual Seller"
                   width={32}

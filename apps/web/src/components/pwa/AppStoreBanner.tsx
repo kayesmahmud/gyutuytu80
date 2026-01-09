@@ -126,7 +126,6 @@ export default function AppStoreBanner() {
                 width={44}
                 height={44}
                 className="w-11 h-11 object-contain"
-                unoptimized
               />
             </div>
           </div>
@@ -160,7 +159,6 @@ export default function AppStoreBanner() {
                 width={140}
                 height={42}
                 className="h-10 w-auto"
-                unoptimized
               />
             </button>
           </div>

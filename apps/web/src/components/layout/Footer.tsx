@@ -70,10 +70,10 @@ export default function Footer({ lang }: FooterProps) {
             <h4 className="text-sm font-semibold text-white mb-3">Download Our App</h4>
             <div className="flex gap-2">
               <a href="#" className="hover:opacity-80 transition-opacity">
-                <Image src="/PlayStore.png" alt="Get it on Google Play" width={120} height={36} className="h-9 w-auto" unoptimized />
+                <Image src="/PlayStore.png" alt="Get it on Google Play" width={120} height={36} className="h-9 w-auto" />
               </a>
               <a href="#" className="hover:opacity-80 transition-opacity">
-                <Image src="/Appstore.png" alt="Download on App Store" width={120} height={36} className="h-9 w-auto" unoptimized />
+                <Image src="/Appstore.png" alt="Download on App Store" width={120} height={36} className="h-9 w-auto" />
               </a>
             </div>
           </div>
@@ -112,7 +112,6 @@ export default function Footer({ lang }: FooterProps) {
                 width={140}
                 height={100}
                 className="h-20 w-auto object-contain"
-                unoptimized
               />
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">
@@ -293,7 +292,6 @@ export default function Footer({ lang }: FooterProps) {
                     width={140}
                     height={42}
                     className="h-11 w-auto"
-                    unoptimized
                   />
                 </a>
                 <a
@@ -306,7 +304,6 @@ export default function Footer({ lang }: FooterProps) {
                     width={140}
                     height={42}
                     className="h-11 w-auto"
-                    unoptimized
                   />
                 </a>
               </div>

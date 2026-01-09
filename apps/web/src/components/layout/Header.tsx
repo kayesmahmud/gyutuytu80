@@ -153,7 +153,6 @@ export default function Header({ lang }: HeaderProps) {
               height={40}
               className="h-8 md:h-10 w-auto object-contain"
               priority
-              unoptimized
             />
           </Link>
 
@@ -402,7 +401,6 @@ export default function Header({ lang }: HeaderProps) {
                 width={84}
                 height={40}
                 className="h-8 w-auto object-contain"
-                unoptimized
               />
             </Link>
             <button
