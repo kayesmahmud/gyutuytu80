@@ -54,6 +54,7 @@ interface UseSupportSocketOptions {
   onNewMessage?: (data: { ticketId: number; message: SupportMessage; newStatus?: string }) => void;
   onTicketUpdated?: (data: TicketUpdate) => void;
   onTicketStatusChanged?: (data: TicketUpdate) => void;
+  onTicketCreated?: (data: TicketUpdate) => void;
   onTyping?: (data: TypingIndicator) => void;
 }
 
@@ -63,6 +64,7 @@ export function useSupportSocket({
   onNewMessage,
   onTicketUpdated,
   onTicketStatusChanged,
+  onTicketCreated,
   onTyping,
 }: UseSupportSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
@@ -112,19 +114,22 @@ export function useSupportSocket({
 
     // Listen for new messages
     socketRef.current.on('support:message-new', (data: { ticketId: number; message: SupportMessage; newStatus?: string }) => {
-      console.log('📩 New support message:', data);
       onNewMessage?.(data);
     });
 
     // Listen for ticket updates (staff dashboard)
     socketRef.current.on('support:ticket-updated', (data: TicketUpdate) => {
-      console.log('🔄 Ticket updated:', data);
       onTicketUpdated?.(data);
+    });
+
+    // Listen for new tickets (staff dashboard)
+    socketRef.current.on('support:ticket-created', (data: TicketUpdate) => {
+      console.log('✨ New ticket created:', data);
+      onTicketCreated?.(data);
     });
 
     // Listen for ticket status changes (current ticket view)
     socketRef.current.on('support:ticket-status-changed', (data: TicketUpdate) => {
-      console.log('🔄 Ticket status changed:', data);
       onTicketStatusChanged?.(data);
     });
 
@@ -139,7 +144,7 @@ export function useSupportSocket({
         socketRef.current = null;
       }
     };
-  }, [token, isStaff, onNewMessage, onTicketUpdated, onTicketStatusChanged, onTyping]);
+  }, [token, isStaff, onNewMessage, onTicketUpdated, onTicketStatusChanged, onTicketCreated, onTyping]);
 
   // Join a ticket room
   const joinTicket = useCallback((ticketId: number) => {

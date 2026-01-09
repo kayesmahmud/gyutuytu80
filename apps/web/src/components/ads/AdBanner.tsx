@@ -115,44 +115,56 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
     };
   }, [autoExpand, isProduction]);
 
+  // Dummy ad data for different sizes (defined outside conditional for hooks)
+  const dummyAds: Record<string, { bg: string; title: string; subtitle: string; cta: string; accent: string }[]> = {
+    leaderboard: [
+      { bg: 'from-blue-600 to-blue-800', title: '🎉 MEGA SALE', subtitle: 'Up to 70% OFF on Electronics', cta: 'Shop Now', accent: 'bg-yellow-400 text-black' },
+      { bg: 'from-purple-600 to-pink-600', title: '✨ New Arrivals', subtitle: 'Fashion Collection 2025', cta: 'Explore', accent: 'bg-white text-purple-600' },
+      { bg: 'from-green-600 to-emerald-700', title: '🏠 Dream Home', subtitle: 'Best Property Deals in Nepal', cta: 'View Listings', accent: 'bg-yellow-400 text-green-800' },
+    ],
+    mobileBanner: [
+      { bg: 'from-orange-500 to-red-600', title: '🔥 Flash Sale', subtitle: 'Limited Time Only', cta: 'Buy Now', accent: 'bg-white text-red-600' },
+      { bg: 'from-teal-500 to-cyan-600', title: '📱 Tech Deals', subtitle: 'Smartphones & More', cta: 'Shop', accent: 'bg-yellow-300 text-teal-800' },
+    ],
+    skyscraper: [
+      { bg: 'from-indigo-600 to-violet-700', title: '🚗', subtitle: 'Find Your Perfect Car', cta: 'Browse Cars', accent: 'bg-yellow-400 text-indigo-800' },
+      { bg: 'from-rose-500 to-pink-600', title: '💼', subtitle: 'Job Opportunities', cta: 'Apply Now', accent: 'bg-white text-rose-600' },
+    ],
+    mediumRectangle: [
+      { bg: 'from-amber-500 to-orange-600', title: '🎁 Special Offer', subtitle: 'Free Delivery on Orders Above Rs. 1000', cta: 'Order Now', accent: 'bg-white text-orange-600' },
+      { bg: 'from-cyan-600 to-blue-700', title: '💻 Work From Home', subtitle: 'Best Laptops & Accessories', cta: 'Shop Now', accent: 'bg-yellow-400 text-cyan-800' },
+    ],
+    largeRectangle: [
+      { bg: 'from-slate-700 to-slate-900', title: '⭐ Premium Membership', subtitle: 'Get exclusive benefits and priority listing', cta: 'Join Now', accent: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900' },
+      { bg: 'from-emerald-500 to-teal-600', title: '🏪 Sell Your Items', subtitle: 'Reach millions of buyers', cta: 'Post Ad Free', accent: 'bg-white text-emerald-700' },
+    ],
+  };
+
+  // Get ads for current size or use default
+  const sizeKey = Object.keys(dummyAds).find(key => size.toLowerCase().includes(key.toLowerCase())) || 'mediumRectangle';
+  const ads = dummyAds[sizeKey] || dummyAds.mediumRectangle;
+
+  // Use state for random ad index to avoid hydration mismatch
+  // Initialize to 0 for consistent SSR, then randomize on client
+  const [adIndex, setAdIndex] = useState(0);
+
+  useEffect(() => {
+    // Randomize ad selection only on client after hydration
+    if (showPlaceholder && ads.length > 1) {
+      setAdIndex(Math.floor(Math.random() * ads.length));
+    }
+  }, [showPlaceholder, ads.length]);
+
   // Development: show realistic dummy ad banners
   if (showPlaceholder) {
-    // Dummy ad data for different sizes
-    const dummyAds: Record<string, { bg: string; title: string; subtitle: string; cta: string; accent: string }[]> = {
-      leaderboard: [
-        { bg: 'from-blue-600 to-blue-800', title: '🎉 MEGA SALE', subtitle: 'Up to 70% OFF on Electronics', cta: 'Shop Now', accent: 'bg-yellow-400 text-black' },
-        { bg: 'from-purple-600 to-pink-600', title: '✨ New Arrivals', subtitle: 'Fashion Collection 2025', cta: 'Explore', accent: 'bg-white text-purple-600' },
-        { bg: 'from-green-600 to-emerald-700', title: '🏠 Dream Home', subtitle: 'Best Property Deals in Nepal', cta: 'View Listings', accent: 'bg-yellow-400 text-green-800' },
-      ],
-      mobileBanner: [
-        { bg: 'from-orange-500 to-red-600', title: '🔥 Flash Sale', subtitle: 'Limited Time Only', cta: 'Buy Now', accent: 'bg-white text-red-600' },
-        { bg: 'from-teal-500 to-cyan-600', title: '📱 Tech Deals', subtitle: 'Smartphones & More', cta: 'Shop', accent: 'bg-yellow-300 text-teal-800' },
-      ],
-      skyscraper: [
-        { bg: 'from-indigo-600 to-violet-700', title: '🚗', subtitle: 'Find Your Perfect Car', cta: 'Browse Cars', accent: 'bg-yellow-400 text-indigo-800' },
-        { bg: 'from-rose-500 to-pink-600', title: '💼', subtitle: 'Job Opportunities', cta: 'Apply Now', accent: 'bg-white text-rose-600' },
-      ],
-      mediumRectangle: [
-        { bg: 'from-amber-500 to-orange-600', title: '🎁 Special Offer', subtitle: 'Free Delivery on Orders Above Rs. 1000', cta: 'Order Now', accent: 'bg-white text-orange-600' },
-        { bg: 'from-cyan-600 to-blue-700', title: '💻 Work From Home', subtitle: 'Best Laptops & Accessories', cta: 'Shop Now', accent: 'bg-yellow-400 text-cyan-800' },
-      ],
-      largeRectangle: [
-        { bg: 'from-slate-700 to-slate-900', title: '⭐ Premium Membership', subtitle: 'Get exclusive benefits and priority listing', cta: 'Join Now', accent: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900' },
-        { bg: 'from-emerald-500 to-teal-600', title: '🏪 Sell Your Items', subtitle: 'Reach millions of buyers', cta: 'Post Ad Free', accent: 'bg-white text-emerald-700' },
-      ],
-    };
-
-    // Get ads for current size or use default
-    const sizeKey = Object.keys(dummyAds).find(key => size.toLowerCase().includes(key.toLowerCase())) || 'mediumRectangle';
-    const ads = dummyAds[sizeKey] || dummyAds.mediumRectangle;
-    const randomAd = ads[Math.floor(Math.random() * ads.length)];
+    const selectedAd = ads[adIndex];
 
     const isVertical = sizeConfig.height > sizeConfig.width;
     const isSmall = sizeConfig.height < 100;
 
     return (
       <div
-        className={`relative overflow-hidden rounded-lg bg-gradient-to-r ${randomAd.bg} ${className}`}
+        className={`relative overflow-hidden rounded-lg bg-gradient-to-r ${selectedAd.bg} ${className}`}
         style={{
           width: sizeConfig.width,
           height: sizeConfig.height,
@@ -164,14 +176,14 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
         <div className={`h-full flex ${isVertical ? 'flex-col justify-center items-center text-center p-4' : 'items-center justify-between px-6'}`}>
           <div className={isVertical ? 'space-y-3' : 'flex items-center gap-4'}>
             <div className={`font-bold text-white ${isSmall ? 'text-sm' : isVertical ? 'text-xl' : 'text-lg'}`}>
-              {randomAd.title}
+              {selectedAd.title}
             </div>
             <div className={`text-white/90 ${isSmall ? 'text-xs' : isVertical ? 'text-sm' : 'text-sm'}`}>
-              {randomAd.subtitle}
+              {selectedAd.subtitle}
             </div>
           </div>
-          <button className={`${randomAd.accent} ${isSmall ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm'} font-semibold rounded-full ${isVertical ? 'mt-4' : ''} hover:opacity-90 transition-opacity`}>
-            {randomAd.cta}
+          <button className={`${selectedAd.accent} ${isSmall ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm'} font-semibold rounded-full ${isVertical ? 'mt-4' : ''} hover:opacity-90 transition-opacity`}>
+            {selectedAd.cta}
           </button>
         </div>
 

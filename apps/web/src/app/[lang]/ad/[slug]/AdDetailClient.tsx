@@ -47,11 +47,11 @@ export default function AdDetailClient({ images, lang }: AdDetailClientProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm">
+    <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 mb-4 md:mb-6 shadow-sm">
       {/* Main Image Container */}
       <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden mb-4">
         {/* Main Image */}
-        <div className="relative h-[450px] sm:h-[500px] flex items-center justify-center">
+        <div className="relative h-[280px] sm:h-[350px] md:h-[450px] lg:h-[500px] flex items-center justify-center">
           {displayImages[selectedImageIndex] === '/placeholder-ad.png' ? (
             <div className="flex flex-col items-center justify-center text-gray-400">
               <svg className="w-24 h-24 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,12 +108,12 @@ export default function AdDetailClient({ images, lang }: AdDetailClientProps) {
 
       {/* Thumbnail Gallery - Bottom */}
       {displayImages.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto p-2 -mx-2 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto p-1 sm:p-2 -mx-1 sm:-mx-2 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           {displayImages.map((image, index) => (
             <button
               key={index}
               onClick={() => handleImageChange(index)}
-              className={`relative flex-shrink-0 w-[90px] h-[90px] sm:w-[100px] sm:h-[100px] rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 snap-start ${
+              className={`relative flex-shrink-0 w-[70px] h-[70px] sm:w-[90px] sm:h-[90px] md:w-[100px] md:h-[100px] rounded-lg sm:rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 snap-start ${
                 selectedImageIndex === index
                   ? 'border-rose-500 ring-2 ring-rose-500/20 shadow-lg scale-105'
                   : 'border-gray-200 hover:border-gray-300 hover:shadow-md'

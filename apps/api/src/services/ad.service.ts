@@ -1,0 +1,489 @@
+/**
+ * Ad Service
+ * Handles ad CRUD operations and transformations
+ */
+
+import { prisma } from '@thulobazaar/database';
+import { PAGINATION } from '../config/constants';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface AdFilters {
+  search?: string;
+  category?: string;
+  location?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  condition?: string;
+  sortBy?: string;
+  limit?: string;
+  offset?: string;
+}
+
+export interface CreateAdInput {
+  title: string;
+  description: string;
+  price?: number;
+  categoryId: number;
+  subcategoryId?: number;
+  locationId?: number;
+  condition?: string;
+  isNegotiable?: boolean;
+  customFields?: Record<string, unknown>;
+}
+
+export interface UpdateAdInput {
+  title?: string;
+  description?: string;
+  price?: number;
+  categoryId?: number;
+  subcategoryId?: number;
+  locationId?: number;
+  condition?: string;
+  customFields?: Record<string, unknown>;
+  existingImages?: string[];
+}
+
+// ============================================================================
+// Transformers
+// ============================================================================
+
+export function transformAdForList(ad: any) {
+  return {
+    id: ad.id,
+    title: ad.title,
+    description: ad.description,
+    price: ad.price,
+    condition: ad.condition,
+    status: ad.status,
+    slug: ad.slug,
+    viewCount: ad.view_count,
+    isFeatured: ad.is_featured,
+    isUrgent: ad.is_urgent,
+    isSticky: ad.is_sticky,
+    createdAt: ad.created_at,
+    updatedAt: ad.updated_at,
+    categoryId: ad.category_id,
+    locationId: ad.location_id,
+    categoryName: ad.categories?.name,
+    categoryIcon: ad.categories?.icon,
+    locationName: ad.locations?.name,
+    accountType: ad.users_ads_user_idTousers?.account_type,
+    businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status,
+    individualVerified: ad.users_ads_user_idTousers?.individual_verified,
+    publishedAt: ad.reviewed_at || ad.created_at,
+    reviewedAt: ad.reviewed_at,
+    primaryImage: ad.ad_images?.find((img: any) => img.is_primary)?.filename || ad.ad_images?.[0]?.filename,
+    images: ad.ad_images?.map((img: any) => ({
+      id: img.id,
+      filename: img.filename,
+      filePath: img.file_path,
+      isPrimary: img.is_primary,
+    })) || [],
+  };
+}
+
+export function transformAdForDashboard(ad: any) {
+  return {
+    id: ad.id,
+    title: ad.title,
+    description: ad.description,
+    price: ad.price,
+    condition: ad.condition,
+    status: ad.status === 'approved' ? 'active' : ad.status,
+    slug: ad.slug,
+    views: ad.view_count,
+    viewCount: ad.view_count,
+    isFeatured: ad.is_featured,
+    isUrgent: ad.is_urgent,
+    isSticky: ad.is_sticky,
+    createdAt: ad.created_at,
+    updatedAt: ad.updated_at,
+    categoryId: ad.category_id,
+    locationId: ad.location_id,
+    categoryName: ad.categories?.name,
+    categoryIcon: ad.categories?.icon,
+    locationName: ad.locations?.name,
+    primaryImage: ad.ad_images?.find((img: any) => img.is_primary)?.filename || ad.ad_images?.[0]?.filename,
+    images: ad.ad_images?.map((img: any) => ({
+      id: img.id,
+      filename: img.filename,
+      filePath: img.file_path,
+      isPrimary: img.is_primary,
+    })) || [],
+  };
+}
+
+export function transformAdForDetail(ad: any) {
+  return {
+    ...ad,
+    category_name: ad.categories?.name,
+    location_name: ad.locations?.name,
+    seller: ad.users_ads_user_idTousers,
+    images: ad.ad_images,
+  };
+}
+
+// ============================================================================
+// Query Helpers
+// ============================================================================
+
+function buildAdWhereClause(filters: AdFilters) {
+  const where: any = { status: 'approved' };
+
+  if (filters.search && typeof filters.search === 'string' && filters.search.trim()) {
+    where.OR = [
+      { title: { contains: filters.search.trim(), mode: 'insensitive' } },
+      { description: { contains: filters.search.trim(), mode: 'insensitive' } },
+    ];
+  }
+
+  if (filters.category && filters.category !== 'all' && !isNaN(Number(filters.category))) {
+    where.category_id = parseInt(filters.category);
+  }
+
+  if (filters.location && filters.location !== 'all' && !isNaN(Number(filters.location))) {
+    where.location_id = parseInt(filters.location);
+  }
+
+  if (filters.minPrice && !isNaN(Number(filters.minPrice))) {
+    where.price = { ...(where.price || {}), gte: parseFloat(filters.minPrice) };
+  }
+
+  if (filters.maxPrice && !isNaN(Number(filters.maxPrice))) {
+    where.price = { ...(where.price || {}), lte: parseFloat(filters.maxPrice) };
+  }
+
+  if (filters.condition && filters.condition !== 'all') {
+    where.condition = filters.condition;
+  }
+
+  return where;
+}
+
+function buildAdOrderBy(sortBy: string = 'newest') {
+  if (sortBy === 'price-low') return { price: 'asc' };
+  if (sortBy === 'price-high') return { price: 'desc' };
+  if (sortBy === 'oldest') return { reviewed_at: { sort: 'asc', nulls: 'last' } };
+  return { reviewed_at: { sort: 'desc', nulls: 'last' } };
+}
+
+// ============================================================================
+// Slug Generation
+// ============================================================================
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+export async function generateAdSlug(title: string, locationId?: number): Promise<string> {
+  const titleSlug = slugify(title);
+
+  let locationSlug = '';
+  if (locationId) {
+    const location = await prisma.locations.findUnique({
+      where: { id: locationId },
+      select: { name: true },
+    });
+    if (location?.name) {
+      locationSlug = slugify(location.name);
+    }
+  }
+
+  const baseSlug = locationSlug
+    ? `${titleSlug}-for-sale-in-${locationSlug}`
+    : `${titleSlug}-for-sale`;
+
+  // Find existing slugs with this base pattern
+  const existingSlugs = await prisma.ads.findMany({
+    where: { slug: { startsWith: `${baseSlug}-` } },
+    select: { slug: true },
+  });
+
+  // Find highest counter
+  let maxCounter = 0;
+  const counterRegex = new RegExp(`^${baseSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)$`);
+
+  for (const ad of existingSlugs) {
+    if (!ad.slug) continue;
+    const match = ad.slug.match(counterRegex);
+    if (match?.[1]) {
+      const counter = parseInt(match[1], 10);
+      if (counter > maxCounter) {
+        maxCounter = counter;
+      }
+    }
+  }
+
+  return `${baseSlug}-${maxCounter + 1}`;
+}
+
+// ============================================================================
+// CRUD Operations
+// ============================================================================
+
+const adListSelect = {
+  include: {
+    categories: { select: { name: true, icon: true } },
+    locations: { select: { name: true } },
+    users_ads_user_idTousers: {
+      select: {
+        account_type: true,
+        business_verification_status: true,
+        individual_verified: true,
+      },
+    },
+    ad_images: {
+      orderBy: [{ is_primary: 'desc' as const }, { created_at: 'asc' as const }],
+    },
+  },
+};
+
+const adDetailSelect = {
+  include: {
+    categories: true,
+    locations: true,
+    users_ads_user_idTousers: {
+      select: {
+        id: true,
+        full_name: true,
+        phone: true,
+        avatar: true,
+        account_type: true,
+        business_verification_status: true,
+        individual_verified: true,
+        shop_slug: true,
+      },
+    },
+    ad_images: {
+      orderBy: [{ is_primary: 'desc' as const }, { created_at: 'asc' as const }],
+    },
+  },
+};
+
+export async function getAds(filters: AdFilters) {
+  const where = buildAdWhereClause(filters);
+  const orderBy = buildAdOrderBy(filters.sortBy);
+
+  const limitNum = Math.min(
+    parseInt(filters.limit || String(PAGINATION.DEFAULT_LIMIT)) || PAGINATION.DEFAULT_LIMIT,
+    PAGINATION.MAX_LIMIT
+  );
+  const offsetNum = parseInt(filters.offset || '0') || 0;
+
+  const [ads, total] = await Promise.all([
+    prisma.ads.findMany({
+      where,
+      ...adListSelect,
+      orderBy,
+      take: limitNum,
+      skip: offsetNum,
+    }),
+    prisma.ads.count({ where }),
+  ]);
+
+  return {
+    ads: ads.map(transformAdForList),
+    pagination: {
+      total,
+      limit: limitNum,
+      offset: offsetNum,
+      hasMore: offsetNum + limitNum < total,
+    },
+  };
+}
+
+export async function getUserAds(userId: number) {
+  const ads = await prisma.ads.findMany({
+    where: { user_id: userId },
+    include: {
+      categories: { select: { name: true, icon: true } },
+      locations: { select: { name: true } },
+      ad_images: {
+        orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
+      },
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
+  return ads.map(transformAdForDashboard);
+}
+
+export async function getAdBySlug(slug: string) {
+  const ad = await prisma.ads.findFirst({
+    where: { slug },
+    ...adDetailSelect,
+  });
+
+  return ad ? transformAdForDetail(ad) : null;
+}
+
+export async function getAdById(id: number) {
+  const ad = await prisma.ads.findUnique({
+    where: { id },
+    ...adDetailSelect,
+  });
+
+  return ad ? transformAdForDetail(ad) : null;
+}
+
+export async function incrementAdViews(adId: number) {
+  await prisma.ads.update({
+    where: { id: adId },
+    data: { view_count: { increment: 1 } },
+  });
+}
+
+export async function createAd(userId: number, input: CreateAdInput) {
+  const finalCategoryId = input.subcategoryId || input.categoryId;
+  const slug = await generateAdSlug(input.title, input.locationId);
+
+  const ad = await prisma.ads.create({
+    data: {
+      title: input.title,
+      description: input.description,
+      price: input.price ?? null,
+      category_id: finalCategoryId,
+      location_id: input.locationId || null,
+      condition: input.condition || 'used',
+      user_id: userId,
+      status: 'pending',
+      slug,
+      custom_fields: input.customFields && Object.keys(input.customFields).length > 0
+        ? input.customFields
+        : null,
+    },
+    include: {
+      categories: true,
+      locations: true,
+    },
+  });
+
+  console.log(`✅ Ad created: ${ad.title} (ID: ${ad.id}) by user ${userId} - Status: pending`);
+  return ad;
+}
+
+export async function createAdImages(adId: number, files: Express.Multer.File[]) {
+  const imageRecords = files.map((file, index) => ({
+    ad_id: adId,
+    filename: file.filename,
+    original_name: file.originalname,
+    file_path: `/uploads/ads/${file.filename}`,
+    file_size: file.size,
+    mime_type: file.mimetype,
+    is_primary: index === 0,
+  }));
+
+  await prisma.ad_images.createMany({ data: imageRecords });
+  console.log(`✅ Uploaded ${files.length} images for ad ${adId}`);
+}
+
+export async function getAdForEdit(adId: number, userId: number) {
+  return prisma.ads.findFirst({
+    where: { id: adId, user_id: userId },
+    include: { ad_images: true },
+  });
+}
+
+export async function updateAd(adId: number, existingAd: any, input: UpdateAdInput) {
+  const finalCategoryId = input.subcategoryId
+    ? input.subcategoryId
+    : input.categoryId
+      ? input.categoryId
+      : existingAd.category_id;
+
+  // Reset status to pending if previously rejected
+  let newStatus = existingAd.status;
+  if (existingAd.status === 'rejected') {
+    newStatus = 'pending';
+    console.log(`📝 Rejected ad ${adId} resubmitted - status changed to pending`);
+  }
+
+  const ad = await prisma.ads.update({
+    where: { id: adId },
+    data: {
+      title: input.title || existingAd.title,
+      description: input.description || existingAd.description,
+      price: input.price !== undefined ? input.price : existingAd.price,
+      category_id: finalCategoryId,
+      location_id: input.locationId || existingAd.location_id,
+      condition: input.condition || existingAd.condition,
+      custom_fields: input.customFields && Object.keys(input.customFields).length > 0
+        ? input.customFields
+        : existingAd.custom_fields,
+      status: newStatus,
+      status_reason: newStatus === 'pending' ? null : existingAd.status_reason,
+      updated_at: new Date(),
+    },
+  });
+
+  console.log(`✅ Ad updated: ${ad.title} (ID: ${ad.id}) - Status: ${newStatus}`);
+  return { ad, newStatus };
+}
+
+export async function updateAdImages(
+  adId: number,
+  existingImages: any[],
+  imagesToKeep: string[],
+  newFiles: Express.Multer.File[]
+) {
+  const normalizePath = (p: string) => p.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/+/, '');
+  const normalizedKeepPaths = imagesToKeep.map(normalizePath);
+
+  // Find images to delete
+  const imagesToDelete = existingImages.filter((img) => {
+    const normalizedPath = normalizePath(img.file_path || '');
+    return !normalizedKeepPaths.includes(normalizedPath);
+  });
+
+  // Delete removed images
+  if (imagesToDelete.length > 0) {
+    await prisma.ad_images.deleteMany({
+      where: { id: { in: imagesToDelete.map((img) => img.id) } },
+    });
+    console.log(`🗑️ Deleted ${imagesToDelete.length} images for ad ${adId}`);
+  }
+
+  // Add new images
+  if (newFiles.length > 0) {
+    const remainingImages = existingImages.length - imagesToDelete.length;
+    const shouldSetPrimary = remainingImages === 0;
+
+    const imageRecords = newFiles.map((file, index) => ({
+      ad_id: adId,
+      filename: file.filename,
+      original_name: file.originalname,
+      file_path: `/uploads/ads/${file.filename}`,
+      file_size: file.size,
+      mime_type: file.mimetype,
+      is_primary: shouldSetPrimary && index === 0,
+    }));
+
+    await prisma.ad_images.createMany({ data: imageRecords });
+    console.log(`✅ Added ${newFiles.length} new images for ad ${adId}`);
+  }
+}
+
+export async function deleteAd(adId: number, userId: number) {
+  const existingAd = await prisma.ads.findFirst({
+    where: { id: adId, user_id: userId },
+  });
+
+  if (!existingAd) return null;
+
+  // Delete images first
+  await prisma.ad_images.deleteMany({ where: { ad_id: adId } });
+
+  // Delete the ad
+  await prisma.ads.delete({ where: { id: adId } });
+
+  console.log(`✅ Ad deleted: ${existingAd.title} (ID: ${adId})`);
+  return existingAd;
+}

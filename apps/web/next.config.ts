@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
         pathname: '/uploads/**',
       },
       {
+        protocol: 'http',
+        hostname: '192.168.1.153',
+        port: '5000',
+        pathname: '/uploads/**',
+      },
+      {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
         pathname: '/**',
@@ -53,6 +59,18 @@ const nextConfig: NextConfig = {
       {
         source: '/',
         destination: '/en',
+        permanent: true,
+      },
+      // Redirect old /all-ads route to /ads
+      {
+        source: '/:lang/all-ads',
+        destination: '/:lang/ads',
+        permanent: true,
+      },
+      // Redirect old /search route to /ads (with query params preserved)
+      {
+        source: '/:lang/search',
+        destination: '/:lang/ads',
         permanent: true,
       },
     ];

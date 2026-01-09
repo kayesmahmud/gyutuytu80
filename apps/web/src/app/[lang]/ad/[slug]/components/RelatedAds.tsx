@@ -32,7 +32,7 @@ export function RelatedAds({ ads, lang }: RelatedAdsProps) {
       <h2 className="text-xl font-semibold mb-6 text-gray-800">
         Related Ads
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
         {ads.map((ad) => (
           <AdCard
             key={ad.id}

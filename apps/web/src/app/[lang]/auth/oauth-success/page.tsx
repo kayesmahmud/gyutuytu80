@@ -11,6 +11,7 @@ export default function OAuthSuccessPage() {
 
   useEffect(() => {
     const token = searchParams.get('token');
+    const refreshToken = searchParams.get('refreshToken');
     const userParam = searchParams.get('user');
 
     if (!token || !userParam) {
@@ -30,6 +31,7 @@ export default function OAuthSuccessPage() {
         // The credentials provider will validate the token and create a session
         const result = await signIn('oauth-token', {
           token,
+          refreshToken,
           userId: userData.id,
           email: userData.email,
           redirect: false,

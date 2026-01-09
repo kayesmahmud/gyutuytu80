@@ -1,9 +1,8 @@
 import { prisma } from '@thulobazaar/database';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
+import crypto from 'crypto';
 import { userSelectForAuth } from './queries';
-
-type AuthUser = NonNullable<Awaited<ReturnType<typeof findUserForAuth>>>;
 
 // Constants for account deletion
 const RECOVERY_PERIOD_DAYS = 30;
@@ -128,10 +127,29 @@ export async function generateBackendToken(user: {
     .sign(JWT_SECRET);
 }
 
+// Generate long-lived refresh token
+export async function generateRefreshToken(user: { id: number }): Promise<string> {
+  const token = crypto.randomBytes(40).toString('hex');
+  const days = 30; // Default 30 days
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + days);
+
+  await prisma.refresh_tokens.create({
+    data: {
+      user_id: user.id,
+      token,
+      expires_at: expiresAt,
+    },
+  });
+
+  return token;
+}
+
 // Create user return object for NextAuth
 export function createUserObject(
   user: AuthUser,
   backendToken: string | null,
+  refreshToken: string | null,
   oauthProvider?: string
 ) {
   return {
@@ -149,6 +167,7 @@ export function createUserObject(
     individualVerified: user.individual_verified,
     lastLogin: user.last_login?.toISOString() || null,
     backendToken,
+    refreshToken,
     oauthProvider,
   };
 }

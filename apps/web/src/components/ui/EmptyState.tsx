@@ -70,7 +70,7 @@ export function EmptyAds({ lang }: { lang: string }) {
       actionLabel="+ Post Your First Ad"
       actionHref={`/${lang}/post-ad`}
       secondaryActionLabel="Browse All Ads"
-      secondaryActionHref={`/${lang}/all-ads`}
+      secondaryActionHref={`/${lang}/ads`}
     />
   );
 }
@@ -82,9 +82,9 @@ export function EmptySearchResults({ lang }: { lang: string }) {
       title="No results found"
       description="We couldn't find any ads matching your search. Try adjusting your filters or search terms."
       actionLabel="Clear Filters"
-      actionHref={`/${lang}/search`}
+      actionHref={`/${lang}/ads`}
       secondaryActionLabel="Browse All Ads"
-      secondaryActionHref={`/${lang}/all-ads`}
+      secondaryActionHref={`/${lang}/ads`}
     />
   );
 }
@@ -96,7 +96,7 @@ export function EmptyFavorites({ lang }: { lang: string }) {
       title="No favorites yet"
       description="Save ads you love by clicking the heart icon. Your favorites will appear here for easy access."
       actionLabel="Browse Ads"
-      actionHref={`/${lang}/all-ads`}
+      actionHref={`/${lang}/ads`}
     />
   );
 }

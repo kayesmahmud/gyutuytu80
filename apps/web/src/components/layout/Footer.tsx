@@ -14,7 +14,7 @@ export default function Footer({ lang }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-white md:bg-gradient-to-br md:from-gray-900 md:via-gray-800 md:to-gray-900 text-gray-700 md:text-white border-t border-gray-200 md:border-none">
+    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 py-6 md:py-12">
 
@@ -24,23 +24,23 @@ export default function Footer({ lang }: FooterProps) {
           <div className="grid grid-cols-2 gap-x-4 gap-y-6 mb-6">
             {/* Quick Links */}
             <div>
-              <h4 className="text-sm font-bold text-gray-900 mb-3">Quick Links</h4>
+              <h4 className="text-sm font-semibold text-white mb-3">Quick Links</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/all-ads`} className="text-sm text-gray-600 hover:text-rose-500">Browse All Ads</Link></li>
-                <li><Link href={`/${lang}/post-ad`} className="text-sm text-gray-600 hover:text-rose-500">Post Free Ad</Link></li>
-                <li><Link href={`/${lang}/shops`} className="text-sm text-gray-600 hover:text-rose-500">Verified Shops</Link></li>
-                <li><Link href={`/${lang}/dashboard`} className="text-sm text-gray-600 hover:text-rose-500">My Dashboard</Link></li>
-                <li><Link href={`/${lang}/verification`} className="text-sm text-gray-600 hover:text-rose-500">Get Verified</Link></li>
+                <li><Link href={`/${lang}/ads`} className="text-sm text-gray-400 hover:text-rose-400">Browse All Ads</Link></li>
+                <li><Link href={`/${lang}/post-ad`} className="text-sm text-gray-400 hover:text-rose-400">Post Free Ad</Link></li>
+                <li><Link href={`/${lang}/shops`} className="text-sm text-gray-400 hover:text-rose-400">Verified Shops</Link></li>
+                <li><Link href={`/${lang}/dashboard`} className="text-sm text-gray-400 hover:text-rose-400">My Dashboard</Link></li>
+                <li><Link href={`/${lang}/verification`} className="text-sm text-gray-400 hover:text-rose-400">Get Verified</Link></li>
               </ul>
             </div>
             {/* Help & Support */}
             <div>
-              <h4 className="text-sm font-bold text-gray-900 mb-3">Help & Support</h4>
+              <h4 className="text-sm font-semibold text-white mb-3">Help & Support</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/help`} className="text-sm text-gray-600 hover:text-rose-500">Help Center</Link></li>
-                <li><Link href={`/${lang}/faq`} className="text-sm text-gray-600 hover:text-rose-500">FAQ</Link></li>
-                <li><Link href={`/${lang}/support`} className="text-sm text-gray-600 hover:text-rose-500">Support Tickets</Link></li>
-                <li><Link href={`/${lang}/contact`} className="text-sm text-gray-600 hover:text-rose-500">Contact Us</Link></li>
+                <li><Link href={`/${lang}/help`} className="text-sm text-gray-400 hover:text-rose-400">Help Center</Link></li>
+                <li><Link href={`/${lang}/faq`} className="text-sm text-gray-400 hover:text-rose-400">FAQ</Link></li>
+                <li><Link href={`/${lang}/support`} className="text-sm text-gray-400 hover:text-rose-400">Support Tickets</Link></li>
+                <li><Link href={`/${lang}/contact`} className="text-sm text-gray-400 hover:text-rose-400">Contact Us</Link></li>
               </ul>
             </div>
           </div>
@@ -49,25 +49,25 @@ export default function Footer({ lang }: FooterProps) {
           <div className="grid grid-cols-2 gap-x-4 gap-y-6 mb-6">
             {/* About */}
             <div>
-              <h4 className="text-sm font-bold text-gray-900 mb-3">About</h4>
+              <h4 className="text-sm font-semibold text-white mb-3">About</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/support/privacy-policy`} className="text-sm text-gray-600 hover:text-rose-500">Privacy Policy</Link></li>
-                <li><Link href={`/${lang}/support/terms-of-service`} className="text-sm text-gray-600 hover:text-rose-500">Terms & Conditions</Link></li>
+                <li><Link href={`/${lang}/support/privacy-policy`} className="text-sm text-gray-400 hover:text-rose-400">Privacy Policy</Link></li>
+                <li><Link href={`/${lang}/support/terms-of-service`} className="text-sm text-gray-400 hover:text-rose-400">Terms & Conditions</Link></li>
               </ul>
             </div>
             {/* Contact */}
             <div>
-              <h4 className="text-sm font-bold text-gray-900 mb-3">Contact</h4>
+              <h4 className="text-sm font-semibold text-white mb-3">Contact</h4>
               <ul className="space-y-2">
-                <li className="text-sm text-gray-600">Kathmandu, Nepal</li>
-                <li><a href="tel:+977-1-4567890" className="text-sm text-gray-600 hover:text-rose-500">+977-1-4567890</a></li>
+                <li className="text-sm text-gray-400">Kathmandu, Nepal</li>
+                <li><a href="tel:+977-1-4567890" className="text-sm text-gray-400 hover:text-rose-400">+977-1-4567890</a></li>
               </ul>
             </div>
           </div>
 
           {/* Row 3: Download App */}
           <div className="mb-6">
-            <h4 className="text-sm font-bold text-gray-900 mb-3">Download Our App</h4>
+            <h4 className="text-sm font-semibold text-white mb-3">Download Our App</h4>
             <div className="flex gap-2">
               <a href="#" className="hover:opacity-80 transition-opacity">
                 <Image src="/PlayStore.png" alt="Get it on Google Play" width={120} height={36} className="h-9 w-auto" unoptimized />
@@ -80,23 +80,23 @@ export default function Footer({ lang }: FooterProps) {
 
           {/* Social Icons - Centered */}
           <div className="flex justify-center space-x-4 mb-6">
-            <a href="https://facebook.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600" aria-label="Facebook">
+            <a href="https://facebook.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400" aria-label="Facebook">
               <FontAwesomeIcon icon={faFacebookF} className="w-5 h-5" />
             </a>
-            <a href="https://instagram.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-pink-600" aria-label="Instagram">
+            <a href="https://instagram.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-400" aria-label="Instagram">
               <FontAwesomeIcon icon={faInstagram} className="w-5 h-5" />
             </a>
-            <a href="https://tiktok.com/@thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-black" aria-label="TikTok">
+            <a href="https://tiktok.com/@thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white" aria-label="TikTok">
               <FontAwesomeIcon icon={faTiktok} className="w-5 h-5" />
             </a>
-            <a href="https://youtube.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-red-600" aria-label="YouTube">
+            <a href="https://youtube.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-400" aria-label="YouTube">
               <FontAwesomeIcon icon={faYoutube} className="w-5 h-5" />
             </a>
           </div>
 
           {/* Copyright - Centered */}
-          <div className="text-center border-t border-gray-200 pt-4">
-            <p className="text-xs text-gray-500">&copy; {currentYear} ThuluBazaar. All rights reserved.</p>
+          <div className="text-center border-t border-gray-700 pt-4">
+            <p className="text-xs text-gray-400">&copy; {currentYear} ThuluBazaar. All rights reserved.</p>
           </div>
         </div>
 
@@ -166,7 +166,7 @@ export default function Footer({ lang }: FooterProps) {
             <ul className="space-y-2.5">
               <li>
                 <Link
-                  href={`/${lang}/all-ads`}
+                  href={`/${lang}/ads`}
                   className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
@@ -362,7 +362,7 @@ export default function Footer({ lang }: FooterProps) {
       {/* Scroll to Top Button */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 bg-gradient-to-br from-rose-500 to-pink-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-50"
+        className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 bg-gradient-to-br from-rose-500 to-pink-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-50"
         aria-label="Scroll to top"
       >
         <svg

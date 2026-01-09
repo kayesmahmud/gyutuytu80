@@ -88,6 +88,16 @@ export default function Header({ lang }: HeaderProps) {
     return () => clearInterval(interval);
   }, [fetchUnreadCount]);
 
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
+
   // Get user initials for avatar fallback
   const getInitials = (name?: string) => {
     if (!name) return '?';
@@ -152,19 +162,11 @@ export default function Header({ lang }: HeaderProps) {
             {!isStaff && (
               <>
                 <Link
-                  href={`/${lang}/all-ads`}
-                  className={`no-underline font-medium text-sm ${pathname?.includes('/all-ads') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
+                  href={`/${lang}/ads`}
+                  className={`no-underline font-medium text-sm ${pathname?.includes('/ads') && !pathname?.includes('/post-ad') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
                     } transition-colors`}
                 >
-                  All Ads
-                </Link>
-
-                <Link
-                  href={`/${lang}/search`}
-                  className={`no-underline font-medium text-sm ${pathname?.includes('/search') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
-                    } transition-colors`}
-                >
-                  Search
+                  Browse Ads
                 </Link>
 
                 <Link
@@ -379,134 +381,136 @@ export default function Header({ lang }: HeaderProps) {
           </button>
         </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <div className="flex flex-col gap-3">
-              {!isStaff && (
-                <>
-                  <Link href={`/${lang}/all-ads`} className="text-gray-600 hover:text-rose-500 py-2">
-                    All Ads
-                  </Link>
-                  <Link href={`/${lang}/search`} className="text-gray-600 hover:text-rose-500 py-2">
-                    Search
-                  </Link>
-                  <Link href={`/${lang}/verification`} className="text-gray-600 hover:text-rose-500 py-2">
-                    Get Verified
-                  </Link>
-                  {isAuthenticated && (
-                    <Link href={`/${lang}/messages`} className="text-gray-600 hover:text-rose-500 py-2 flex items-center gap-2">
-                      Inbox
-                      {unreadCount > 0 && (
-                        <span className="min-w-[20px] h-[20px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                      )}
-                    </Link>
-                  )}
-                </>
-              )}
+      </div>
 
-              {!isAuthenticated ? (
-                <>
-                  <Link href={`/${lang}/auth/signin`} className="px-4 py-2 rounded-lg font-semibold border-2 border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors w-full text-center">
-                    Sign In
+      {/* Mobile Slide-in Drawer */}
+      <div className={`md:hidden fixed inset-0 z-[60] transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/50"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+
+        {/* Drawer Panel */}
+        <div className={`absolute top-0 left-0 h-full w-[75vw] max-w-[300px] bg-white shadow-xl transform transition-transform duration-300 ease-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <Link href={`/${lang}`} onClick={() => setMobileMenuOpen(false)}>
+              <Image
+                src="/logo.png"
+                alt="Thulobazaar"
+                width={84}
+                height={40}
+                className="h-8 w-auto object-contain"
+                unoptimized
+              />
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
+              aria-label="Close menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Drawer Content */}
+          <div className="flex flex-col p-4 gap-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 65px)' }}>
+            {!isStaff && (
+              <>
+                <Link href={`/${lang}/ads`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
+                  Browse Ads
+                </Link>
+                <Link href={`/${lang}/verification`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
+                  Get Verified
+                </Link>
+                {isAuthenticated && (
+                  <Link href={`/${lang}/messages`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg flex items-center gap-2 transition-colors">
+                    Inbox
+                    {unreadCount > 0 && (
+                      <span className="min-w-[20px] h-[20px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </Link>
-                  <Link href={`/${lang}/auth/signup`} className="px-4 py-2 rounded-lg font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors w-full text-center">
-                    Sign Up
+                )}
+              </>
+            )}
+
+            {/* Divider */}
+            <div className="border-t border-gray-200 my-2" />
+
+            {!isAuthenticated ? (
+              <div className="flex flex-col gap-3 mt-2">
+                <Link href={`/${lang}/auth/signin`} onClick={() => setMobileMenuOpen(false)} className="px-4 py-2.5 rounded-lg font-semibold border-2 border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors text-center">
+                  Sign In
+                </Link>
+                <Link href={`/${lang}/auth/signup`} onClick={() => setMobileMenuOpen(false)} className="px-4 py-2.5 rounded-lg font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors text-center">
+                  Sign Up
+                </Link>
+              </div>
+            ) : (
+              <>
+                {currentUser?.role === 'super_admin' ? (
+                  <Link href={`/${lang}/super-admin/dashboard`} onClick={() => setMobileMenuOpen(false)} className="px-4 py-2.5 rounded-lg font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors text-center">
+                    🛡️ Super Admin Panel
                   </Link>
-                  <Link
-                    href={`/${lang}/post-ad`}
-                    className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white py-3 rounded-xl font-bold text-sm w-full hover:from-green-500 hover:via-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg"
-                  >
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
-                    <div className="relative flex items-center gap-2">
-                      <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </div>
-                      <span>POST FREE AD</span>
-                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
-                    </div>
+                ) : currentUser?.role === 'editor' ? (
+                  <Link href={`/${lang}/editor/dashboard`} onClick={() => setMobileMenuOpen(false)} className="px-4 py-2.5 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg transition-all text-center">
+                    Editor Dashboard
                   </Link>
-                </>
-              ) : (
-                <>
-                  {currentUser?.role === 'super_admin' ? (
-                    <Link href={`/${lang}/super-admin/dashboard`} className="px-4 py-2 rounded-lg font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors w-full text-center">
-                      🛡️ Super Admin Panel
+                ) : (
+                  <>
+                    <Link href={`/${lang}/profile`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
+                      👤 My Profile
                     </Link>
-                  ) : currentUser?.role === 'editor' ? (
-                    <Link href={`/${lang}/editor/dashboard`} className="px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg transition-all duration-200 w-full text-center">
-                      Editor Dashboard
+                    <Link href={`/${lang}/dashboard`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
+                      📊 Dashboard
                     </Link>
-                  ) : (
-                    <>
-                      <Link href={`/${lang}/profile`} className="text-gray-600 hover:text-rose-500 py-2">
-                        👤 My Profile
+
+                    {/* My Shop - for all users with shop slug */}
+                    {user && (user.customShopSlug || user.shopSlug) && (
+                      <Link
+                        href={`/${lang}/shop/${user.customShopSlug || user.shopSlug}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`py-3 px-3 font-medium flex items-center justify-between rounded-lg transition-colors ${(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified')
+                            ? 'text-purple-600 hover:text-purple-700 bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500'
+                            : user.individualVerified
+                              ? 'text-blue-600 hover:text-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500'
+                              : 'text-gray-700 hover:text-rose-500 hover:bg-gray-50'
+                          }`}
+                      >
+                        <span>🏪 My Shop</span>
+                        {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
+                          <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-0.5 rounded-full font-bold">
+                            ⭐ VERIFIED
+                          </span>
+                        )}
+                        {user.individualVerified && !(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
+                          <span className="text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white px-2 py-0.5 rounded-full font-bold">
+                            ✓ VERIFIED
+                          </span>
+                        )}
                       </Link>
-                      <Link href={`/${lang}/dashboard`} className="text-gray-600 hover:text-rose-500 py-2">
-                        📊 Dashboard
-                      </Link>
+                    )}
+                  </>
+                )}
 
-                      {/* My Shop - for all users with shop slug */}
-                      {user && (user.customShopSlug || user.shopSlug) && (
-                        <Link
-                          href={`/${lang}/shop/${user.customShopSlug || user.shopSlug}`}
-                          className={`py-2 font-medium flex items-center justify-between px-3 rounded-lg ${(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified')
-                              ? 'text-purple-600 hover:text-purple-700 bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500'
-                              : user.individualVerified
-                                ? 'text-blue-600 hover:text-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500'
-                                : 'text-gray-600 hover:text-rose-500'
-                            }`}
-                        >
-                          <span>🏪 My Shop</span>
-                          {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                            <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-0.5 rounded-full font-bold">
-                              ⭐ VERIFIED
-                            </span>
-                          )}
-                          {user.individualVerified && !(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                            <span className="text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white px-2 py-0.5 rounded-full font-bold">
-                              ✓ VERIFIED
-                            </span>
-                          )}
-                        </Link>
-                      )}
-                    </>
-                  )}
-
-                  {/* Only show Sign Out for regular users (not staff) in mobile */}
-                  {!isStaff && (
-                    <button onClick={handleSignOut} className="px-4 py-2 rounded-lg font-semibold cursor-pointer bg-transparent text-red-600 border-2 border-red-600 transition-all duration-200 hover:bg-red-600 hover:text-white w-full">
+                {/* Only show Sign Out for regular users (not staff) in mobile */}
+                {!isStaff && (
+                  <>
+                    <div className="border-t border-gray-200 my-2" />
+                    <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="px-4 py-2.5 rounded-lg font-semibold cursor-pointer bg-transparent text-red-600 border-2 border-red-600 transition-all hover:bg-red-600 hover:text-white w-full">
                       Sign Out
                     </button>
-                  )}
-
-                  {/* Only show Post Ad for regular users in mobile */}
-                  {!isStaff && (
-                    <Link
-                      href={`/${lang}/post-ad`}
-                      className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white py-3 rounded-xl font-bold text-sm w-full hover:from-green-500 hover:via-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg"
-                    >
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
-                      <div className="relative flex items-center gap-2">
-                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                          </svg>
-                        </div>
-                        <span>POST FREE AD</span>
-                        <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
-                      </div>
-                    </Link>
-                  )}
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </header>
   );

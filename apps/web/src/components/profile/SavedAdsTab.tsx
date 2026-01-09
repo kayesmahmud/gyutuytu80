@@ -52,7 +52,7 @@ export function SavedAdsTab({
         <h3 className="text-lg font-semibold text-gray-900 mb-2">No saved ads yet</h3>
         <p className="text-gray-500 mb-6">Save ads you like by clicking the heart icon</p>
         <Link
-          href={`/${lang}/search`}
+          href={`/${lang}/ads`}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

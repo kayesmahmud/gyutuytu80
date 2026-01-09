@@ -16,6 +16,8 @@ declare module 'next-auth' {
       businessVerificationStatus: string | null;
       individualVerified: boolean | null;
       backendToken: string | null;
+      refreshToken: string | null;
+      error?: string;
     };
   }
 
@@ -32,6 +34,7 @@ declare module 'next-auth' {
     businessVerificationStatus: string | null;
     individualVerified: boolean | null;
     backendToken: string | null;
+    refreshToken: string | null;
   }
 }
 
@@ -46,5 +49,7 @@ declare module 'next-auth/jwt' {
     businessVerificationStatus: string | null;
     individualVerified: boolean | null;
     backendToken: string | null;
+    refreshToken: string | null;
+    error?: string;
   }
 }

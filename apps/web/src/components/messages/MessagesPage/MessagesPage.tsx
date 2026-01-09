@@ -67,7 +67,7 @@ export default function MessagesPage() {
       {/* Sidebar */}
       <div className={`${
         selectedConversation || selectedAnnouncement ? 'hidden md:flex' : 'flex'
-      } w-full md:w-1/3 lg:w-1/4 xl:w-1/5 border-r border-gray-200 bg-white flex-shrink-0 flex-col`}>
+      } w-full md:w-2/5 lg:w-1/3 xl:w-1/4 border-r border-gray-200 bg-white flex-shrink-0 flex-col`}>
         {/* Tab Buttons */}
         <div className="flex border-b border-gray-200">
           <button

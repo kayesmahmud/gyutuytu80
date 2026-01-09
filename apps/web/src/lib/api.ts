@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { createApiClient } from '@thulobazaar/api-client';
-import { getSession } from 'next-auth/react';
+import { getSession, signOut } from 'next-auth/react';
 
 /**
  * API Client instance for the Next.js web app
@@ -25,9 +25,16 @@ export const apiClient = createApiClient({
     }
   },
 
-  // Handle unauthorized access
+  // Handle unauthorized access - use signOut to properly clear session
+  // This prevents redirect loops by clearing NextAuth session before redirecting
   onUnauthorized: () => {
     if (typeof window === 'undefined') return;
-    window.location.href = '/en/auth/signin';
+
+    // Don't redirect if already on signin page (prevent loops)
+    if (window.location.pathname.includes('/auth/signin')) return;
+
+    console.log('🔐 [API] Unauthorized - signing out and redirecting to signin');
+    // Use NextAuth signOut to properly clear the session before redirecting
+    signOut({ redirect: true, callbackUrl: '/en/auth/signin' });
   },
 });

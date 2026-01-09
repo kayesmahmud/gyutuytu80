@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Search, PlusCircle, MessageCircle, User } from 'lucide-react';
+import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
 
 interface BottomNavProps {
     lang: string;
@@ -14,8 +15,9 @@ export default function BottomNav({ lang, unreadCount = 0 }: BottomNavProps) {
     const pathname = usePathname();
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
+    const isKeyboardVisible = useKeyboardVisible();
 
-    // Hide on scroll down, show on scroll up
+    // Hide on scroll down, show on scroll up (must be before any early returns!)
     useEffect(() => {
         const handleScroll = () => {
             const currentScrollY = window.scrollY;
@@ -35,6 +37,13 @@ export default function BottomNav({ lang, unreadCount = 0 }: BottomNavProps) {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [lastScrollY]);
 
+    // Hide on ad detail pages (has its own contact bar) - AFTER all hooks!
+    const isAdDetailPage = pathname?.match(/\/ad\/[^/]+$/) && !pathname?.endsWith('/ads');
+    if (isAdDetailPage) return null;
+
+    // Hide when keyboard is open OR scrolling down
+    const shouldShow = isVisible && !isKeyboardVisible;
+
     const navItems = [
         {
             name: 'Home',
@@ -43,10 +52,10 @@ export default function BottomNav({ lang, unreadCount = 0 }: BottomNavProps) {
             active: pathname === `/${lang}`,
         },
         {
-            name: 'Search',
-            href: `/${lang}/all-ads`,
+            name: 'Browse',
+            href: `/${lang}/ads`,
             icon: Search,
-            active: pathname?.includes('/all-ads') || pathname?.includes('/search'),
+            active: pathname?.includes('/ads') && !pathname?.includes('/post-ad'),
         },
         {
             name: 'Post',
@@ -72,7 +81,7 @@ export default function BottomNav({ lang, unreadCount = 0 }: BottomNavProps) {
 
     return (
         <nav
-            className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden transition-transform duration-300 ${isVisible ? 'translate-y-0' : 'translate-y-full'
+            className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden transition-transform duration-300 ${shouldShow ? 'translate-y-0' : 'translate-y-full'
                 }`}
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >

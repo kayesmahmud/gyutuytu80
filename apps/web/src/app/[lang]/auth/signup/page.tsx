@@ -15,19 +15,19 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
   const { lang } = await params;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Link href={`/${lang}`} className="inline-block mb-6">
-            <h1 className="text-4xl font-bold text-rose-500">Thulobazaar</h1>
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href={`/${lang}`} className="inline-block mb-4 sm:mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold text-rose-500">Thulobazaar</h1>
           </Link>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Create an account</h2>
-          <p className="text-gray-500">Join Thulobazaar to buy and sell easily</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Create an account</h2>
+          <p className="text-gray-500 text-sm sm:text-base">Join Thulobazaar to buy and sell easily</p>
         </div>
 
         {/* Register Form Card */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-md p-6">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-md p-4 sm:p-6">
           <RegisterForm lang={lang} />
 
           {/* Divider */}

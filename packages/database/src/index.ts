@@ -24,6 +24,7 @@ export type {
   promotion_pricing,
   typing_indicators,
   user_favorites,
+  refresh_tokens,
 } from '@prisma/client';
 
 // Export Prisma namespace for advanced types

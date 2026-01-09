@@ -63,6 +63,8 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ User found:', user.email);
 
+    const refreshToken = searchParams.get('refreshToken');
+
     // Create a response that stores the token and user in localStorage via client-side redirect
     // We'll redirect to a client page that handles the storage
     const userData = encodeURIComponent(JSON.stringify({
@@ -79,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     // Redirect to a client-side handler that will store the token
     return NextResponse.redirect(
-      new URL(`/en/auth/oauth-success?token=${token}&user=${userData}`, request.url)
+      new URL(`/en/auth/oauth-success?token=${token}&refreshToken=${refreshToken}&user=${userData}`, request.url)
     );
   } catch (error) {
     console.error('❌ OAuth callback error:', error);

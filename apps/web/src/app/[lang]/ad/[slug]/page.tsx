@@ -15,6 +15,7 @@ import {
   SellerCard,
   SafetyTips,
   RelatedAds,
+  AdContactBar,
 } from './components';
 import { getImageUrl } from '@/lib/images/imageUrl';
 
@@ -263,12 +264,12 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
   // Build breadcrumb items
   const breadcrumbItems = [
     { label: 'Home', path: `/${lang}` },
-    { label: 'All Ads', path: `/${lang}/search` },
+    { label: 'All Ads', path: `/${lang}/ads` },
   ];
   if (ad.categories?.name && ad.categories?.slug) {
     breadcrumbItems.push({
       label: ad.categories.name,
-      path: `/${lang}/search?category=${ad.categories.slug}`
+      path: `/${lang}/ads/${ad.categories.slug}`
     });
   }
   breadcrumbItems.push({
@@ -281,8 +282,8 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
       <Breadcrumb items={breadcrumbItems} />
       <PromotionSuccessToast promoted={search.promoted === 'true'} txnId={search.txnId} />
 
-      <div className="max-w-[1440px] mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] xl:grid-cols-[160px_1fr_350px_160px] gap-6">
+      <div className="max-w-[1440px] mx-auto px-4 py-4 md:py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[160px_1fr_350px_160px] gap-4 md:gap-6">
           {/* Left Vertical Banner */}
           <div className="hidden xl:flex xl:flex-col xl:items-center self-start" style={{ marginTop: '200px' }}>
             <div className="sticky top-4">
@@ -304,11 +305,11 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
             <AdDetailClient images={images} lang={lang} />
 
             {/* Ad Details */}
-            <div className="bg-white rounded-xl p-8 mb-6 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-6 md:p-8 mb-4 md:mb-6 shadow-sm">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-800 mb-2">{ad.title}</h1>
-                  <div className="flex gap-4 text-sm text-gray-600 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2">{ad.title}</h1>
+                  <div className="flex gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 flex-wrap">
                     {/* Show when ad was approved (reviewed_at), not when submitted */}
                     <span>{formatRelativeTime(ad.reviewed_at || ad.created_at || new Date())}</span>
                     <span>•</span>
@@ -317,7 +318,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                 </div>
               </div>
 
-              <div className="text-4xl font-bold text-green-600 mb-4">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-4">
                 {ad.price ? formatPrice(parseFloat(ad.price.toString())) : 'Price on request'}
               </div>
 
@@ -342,6 +343,30 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
               <LocationSection fullLocation={fullLocation} locationType={ad.locations?.type || null} />
             </div>
 
+            {/* Seller Card + Promote - Mobile only, shown after ad details */}
+            <div className="lg:hidden mt-4 space-y-4">
+              <SellerCard
+                seller={ad.users_ads_user_idTousers}
+                adId={ad.id}
+                userId={ad.user_id}
+                adTitle={ad.title}
+                adSlug={slug}
+                lang={lang}
+                favoritesCount={favoritesCount}
+              />
+              <PromoteSection ad={{
+                id: ad.id,
+                title: ad.title,
+                user_id: ad.user_id || 0,
+                is_featured: ad.is_featured ?? false,
+                featured_until: ad.featured_until,
+                is_urgent: ad.is_urgent ?? false,
+                urgent_until: ad.urgent_until,
+                is_sticky: ad.is_sticky ?? false,
+                sticky_until: ad.sticky_until
+              }} />
+            </div>
+
             {/* Related Ads */}
             {relatedAds.length > 0 && (
               <div className="mt-8">
@@ -355,29 +380,33 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
             </div>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - Desktop only for SellerCard & Promote (shown inline on mobile) */}
           <div>
-            <SellerCard
-              seller={ad.users_ads_user_idTousers}
-              adId={ad.id}
-              userId={ad.user_id}
-              adTitle={ad.title}
-              adSlug={slug}
-              lang={lang}
-              favoritesCount={favoritesCount}
-            />
+            <div className="hidden lg:block">
+              <SellerCard
+                seller={ad.users_ads_user_idTousers}
+                adId={ad.id}
+                userId={ad.user_id}
+                adTitle={ad.title}
+                adSlug={slug}
+                lang={lang}
+                favoritesCount={favoritesCount}
+              />
+            </div>
 
-            <PromoteSection ad={{
-              id: ad.id,
-              title: ad.title,
-              user_id: ad.user_id || 0,
-              is_featured: ad.is_featured ?? false,
-              featured_until: ad.featured_until,
-              is_urgent: ad.is_urgent ?? false,
-              urgent_until: ad.urgent_until,
-              is_sticky: ad.is_sticky ?? false,
-              sticky_until: ad.sticky_until
-            }} />
+            <div className="hidden lg:block">
+              <PromoteSection ad={{
+                id: ad.id,
+                title: ad.title,
+                user_id: ad.user_id || 0,
+                is_featured: ad.is_featured ?? false,
+                featured_until: ad.featured_until,
+                is_urgent: ad.is_urgent ?? false,
+                urgent_until: ad.urgent_until,
+                is_sticky: ad.is_sticky ?? false,
+                sticky_until: ad.sticky_until
+              }} />
+            </div>
 
             <SafetyTips />
           </div>
@@ -390,6 +419,17 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
           </div>
         </div>
       </div>
+
+      {/* Mobile Contact Action Bar */}
+      <AdContactBar
+        sellerId={ad.user_id || 0}
+        sellerPhone={ad.users_ads_user_idTousers?.phone || null}
+        sellerBusinessPhone={ad.users_ads_user_idTousers?.business_phone || null}
+        adId={ad.id}
+        adTitle={ad.title}
+        adSlug={slug}
+        lang={lang}
+      />
     </div>
   );
 }

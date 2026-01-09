@@ -19,30 +19,31 @@ export default function HeroSearch({ lang }: HeroSearchProps) {
     // Small delay to show animation before navigation
     setTimeout(() => {
       if (query.trim()) {
-        router.push(`/${lang}/search?q=${encodeURIComponent(query.trim())}`);
+        router.push(`/${lang}/ads?query=${encodeURIComponent(query.trim())}`);
       } else {
-        router.push(`/${lang}/search`);
+        router.push(`/${lang}/ads`);
       }
     }, 400);
   };
 
   return (
-    <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-6">
-      <div className="flex flex-col sm:flex-row gap-2 bg-white rounded-2xl p-2 shadow-2xl">
+    <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-4 sm:mb-6">
+      {/* Mobile: Compact single-line search bar */}
+      <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg sm:rounded-2xl p-1 sm:p-2 shadow-lg sm:shadow-2xl">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for anything..."
           aria-label="Search for products"
-          className="flex-1 px-4 py-3 border-0 focus:outline-none text-gray-800 rounded-xl bg-transparent"
+          className="flex-1 min-w-0 px-3 sm:px-4 py-2 sm:py-3 border-0 focus:outline-none text-gray-800 text-sm sm:text-base rounded-lg bg-transparent placeholder:text-gray-400"
         />
         <button
           type="submit"
           disabled={isSearching}
-          className="group text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400"
+          className="group text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 hover:shadow-lg flex items-center justify-center gap-1.5 sm:gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 flex-shrink-0"
         >
-          {/* Animated Magnifying Glass */}
+          {/* Magnifying Glass Icon */}
           <div className={`relative ${isSearching ? 'animate-search-wobble' : ''}`}>
             <svg
               className={`w-5 h-5 transition-transform duration-300 ${
@@ -62,7 +63,8 @@ export default function HeroSearch({ lang }: HeroSearchProps) {
               />
             </svg>
           </div>
-          <span>{isSearching ? 'Searching...' : 'Search'}</span>
+          {/* Text only on desktop */}
+          <span className="hidden sm:inline">{isSearching ? '...' : 'Search'}</span>
         </button>
       </div>
 

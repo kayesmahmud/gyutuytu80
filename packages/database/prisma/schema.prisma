@@ -538,6 +538,7 @@ model users {
   shop_reports_as_reporter                                                             shop_reports[]                     @relation("shop_reports_reporter")
   shop_reports_as_resolver                                                             shop_reports[]                     @relation("shop_reports_resolver")
   shop_reports_as_shop                                                                 shop_reports[]                     @relation("shop_reports_shop")
+  refresh_tokens                                                                       refresh_tokens[]
   support_messages                                                                     support_messages[]
   support_tickets_support_tickets_assigned_toTousers                                   support_tickets[]                  @relation("support_tickets_assigned_toTousers")
   support_tickets_support_tickets_user_idTousers                                       support_tickets[]                  @relation("support_tickets_user_idTousers")
@@ -831,4 +832,21 @@ enum announcement_audience {
   new_users
   business_verified
   individual_verified
+}
+
+/// Refresh tokens for long-lived sessions with rotation
+model refresh_tokens {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  token       String   @unique @db.VarChar(255)
+  expires_at  DateTime @db.Timestamp(6)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  is_revoked  Boolean  @default(false)
+  replaced_by String?  @db.VarChar(255) // New token that replaced this one (for rotation)
+  
+  // Relations
+  users       users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_refresh_tokens_user")
+  @@index([token], map: "idx_refresh_tokens_token")
 }

@@ -262,7 +262,7 @@ export default async function HomePage({ params }: HomePageProps) {
             </Link>
             {/* Browse All Ads - Orange gradient to match design */}
             <Link
-              href={`/${lang}/all-ads`}
+              href={`/${lang}/ads`}
               className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-500 text-white w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold hover:from-orange-500 hover:via-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-orange-500/50 hover:scale-105 no-underline"
             >
               {/* Glow Effect - hidden on mobile */}
@@ -314,7 +314,7 @@ export default async function HomePage({ params }: HomePageProps) {
                   </p>
                 </div>
                 <Link
-                  href={`/${lang}/all-ads`}
+                  href={`/${lang}/ads`}
                   className="text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 no-underline transition-colors text-sm sm:text-base"
                 >
                   View All
@@ -324,17 +324,21 @@ export default async function HomePage({ params }: HomePageProps) {
                 </Link>
               </div>
 
-              {/* Mobile: 2x2 grid showing first 4 categories */}
-              <div className="sm:hidden">
-                <div className="grid grid-cols-4 gap-2">
-                  {normalizedCategories.slice(0, 4).map((category) => (
+              {/* Mobile: Horizontal scrollable carousel */}
+              <div className="sm:hidden -mx-4 px-4">
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
+                  {normalizedCategories.map((category) => (
                     <Link
                       key={category.id}
-                      href={`/${lang}/ads/category/${category.slug}`}
-                      className="flex flex-col items-center justify-center bg-white rounded-xl px-2 py-3 border border-gray-200 hover:border-rose-500 hover:bg-rose-50 transition-all no-underline shadow-sm"
+                      href={`/${lang}/ads/${category.slug}`}
+                      className="flex-shrink-0 snap-start"
                     >
-                      <span className="text-xl mb-1">{category.icon || '📁'}</span>
-                      <span className="font-medium text-gray-800 text-[11px] text-center leading-tight">{category.name}</span>
+                      <div className="w-[72px] flex flex-col items-center justify-center p-3 bg-white border border-gray-200 rounded-xl hover:border-rose-300 hover:shadow-sm transition-all">
+                        <span className="text-2xl mb-1">{category.icon || '📁'}</span>
+                        <span className="font-medium text-gray-800 text-[10px] text-center leading-tight line-clamp-2">
+                          {category.name}
+                        </span>
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -366,7 +370,7 @@ export default async function HomePage({ params }: HomePageProps) {
                   Latest Ads
                 </h2>
                 <Link
-                  href={`/${lang}/all-ads`}
+                  href={`/${lang}/ads`}
                   className="text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 no-underline transition-colors text-sm sm:text-base"
                 >
                   View All Ads

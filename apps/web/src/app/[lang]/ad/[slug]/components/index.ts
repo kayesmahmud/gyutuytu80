@@ -5,3 +5,4 @@ export * from './LocationSection';
 export * from './SellerCard';
 export * from './SafetyTips';
 export * from './RelatedAds';
+export { default as AdContactBar } from './AdContactBar';

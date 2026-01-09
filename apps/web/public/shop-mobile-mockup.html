@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Mobile View - Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Hide scrollbar but allow scrolling */
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Mobile Container (max 390px like iPhone) -->
+  <div class="max-w-[390px] mx-auto bg-white min-h-screen shadow-xl">
+
+    <!-- Shop Header -->
+    <div class="px-4 pt-6 pb-4 bg-gradient-to-b from-pink-50 to-white">
+      <!-- Avatar -->
+      <div class="flex justify-center mb-3">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center border-4 border-yellow-400 shadow-lg">
+          <span class="text-white text-xl font-bold">AM</span>
+        </div>
+      </div>
+
+      <!-- Shop Name + Verified -->
+      <div class="text-center mb-1">
+        <span class="text-xl font-bold text-gray-900">Alina Mobile Store</span>
+        <span class="inline-block ml-1 w-5 h-5 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-white text-xs leading-5">✓</span>
+      </div>
+
+      <!-- Account Type -->
+      <p class="text-center text-gray-500 text-sm mb-4">Verified Business Account</p>
+
+      <!-- Stats Row -->
+      <div class="flex justify-center gap-6 text-center">
+        <div>
+          <div class="text-lg font-bold text-primary">4</div>
+          <div class="text-xs text-gray-500">Active Ads</div>
+        </div>
+        <div>
+          <div class="text-lg font-bold text-primary">3</div>
+          <div class="text-xs text-gray-500">Total Views</div>
+        </div>
+        <div>
+          <div class="text-lg font-bold text-primary">Dec 2025</div>
+          <div class="text-xs text-gray-500">Member Since</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 4-TAB NAVIGATION ========== -->
+    <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div class="flex">
+        <!-- About Tab (Active) -->
+        <button onclick="showTab('about')" id="tab-about" class="flex-1 py-3 text-sm font-semibold text-primary border-b-2 border-primary bg-primary/5">
+          About
+        </button>
+        <!-- Contact Tab -->
+        <button onclick="showTab('contact')" id="tab-contact" class="flex-1 py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:bg-gray-50">
+          Contact
+        </button>
+        <!-- Categories Tab -->
+        <button onclick="showTab('categories')" id="tab-categories" class="flex-1 py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:bg-gray-50">
+          Categories
+        </button>
+        <!-- Location Tab -->
+        <button onclick="showTab('location')" id="tab-location" class="flex-1 py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:bg-gray-50">
+          Location
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== TAB CONTENT ========== -->
+    <div class="p-4">
+
+      <!-- ABOUT Content -->
+      <div id="content-about" class="tab-content">
+        <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+          <h3 class="font-semibold text-gray-900 mb-2">About Us</h3>
+          <p class="text-gray-600 text-sm">We sell all kinds of mobile here. Best prices in town with warranty on all products.</p>
+        </div>
+
+        <!-- Shop's Ads Preview -->
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-900">Shop Products</h3>
+            <span class="text-xs text-primary">View All →</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-gray-400 text-xs">Product 1</div>
+            <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center text-gray-400 text-xs">Product 2</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACT Content -->
+      <div id="content-contact" class="tab-content hidden">
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-900">Contact Information</h3>
+          </div>
+
+          <!-- WhatsApp -->
+          <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <span class="text-green-600 text-sm">📱</span>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">WhatsApp</div>
+              <div class="font-medium text-gray-900">+9779803093361</div>
+            </div>
+          </div>
+
+          <!-- Mobile -->
+          <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <span class="text-blue-600 text-sm">📞</span>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">Mobile <span class="text-green-600">✓ Verified</span></div>
+              <div class="font-medium text-gray-900">9803093361</div>
+            </div>
+          </div>
+
+          <!-- Website -->
+          <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+              <span class="text-purple-600 text-sm">🌐</span>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">Website</div>
+              <div class="font-medium text-primary">www.alinamobilestore.com</div>
+            </div>
+          </div>
+
+          <!-- Social Links -->
+          <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <span class="text-blue-600 text-sm">f</span>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">Facebook</div>
+              <div class="font-medium text-primary">alinamobilestore</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 py-3">
+            <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
+              <span class="text-pink-600 text-sm">📷</span>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">Instagram</div>
+              <div class="font-medium text-primary">@alinamobilestore</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORIES Content -->
+      <div id="content-categories" class="tab-content hidden">
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 class="font-semibold text-gray-900 mb-3">Shop Categories</h3>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span class="text-gray-700">📱 Mobile Phones</span>
+              <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">12 items</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span class="text-gray-700">🎧 Accessories</span>
+              <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">8 items</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span class="text-gray-700">🔌 Chargers</span>
+              <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">5 items</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOCATION Content -->
+      <div id="content-location" class="tab-content hidden">
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 class="font-semibold text-gray-900 mb-3">Shop Location</h3>
+
+          <!-- Map Placeholder -->
+          <div class="bg-gray-200 rounded-lg h-40 mb-4 flex items-center justify-center text-gray-500">
+            🗺️ Google Map Here
+          </div>
+
+          <!-- Address -->
+          <div class="flex items-start gap-3 mb-4">
+            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <span class="text-red-500">📍</span>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500">Address</div>
+              <div class="font-medium text-gray-900">New Road, Kathmandu</div>
+              <div class="text-sm text-gray-500">Near Bishal Bazaar</div>
+            </div>
+          </div>
+
+          <!-- Directions Button -->
+          <button class="w-full py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition">
+            Get Directions
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation (placeholder) -->
+    <div class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto bg-white border-t border-gray-200 px-4 py-2 flex justify-around">
+      <div class="text-center text-xs text-gray-500">🏠 Home</div>
+      <div class="text-center text-xs text-gray-500">🔍 Browse</div>
+      <div class="text-center text-xs text-green-600">➕</div>
+      <div class="text-center text-xs text-gray-500">💬 Messages</div>
+      <div class="text-center text-xs text-primary">👤 Profile</div>
+    </div>
+
+  </div>
+
+  <script>
+    // Tab switching logic
+    function showTab(tabName) {
+      // Hide all content
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      // Reset all tabs
+      document.querySelectorAll('[id^="tab-"]').forEach(el => {
+        el.classList.remove('text-primary', 'border-primary', 'bg-primary/5', 'font-semibold');
+        el.classList.add('text-gray-500', 'border-transparent', 'font-medium');
+      });
+
+      // Show selected content
+      document.getElementById('content-' + tabName).classList.remove('hidden');
+      // Activate selected tab
+      const activeTab = document.getElementById('tab-' + tabName);
+      activeTab.classList.remove('text-gray-500', 'border-transparent', 'font-medium');
+      activeTab.classList.add('text-primary', 'border-primary', 'bg-primary/5', 'font-semibold');
+    }
+  </script>
+
+  <script>
+    // Configure Tailwind primary color
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#E11D48' // Rose-600
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>

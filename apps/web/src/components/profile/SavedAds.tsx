@@ -153,7 +153,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
           Browse listings and click the heart icon to save ads you're interested in
         </p>
         <Link
-          href={`/${lang}/search`}
+          href={`/${lang}/ads`}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-500 text-white text-sm font-semibold rounded-xl hover:bg-rose-600 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

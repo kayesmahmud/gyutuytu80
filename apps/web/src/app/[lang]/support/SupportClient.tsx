@@ -35,6 +35,10 @@ export default function SupportClient() {
     handleCreateTicket,
     handleSendMessage,
     handleInputChange,
+    handleFileUpload,
+    sendingFile,
+    isInternal,
+    setIsInternal,
   } = useSupportClient();
 
   // Auth check
@@ -67,15 +71,15 @@ export default function SupportClient() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+      <div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Support Center</h1>
-            <p className="text-gray-600 mt-1">Get help with your questions and issues</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Support Center</h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">Get help with your questions and issues</p>
           </div>
           <button
             onClick={() => setShowNewTicketForm(true)}
-            className="mt-4 md:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="mt-3 md:mt-0 bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm sm:text-base"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -92,7 +96,7 @@ export default function SupportClient() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           {/* Tickets List */}
           <TicketsList
             tickets={tickets}
@@ -114,6 +118,10 @@ export default function SupportClient() {
               onClose={() => setSelectedTicket(null)}
               onInputChange={handleInputChange}
               onSendMessage={handleSendMessage}
+              onFileUpload={handleFileUpload}
+              sendingFile={sendingFile}
+              isInternal={isInternal}
+              setIsInternal={setIsInternal}
             />
           </div>
         </div>

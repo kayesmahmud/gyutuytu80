@@ -22,6 +22,8 @@ export const config = {
   // Security
   JWT_SECRET: process.env.JWT_SECRET || '',
   JWT_EXPIRES_IN: (process.env.JWT_EXPIRES_IN || '24h') as string,
+  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET || '',
+  REFRESH_TOKEN_EXPIRES_IN: (process.env.REFRESH_TOKEN_EXPIRES_IN || '30d') as string,
   SESSION_SECRET: process.env.SESSION_SECRET || '',
 
   // Google OAuth

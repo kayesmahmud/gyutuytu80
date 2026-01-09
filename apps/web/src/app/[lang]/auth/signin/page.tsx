@@ -15,19 +15,19 @@ export default async function LoginPage({ params }: LoginPageProps) {
   const { lang } = await params;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Link href={`/${lang}`} className="inline-block mb-6">
-            <span className="text-4xl font-bold text-rose-500">Thulobazaar</span>
+        <div className="text-center mb-6 sm:mb-8">
+          <Link href={`/${lang}`} className="inline-block mb-4 sm:mb-6">
+            <span className="text-3xl sm:text-4xl font-bold text-rose-500">Thulobazaar</span>
           </Link>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
-          <p className="text-gray-500">Login to your account to continue</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
+          <p className="text-gray-500 text-sm sm:text-base">Login to your account to continue</p>
         </div>
 
         {/* Login Form Card */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-md p-8">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-md p-4 sm:p-6 md:p-8">
           <LoginForm lang={lang} />
 
           {/* Divider */}

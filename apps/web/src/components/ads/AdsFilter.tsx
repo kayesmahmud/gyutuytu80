@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
 import FilterSection from '@/components/shared/FilterSection';
 import RadioOption from '@/components/shared/RadioOption';
-import { buildAdUrl } from '@/lib/urls/client';
+import { useAdsFilters } from '@/hooks/useAdsFilters';
+import { CONDITION_OPTIONS } from '@/lib/filters';
 import type { LocationHierarchyProvince } from '@/lib/location/types';
 
 interface Category {
@@ -43,8 +43,25 @@ export default function AdsFilter({
   sortBy,
   searchQuery = '',
 }: AdsFilterProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // Use centralized filter hook
+  const {
+    updateFilters,
+    clearAllFilters,
+    activeFiltersCount,
+    categoryCount,
+    locationCount,
+    priceCount,
+    conditionCount,
+  } = useAdsFilters({
+    lang,
+    selectedCategorySlug,
+    selectedLocationSlug,
+    minPrice,
+    maxPrice,
+    condition,
+    sortBy,
+    searchQuery,
+  });
 
   // Track expanded sections
   const [expandedSections, setExpandedSections] = useState({
@@ -54,15 +71,23 @@ export default function AdsFilter({
     condition: true,
   });
 
+  // Local state for price inputs (so user can type full values before applying)
+  const [localMinPrice, setLocalMinPrice] = useState(minPrice);
+  const [localMaxPrice, setLocalMaxPrice] = useState(maxPrice);
+
   // Track expanded categories (multiple can be expanded)
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(() => {
     // Auto-expand parent category if a subcategory is selected
     if (selectedCategorySlug) {
-      const selectedCategory = categories.find(cat =>
-        cat.slug === selectedCategorySlug ||
-        cat.subcategories?.some(sub => sub.slug === selectedCategorySlug)
+      const selectedCategory = categories.find(
+        (cat) =>
+          cat.slug === selectedCategorySlug ||
+          cat.subcategories?.some((sub) => sub.slug === selectedCategorySlug)
       );
-      if (selectedCategory && selectedCategory.subcategories?.some(sub => sub.slug === selectedCategorySlug)) {
+      if (
+        selectedCategory &&
+        selectedCategory.subcategories?.some((sub) => sub.slug === selectedCategorySlug)
+      ) {
         return new Set([selectedCategory.id]);
       }
     }
@@ -88,86 +113,23 @@ export default function AdsFilter({
     });
   };
 
-  /**
-   * Navigate to new URL with updated filters
-   * Uses path-based URLs: /ads/{location}/{category}?query=...
-   */
-  const updateFilters = (updates: {
-    category?: string | null;
-    location?: string | null;
-    minPrice?: string;
-    maxPrice?: string;
-    condition?: string;
-    sortBy?: string;
-  }) => {
-    // Determine new category and location (use existing if not updating)
-    const newCategory = updates.category !== undefined ? updates.category : selectedCategorySlug;
-    const newLocation = updates.location !== undefined ? updates.location : selectedLocationSlug;
-
-    // Build query parameters (everything except category and location)
-    const queryParams: Record<string, string> = {};
-
-    if (searchQuery) {
-      queryParams.query = searchQuery;
-    }
-
-    if (updates.minPrice !== undefined) {
-      if (updates.minPrice) queryParams.minPrice = updates.minPrice;
-    } else if (minPrice) {
-      queryParams.minPrice = minPrice;
-    }
-
-    if (updates.maxPrice !== undefined) {
-      if (updates.maxPrice) queryParams.maxPrice = updates.maxPrice;
-    } else if (maxPrice) {
-      queryParams.maxPrice = maxPrice;
-    }
-
-    if (updates.condition !== undefined) {
-      if (updates.condition) queryParams.condition = updates.condition;
-    } else if (condition) {
-      queryParams.condition = condition;
-    }
-
-    if (updates.sortBy !== undefined) {
-      if (updates.sortBy) queryParams.sortBy = updates.sortBy;
-    } else if (sortBy) {
-      queryParams.sortBy = sortBy;
-    }
-
-    // Build new URL using helper
-    const url = buildAdUrl(lang, newLocation || null, newCategory || null, queryParams);
-    router.push(url);
-  };
-
-  const clearAllFilters = () => {
-    // Clear all filters except search query
-    const queryParams = searchQuery ? { query: searchQuery } : {};
-    const url = buildAdUrl(lang, null, null, queryParams);
-    router.push(url);
-  };
-
-  // Count active filters
-  const categoryCount = selectedCategorySlug ? 1 : 0;
-  const locationCount = selectedLocationSlug ? 1 : 0;
-  const priceCount = minPrice || maxPrice ? 1 : 0;
-  const conditionCount = condition ? 1 : 0;
-  const totalActiveFilters = categoryCount + locationCount + priceCount + conditionCount;
-
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           Filters
-          {totalActiveFilters > 0 && (
+          {activeFiltersCount > 0 && (
             <span className="bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-              {totalActiveFilters}
+              {activeFiltersCount}
             </span>
           )}
         </h3>
-        {totalActiveFilters > 0 && (
-          <button onClick={clearAllFilters} className="text-rose-500 hover:text-rose-600 transition-colors text-sm font-semibold">
+        {activeFiltersCount > 0 && (
+          <button
+            onClick={clearAllFilters}
+            className="text-rose-500 hover:text-rose-600 transition-colors text-sm font-semibold"
+          >
             Clear All
           </button>
         )}
@@ -260,22 +222,36 @@ export default function AdsFilter({
         isExpanded={expandedSections.price}
         onToggle={() => toggleSection('price')}
       >
-        <div className="flex gap-2 items-center">
-          <input
-            type="number"
-            placeholder="Min"
-            defaultValue={minPrice}
-            onBlur={(e) => updateFilters({ minPrice: e.target.value || undefined })}
-            className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors"
-          />
-          <span className="text-gray-500">-</span>
-          <input
-            type="number"
-            placeholder="Max"
-            defaultValue={maxPrice}
-            onBlur={(e) => updateFilters({ maxPrice: e.target.value || undefined })}
-            className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors"
-          />
+        <div className="space-y-2">
+          <div className="flex gap-2 items-center">
+            <input
+              type="number"
+              placeholder="Min"
+              value={localMinPrice}
+              onChange={(e) => setLocalMinPrice(e.target.value)}
+              className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors"
+            />
+            <span className="text-gray-500">-</span>
+            <input
+              type="number"
+              placeholder="Max"
+              value={localMaxPrice}
+              onChange={(e) => setLocalMaxPrice(e.target.value)}
+              className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors"
+            />
+          </div>
+          <button
+            onClick={() =>
+              updateFilters({
+                minPrice: localMinPrice || undefined,
+                maxPrice: localMaxPrice || undefined,
+              })
+            }
+            disabled={localMinPrice === minPrice && localMaxPrice === maxPrice}
+            className="w-full py-2 px-4 bg-rose-500 text-white text-sm font-medium rounded-md hover:bg-rose-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Apply Price
+          </button>
         </div>
       </FilterSection>
 
@@ -287,21 +263,14 @@ export default function AdsFilter({
         onToggle={() => toggleSection('condition')}
       >
         <div className="space-y-1">
-          <RadioOption
-            label="Any Condition"
-            checked={!condition}
-            onChange={() => updateFilters({ condition: undefined })}
-          />
-          <RadioOption
-            label="✨ New"
-            checked={condition === 'new'}
-            onChange={() => updateFilters({ condition: 'new' })}
-          />
-          <RadioOption
-            label="♻️ Used"
-            checked={condition === 'used'}
-            onChange={() => updateFilters({ condition: 'used' })}
-          />
+          {CONDITION_OPTIONS.map((opt) => (
+            <RadioOption
+              key={opt.value}
+              label={opt.icon ? `${opt.icon} ${opt.label}` : opt.label}
+              checked={opt.value === '' ? !condition : condition === opt.value}
+              onChange={() => updateFilters({ condition: opt.value || undefined })}
+            />
+          ))}
         </div>
       </FilterSection>
     </div>

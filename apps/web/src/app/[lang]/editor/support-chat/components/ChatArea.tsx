@@ -156,15 +156,14 @@ function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <div className={`mb-4 flex ${message.isOwnMessage ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[70%] rounded-lg p-3 ${
-          message.isInternal
-            ? 'bg-yellow-100 border border-yellow-300 text-gray-900'
-            : message.isOwnMessage
+        className={`max-w-[70%] rounded-lg p-3 ${message.isInternal
+          ? 'bg-yellow-100 border border-yellow-300 text-gray-900'
+          : message.isOwnMessage
             ? 'bg-teal-500 text-white'
             : message.sender.isStaff
-            ? 'bg-blue-100 text-gray-900'
-            : 'bg-white border border-gray-200 text-gray-900'
-        }`}
+              ? 'bg-blue-100 text-gray-900'
+              : 'bg-white border border-gray-200 text-gray-900'
+          }`}
       >
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-semibold opacity-80">{message.sender.fullName}</span>
@@ -237,30 +236,44 @@ function MessageInput({
 }: MessageInputProps) {
   return (
     <div className="p-4 border-t border-gray-200 bg-white">
-      <div className="flex items-center gap-2 mb-2">
-        <label className="flex items-center gap-2 text-sm text-gray-600">
+      {/* Toggle UI */}
+      <div className="flex gap-4 mb-2 px-1">
+        <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
           <input
-            type="checkbox"
-            checked={isInternal}
-            onChange={(e) => setIsInternal(e.target.checked)}
-            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+            type="radio"
+            name="messageTypeEditor"
+            checked={!isInternal}
+            onChange={() => setIsInternal(false)}
+            className="sr-only"
           />
-          Internal Note (not visible to user)
+          <span className={`px-3 py-1.5 rounded-full font-medium transition-colors ${!isInternal ? 'bg-gray-200 text-gray-800' : 'text-gray-500 hover:bg-gray-100'}`}>Public Reply</span>
         </label>
-        {isConnected && (
-          <span className="ml-auto text-xs text-green-600 flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            Live
+        <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+          <input
+            type="radio"
+            name="messageTypeEditor"
+            checked={isInternal}
+            onChange={() => setIsInternal(true)}
+            className="sr-only"
+          />
+          <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-colors ${isInternal ? 'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-300' : 'text-gray-500 hover:bg-gray-100'}`}>
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            Internal Note
           </span>
-        )}
+        </label>
       </div>
-      <div className="flex gap-2">
+
+      <div className={`flex gap-2 p-2 rounded-xl transition-all
+         ${isInternal
+          ? 'bg-yellow-50'
+          : 'bg-gray-100'
+        }`}>
         <textarea
           value={newMessage}
           onChange={onMessageInputChange}
-          placeholder={isInternal ? 'Add internal note...' : 'Type your message...'}
+          placeholder={isInternal ? 'Add an internal note...' : 'Type your message...'}
           rows={3}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+          className="flex-1 px-4 py-2 bg-transparent border-0 focus:ring-0 resize-none text-gray-900 placeholder:text-gray-500"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
@@ -268,13 +281,18 @@ function MessageInput({
             }
           }}
         />
-        <button
-          onClick={onSendMessage}
-          disabled={!newMessage.trim() || sendingMessage}
-          className="px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {sendingMessage ? 'Sending...' : 'Send'}
-        </button>
+        <div className="flex flex-col justify-end">
+          <button
+            onClick={onSendMessage}
+            disabled={!newMessage.trim() || sendingMessage}
+            className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isInternal
+                ? 'bg-yellow-600 hover:bg-yellow-700'
+                : 'bg-teal-600 hover:bg-teal-700'
+              }`}
+          >
+            {sendingMessage ? '...' : 'Send'}
+          </button>
+        </div>
       </div>
     </div>
   );

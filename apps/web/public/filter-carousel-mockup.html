@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Filter Carousel Mockup - ThuluBazaar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Hide scrollbar but allow scroll */
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Bottom sheet animation */
+    .bottom-sheet {
+      transform: translateY(100%);
+      transition: transform 0.3s ease-out;
+    }
+    .bottom-sheet.open {
+      transform: translateY(0);
+    }
+
+    /* Backdrop */
+    .backdrop {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Header (Fixed) - ThuluBazaar Style -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+    <div class="flex items-center justify-between px-4 py-3">
+      <!-- Logo -->
+      <div class="flex items-center">
+        <span class="font-bold text-xl">
+          <span class="text-rose-500">THULO</span><span class="text-rose-500">'</span><span class="text-gray-800">BAZAAR</span>
+        </span>
+      </div>
+      <!-- Hamburger Menu -->
+      <button class="p-2">
+        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Search Bar (Fixed below header) -->
+  <div class="fixed top-[56px] left-0 right-0 z-45 bg-white px-4 py-2 border-b border-gray-100">
+    <div class="flex items-center gap-2">
+      <div class="flex-1 relative">
+        <input
+          type="text"
+          placeholder="Search in All Nepal"
+          class="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+        >
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+      <button class="p-2.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Carousel (Sticky below header) -->
+  <div class="fixed top-[108px] left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+    <div class="relative flex items-center">
+      <!-- Scrollable Pills Container -->
+      <div class="flex-1 flex items-center gap-2 px-3 py-2.5 overflow-x-auto scrollbar-hide pr-14">
+
+        <!-- Location Pill -->
+        <button onclick="openDrawer('locations')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm whitespace-nowrap hover:bg-gray-50 active:bg-gray-100 transition-colors">
+          <span>All of Nepal</span>
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <!-- Category Pill (Active Example) -->
+        <button onclick="openDrawer('categories')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-rose-500 bg-rose-50 text-rose-700 text-sm whitespace-nowrap hover:bg-rose-100 active:bg-rose-200 transition-colors">
+          <span>Mobiles</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <!-- Condition Pill -->
+        <button onclick="openDrawer('condition')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm whitespace-nowrap hover:bg-gray-50 active:bg-gray-100 transition-colors">
+          <span>Condition</span>
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <!-- Sort Pill -->
+        <button onclick="openSortSheet()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm whitespace-nowrap hover:bg-gray-50 active:bg-gray-100 transition-colors">
+          <span>Sort by</span>
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <!-- Price Pill -->
+        <button onclick="openDrawer('price')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm whitespace-nowrap hover:bg-gray-50 active:bg-gray-100 transition-colors">
+          <span>Price</span>
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+      </div>
+
+      <!-- Filter Icon (Fixed Right) -->
+      <div class="absolute right-0 top-0 bottom-0 flex items-center pr-2 pl-4 bg-gradient-to-l from-white via-white to-transparent">
+        <button onclick="openDrawer()" class="p-2 bg-white border border-gray-300 rounded-full shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors">
+          <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="pt-[160px] px-4 pb-20">
+    <!-- Page Title -->
+    <h1 class="text-lg font-semibold text-gray-800 mb-1 mt-2">Buy, Sell or Find Anything in Nepal</h1>
+
+    <!-- Results Count -->
+    <div class="flex items-center justify-between mb-4">
+      <span class="text-sm text-gray-600">Showing 1-25 of 12,456 ads</span>
+      <button class="flex items-center gap-1 text-sm text-rose-600 font-medium">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+        </svg>
+        Save search
+      </button>
+    </div>
+
+    <!-- Sample Ad Cards (2 columns) -->
+    <div class="grid grid-cols-2 gap-2">
+      <!-- Ad Card 1 -->
+      <div class="bg-white rounded-xl overflow-hidden shadow-sm">
+        <div class="relative h-32 bg-gray-200">
+          <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-medium rounded">USED</div>
+        </div>
+        <div class="p-2.5">
+          <h3 class="text-xs font-medium text-gray-800 line-clamp-2 mb-1">iPhone 14 Pro Max 256GB</h3>
+          <p class="text-[10px] text-gray-500 mb-1">Kathmandu, Mobiles</p>
+          <p class="text-sm font-bold text-rose-600">Rs. 145,000</p>
+        </div>
+      </div>
+
+      <!-- Ad Card 2 -->
+      <div class="bg-white rounded-xl overflow-hidden shadow-sm">
+        <div class="relative h-32 bg-gray-200">
+          <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-medium rounded">NEW</div>
+        </div>
+        <div class="p-2.5">
+          <h3 class="text-xs font-medium text-gray-800 line-clamp-2 mb-1">Samsung Galaxy S24 Ultra</h3>
+          <p class="text-[10px] text-gray-500 mb-1">Lalitpur, Mobiles</p>
+          <p class="text-sm font-bold text-rose-600">Rs. 185,000</p>
+        </div>
+      </div>
+
+      <!-- Ad Card 3 -->
+      <div class="bg-white rounded-xl overflow-hidden shadow-sm">
+        <div class="relative h-32 bg-gray-200">
+          <div class="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-white text-[10px] font-medium rounded">FEATURED</div>
+          <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-medium rounded">USED</div>
+        </div>
+        <div class="p-2.5">
+          <h3 class="text-xs font-medium text-gray-800 line-clamp-2 mb-1">OnePlus 12 8/256GB Box Pack</h3>
+          <p class="text-[10px] text-gray-500 mb-1">Bhaktapur, Mobiles</p>
+          <p class="text-sm font-bold text-rose-600">Rs. 98,000</p>
+        </div>
+      </div>
+
+      <!-- Ad Card 4 -->
+      <div class="bg-white rounded-xl overflow-hidden shadow-sm">
+        <div class="relative h-32 bg-gray-200">
+          <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-blue-600 text-white text-[10px] font-medium rounded">USED</div>
+        </div>
+        <div class="p-2.5">
+          <h3 class="text-xs font-medium text-gray-800 line-clamp-2 mb-1">Xiaomi Redmi Note 13 Pro+</h3>
+          <p class="text-[10px] text-gray-500 mb-1">Pokhara, Mobiles</p>
+          <p class="text-sm font-bold text-rose-600">Rs. 42,000</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+    <div class="flex items-center justify-around py-2">
+      <button class="flex flex-col items-center text-rose-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span class="text-xs mt-0.5">Home</span>
+      </button>
+      <button class="flex flex-col items-center text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="text-xs mt-0.5">Browse</span>
+      </button>
+      <button class="flex flex-col items-center -mt-5">
+        <div class="bg-rose-500 text-white p-3 rounded-full shadow-lg">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+        </div>
+      </button>
+      <button class="flex flex-col items-center text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
+        <span class="text-xs mt-0.5">Messages</span>
+      </button>
+      <button class="flex flex-col items-center text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <span class="text-xs mt-0.5">Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Backdrop -->
+  <div id="backdrop" class="backdrop fixed inset-0 bg-black/50 z-[60]" onclick="closeAllSheets()"></div>
+
+  <!-- Sort Bottom Sheet -->
+  <div id="sortSheet" class="bottom-sheet fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-[70] max-h-[60vh]">
+    <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+      <h2 class="text-lg font-semibold text-gray-800">Sort by</h2>
+      <button onclick="closeSortSheet()" class="p-1 hover:bg-gray-100 rounded-full transition-colors">
+        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="px-4 py-2">
+      <label class="flex items-center gap-3 py-3 cursor-pointer">
+        <input type="radio" name="sort" checked class="w-5 h-5 text-rose-600 border-gray-300 focus:ring-rose-500">
+        <span class="text-gray-800">Date: Newest first</span>
+      </label>
+      <label class="flex items-center gap-3 py-3 cursor-pointer">
+        <input type="radio" name="sort" class="w-5 h-5 text-rose-600 border-gray-300 focus:ring-rose-500">
+        <span class="text-gray-800">Date: Oldest first</span>
+      </label>
+      <label class="flex items-center gap-3 py-3 cursor-pointer">
+        <input type="radio" name="sort" class="w-5 h-5 text-rose-600 border-gray-300 focus:ring-rose-500">
+        <span class="text-gray-800">Price: Highest to Lowest</span>
+      </label>
+      <label class="flex items-center gap-3 py-3 cursor-pointer">
+        <input type="radio" name="sort" class="w-5 h-5 text-rose-600 border-gray-300 focus:ring-rose-500">
+        <span class="text-gray-800">Price: Lowest to Highest</span>
+      </label>
+    </div>
+    <div class="px-4 pb-6 pt-2 border-t border-gray-100 mt-2">
+      <button onclick="closeSortSheet()" class="w-full py-3 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 transition-colors">
+        Apply
+      </button>
+    </div>
+  </div>
+
+  <!-- Full Filter Drawer (Slides from bottom) -->
+  <div id="filterDrawer" class="bottom-sheet fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-[70] max-h-[85vh] flex flex-col">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100 shrink-0">
+      <h2 class="text-lg font-semibold text-gray-800">Filters</h2>
+      <button onclick="closeDrawer()" class="p-1 hover:bg-gray-100 rounded-full transition-colors">
+        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto px-4 py-2">
+      <!-- Location Section -->
+      <div id="section-locations" class="border-b border-gray-100 py-3">
+        <button class="flex items-center justify-between w-full text-left" onclick="toggleSection('locations')">
+          <span class="font-medium text-gray-800">Location</span>
+          <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="chevron-locations" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div id="content-locations" class="mt-3 hidden">
+          <p class="text-sm text-rose-600 mb-2">Select Location</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="location" checked> All of Nepal</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="location"> Kathmandu</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="location"> Lalitpur</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="location"> Bhaktapur</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="location"> Pokhara</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Section -->
+      <div id="section-categories" class="border-b border-gray-100 py-3">
+        <button class="flex items-center justify-between w-full text-left" onclick="toggleSection('categories')">
+          <span class="font-medium text-gray-800">Category</span>
+          <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="chevron-categories" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div id="content-categories" class="mt-3 hidden">
+          <p class="text-sm text-rose-600 mb-2">Select Category</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="category"> All Categories</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="category" checked> Mobiles</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="category"> Electronics</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="category"> Vehicles</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="category"> Property</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Condition Section -->
+      <div id="section-condition" class="border-b border-gray-100 py-3">
+        <button class="flex items-center justify-between w-full text-left" onclick="toggleSection('condition')">
+          <span class="font-medium text-gray-800">Condition</span>
+          <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="chevron-condition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div id="content-condition" class="mt-3 hidden">
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="condition" checked> All</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="condition"> New</label>
+            <label class="flex items-center gap-2 text-sm text-gray-700"><input type="radio" name="condition"> Used</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Section -->
+      <div id="section-price" class="border-b border-gray-100 py-3">
+        <button class="flex items-center justify-between w-full text-left" onclick="toggleSection('price')">
+          <span class="font-medium text-gray-800">Price Range</span>
+          <svg class="w-5 h-5 text-gray-500 transform transition-transform" id="chevron-price" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div id="content-price" class="mt-3 hidden">
+          <div class="flex gap-2 items-center">
+            <input type="number" placeholder="Min" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
+            <span class="text-gray-400">-</span>
+            <input type="number" placeholder="Max" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
+          </div>
+          <button class="mt-3 w-full py-2 bg-rose-100 text-rose-700 text-sm font-medium rounded-lg hover:bg-rose-200 transition-colors">
+            Apply Price
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="shrink-0 flex gap-3 px-4 py-4 border-t border-gray-100 bg-white">
+      <button onclick="closeDrawer()" class="flex-1 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+        Reset
+      </button>
+      <button onclick="closeDrawer()" class="flex-1 py-3 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 transition-colors">
+        Show Results
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Open Sort Bottom Sheet
+    function openSortSheet() {
+      document.getElementById('backdrop').classList.add('open');
+      document.getElementById('sortSheet').classList.add('open');
+    }
+
+    // Close Sort Bottom Sheet
+    function closeSortSheet() {
+      document.getElementById('backdrop').classList.remove('open');
+      document.getElementById('sortSheet').classList.remove('open');
+    }
+
+    // Open Filter Drawer (optionally to specific section)
+    function openDrawer(section) {
+      document.getElementById('backdrop').classList.add('open');
+      document.getElementById('filterDrawer').classList.add('open');
+
+      // If section specified, expand that section
+      if (section) {
+        // Close all sections first
+        ['locations', 'categories', 'condition', 'price'].forEach(s => {
+          document.getElementById('content-' + s).classList.add('hidden');
+          document.getElementById('chevron-' + s).classList.remove('rotate-180');
+        });
+
+        // Open the requested section
+        document.getElementById('content-' + section).classList.remove('hidden');
+        document.getElementById('chevron-' + section).classList.add('rotate-180');
+
+        // Scroll to section
+        setTimeout(() => {
+          document.getElementById('section-' + section).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+
+    // Close Filter Drawer
+    function closeDrawer() {
+      document.getElementById('backdrop').classList.remove('open');
+      document.getElementById('filterDrawer').classList.remove('open');
+    }
+
+    // Close all sheets
+    function closeAllSheets() {
+      closeSortSheet();
+      closeDrawer();
+    }
+
+    // Toggle section expand/collapse
+    function toggleSection(section) {
+      const content = document.getElementById('content-' + section);
+      const chevron = document.getElementById('chevron-' + section);
+      content.classList.toggle('hidden');
+      chevron.classList.toggle('rotate-180');
+    }
+  </script>
+</body>
+</html>

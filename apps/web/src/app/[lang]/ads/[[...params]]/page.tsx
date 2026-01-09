@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { prisma } from '@thulobazaar/database';
-import { AdsFilter, AdCard, AdBanner } from '@/components/ads';
+import { AdsFilter, AdsSearchBar, AdsFilterWrapper, AdCard, AdBanner, SortDropdown } from '@/components/ads';
 import { parseAdUrlParams, getFilterIds, generateAdListingMetadata } from '@/lib/urls';
 import { getLocationHierarchy } from '@/lib/location';
 import { getRootCategoriesWithChildren } from '@/lib/location';
@@ -144,9 +144,25 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container-custom py-6">
-        {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-500">
+      {/* Mobile Filter Carousel + Drawer */}
+      <AdsFilterWrapper
+        lang={lang}
+        categories={categories}
+        locationHierarchy={locationHierarchy}
+        selectedCategorySlug={parsed.categorySlug || undefined}
+        selectedCategoryName={parsed.categoryName || undefined}
+        selectedLocationSlug={parsed.locationSlug || undefined}
+        selectedLocationName={parsed.locationName || undefined}
+        minPrice={minPrice?.toString() || ''}
+        maxPrice={maxPrice?.toString() || ''}
+        condition={condition}
+        sortBy={sortBy}
+        searchQuery={searchQuery}
+      />
+
+      <div className="container-custom py-4 md:py-6">
+        {/* Breadcrumb - Hidden on mobile, visible for desktop SEO */}
+        <div className="hidden lg:block mb-4 text-sm text-gray-500">
           {breadcrumbs.map((crumb, index) => (
             <span key={index}>
               {index < breadcrumbs.length - 1 ? (
@@ -164,14 +180,17 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
         </div>
 
         {/* Page Header with Top Banner inline on desktop */}
-        <div className="mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>
+        <div className="mb-4 md:mb-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 md:gap-4">
+          {/* Title section - Hidden on mobile, visible for desktop SEO */}
+          <div className="hidden lg:block">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>
             <p className="text-gray-500">
               Found <span className="font-semibold text-gray-900">{totalAds.toLocaleString()}</span> ads
               {hasActiveFilters && ' matching your filters'}
             </p>
           </div>
+          {/* Hidden H1 for mobile SEO - screen reader only */}
+          <h1 className="sr-only lg:hidden">{pageTitle}</h1>
           {/* Top Banner - 728x90 desktop inline / 320x100 mobile below */}
           <div className="flex-shrink-0">
             <div className="flex lg:hidden">
@@ -183,9 +202,9 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Filters Sidebar */}
-          <aside className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+          {/* Filters Sidebar - Hidden on mobile (use drawer instead) */}
+          <aside className="hidden lg:block lg:col-span-1">
             <AdsFilter
               lang={lang}
               categories={categories}
@@ -208,14 +227,29 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
 
           {/* Results */}
           <main className="lg:col-span-3">
+            {/* Search Bar */}
+            <AdsSearchBar
+              lang={lang}
+              initialQuery={searchQuery}
+              selectedCategorySlug={parsed.categorySlug || undefined}
+              selectedLocationSlug={parsed.locationSlug || undefined}
+            />
+
             {/* Sort & View Options */}
-            <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 flex flex-wrap justify-between items-center gap-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 md:mb-6 flex flex-wrap justify-between items-center gap-4">
               <div className="text-sm text-gray-500">
                 {totalAds > 0 && (
                   <>
                     Showing {offset + 1}-{Math.min(offset + adsPerPage, totalAds)} of {totalAds} ads
                   </>
                 )}
+              </div>
+              {/* Sort dropdown - hidden on mobile (available in filter carousel) */}
+              <div className="hidden lg:block">
+                <SortDropdown
+                  currentSort={sortBy}
+                  basePath={`/${lang}/ads${urlParams ? `/${urlParams.join('/')}` : ''}`}
+                />
               </div>
             </div>
 
@@ -240,7 +274,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
             {/* Results Grid */}
             {ads.length > 0 && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6 mb-4 md:mb-6">
                   {ads.map((ad, index) => (
                     <React.Fragment key={ad.id}>
                       <AdCard
@@ -270,7 +304,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
                       />
                       {/* In-Feed Ad after every 6th card */}
                       {(index + 1) % 6 === 0 && index < ads.length - 1 && (
-                        <div className="flex justify-center items-center bg-gray-50 rounded-xl p-4">
+                        <div className="col-span-full flex justify-center items-center bg-gray-50 rounded-xl p-4">
                           <AdBanner slot="adsListingInFeed" size="mediumRectangle" autoExpand />
                         </div>
                       )}

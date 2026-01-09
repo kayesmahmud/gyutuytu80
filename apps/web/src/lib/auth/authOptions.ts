@@ -18,8 +18,47 @@ import {
   createUserObject,
   generateShopSlug,
   reactivateAccount,
+  generateRefreshToken,
 } from './helpers';
 import { userSelectBase, userSelectForAuth, userSelectForOAuth } from './queries';
+
+/**
+ * Refresh access token helper
+ */
+async function refreshAccessToken(token: any) {
+  try {
+    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const response = await fetch(`${url}/api/auth/refresh-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        refreshToken: token.refreshToken,
+      }),
+    });
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+
+    return {
+      ...token,
+      backendToken: refreshedTokens.data.token,
+      refreshToken: refreshedTokens.data.refreshToken ?? token.refreshToken, // Fallback if not rotated
+      iat: Math.floor(Date.now() / 1000),
+      error: undefined,
+    };
+  } catch (error) {
+    console.error('RefreshAccessTokenError', error);
+    return {
+      ...token,
+      error: 'RefreshAccessTokenError',
+    };
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   debug: true,
@@ -52,6 +91,7 @@ export const authOptions: NextAuthOptions = {
       name: 'OAuth Token',
       credentials: {
         token: { label: 'Token', type: 'text' },
+        refreshToken: { label: 'Refresh Token', type: 'text' },
         userId: { label: 'User ID', type: 'text' },
         email: { label: 'Email', type: 'email' },
       },
@@ -77,7 +117,12 @@ export const authOptions: NextAuthOptions = {
 
           console.log('🔐 [OAuth Token] User authenticated:', user.email);
 
-          return createUserObject(user as any, credentials.token, 'google');
+          return createUserObject(
+            user as any,
+            credentials.token,
+            credentials.refreshToken || null,
+            'google'
+          );
         } catch (error: any) {
           console.error('🔐 [OAuth Token] Error:', error.message);
           throw new Error(error.message || 'Token verification failed');
@@ -146,9 +191,10 @@ export const authOptions: NextAuthOptions = {
             });
 
             const backendToken = await generateBackendToken(user);
+            const refreshToken = await generateRefreshToken(user);
 
             return {
-              ...createUserObject(user as any, backendToken),
+              ...createUserObject(user as any, backendToken, refreshToken),
               lastLogin: previousLastLogin?.toISOString() || null,
             };
           } catch (error) {
@@ -218,9 +264,10 @@ export const authOptions: NextAuthOptions = {
           });
 
           const backendToken = await generateBackendToken(user);
+          const refreshToken = await generateRefreshToken(user);
 
           return {
-            ...createUserObject(user as any, backendToken),
+            ...createUserObject(user as any, backendToken, refreshToken),
             lastLogin: previousLastLogin?.toISOString() || null,
           };
         } catch (error) {
@@ -331,6 +378,7 @@ export const authOptions: NextAuthOptions = {
               phone: dbUser.phone,
               role: dbUser.role,
             });
+            const refreshToken = await generateRefreshToken({ id: dbUser.id });
 
             Object.assign(token, {
               id: dbUser.id.toString(),
@@ -347,6 +395,7 @@ export const authOptions: NextAuthOptions = {
               individualVerified: dbUser.individual_verified,
               oauthProvider: dbUser.oauth_provider,
               backendToken, // Add backend token for OAuth users
+              refreshToken,
               iat: Math.floor(Date.now() / 1000),
             });
             return token;
@@ -371,6 +420,7 @@ export const authOptions: NextAuthOptions = {
           individualVerified: user.individualVerified,
           lastLogin: user.lastLogin,
           backendToken: user.backendToken,
+          refreshToken: user.refreshToken,
           oauthProvider: user.oauthProvider,
           iat: Math.floor(Date.now() / 1000),
         });
@@ -406,7 +456,10 @@ export const authOptions: NextAuthOptions = {
 
       // Check token expiration (24 hours)
       const tokenAge = Math.floor(Date.now() / 1000) - (token.iat as number || 0);
-      if (tokenAge > 86400) return null;
+      // Access token expires in 24h (86400s), refresh slightly before (e.g. 23h = 82800s)
+      if (tokenAge > 82800) {
+        return refreshAccessToken(token);
+      }
 
       return token;
     },
@@ -435,6 +488,8 @@ export const authOptions: NextAuthOptions = {
       }
 
       (session as any).backendToken = token.backendToken as string | null;
+      (session as any).refreshToken = token.refreshToken as string | null;
+      (session as any).error = token.error as string | undefined;
 
       return session;
     },
@@ -454,7 +509,7 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60,
+    maxAge: 29 * 24 * 60 * 60, // 29 days (slightly less than refresh token to prevent edge cases)
   },
 
   secret: process.env.NEXTAUTH_SECRET,

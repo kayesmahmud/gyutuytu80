@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
+import { useSupportSocket } from '@/hooks/useSupportSocket';
 import {
   getEditorStats,
   getPendingVerifications,
@@ -157,6 +158,44 @@ export function useEditorDashboard(lang: string): UseEditorDashboardReturn {
 
     setLoading(false);
   }, [staff]);
+
+  // Socket Integration for Real-time Badges
+  const handleTicketUpdated = useCallback(() => {
+    // Refresh the support chat count when any ticket activity happens
+    getSupportChatCount()
+      .then((res) => {
+        if (res.success) {
+          setBadgeCounts((prev) => ({
+            ...prev,
+            supportChat: res.data.count
+          }));
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  const handleNewMessage = useCallback(() => {
+    // Also refresh on new message 
+    getSupportChatCount()
+      .then((res) => {
+        if (res.success) {
+          setBadgeCounts((prev) => ({
+            ...prev,
+            supportChat: res.data.count
+          }));
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  const token = (staff as any)?.backendToken;
+
+  useSupportSocket({
+    token: token,
+    isStaff: true,
+    onTicketUpdated: handleTicketUpdated,
+    onNewMessage: handleNewMessage,
+  });
 
   useEffect(() => {
     if (authLoading) return;

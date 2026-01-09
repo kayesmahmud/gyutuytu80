@@ -226,10 +226,10 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-8 px-4 lg:px-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 px-4 lg:px-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <div className="mb-4 md:mb-6 lg:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
               All Shops
             </h1>
             <p className="text-gray-500">
@@ -249,7 +249,7 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {transformedShops.map((shop) => (
                 <ShopCard key={shop.id} shop={shop} lang={lang} />
               ))}
@@ -257,7 +257,7 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
           )}
 
           {/* Pagination */}
-          <div className="mt-12">
+          <div className="mt-8 md:mt-12">
             <ShopsPagination
               currentPage={page}
               totalPages={totalPages}

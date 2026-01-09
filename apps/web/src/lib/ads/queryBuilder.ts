@@ -1,7 +1,7 @@
 /**
  * Ads Query Builder
  * Centralized logic for building Prisma where clauses and orderBy for ads listings
- * Used by /ads, /search, and /all-ads pages
+ * Used by /ads page (consolidated from former /search and /all-ads pages)
  */
 
 export interface AdsFilterOptions {
