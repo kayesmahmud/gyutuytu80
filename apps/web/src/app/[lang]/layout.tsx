@@ -4,6 +4,7 @@ import { Header, Footer, BottomNav } from '@/components/layout';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
+import AppStoreBanner from '@/components/pwa/AppStoreBanner';
 
 const supportedLanguages = ['en', 'ne'] as const;
 type SupportedLanguage = typeof supportedLanguages[number];
@@ -62,7 +63,8 @@ export default async function LanguageLayout({
   return (
     <>
       <ServiceWorkerRegister />
-      <InstallPrompt />
+      <InstallPrompt />      {/* Desktop PWA install */}
+      <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
       <GoogleAdSense />
       <Header lang={lang} />
       <div className="pb-20 lg:pb-0">

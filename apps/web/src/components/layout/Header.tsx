@@ -392,7 +392,7 @@ export default function Header({ lang }: HeaderProps) {
         />
 
         {/* Drawer Panel */}
-        <div className={`absolute top-0 left-0 h-full w-[75vw] max-w-[300px] bg-white shadow-xl transform transition-transform duration-300 ease-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`absolute top-0 right-0 h-full w-[75vw] max-w-[300px] bg-white shadow-xl transform transition-transform duration-300 ease-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           {/* Drawer Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <Link href={`/${lang}`} onClick={() => setMobileMenuOpen(false)}>

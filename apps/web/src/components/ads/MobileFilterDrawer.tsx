@@ -159,17 +159,17 @@ export default function MobileFilterDrawer({
 
   return (
     <>
-      {/* Drawer Overlay */}
+      {/* Drawer Overlay - z-[60] to cover BottomNav (z-50) */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 lg:hidden animate-fade-in"
+          className="fixed inset-0 bg-black/50 z-[60] lg:hidden animate-fade-in"
           onClick={handleClose}
         />
       )}
 
-      {/* Drawer Content */}
+      {/* Drawer Content - z-[60] to cover BottomNav (z-50) */}
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 lg:hidden transition-transform duration-300 ease-out max-h-[85vh] flex flex-col ${
+        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-[60] lg:hidden transition-transform duration-300 ease-out max-h-[85vh] flex flex-col ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
       >

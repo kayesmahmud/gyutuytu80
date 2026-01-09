@@ -14,13 +14,17 @@ export default function InstallPrompt() {
     const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
     useEffect(() => {
+        // Skip on mobile - mobile users see AppStoreBanner for native app download instead
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) return;
+
         // Check if user has dismissed the banner before
         const dismissed = localStorage.getItem('pwa-install-dismissed');
         if (dismissed === 'true') {
             return;
         }
 
-        // Detect iOS
+        // Detect iOS (only relevant for desktop Safari now)
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator as any).standalone;
 

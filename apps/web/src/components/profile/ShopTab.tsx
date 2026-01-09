@@ -97,55 +97,63 @@ export function ShopTab({
         </div>
       )}
 
-      {/* Shop Header */}
-      <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-          <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {/* Shop Header - Stacked on mobile, horizontal on desktop */}
+      <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 p-4 text-center sm:text-left bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{businessName}</h3>
-          <p className="text-sm text-gray-600">Your verified business shop page</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1.5 sm:gap-2">
+            <h3 className="font-semibold text-gray-900 truncate max-w-full">{businessName}</h3>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 flex-shrink-0">
+              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Verified
+            </span>
+          </div>
+          <p className="text-sm text-gray-600 mt-1">Your verified business shop page</p>
         </div>
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          Verified
-        </span>
       </div>
 
       {/* Shop URL Section */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Shop URL</label>
         {!isEditing ? (
-          <div className="flex items-center gap-3">
-            <code className="flex-1 text-sm font-mono text-gray-700 bg-gray-100 px-4 py-2.5 rounded-lg border border-gray-200 truncate">
+          <div className="space-y-3">
+            {/* URL display - full width on mobile */}
+            <code className="block text-sm font-mono text-gray-700 bg-gray-100 px-4 py-2.5 rounded-lg border border-gray-200 break-all">
               {typeof window !== 'undefined' ? window.location.origin : ''}/{lang}/shop/{activeShopSlug}
             </code>
-            <button
-              onClick={copyUrl}
-              className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              title="Copy URL"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </button>
-            <button
-              onClick={() => startEditing(activeShopSlug)}
-              className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
-            >
-              Edit
-            </button>
+            {/* Action buttons row */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={copyUrl}
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                title="Copy URL"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span className="sm:hidden">Copy</span>
+              </button>
+              <button
+                onClick={() => startEditing(activeShopSlug)}
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+              >
+                Edit URL
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
+            {/* URL input - stacked on mobile */}
+            <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2">
               <div className="flex-1 flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden">
-                <span className="px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border-r border-gray-300 whitespace-nowrap">
-                  /{lang}/shop/
+                <span className="px-2 sm:px-3 py-2.5 text-xs sm:text-sm text-gray-500 bg-gray-50 border-r border-gray-300 whitespace-nowrap">
+                  /shop/
                 </span>
                 <input
                   type="text"
@@ -153,15 +161,15 @@ export function ShopTab({
                   onChange={(e) => setCustomSlug(e.target.value)}
                   onBlur={() => checkAvailability(customSlug)}
                   placeholder="your-shop-name"
-                  className="flex-1 px-3 py-2.5 text-sm outline-none border-none focus:ring-0"
+                  className="flex-1 min-w-0 px-3 py-2.5 text-sm outline-none border-none focus:ring-0"
                 />
               </div>
               <button
                 onClick={() => checkAvailability(customSlug)}
                 disabled={availability === 'checking'}
-                className="px-4 py-2.5 bg-secondary text-white rounded-lg hover:bg-secondary-hover transition-colors disabled:opacity-50"
+                className="w-full sm:w-auto px-4 py-2.5 bg-secondary text-white rounded-lg hover:bg-secondary-hover transition-colors disabled:opacity-50"
               >
-                {availability === 'checking' ? 'Checking...' : 'Check'}
+                {availability === 'checking' ? 'Checking...' : 'Check Availability'}
               </button>
             </div>
 
@@ -201,17 +209,17 @@ export function ShopTab({
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={saveSlug}
                 disabled={availability !== 'available' || isSaving}
-                className="px-5 py-2.5 bg-success text-white font-medium rounded-lg hover:bg-success-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 sm:flex-none px-5 py-2.5 bg-success text-white font-medium rounded-lg hover:bg-success-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSaving ? 'Saving...' : 'Save URL'}
               </button>
               <button
                 onClick={() => cancelEditing(activeShopSlug)}
-                className="px-5 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 sm:flex-none px-5 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
@@ -220,11 +228,11 @@ export function ShopTab({
         )}
       </div>
 
-      {/* Shop Actions */}
-      <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-100">
+      {/* Shop Actions - Full width on mobile */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t border-gray-100">
         <Link
           href={`/${lang}/shop/${activeShopSlug}`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors"
+          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -234,7 +242,7 @@ export function ShopTab({
         </Link>
         <button
           onClick={shareShop}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
