@@ -98,6 +98,7 @@ function FavoriteAdCard({ favorite, lang, onRemove }: FavoriteAdCardProps) {
               src={getImageUrl(favorite.ad.primaryImage, 'ads') || ''}
               alt={favorite.ad.title}
               fill
+              unoptimized
               className="object-cover hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 640px) 96px, 112px"
             />

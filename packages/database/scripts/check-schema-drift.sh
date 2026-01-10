@@ -13,6 +13,30 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Find psql binary (works with Postgres.app, pgAdmin, or system install)
+find_psql() {
+  # Check common locations
+  if command -v psql &> /dev/null; then
+    echo "psql"
+  elif [ -f "/Applications/Postgres.app/Contents/Versions/latest/bin/psql" ]; then
+    echo "/Applications/Postgres.app/Contents/Versions/latest/bin/psql"
+  elif [ -f "/Applications/pgAdmin 4.app/Contents/SharedSupport/psql" ]; then
+    echo "/Applications/pgAdmin 4.app/Contents/SharedSupport/psql"
+  elif [ -f "/usr/local/bin/psql" ]; then
+    echo "/usr/local/bin/psql"
+  elif [ -f "/opt/homebrew/bin/psql" ]; then
+    echo "/opt/homebrew/bin/psql"
+  else
+    echo ""
+  fi
+}
+
+PSQL=$(find_psql)
+if [ -z "$PSQL" ]; then
+  echo -e "${RED}❌ Error: psql not found. Install PostgreSQL or pgAdmin.${NC}"
+  exit 1
+fi
+
 PROJECT_DIR="/Users/elw/Documents/Web/thulobazaar/monorepo"
 cd "$PROJECT_DIR/packages/database"
 
@@ -22,7 +46,7 @@ echo ""
 
 # Check if _prisma_migrations table exists
 echo -e "${BLUE}Step 1: Checking _prisma_migrations table...${NC}"
-MIGRATIONS_TABLE_EXISTS=$(PGPASSWORD=postgres psql -U elw -d thulobazaar -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '_prisma_migrations');")
+MIGRATIONS_TABLE_EXISTS=$(PGPASSWORD=postgres "$PSQL" -h localhost -U elw -d thulobazaar -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '_prisma_migrations');")
 
 if [ "$MIGRATIONS_TABLE_EXISTS" = "f" ]; then
   echo -e "${RED}❌ CRITICAL: _prisma_migrations table does NOT exist!${NC}"
@@ -41,7 +65,7 @@ else
   echo -e "${GREEN}✅ _prisma_migrations table exists${NC}"
 
   # Count applied migrations
-  MIGRATION_COUNT=$(PGPASSWORD=postgres psql -U elw -d thulobazaar -tAc "SELECT COUNT(*) FROM _prisma_migrations;")
+  MIGRATION_COUNT=$(PGPASSWORD=postgres "$PSQL" -h localhost -U elw -d thulobazaar -tAc "SELECT COUNT(*) FROM _prisma_migrations;")
   echo -e "${GREEN}   Applied migrations: $MIGRATION_COUNT${NC}"
 fi
 
@@ -76,7 +100,7 @@ echo ""
 echo -e "${BLUE}Step 3: Validating critical schema elements...${NC}"
 
 # Check categories.form_template (caused the homepage crash)
-FORM_TEMPLATE=$(PGPASSWORD=postgres psql -U elw -d thulobazaar -tAc "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'categories' AND column_name = 'form_template');")
+FORM_TEMPLATE=$(PGPASSWORD=postgres "$PSQL" -h localhost -U elw -d thulobazaar -tAc "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'categories' AND column_name = 'form_template');")
 if [ "$FORM_TEMPLATE" = "t" ]; then
   echo -e "${GREEN}✅ categories.form_template exists${NC}"
 else
@@ -84,7 +108,7 @@ else
 fi
 
 # Check ads.custom_fields
-CUSTOM_FIELDS=$(PGPASSWORD=postgres psql -U elw -d thulobazaar -tAc "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'ads' AND column_name = 'custom_fields');")
+CUSTOM_FIELDS=$(PGPASSWORD=postgres "$PSQL" -h localhost -U elw -d thulobazaar -tAc "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'ads' AND column_name = 'custom_fields');")
 if [ "$CUSTOM_FIELDS" = "t" ]; then
   echo -e "${GREEN}✅ ads.custom_fields exists${NC}"
 else
@@ -92,7 +116,7 @@ else
 fi
 
 # Check user_favorites table
-USER_FAVORITES=$(PGPASSWORD=postgres psql -U elw -d thulobazaar -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_favorites');")
+USER_FAVORITES=$(PGPASSWORD=postgres "$PSQL" -h localhost -U elw -d thulobazaar -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_favorites');")
 if [ "$USER_FAVORITES" = "t" ]; then
   echo -e "${GREEN}✅ user_favorites table exists${NC}"
 else

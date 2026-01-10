@@ -9,6 +9,7 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { apiClient } from '@/lib/api';
+import { User, LayoutDashboard, Store, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   lang: string;
@@ -305,17 +306,19 @@ export default function Header({ lang }: HeaderProps) {
                             <Link
                               href={`/${lang}/profile`}
                               onClick={() => setProfileDropdownOpen(false)}
-                              className="block w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 no-underline transition-colors"
+                              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 no-underline transition-colors"
                             >
-                              👤 My Profile
+                              <User className="w-4 h-4 text-gray-500" />
+                              My Profile
                             </Link>
 
                             <Link
                               href={`/${lang}/dashboard`}
                               onClick={() => setProfileDropdownOpen(false)}
-                              className="block w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 no-underline transition-colors"
+                              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 no-underline transition-colors"
                             >
-                              📊 My Dashboard
+                              <LayoutDashboard className="w-4 h-4 text-gray-500" />
+                              Dashboard
                             </Link>
 
                             {/* View My Shop - for all users with shop slug */}
@@ -331,8 +334,9 @@ export default function Header({ lang }: HeaderProps) {
                                   }`}
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="flex items-center gap-2">
-                                    🏪 My Shop
+                                  <span className="flex items-center gap-2.5">
+                                    <Store className="w-4 h-4" />
+                                    My Shop
                                   </span>
                                   {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
                                     <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-0.5 rounded-full font-bold">
@@ -353,9 +357,10 @@ export default function Header({ lang }: HeaderProps) {
                           <div className="border-t border-gray-100">
                             <button
                               onClick={handleSignOut}
-                              className="block w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
                             >
-                              🚪 Sign Out
+                              <LogOut className="w-4 h-4" />
+                              Sign Out
                             </button>
                           </div>
                         </div>
@@ -461,11 +466,13 @@ export default function Header({ lang }: HeaderProps) {
                   </Link>
                 ) : (
                   <>
-                    <Link href={`/${lang}/profile`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
-                      👤 My Profile
+                    <Link href={`/${lang}/profile`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
+                      <User className="w-5 h-5 text-gray-500" />
+                      My Profile
                     </Link>
-                    <Link href={`/${lang}/dashboard`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
-                      📊 Dashboard
+                    <Link href={`/${lang}/dashboard`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
+                      <LayoutDashboard className="w-5 h-5 text-gray-500" />
+                      Dashboard
                     </Link>
 
                     {/* My Shop - for all users with shop slug */}
@@ -480,7 +487,10 @@ export default function Header({ lang }: HeaderProps) {
                               : 'text-gray-700 hover:text-rose-500 hover:bg-gray-50'
                           }`}
                       >
-                        <span>🏪 My Shop</span>
+                        <span className="flex items-center gap-3">
+                          <Store className="w-5 h-5" />
+                          My Shop
+                        </span>
                         {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
                           <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-0.5 rounded-full font-bold">
                             ⭐ VERIFIED
