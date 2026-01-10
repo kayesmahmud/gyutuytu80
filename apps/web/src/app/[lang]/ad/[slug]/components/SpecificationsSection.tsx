@@ -7,7 +7,12 @@ export function SpecificationsSection({ customFields }: SpecificationsSectionPro
 
   const filteredKeys = ['isNegotiable', 'amenities', 'condition'];
   const entries = Object.entries(customFields)
-    .filter(([key]) => !filteredKeys.includes(key));
+    .filter(([key, value]) =>
+      !filteredKeys.includes(key) &&
+      value !== null &&
+      value !== undefined &&
+      value !== ''
+    );
 
   // Check if this is a property-related ad (has totalArea field)
   const hasAreaFields = entries.some(([key]) => key === 'totalArea' || key === 'areaUnit');

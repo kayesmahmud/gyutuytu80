@@ -138,10 +138,55 @@ export default function Header({ lang }: HeaderProps) {
   // Check if user is staff (editor or super_admin)
   const isStaff = currentUser?.role === 'editor' || currentUser?.role === 'super_admin';
 
+  // Check if user is verified (individual or business)
+  const isUserVerified = user?.individualVerified ||
+    user?.businessVerificationStatus === 'approved' ||
+    user?.businessVerificationStatus === 'verified';
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-14 md:h-16">
+        {/* Mobile Header - 3 column grid for centered logo */}
+        <div className="md:hidden grid grid-cols-3 items-center h-14">
+          {/* Left - Hamburger Menu */}
+          <div className="flex justify-start">
+            <button
+              className="p-2 text-gray-600 hover:text-rose-500"
+              onClick={handleMobileMenuToggle}
+              aria-label="Toggle mobile menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Center - Logo */}
+          <div className="flex justify-center">
+            <Link
+              href={`/${lang}`}
+              className="no-underline flex items-center hover:opacity-80 transition-opacity"
+            >
+              <Image
+                src="/logo.png"
+                alt="Thulobazaar"
+                width={84}
+                height={40}
+                className="h-8 w-auto object-contain"
+                priority
+              />
+            </Link>
+          </div>
+
+          {/* Right - Empty for balance (or can add cart/notification icon later) */}
+          <div className="flex justify-end">
+            {/* Placeholder for future icon */}
+          </div>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden md:flex items-center justify-between h-16">
           {/* Logo */}
           <Link
             href={`/${lang}`}
@@ -152,7 +197,7 @@ export default function Header({ lang }: HeaderProps) {
               alt="Thulobazaar"
               width={84}
               height={40}
-              className="h-8 md:h-10 w-auto object-contain"
+              className="h-10 w-auto object-contain"
               priority
             />
           </Link>
@@ -174,7 +219,7 @@ export default function Header({ lang }: HeaderProps) {
                   className={`no-underline font-medium text-sm ${pathname?.includes('/verification') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
                     } transition-colors`}
                 >
-                  Get Verified
+                  {isUserVerified ? 'Verification' : 'Get Verified'}
                 </Link>
 
                 {isAuthenticated && (
@@ -371,20 +416,7 @@ export default function Header({ lang }: HeaderProps) {
               </div>
             )}
           </nav>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 text-gray-600 hover:text-rose-500"
-            onClick={handleMobileMenuToggle}
-            aria-label="Toggle mobile menu"
-            aria-expanded={mobileMenuOpen}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
-
       </div>
 
       {/* Mobile Slide-in Drawer */}
@@ -396,7 +428,7 @@ export default function Header({ lang }: HeaderProps) {
         />
 
         {/* Drawer Panel */}
-        <div className={`absolute top-0 right-0 h-full w-[75vw] max-w-[300px] bg-white shadow-xl transform transition-transform duration-300 ease-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`absolute top-0 left-0 h-full w-[75vw] max-w-[300px] bg-white shadow-xl transform transition-transform duration-300 ease-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           {/* Drawer Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <Link href={`/${lang}`} onClick={() => setMobileMenuOpen(false)}>
@@ -427,18 +459,8 @@ export default function Header({ lang }: HeaderProps) {
                   Browse Ads
                 </Link>
                 <Link href={`/${lang}/verification`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
-                  Get Verified
+                  {isUserVerified ? 'Verification' : 'Get Verified'}
                 </Link>
-                {isAuthenticated && (
-                  <Link href={`/${lang}/messages`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg flex items-center gap-2 transition-colors">
-                    Inbox
-                    {unreadCount > 0 && (
-                      <span className="min-w-[20px] h-[20px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </Link>
-                )}
               </>
             )}
 
