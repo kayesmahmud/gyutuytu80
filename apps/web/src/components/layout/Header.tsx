@@ -378,19 +378,17 @@ export default function Header({ lang }: HeaderProps) {
                                       : 'text-gray-700 hover:bg-gray-50'
                                   }`}
                               >
-                                <div className="flex items-center justify-between">
-                                  <span className="flex items-center gap-2.5">
-                                    <Store className="w-4 h-4" />
-                                    My Shop
-                                  </span>
+                                <div className="flex items-center gap-2">
+                                  <Store className="w-4 h-4 flex-shrink-0" />
+                                  <span>My Shop</span>
                                   {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                                    <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-0.5 rounded-full font-bold">
-                                      ⭐ VERIFIED
+                                    <span className="ml-auto flex-shrink-0 w-5 h-5 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center" title="Business Verified">
+                                      <span className="text-white text-[10px]">⭐</span>
                                     </span>
                                   )}
                                   {user.individualVerified && !(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                                    <span className="text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white px-2 py-0.5 rounded-full font-bold">
-                                      ✓ VERIFIED
+                                    <span className="ml-auto flex-shrink-0 w-5 h-5 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center" title="Individual Verified">
+                                      <span className="text-white text-[10px] font-bold">✓</span>
                                     </span>
                                   )}
                                 </div>
@@ -502,25 +500,23 @@ export default function Header({ lang }: HeaderProps) {
                       <Link
                         href={`/${lang}/shop/${user.customShopSlug || user.shopSlug}`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`py-3 px-3 font-medium flex items-center justify-between rounded-lg transition-colors ${(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified')
+                        className={`py-3 px-3 font-medium flex items-center gap-3 rounded-lg transition-colors ${(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified')
                             ? 'text-purple-600 hover:text-purple-700 bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500'
                             : user.individualVerified
                               ? 'text-blue-600 hover:text-blue-700 bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500'
                               : 'text-gray-700 hover:text-rose-500 hover:bg-gray-50'
                           }`}
                       >
-                        <span className="flex items-center gap-3">
-                          <Store className="w-5 h-5" />
-                          My Shop
-                        </span>
+                        <Store className="w-5 h-5 flex-shrink-0" />
+                        <span>My Shop</span>
                         {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                          <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-0.5 rounded-full font-bold">
-                            ⭐ VERIFIED
+                          <span className="ml-auto flex-shrink-0 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center" title="Business Verified">
+                            <span className="text-white text-xs">⭐</span>
                           </span>
                         )}
                         {user.individualVerified && !(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                          <span className="text-xs bg-gradient-to-r from-blue-400 to-cyan-400 text-white px-2 py-0.5 rounded-full font-bold">
-                            ✓ VERIFIED
+                          <span className="ml-auto flex-shrink-0 w-6 h-6 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center" title="Individual Verified">
+                            <span className="text-white text-xs font-bold">✓</span>
                           </span>
                         )}
                       </Link>

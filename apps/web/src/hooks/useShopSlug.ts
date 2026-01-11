@@ -112,9 +112,11 @@ export function useShopSlug(options: UseShopSlugOptions = {}): UseShopSlugReturn
         setError(response.message || 'Failed to update shop URL');
         return false;
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving shop slug:', err);
-      setError('Failed to update shop URL');
+      // Extract error message from API response
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to update shop URL';
+      setError(errorMessage);
       return false;
     } finally {
       setIsSaving(false);
