@@ -382,14 +382,10 @@ export default function Header({ lang }: HeaderProps) {
                                   <Store className="w-4 h-4 flex-shrink-0" />
                                   <span>My Shop</span>
                                   {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                                    <span className="ml-auto flex-shrink-0 w-5 h-5 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center" title="Business Verified">
-                                      <span className="text-white text-[10px]">⭐</span>
-                                    </span>
+                                    <img src="/golden-badge.png" alt="Verified Business" title="Verified Business" className="ml-auto w-5 h-5 flex-shrink-0" />
                                   )}
                                   {user.individualVerified && !(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                                    <span className="ml-auto flex-shrink-0 w-5 h-5 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center" title="Individual Verified">
-                                      <span className="text-white text-[10px] font-bold">✓</span>
-                                    </span>
+                                    <img src="/blue-badge.png" alt="Verified Individual" title="Verified Individual" className="ml-auto w-5 h-5 flex-shrink-0" />
                                   )}
                                 </div>
                               </Link>
@@ -510,14 +506,10 @@ export default function Header({ lang }: HeaderProps) {
                         <Store className="w-5 h-5 flex-shrink-0" />
                         <span>My Shop</span>
                         {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                          <span className="ml-auto flex-shrink-0 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center" title="Business Verified">
-                            <span className="text-white text-xs">⭐</span>
-                          </span>
+                          <img src="/golden-badge.png" alt="Verified Business" title="Verified Business" className="ml-auto w-5 h-5 flex-shrink-0" />
                         )}
                         {user.individualVerified && !(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                          <span className="ml-auto flex-shrink-0 w-6 h-6 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center" title="Individual Verified">
-                            <span className="text-white text-xs font-bold">✓</span>
-                          </span>
+                          <img src="/blue-badge.png" alt="Verified Individual" title="Verified Individual" className="ml-auto w-5 h-5 flex-shrink-0" />
                         )}
                       </Link>
                     )}

@@ -82,7 +82,7 @@ export default function ShopCard({ shop, lang }: ShopCardProps) {
         {(isVerifiedBusiness || isVerifiedIndividual) && (
           <div className="absolute top-2 right-2">
             <img
-              src={isVerifiedBusiness ? '/golden-badge.svg' : '/blue-badge.svg'}
+              src={isVerifiedBusiness ? '/golden-badge.png' : '/blue-badge.png'}
               alt={isVerifiedBusiness ? 'Verified Business' : 'Verified Seller'}
               title={isVerifiedBusiness ? 'Verified Business' : 'Verified Seller'}
               className="w-6 h-6"

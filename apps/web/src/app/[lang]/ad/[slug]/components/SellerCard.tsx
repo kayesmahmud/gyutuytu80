@@ -73,7 +73,7 @@ export function SellerCard({
               {displayName}
               {isVerifiedBusiness && (
                 <Image
-                  src="/golden-badge.svg"
+                  src="/golden-badge.png"
                   alt="Verified Business"
                   title="Verified Business"
                   width={20}
@@ -82,7 +82,7 @@ export function SellerCard({
               )}
               {isVerifiedIndividual && (
                 <Image
-                  src="/blue-badge.svg"
+                  src="/blue-badge.png"
                   alt="Verified Individual Seller"
                   title="Verified Individual Seller"
                   width={20}

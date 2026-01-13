@@ -1,21 +1,44 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Search, PlusCircle, MessageCircle, User } from 'lucide-react';
 import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
+import { useUserAuth } from '@/contexts/UserAuthContext';
+import { apiClient } from '@/lib/api';
 
 interface BottomNavProps {
     lang: string;
-    unreadCount?: number;
 }
 
-export default function BottomNav({ lang, unreadCount = 0 }: BottomNavProps) {
+export default function BottomNav({ lang }: BottomNavProps) {
     const pathname = usePathname();
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
+    const [unreadCount, setUnreadCount] = useState(0);
     const isKeyboardVisible = useKeyboardVisible();
+    const { isAuthenticated } = useUserAuth();
+
+    // Fetch unread message count (same as Header)
+    const fetchUnreadCount = useCallback(async () => {
+        if (!isAuthenticated) return;
+        try {
+            const response = await apiClient.getUnreadCount();
+            if (response.success && response.data) {
+                setUnreadCount(response.data.unread_messages || 0);
+            }
+        } catch (error) {
+            console.error('Failed to fetch unread count:', error);
+        }
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        fetchUnreadCount();
+        // Poll for new messages every 30 seconds
+        const interval = setInterval(fetchUnreadCount, 30000);
+        return () => clearInterval(interval);
+    }, [fetchUnreadCount]);
 
     // Hide on scroll down, show on scroll up (must be before any early returns!)
     useEffect(() => {
@@ -73,9 +96,9 @@ export default function BottomNav({ lang, unreadCount = 0 }: BottomNavProps) {
         },
         {
             name: 'Profile',
-            href: `/${lang}/dashboard`,
+            href: `/${lang}/profile`,
             icon: User,
-            active: pathname?.includes('/dashboard') || pathname?.includes('/profile'),
+            active: pathname?.includes('/profile'),
         },
     ];
 
@@ -113,12 +136,12 @@ export default function BottomNav({ lang, unreadCount = 0 }: BottomNavProps) {
                                     : 'text-gray-600 hover:text-rose-500'
                                 }`}
                         >
-                            <div className="relative">
+                            <div className="relative inline-flex">
                                 <Icon className="w-6 h-6" strokeWidth={item.active ? 2.5 : 2} />
 
-                                {/* Unread badge for messages */}
-                                {item.badge && item.badge > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                                {/* Unread badge for messages - positioned on top-right of icon */}
+                                {typeof item.badge === 'number' && item.badge > 0 && (
+                                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 z-10">
                                         {item.badge > 99 ? '99+' : item.badge}
                                     </span>
                                 )}
