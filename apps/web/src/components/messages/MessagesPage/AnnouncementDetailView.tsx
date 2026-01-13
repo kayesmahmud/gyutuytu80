@@ -30,7 +30,7 @@ export function AnnouncementDetailView({ announcement, onBack }: AnnouncementDet
             {announcement.title}
           </h2>
           <p className="text-xs text-gray-500">
-            ThuluBazaar Announcement
+            Thulo Bazaar Announcement
           </p>
         </div>
       </div>

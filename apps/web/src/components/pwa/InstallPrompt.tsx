@@ -91,7 +91,7 @@ export default function InstallPrompt() {
                                     <Smartphone className="w-7 h-7 text-indigo-600" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg">Install ThuluBazaar</h3>
+                                    <h3 className="font-bold text-lg">Install Thulo Bazaar</h3>
                                     <p className="text-sm opacity-90">Get the app experience</p>
                                 </div>
                             </div>
@@ -150,7 +150,7 @@ export default function InstallPrompt() {
                     <div className="p-6 border-b border-gray-200">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h3 className="font-bold text-xl text-gray-900">Install ThuluBazaar</h3>
+                                <h3 className="font-bold text-xl text-gray-900">Install Thulo Bazaar</h3>
                                 <p className="text-sm text-gray-600 mt-1">Add to your home screen</p>
                             </div>
                             <button

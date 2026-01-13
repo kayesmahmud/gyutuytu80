@@ -21,22 +21,22 @@ const FAQ_CATEGORIES: FAQCategory[] = [
     id: 'getting-started',
     title: 'Getting Started',
     icon: '🚀',
-    description: 'New to ThuluBazaar? Start here.',
+    description: 'New to Thulo Bazaar? Start here.',
     faqs: [
       {
-        question: 'What is ThuluBazaar?',
-        answer: 'ThuluBazaar is Nepal\'s leading online classifieds marketplace where you can buy, sell, and rent products and services. We connect buyers and sellers across Nepal for electronics, vehicles, property, jobs, and much more.',
+        question: 'What is Thulo Bazaar?',
+        answer: 'Thulo Bazaar is Nepal\'s leading online classifieds marketplace where you can buy, sell, and rent products and services. We connect buyers and sellers across Nepal for electronics, vehicles, property, jobs, and much more.',
       },
       {
         question: 'How do I create an account?',
         answer: 'Click on "Sign Up" at the top of the page. You can register using your email address or phone number. You\'ll receive a verification code to confirm your account. Once verified, you can start posting ads and contacting sellers.',
       },
       {
-        question: 'Is it free to use ThuluBazaar?',
+        question: 'Is it free to use Thulo Bazaar?',
         answer: 'Yes! Creating an account and browsing ads is completely free. Posting basic ads is also free. We offer optional premium features like Featured Ads, Urgent tags, and Sticky posts to help your ads get more visibility.',
       },
       {
-        question: 'What can I sell on ThuluBazaar?',
+        question: 'What can I sell on Thulo Bazaar?',
         answer: 'You can sell a wide variety of items including electronics, vehicles, property, fashion, home goods, services, and more. However, illegal items, weapons, drugs, and prohibited content are strictly not allowed. Please review our Terms of Service for the complete list.',
       },
     ],
@@ -80,7 +80,7 @@ const FAQ_CATEGORIES: FAQCategory[] = [
         answer: 'Click on any ad to view details, then use the "Message" button to send a message to the seller through our platform, or use the displayed phone number to call/message directly.',
       },
       {
-        question: 'Is it safe to buy on ThuluBazaar?',
+        question: 'Is it safe to buy on Thulo Bazaar?',
         answer: 'We recommend meeting sellers in public places, inspecting items before payment, and using secure payment methods. Look for verified sellers (blue checkmark) for added trust. Never send money without seeing the item.',
       },
       {
@@ -156,7 +156,7 @@ const FAQ_CATEGORIES: FAQCategory[] = [
         answer: 'Report the user immediately through our platform. If you\'ve lost money, file a police report. Contact our support team with all evidence (messages, transaction records). We take fraud seriously and will investigate promptly.',
       },
       {
-        question: 'How does ThuluBazaar protect my data?',
+        question: 'How does Thulo Bazaar protect my data?',
         answer: 'We use industry-standard encryption and security practices. Your password is hashed and never stored in plain text. We don\'t share your personal information with third parties without consent. Read our Privacy Policy for full details.',
       },
       {
@@ -196,7 +196,7 @@ export default function HelpClient() {
         <div className="max-w-7xl mx-auto px-4 py-10 md:py-16 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4">Help Center</h1>
           <p className="text-base sm:text-lg md:text-xl opacity-90 max-w-2xl mx-auto mb-6 md:mb-8">
-            Find answers to your questions about ThuluBazaar
+            Find answers to your questions about Thulo Bazaar
           </p>
 
           {/* Search Bar */}

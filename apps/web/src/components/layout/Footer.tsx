@@ -96,7 +96,7 @@ export default function Footer({ lang }: FooterProps) {
 
           {/* Copyright - Centered */}
           <div className="text-center border-t border-gray-700 pt-4">
-            <p className="text-xs text-gray-400">&copy; {currentYear} ThuluBazaar. All rights reserved.</p>
+            <p className="text-xs text-gray-400">&copy; {currentYear} Thulo Bazaar. All rights reserved.</p>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ export default function Footer({ lang }: FooterProps) {
             <Link href={`/${lang}`} className="inline-block">
               <Image
                 src="/logo-footer.png"
-                alt="ThuluBazaar"
+                alt="Thulo Bazaar"
                 width={140}
                 height={100}
                 className="h-20 w-auto object-contain"
@@ -319,7 +319,7 @@ export default function Footer({ lang }: FooterProps) {
 
             {/* Copyright */}
             <div className="text-gray-400 text-sm text-center md:text-left">
-              <p>&copy; {currentYear} ThuluBazaar. All rights reserved.</p>
+              <p>&copy; {currentYear} Thulo Bazaar. All rights reserved.</p>
               <p className="text-xs text-gray-500 mt-1">
                 Built with Next.js 16 + TypeScript + Tailwind CSS
               </p>

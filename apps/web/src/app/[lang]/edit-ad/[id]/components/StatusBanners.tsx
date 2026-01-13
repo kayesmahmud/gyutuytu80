@@ -52,7 +52,7 @@ export function ApprovedBanner() {
         <div className="flex-1">
           <h3 className="text-lg font-bold text-green-900 mb-3">Ad Approved & Published</h3>
           <p className="text-sm text-green-700 mb-4">
-            This ad has been approved by our editors and is currently live on ThuluBazaar. For
+            This ad has been approved by our editors and is currently live on Thulo Bazaar. For
             content integrity and fairness to buyers, approved ads cannot be edited.
           </p>
           <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">

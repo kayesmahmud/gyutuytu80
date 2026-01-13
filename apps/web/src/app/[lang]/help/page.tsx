@@ -7,8 +7,8 @@ import { Metadata } from 'next';
 import HelpClient from './HelpClient';
 
 export const metadata: Metadata = {
-  title: 'Help Center | ThuluBazaar',
-  description: 'Find answers to frequently asked questions about buying, selling, account management, payments, and more on ThuluBazaar.',
+  title: 'Help Center | Thulo Bazaar',
+  description: 'Find answers to frequently asked questions about buying, selling, account management, payments, and more on Thulo Bazaar.',
 };
 
 export default function HelpPage() {

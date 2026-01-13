@@ -21,7 +21,7 @@ const FAQ_SECTIONS: FAQSection[] = [
     icon: '📋',
     faqs: [
       {
-        question: 'What is ThuluBazaar?',
+        question: 'What is Thulo Bazaar?',
         answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.',
       },
       {
@@ -29,7 +29,7 @@ const FAQ_SECTIONS: FAQSection[] = [
         answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       },
       {
-        question: 'Is ThuluBazaar free to use?',
+        question: 'Is Thulo Bazaar free to use?',
         answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.',
       },
     ],
@@ -43,7 +43,7 @@ const FAQ_SECTIONS: FAQSection[] = [
         answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       },
       {
-        question: 'Is it safe to buy on ThuluBazaar?',
+        question: 'Is it safe to buy on Thulo Bazaar?',
         answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.',
       },
       {
@@ -146,7 +146,7 @@ export default function FAQClient() {
         <div className="max-w-7xl mx-auto px-4 py-10 md:py-16 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4">Frequently Asked Questions</h1>
           <p className="text-base sm:text-lg md:text-xl opacity-90 max-w-2xl mx-auto">
-            Find quick answers to common questions about ThuluBazaar
+            Find quick answers to common questions about Thulo Bazaar
           </p>
         </div>
       </div>

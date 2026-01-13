@@ -21,7 +21,7 @@ export async function generateMetadata({
   const { lang } = await params;
 
   return {
-    title: 'ThuluBazaar - Buy & Sell Everything',
+    title: 'Thulo Bazaar - Buy & Sell Everything',
     description: lang === 'ne'
       ? 'नेपालको अग्रणी क्लासिफाइड मार्केटप्लेस'
       : "Nepal's Leading Classifieds Marketplace",
@@ -30,7 +30,7 @@ export async function generateMetadata({
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
-      title: 'ThuluBazaar',
+      title: 'Thulo Bazaar',
     },
     viewport: {
       width: 'device-width',

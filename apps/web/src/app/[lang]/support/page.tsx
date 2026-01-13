@@ -7,7 +7,7 @@ import { Metadata } from 'next';
 import SupportClient from './SupportClient';
 
 export const metadata: Metadata = {
-  title: 'Support | ThuluBazaar',
+  title: 'Support | Thulo Bazaar',
   description: 'Get help with your account, ads, payments, and more',
 };
 

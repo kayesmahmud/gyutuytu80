@@ -122,7 +122,7 @@ export default function AppStoreBanner() {
             <div className="w-16 h-16 bg-white rounded-xl shadow-xl flex items-center justify-center transform hover:scale-105 transition-transform">
               <Image
                 src="/logo.png"
-                alt="ThuluBazaar"
+                alt="Thulo Bazaar"
                 width={44}
                 height={44}
                 className="w-11 h-11 object-contain"
@@ -132,7 +132,7 @@ export default function AppStoreBanner() {
 
           {/* App Name & Tagline */}
           <div className="text-center relative">
-            <h2 className="text-2xl font-bold text-white mb-1">ThuluBazaar</h2>
+            <h2 className="text-2xl font-bold text-white mb-1">Thulo Bazaar</h2>
             <p className="text-white/90 text-sm">Buy & Sell Everything in Nepal</p>
 
             {/* Rating */}

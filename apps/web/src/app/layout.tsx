@@ -6,7 +6,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'ThuluBazaar - Buy & Sell Everything',
+  title: 'Thulo Bazaar - Buy & Sell Everything',
   description: "Nepal's Leading Classifieds Marketplace",
 };
 
