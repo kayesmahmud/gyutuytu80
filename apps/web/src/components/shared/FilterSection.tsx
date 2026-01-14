@@ -42,7 +42,9 @@ export default function FilterSection({ title, count, isExpanded, onToggle, chil
           paddingBottom: isExpanded ? '1rem' : '0',
         }}
       >
-        {children}
+        <div className="p-0.5">
+          {children}
+        </div>
       </div>
     </div>
   );

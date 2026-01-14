@@ -97,7 +97,7 @@ export default function AdsSearchBar({
 
         <button
           type="submit"
-          className="px-4 md:px-6 py-2.5 md:py-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+          className="px-4 md:px-6 py-2.5 md:py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
         >
           <span className="hidden sm:inline">Search</span>
           <svg className="w-5 h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">

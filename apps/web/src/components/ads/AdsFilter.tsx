@@ -222,24 +222,21 @@ export default function AdsFilter({
         isExpanded={expandedSections.price}
         onToggle={() => toggleSection('price')}
       >
-        <div className="space-y-2">
-          <div className="flex gap-2 items-center">
-            <input
-              type="number"
-              placeholder="Min"
-              value={localMinPrice}
-              onChange={(e) => setLocalMinPrice(e.target.value)}
-              className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors"
-            />
-            <span className="text-gray-500">-</span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={localMaxPrice}
-              onChange={(e) => setLocalMaxPrice(e.target.value)}
-              className="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors"
-            />
-          </div>
+        <div className="space-y-3">
+          <input
+            type="number"
+            placeholder="Min"
+            value={localMinPrice}
+            onChange={(e) => setLocalMinPrice(e.target.value)}
+            className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors"
+          />
+          <input
+            type="number"
+            placeholder="Max"
+            value={localMaxPrice}
+            onChange={(e) => setLocalMaxPrice(e.target.value)}
+            className="w-full text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-colors"
+          />
           <button
             onClick={() =>
               updateFilters({
