@@ -404,9 +404,14 @@ export default async function HomePage({ params }: HomePageProps) {
                         lang={lang}
                         ad={ad}
                       />
-                      {/* In-Feed Ad after every 4 cards (2 rows on mobile) - spans full width */}
-                      {index === 3 && (
-                        <div className="col-span-2 md:col-span-3 flex justify-center items-center bg-gray-50 rounded-xl p-4">
+                      {/* In-Feed Ad - Mobile: after 2 cards (index 1), Desktop: after 3 cards (index 2) */}
+                      {index === 1 && (
+                        <div className="md:hidden col-span-2 flex justify-center items-center bg-gray-50 rounded-xl p-4">
+                          <AdBanner slot="homeInFeed" size="mediumRectangle" autoExpand />
+                        </div>
+                      )}
+                      {index === 2 && (
+                        <div className="hidden md:flex col-span-3 justify-center items-center bg-gray-50 rounded-xl p-4">
                           <AdBanner slot="homeInFeed" size="mediumRectangle" autoExpand />
                         </div>
                       )}
