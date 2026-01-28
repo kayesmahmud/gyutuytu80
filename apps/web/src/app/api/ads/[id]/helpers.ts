@@ -151,17 +151,15 @@ export function transformAdToResponse(ad: AdWithRelations, locationHierarchy: Lo
   };
 }
 
-// Normalize condition values
+// Normalize condition values to only "Brand New" or "Used"
 export function normalizeCondition(condition: string | undefined): string | undefined {
   if (!condition) return undefined;
 
   const conditionLower = condition.toLowerCase();
   if (conditionLower === 'brand new' || conditionLower === 'new') {
-    return 'new';
-  } else if (conditionLower === 'used' || conditionLower === 'reconditioned') {
-    return 'used';
+    return 'Brand New';
   }
-  return condition;
+  return 'Used'; // Default everything else to Used
 }
 
 // Parse JSON safely - returns null on parse error when defaultValue is null

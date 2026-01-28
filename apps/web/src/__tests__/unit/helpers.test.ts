@@ -14,30 +14,26 @@ describe('normalizeCondition', () => {
     expect(normalizeCondition('')).toBeUndefined();
   });
 
-  it('normalizes "brand new" to "new"', () => {
-    expect(normalizeCondition('brand new')).toBe('new');
-    expect(normalizeCondition('Brand New')).toBe('new');
-    expect(normalizeCondition('BRAND NEW')).toBe('new');
+  it('normalizes "brand new" to "Brand New"', () => {
+    expect(normalizeCondition('brand new')).toBe('Brand New');
+    expect(normalizeCondition('Brand New')).toBe('Brand New');
+    expect(normalizeCondition('BRAND NEW')).toBe('Brand New');
   });
 
-  it('normalizes "new" to "new"', () => {
-    expect(normalizeCondition('new')).toBe('new');
-    expect(normalizeCondition('New')).toBe('new');
+  it('normalizes "new" to "Brand New"', () => {
+    expect(normalizeCondition('new')).toBe('Brand New');
+    expect(normalizeCondition('New')).toBe('Brand New');
   });
 
-  it('normalizes "used" to "used"', () => {
-    expect(normalizeCondition('used')).toBe('used');
-    expect(normalizeCondition('Used')).toBe('used');
+  it('normalizes "used" to "Used"', () => {
+    expect(normalizeCondition('used')).toBe('Used');
+    expect(normalizeCondition('Used')).toBe('Used');
   });
 
-  it('normalizes "reconditioned" to "used"', () => {
-    expect(normalizeCondition('reconditioned')).toBe('used');
-    expect(normalizeCondition('Reconditioned')).toBe('used');
-  });
-
-  it('returns original value for unknown conditions', () => {
-    expect(normalizeCondition('like-new')).toBe('like-new');
-    expect(normalizeCondition('refurbished')).toBe('refurbished');
+  it('normalizes everything else to "Used"', () => {
+    expect(normalizeCondition('reconditioned')).toBe('Used');
+    expect(normalizeCondition('like-new')).toBe('Used');
+    expect(normalizeCondition('refurbished')).toBe('Used');
   });
 });
 

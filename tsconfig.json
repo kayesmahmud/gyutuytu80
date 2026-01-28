@@ -2,7 +2,9 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
@@ -15,5 +17,11 @@
     "declaration": true,
     "declarationMap": true
   },
-  "exclude": ["node_modules", "dist", ".next", "coverage"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".next",
+    "coverage"
+  ],
+  "extends": "expo/tsconfig.base"
 }

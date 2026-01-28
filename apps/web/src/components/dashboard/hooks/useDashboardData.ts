@@ -30,6 +30,10 @@ export function useDashboardData() {
   const [showResubmitModal, setShowResubmitModal] = useState(false);
   const [resubmitType, setResubmitType] = useState<'individual' | 'business' | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const adsPerPage = 10;
+
   // Track if session has been refreshed to prevent infinite loops
   const sessionRefreshed = useRef(false);
 
@@ -196,6 +200,24 @@ export function useDashboardData() {
     return true;
   });
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAds.length / adsPerPage);
+  const startIndex = (currentPage - 1) * adsPerPage;
+  const paginatedAds = filteredAds.slice(startIndex, startIndex + adsPerPage);
+
+  // Handle tab change with pagination reset
+  const handleTabChange = useCallback((tab: AdTab) => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to first page when changing tabs
+  }, []);
+
+  // Handle page change
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of ads list
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   return {
     // State
     session,
@@ -203,6 +225,7 @@ export function useDashboardData() {
     activeTab,
     userAds,
     filteredAds,
+    paginatedAds,
     loading,
     error,
     stats,
@@ -210,8 +233,14 @@ export function useDashboardData() {
     showResubmitModal,
     resubmitType,
 
+    // Pagination state
+    currentPage,
+    totalPages,
+    adsPerPage,
+
     // Actions
-    setActiveTab,
+    handleTabChange,
+    handlePageChange,
     handleDeleteAd,
     handleMarkAsSold,
     openResubmitModal,

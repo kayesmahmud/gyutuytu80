@@ -3,6 +3,8 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@thulobazaar/types', '@thulobazaar/utils', '@thulobazaar/api-client'],
+  // Allow dev requests from network IP for mobile testing
+  allowedDevOrigins: ['http://192.168.1.153:3333'],
   // Empty turbopack config to silence Next.js 16 warning about webpack config
   // This allows us to keep using webpack config while acknowledging Turbopack is available
   turbopack: {},

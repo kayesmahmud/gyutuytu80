@@ -9,7 +9,7 @@ import type {
   PaymentVerifyParams,
   PaymentVerifyResponse,
   KhaltiConfig,
-} from './types';
+} from './types.js';
 
 // Khalti API URLs
 const KHALTI_SANDBOX_URL = 'https://dev.khalti.com/api/v2';

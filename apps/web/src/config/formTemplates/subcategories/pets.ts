@@ -118,7 +118,7 @@ export const poultry: SubcategoryConfig = {
 export const petFood: SubcategoryConfig = {
   name: 'Pet Food',
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Unopened'], required: true } },
+    { field: conditionNewUsed, override: { required: true } },
     { field: brandField, override: { placeholder: 'e.g., Pedigree, Royal Canin, Whiskas' } },
     { field: suitableForField },
   ],

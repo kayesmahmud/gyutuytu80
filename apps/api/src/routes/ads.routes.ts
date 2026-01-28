@@ -161,7 +161,7 @@ router.post(
 
     // Parse attributes
     const parsedAttributes = parseAttributes(attributes);
-    const condition = (parsedAttributes.condition as string) || 'used';
+    const condition = (parsedAttributes.condition as string) || undefined;
     const { condition: _cond, ...customFields } = parsedAttributes;
 
     // Create ad

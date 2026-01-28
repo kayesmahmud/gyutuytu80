@@ -10,6 +10,8 @@ export interface SystemSettings {
   adExpiryDays: number;
   freeAdsLimit: number;
   maxImagesPerAd: number;
+  maxImagesVerified: number;
+  maxImagesUnverified: number;
   // SMTP Settings
   smtpEnabled: boolean;
   smtpHost: string;
@@ -45,7 +47,7 @@ export interface SystemSettings {
 export type SettingsTab = 'general' | 'ads' | 'users' | 'email' | 'sms';
 
 export const DEFAULT_SETTINGS: SystemSettings = {
-  siteName: 'ThuluBazaar',
+  siteName: 'Thulo Bazaar',
   siteDescription: "Nepal's Leading Marketplace",
   contactEmail: 'support@thulobazaar.com',
   supportPhone: '+977-1-1234567',
@@ -56,6 +58,8 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   adExpiryDays: 30,
   freeAdsLimit: 5,
   maxImagesPerAd: 10,
+  maxImagesVerified: 10,
+  maxImagesUnverified: 5,
   // SMTP
   smtpEnabled: false,
   smtpHost: '',

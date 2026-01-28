@@ -7,9 +7,13 @@ import type { Ad, AdTab } from './types';
 interface AdsListProps {
   userAds: Ad[];
   filteredAds: Ad[];
+  paginatedAds: Ad[];
   activeTab: AdTab;
   lang: string;
+  currentPage: number;
+  totalPages: number;
   onTabChange: (tab: AdTab) => void;
+  onPageChange: (page: number) => void;
   onDelete: (adId: number) => Promise<void>;
   onMarkAsSold: (adId: number) => Promise<void>;
 }
@@ -84,9 +88,13 @@ function getAdCountByStatus(ads: Ad[], status: AdTab): number {
 export function AdsList({
   userAds,
   filteredAds,
+  paginatedAds,
   activeTab,
   lang,
+  currentPage,
+  totalPages,
   onTabChange,
+  onPageChange,
   onDelete,
   onMarkAsSold,
 }: AdsListProps) {
@@ -138,17 +146,80 @@ export function AdsList({
         {filteredAds.length === 0 ? (
           <EmptyAds lang={lang} />
         ) : (
-          <div className="space-y-4">
-            {filteredAds.map((ad) => (
-              <AdItem
-                key={ad.id}
-                ad={ad}
-                lang={lang}
-                onDelete={onDelete}
-                onMarkAsSold={onMarkAsSold}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-4">
+              {paginatedAds.map((ad) => (
+                <AdItem
+                  key={ad.id}
+                  ad={ad}
+                  lang={lang}
+                  onDelete={onDelete}
+                  onMarkAsSold={onMarkAsSold}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-600">
+                  Showing {(currentPage - 1) * 10 + 1} to{' '}
+                  {Math.min(currentPage * 10, filteredAds.length)} of {filteredAds.length} ads
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first, last, current, and adjacent pages
+                      const showPage =
+                        page === 1 ||
+                        page === totalPages ||
+                        Math.abs(page - currentPage) <= 1;
+                      const showEllipsis =
+                        (page === 2 && currentPage > 3) ||
+                        (page === totalPages - 1 && currentPage < totalPages - 2);
+
+                      if (!showPage && !showEllipsis) return null;
+                      if (showEllipsis && !showPage) {
+                        return (
+                          <span key={page} className="px-2 text-gray-400">
+                            ...
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => onPageChange(page)}
+                          className={`w-9 h-9 text-sm font-medium rounded-lg transition-colors ${
+                            currentPage === page
+                              ? 'bg-indigo-600 text-white'
+                              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

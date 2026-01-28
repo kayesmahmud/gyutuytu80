@@ -11,3 +11,4 @@ export { default as verificationRoutes } from './verification.routes.js';
 export { default as areasRoutes } from './areas.routes.js';
 export { default as promotionRoutes } from './promotion.routes.js';
 export { default as mockPaymentRoutes } from './mockPayment.routes.js';
+export { default as favoritesRoutes } from './favorites.routes.js';

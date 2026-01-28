@@ -4,7 +4,7 @@
  */
 
 import { prisma } from '@thulobazaar/database';
-import { PAGINATION } from '../config/constants';
+import { PAGINATION } from '../config/constants.js';
 
 // ============================================================================
 // Types
@@ -73,6 +73,8 @@ export function transformAdForList(ad: any) {
     accountType: ad.users_ads_user_idTousers?.account_type,
     businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status,
     individualVerified: ad.users_ads_user_idTousers?.individual_verified,
+    userName: ad.users_ads_user_idTousers?.full_name,
+    userAvatar: ad.users_ads_user_idTousers?.avatar,
     publishedAt: ad.reviewed_at || ad.created_at,
     reviewedAt: ad.reviewed_at,
     primaryImage: ad.ad_images?.find((img: any) => img.is_primary)?.filename || ad.ad_images?.[0]?.filename,
@@ -116,14 +118,60 @@ export function transformAdForDashboard(ad: any) {
   };
 }
 
-export function transformAdForDetail(ad: any) {
+export async function transformAdForDetail(ad: any) {
   return {
     ...ad,
     category_name: ad.categories?.name,
-    location_name: ad.locations?.name,
+    location_name: await getLocationHierarchy(ad.location_id),
+    userName: ad.users_ads_user_idTousers?.full_name,
+    userAvatar: ad.users_ads_user_idTousers?.avatar,
+    userPhone: ad.users_ads_user_idTousers?.phone,
+    userVerified: ad.users_ads_user_idTousers?.business_verification_status === 'verified' || ad.users_ads_user_idTousers?.individual_verified,
+    businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status,
+    individualVerified: ad.users_ads_user_idTousers?.individual_verified,
+    shopSlug: ad.users_ads_user_idTousers?.shop_slug,
+    accountType: ad.users_ads_user_idTousers?.account_type,
     seller: ad.users_ads_user_idTousers,
     images: ad.ad_images,
+    attributes: ad.custom_fields,
   };
+}
+
+export async function getLocationHierarchy(locationId?: number): Promise<string> {
+  if (!locationId) return '';
+
+  try {
+    const location = await prisma.locations.findUnique({
+      where: { id: locationId },
+      include: {
+        locations: {
+          include: {
+            locations: {
+              include: {
+                locations: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!location) return '';
+
+    const parts = [location.name];
+    let current = location.locations;
+
+    // Traverse up to 3 parent levels (Area -> City -> District -> Province)
+    while (current) {
+      parts.push(current.name);
+      current = current.locations;
+    }
+
+    return parts.join(', ');
+  } catch (error) {
+    console.error('Error fetching location hierarchy:', error);
+    return '';
+  }
 }
 
 // ============================================================================
@@ -168,6 +216,21 @@ function buildAdOrderBy(sortBy: string = 'newest') {
   if (sortBy === 'price-high') return { price: 'desc' };
   if (sortBy === 'oldest') return { reviewed_at: { sort: 'asc', nulls: 'last' } };
   return { reviewed_at: { sort: 'desc', nulls: 'last' } };
+}
+
+// ============================================================================
+// Condition Normalization
+// ============================================================================
+
+/**
+ * Normalize condition to only "Brand New" or "Used"
+ * This ensures consistent values in the database regardless of input source
+ */
+function normalizeCondition(condition?: string): string {
+  if (!condition) return 'Used';
+  const lower = condition.toLowerCase();
+  if (lower === 'brand new' || lower === 'new') return 'Brand New';
+  return 'Used'; // Default everything else to Used
 }
 
 // ============================================================================
@@ -238,6 +301,8 @@ const adListSelect = {
         account_type: true,
         business_verification_status: true,
         individual_verified: true,
+        full_name: true,
+        avatar: true,
       },
     },
     ad_images: {
@@ -322,7 +387,7 @@ export async function getAdBySlug(slug: string) {
     ...adDetailSelect,
   });
 
-  return ad ? transformAdForDetail(ad) : null;
+  return ad ? await transformAdForDetail(ad) : null;
 }
 
 export async function getAdById(id: number) {
@@ -331,7 +396,7 @@ export async function getAdById(id: number) {
     ...adDetailSelect,
   });
 
-  return ad ? transformAdForDetail(ad) : null;
+  return ad ? await transformAdForDetail(ad) : null;
 }
 
 export async function incrementAdViews(adId: number) {
@@ -352,7 +417,7 @@ export async function createAd(userId: number, input: CreateAdInput) {
       price: input.price ?? null,
       category_id: finalCategoryId,
       location_id: input.locationId || null,
-      condition: input.condition || 'used',
+      condition: normalizeCondition(input.condition),
       user_id: userId,
       status: 'pending',
       slug,
@@ -414,7 +479,7 @@ export async function updateAd(adId: number, existingAd: any, input: UpdateAdInp
       price: input.price !== undefined ? input.price : existingAd.price,
       category_id: finalCategoryId,
       location_id: input.locationId || existingAd.location_id,
-      condition: input.condition || existingAd.condition,
+      condition: normalizeCondition(input.condition || existingAd.condition),
       custom_fields: input.customFields && Object.keys(input.customFields).length > 0
         ? input.customFields
         : existingAd.custom_fields,

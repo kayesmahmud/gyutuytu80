@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebookF, faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
@@ -12,6 +13,13 @@ interface FooterProps {
 
 export default function Footer({ lang }: FooterProps) {
   const currentYear = new Date().getFullYear();
+  const pathname = usePathname();
+
+  // Only show scroll-to-top button on homepage and ads listing page
+  const showScrollToTop =
+    pathname === `/${lang}` ||
+    pathname === `/${lang}/ads` ||
+    pathname?.startsWith(`/${lang}/ads?`);
 
   return (
     <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
@@ -356,26 +364,28 @@ export default function Footer({ lang }: FooterProps) {
         </div>
       </div>
 
-      {/* Scroll to Top Button */}
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 bg-gradient-to-br from-rose-500 to-pink-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-50"
-        aria-label="Scroll to top"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      {/* Scroll to Top Button - Only on homepage and ads page */}
+      {showScrollToTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 bg-gradient-to-br from-rose-500 to-pink-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-50"
+          aria-label="Scroll to top"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 10l7-7m0 0l7 7m-7-7v18"
-          />
-        </svg>
-      </button>
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 10l7-7m0 0l7 7m-7-7v18"
+            />
+          </svg>
+        </button>
+      )}
     </footer>
   );
 }

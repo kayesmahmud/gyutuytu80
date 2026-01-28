@@ -114,30 +114,4 @@ export const modeOfTeachingField: FormField = {
   appliesTo: 'all',
 };
 
-// Overseas Jobs fields
-export const countryField: FormField = {
-  name: 'country',
-  label: 'Country',
-  type: 'select',
-  required: true,
-  options: ['Bulgaria', 'Croatia', 'Serbia', 'Saudi Arabia', 'UAE', 'Qatar', 'Malaysia', 'Singapore', 'Japan', 'South Korea'],
-  appliesTo: 'all',
-};
 
-export const jobPositionField: FormField = {
-  name: 'jobPosition',
-  label: 'Job Position',
-  type: 'text',
-  required: true,
-  placeholder: 'e.g., Construction Worker, Chef, Driver',
-  appliesTo: 'all',
-};
-
-export const visaTypeField: FormField = {
-  name: 'visaType',
-  label: 'Visa Type',
-  type: 'select',
-  required: false,
-  options: ['Work Visa', 'Employment Visa', 'Sponsored'],
-  appliesTo: 'all',
-};

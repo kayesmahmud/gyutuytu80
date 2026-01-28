@@ -64,7 +64,7 @@ export const mensAccessories: SubcategoryConfig = {
 export const mensGrooming: SubcategoryConfig = {
   name: "Men's Grooming",
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Sealed', 'Opened/Used'] } },
+    { field: conditionNewUsed },
     { field: brandField, override: { placeholder: 'e.g., Nivea, Gillette, Park Avenue' } },
   ],
 };
@@ -115,8 +115,20 @@ export const womensJewelry: SubcategoryConfig = {
 export const womensBeauty: SubcategoryConfig = {
   name: 'Beauty & Skincare',
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Sealed', 'Opened/Used'] } },
+    { field: conditionNewUsed },
     { field: brandField, override: { placeholder: "e.g., L'Oreal, MAC, Maybelline" } },
+  ],
+};
+
+export const beautyPersonalCare: SubcategoryConfig = {
+  name: 'Beauty & Personal Care',
+  fields: [],
+};
+
+export const lingerieSleepwear: SubcategoryConfig = {
+  name: 'Lingerie & Sleepwear',
+  fields: [
+    { field: colorField },
   ],
 };
 
@@ -129,17 +141,53 @@ export const womensBags: SubcategoryConfig = {
   ],
 };
 
+export const babyBoyFashion: SubcategoryConfig = {
+  name: "Baby Boy's Fashion",
+  fields: [
+    { field: brandField, override: { placeholder: "e.g., Carter's, Mothercare, Next" } },
+    { field: colorField },
+  ],
+};
+
+export const babyGirlFashion: SubcategoryConfig = {
+  name: "Baby Girl's Fashion",
+  fields: [
+    { field: brandField, override: { placeholder: "e.g., Carter's, Mothercare, Next" } },
+    { field: colorField },
+  ],
+};
+
+export const groomingBodycare: SubcategoryConfig = {
+  name: "Grooming & Bodycare",
+  fields: [
+    { field: brandField, override: { placeholder: 'e.g., Nivea, Gillette, Park Avenue' } },
+  ],
+};
+
+export const wholesaleBulk: SubcategoryConfig = {
+  name: "Wholesale - Bulk",
+  fields: [
+    { field: brandField, override: { required: false } },
+  ],
+};
+
 // Export all fashion subcategories as a map
 export const fashionSubcategories: Record<string, SubcategoryConfig> = {
+  "Baby Boy's Fashion": babyBoyFashion,
+  "Baby Girl's Fashion": babyGirlFashion,
   "Men's Clothing": mensClothing,
   "Men's Footwear": mensFootwear,
   "Men's Watches": mensWatches,
   "Men's Accessories": mensAccessories,
   "Men's Grooming": mensGrooming,
+  "Grooming & Bodycare": groomingBodycare,
+  "Wholesale - Bulk": wholesaleBulk,
   "Women's Clothing": womensClothing,
   "Women's Footwear": womensFootwear,
   "Women's Watches": womensWatches,
   'Jewelry': womensJewelry,
   'Beauty & Skincare': womensBeauty,
+  'Beauty & Personal Care': beautyPersonalCare,
+  'Lingerie & Sleepwear': lingerieSleepwear,
   'Bags & Luggage': womensBags,
 };

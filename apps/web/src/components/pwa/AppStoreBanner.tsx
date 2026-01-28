@@ -125,7 +125,8 @@ export default function AppStoreBanner() {
                 alt="Thulo Bazaar"
                 width={44}
                 height={44}
-                className="w-11 h-11 object-contain"
+                className="object-contain"
+                style={{ width: '44px', height: '44px' }}
               />
             </div>
           </div>

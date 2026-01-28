@@ -1,7 +1,7 @@
 # ThuluBazaar - Essential Reference
 
 ## 🎯 Quick Info
-**Stack:** Next.js 15 + Express + PostgreSQL + Prisma
+**Stack:** Next.js 15 + Express + PostgreSQL + Prisma + Flutter (mobile)
 **Ports:** 3333 (web), 5000 (api)
 **DB:** thulobazaar @ localhost:5432 (user: elw, pass: postgres)
 
@@ -11,7 +11,7 @@
 ├── apps/
 │   ├── web/            # Next.js frontend (port 3333)
 │   ├── api/            # Express backend (port 5000)
-│   └── mobile/         # React Native app
+│   └── mobile/         # Flutter app (Dart)
 └── packages/           # types, api-client, database
 ```
 

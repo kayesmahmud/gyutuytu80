@@ -138,6 +138,21 @@ export const parkingGarage: SubcategoryConfig = {
   ],
 };
 
+export const autoServices: SubcategoryConfig = {
+  name: 'Auto Services',
+  fields: [
+    { field: brandField, override: { placeholder: 'e.g., Toyota, Honda, Yamaha' } },
+    { field: modelField, override: { placeholder: 'e.g., Corolla, City, FZ' } },
+    { field: vehicleYearField },
+    { field: colorField },
+  ],
+};
+
+export const maintenanceRepair: SubcategoryConfig = {
+  name: 'Maintenance and Repair',
+  fields: [],
+};
+
 // Export all vehicles subcategories as a map
 export const vehiclesSubcategories: Record<string, SubcategoryConfig> = {
   'Cars': cars,
@@ -149,4 +164,6 @@ export const vehiclesSubcategories: Record<string, SubcategoryConfig> = {
   'Auto Parts & Accessories': autoParts,
   'Vehicle Rentals': vehicleRentals,
   'Parking & Garage': parkingGarage,
+  'Auto Services': autoServices,
+  'Maintenance and Repair': maintenanceRepair,
 };

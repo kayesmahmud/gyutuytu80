@@ -3,9 +3,9 @@
  * Unified interface for Khalti and eSewa
  */
 
-export * from './types';
-export * from './khalti';
-export * from './esewa';
+export * from './types.js';
+export * from './khalti.js';
+export * from './esewa.js';
 
 import type {
   PaymentGateway,
@@ -13,10 +13,10 @@ import type {
   PaymentInitiateResponse,
   PaymentVerifyParams,
   PaymentVerifyResponse,
-} from './types';
+} from './types.js';
 
-import { initiateKhaltiPayment, verifyKhaltiPayment } from './khalti';
-import { initiateEsewaPayment, verifyEsewaPayment } from './esewa';
+import { initiateKhaltiPayment, verifyKhaltiPayment } from './khalti.js';
+import { initiateEsewaPayment, verifyEsewaPayment } from './esewa.js';
 
 /**
  * Initiate payment with the specified gateway

@@ -47,14 +47,42 @@ export function AdSettingsTab({ settings, updateSettings }: AdSettingsTabProps) 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Max Images Per Ad</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Max Images Per Ad (Legacy)</label>
           <input
             type="number"
             value={settings.maxImagesPerAd}
             onChange={(e) => updateSettings({ maxImagesPerAd: parseInt(e.target.value) || 0 })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
-          <p className="text-xs text-gray-500 mt-1">Maximum images allowed per ad</p>
+          <p className="text-xs text-gray-500 mt-1">Fallback limit (used if user-specific limits not set)</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Max Images - Verified Users
+            <span className="ml-2 text-xs text-green-600 font-normal">✓ Business or Individual</span>
+          </label>
+          <input
+            type="number"
+            value={settings.maxImagesVerified}
+            onChange={(e) => updateSettings({ maxImagesVerified: parseInt(e.target.value) || 0 })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+          <p className="text-xs text-gray-500 mt-1">Image limit for verified business or individual users</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Max Images - Unverified Users
+            <span className="ml-2 text-xs text-orange-600 font-normal">○ Not verified</span>
+          </label>
+          <input
+            type="number"
+            value={settings.maxImagesUnverified}
+            onChange={(e) => updateSettings({ maxImagesUnverified: parseInt(e.target.value) || 0 })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          />
+          <p className="text-xs text-gray-500 mt-1">Image limit for users without verification</p>
         </div>
       </div>
     </div>

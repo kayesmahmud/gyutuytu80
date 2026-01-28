@@ -11,7 +11,14 @@ class PostAdScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: const MainAppBar(), // Using shared header with Menu/Logo
+      appBar: MainAppBar(
+        leading: Navigator.canPop(context) 
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.pop(context),
+            )
+          : null, // Default to hamburger
+      ),
       drawer: const MainDrawer(),
       body: SingleChildScrollView(
         child: Padding(
@@ -61,7 +68,13 @@ class PostAdScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: () {
-                         Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateAdScreen()));
+                         debugPrint("🔘 Start New Ad button clicked");
+                         try {
+                           Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateAdScreen()));
+                         } catch (e) {
+                           debugPrint("🔴 Error navigating to CreateAdScreen: $e");
+                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                         }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6366F1), // Indigo/Purple color from screenshot

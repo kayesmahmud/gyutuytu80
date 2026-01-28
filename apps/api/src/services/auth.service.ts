@@ -14,6 +14,10 @@ import {
   type OtpPurpose,
 } from '../lib/sms.js';
 import { generateAccessToken, generateRefreshToken } from '../lib/token.js';
+import { OAuth2Client } from 'google-auth-library';
+import config from '../config/index.js';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ============================================================================
 // Constants
@@ -466,4 +470,99 @@ export async function resetPassword(
   console.log(`🔐 Password reset successful for ${formattedPhone}`);
 
   return { success: true };
+}
+
+// ============================================================================
+// Google Auth Functions
+// ============================================================================
+
+export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+
+        if (!payload || !payload.email) {
+            return { success: false, error: 'Invalid Google Token payload' };
+        }
+
+        const { email, name, picture, sub: googleId } = payload;
+
+        // Find user by email or googleId
+        let user = await prisma.users.findFirst({
+            where: {
+                OR: [{ email }, { oauth_provider_id: googleId }],
+            },
+        });
+
+        if (!user) {
+            // Create new user
+            user = await prisma.users.create({
+                data: {
+                    email,
+                    full_name: name || 'User',
+                    avatar: picture,
+                    oauth_provider: 'google',
+                    oauth_provider_id: googleId,
+                    email_verified: payload.email_verified,
+                    role: 'user',
+                    is_active: true,
+                    // Since we don't have a phone number yet, we leave it null.
+                    // Password hash is required by schema but nullable in some setups?
+                    // Let's check schema. Schema says password_hash String @db.VarChar(255) (Not optional?)
+                    // Wait, viewing schema again...
+                    password_hash: await bcrypt.hash(Math.random().toString(36), 10), // Random password for OAuth users
+                },
+            });
+
+            console.log(`✅ New Google user created: ${email} (userId: ${user.id})`);
+        } else {
+            // Update existing user with Google info if needed (e.g. if they didn't have googleId linked)
+            if (!user.oauth_provider_id) {
+                await prisma.users.update({
+                    where: { id: user.id },
+                    data: {
+                        oauth_provider: 'google',
+                        oauth_provider_id: googleId,
+                        avatar: user.avatar || picture, // Update avatar if missing
+                    },
+                });
+            }
+        }
+
+        if (!user.is_active) {
+            return { success: false, error: 'Your account has been deactivated.' };
+        }
+
+        if (user.is_suspended) {
+            return { success: false, error: 'Your account has been suspended.' };
+        }
+
+        // Generate tokens
+        const accessToken = generateAccessToken(user);
+        const refreshToken = await generateRefreshToken(user);
+
+        return {
+            success: true,
+            token: accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                fullName: user.full_name,
+                phone: user.phone,
+                phoneVerified: user.phone_verified,
+                role: user.role,
+                shopSlug: user.shop_slug,
+                accountType: user.account_type,
+                avatar: user.avatar,
+            },
+        };
+
+    } catch (error) {
+        console.error('Google verification failed:', error);
+        return { success: false, error: 'Google verification failed' };
+    }
 }

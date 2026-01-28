@@ -67,9 +67,7 @@ export function createProfileMethods(client: AxiosInstance) {
     },
 
     async checkShopSlugAvailability(slug: string): Promise<ApiResponse<{ available: boolean }>> {
-      const response = await client.get('/api/shop/check-slug', {
-        params: { slug },
-      });
+      const response = await client.get(`/api/shop/check-slug/${encodeURIComponent(slug)}`);
       return response.data;
     },
 

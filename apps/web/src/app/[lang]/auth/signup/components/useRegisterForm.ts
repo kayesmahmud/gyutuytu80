@@ -281,15 +281,11 @@ export function useRegisterForm(lang: string): UseRegisterFormReturn {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
-    setSocialLoading(provider);
+  const handleSocialLogin = async () => {
+    setSocialLoading('google');
     setError('');
     try {
-      if (provider === 'google') {
-        window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
-      } else {
-        await signIn(provider, { callbackUrl: `/${lang}` });
-      }
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
     } catch (err) {
       console.error('Social login error:', err);
       setError('Failed to connect. Please try again.');

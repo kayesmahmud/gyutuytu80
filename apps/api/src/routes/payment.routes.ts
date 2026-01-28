@@ -4,9 +4,9 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticateToken } from '../middleware/auth';
-import { getAvailableGateways } from '../lib/payment';
-import type { PaymentGateway, PaymentType } from '../lib/payment/types';
+import { authenticateToken } from '../middleware/auth.js';
+import { initiatePayment, verifyPayment, getAvailableGateways } from '../lib/payment/index.js';
+import type { PaymentGateway, PaymentType } from '../lib/payment/types.js';
 import {
   initiatePaymentTransaction,
   findTransactionByOrderId,
@@ -17,7 +17,7 @@ import {
   getTransactionStatus,
   getPaymentHistory,
   markTransactionCanceled,
-} from '../services/payment.service';
+} from '../services/payment.service.js';
 
 const router = Router();
 

@@ -5,10 +5,8 @@
   "description": "ThuluBazaar - Monorepo for Web, iOS, and Android apps",
   "packageManager": "npm@10.0.0",
   "overrides": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3"
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "workspaces": [
     "apps/*",

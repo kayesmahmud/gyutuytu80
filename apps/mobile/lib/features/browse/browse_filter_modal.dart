@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_theme.dart';
-
-import 'package:mobile/core/data/mock_filter_data.dart';
+import 'package:mobile/core/models/models.dart';
+import 'package:mobile/core/api/ad_client.dart';
 
 class BrowseFilterModal extends StatefulWidget {
   final String? initialExpandedSection;
+  final SearchFilters? currentFilters;
+  final Function(SearchFilters)? onApplyFilters;
 
-  const BrowseFilterModal({super.key, this.initialExpandedSection});
+  const BrowseFilterModal({
+    super.key,
+    this.initialExpandedSection,
+    this.currentFilters,
+    this.onApplyFilters,
+  });
 
   @override
   State<BrowseFilterModal> createState() => _BrowseFilterModalState();
 }
 
 class _BrowseFilterModalState extends State<BrowseFilterModal> {
+  final AdClient _adClient = AdClient();
+
   // Track expanded state of each section
   final Map<String, bool> _expandedSections = {
     "Categories": false,
@@ -24,21 +33,83 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
   };
 
   // Track expanded state of specific IDs (for cascading location/categories)
-  // Using a Set of Strings to store unique identifiers like "cat_mobiles", "loc_bagmati", "loc_kathmandu_dist"
   final Set<String> _expandedItems = {};
 
   // Selected values
-  String? _selectedCategorySlug;
+  int? _selectedCategoryId;
+  int? _selectedSubcategoryId;
+  String? _selectedCategoryName;
+  int? _selectedLocationId;
   String? _selectedLocationName;
   String _selectedCondition = ""; // empty = any
   String _selectedSort = "newest";
+  double? _minPrice;
+  double? _maxPrice;
 
+  // Category data from API
+  List<CategoryWithSubcategories> _categories = [];
+  bool _loadingCategories = true;
+
+  // Price controllers
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     if (widget.initialExpandedSection != null) {
       _expandedSections[widget.initialExpandedSection!] = true;
+    }
+    _loadFromCurrentFilters();
+    _fetchCategories();
+  }
+
+  @override
+  void dispose() {
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
+    super.dispose();
+  }
+
+  void _loadFromCurrentFilters() {
+    if (widget.currentFilters != null) {
+      final f = widget.currentFilters!;
+      _selectedCategoryId = f.categoryId;
+      _selectedSubcategoryId = f.subcategoryId;
+      _selectedLocationId = f.locationId;
+      _selectedCondition = f.condition ?? "";
+      _minPrice = f.minPrice;
+      _maxPrice = f.maxPrice;
+      if (f.minPrice != null) {
+        _minPriceController.text = f.minPrice!.toStringAsFixed(0);
+      }
+      if (f.maxPrice != null) {
+        _maxPriceController.text = f.maxPrice!.toStringAsFixed(0);
+      }
+      // Map sortBy + sortOrder to our sort option
+      if (f.sortBy == 'date') {
+        _selectedSort = f.sortOrder == 'asc' ? 'oldest' : 'newest';
+      } else if (f.sortBy == 'price') {
+        _selectedSort = f.sortOrder == 'asc' ? 'price_asc' : 'price_desc';
+      }
+    }
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final categories = await _adClient.getCategories();
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          _loadingCategories = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingCategories = false;
+        });
+      }
     }
   }
 
@@ -55,6 +126,67 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
       } else {
         _expandedItems.add(id);
       }
+    });
+  }
+
+  void _applyFilters() {
+    // Parse sort option
+    String? sortBy;
+    String? sortOrder;
+    switch (_selectedSort) {
+      case 'newest':
+        sortBy = 'date';
+        sortOrder = 'desc';
+        break;
+      case 'oldest':
+        sortBy = 'date';
+        sortOrder = 'asc';
+        break;
+      case 'price_asc':
+        sortBy = 'price';
+        sortOrder = 'asc';
+        break;
+      case 'price_desc':
+        sortBy = 'price';
+        sortOrder = 'desc';
+        break;
+    }
+
+    // Parse price
+    final minPrice = double.tryParse(_minPriceController.text);
+    final maxPrice = double.tryParse(_maxPriceController.text);
+
+    final filters = SearchFilters(
+      categoryId: _selectedCategoryId,
+      subcategoryId: _selectedSubcategoryId,
+      locationId: _selectedLocationId,
+      areaId: null,
+      condition: _selectedCondition.isEmpty ? null : _selectedCondition,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+      query: widget.currentFilters?.query, // Preserve search query
+    );
+
+    widget.onApplyFilters?.call(filters);
+    Navigator.pop(context);
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _selectedCategoryId = null;
+      _selectedSubcategoryId = null;
+      _selectedCategoryName = null;
+      _selectedLocationId = null;
+      _selectedLocationName = null;
+      _selectedCondition = "";
+      _selectedSort = "newest";
+      _minPrice = null;
+      _maxPrice = null;
+      _minPriceController.clear();
+      _maxPriceController.clear();
+      _expandedItems.clear();
     });
   }
 
@@ -158,15 +290,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      setState(() {
-                         _selectedCategorySlug = null;
-                         _selectedLocationName = null;
-                         _selectedCondition = "";
-                         _selectedSort = "newest";
-                         _expandedItems.clear();
-                      });
-                    },
+                    onPressed: _resetFilters,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: BorderSide(color: Colors.grey[300]!),
@@ -186,7 +310,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _applyFilters,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -248,93 +372,94 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
     );
   }
 
-  // --- Recursive Category Builder ---
+  // --- Category Builder with API Data ---
   Widget _buildCategoriesContent() {
+    if (_loadingCategories) {
+      return const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Container(
-      color: Colors.grey[50], // Light grey background for the dropdown area
+      color: Colors.grey[50],
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         children: [
           // "All Categories" Option
-           InkWell(
-             onTap: () => setState(() => _selectedCategorySlug = null),
-             child: Container(
-               color: _selectedCategorySlug == null ? const Color(0xFFFFF1F2) : Colors.transparent, // Rose-50 looks
-               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-               child: Row(
-                 children: [
-                   const Icon(Icons.folder_open, color: Colors.grey),
-                   const SizedBox(width: 12),
-                   Text("All Categories", style: GoogleFonts.inter(fontSize: 14)),
-                   const Spacer(),
-                     if (_selectedCategorySlug == null) 
-                       Icon(Icons.check, color: AppTheme.primary, size: 18),
-                 ],
-               ),
-             ),
-           ),
-           
-           // List of Categories
-           ...MockFilterData.categories.map((cat) => _buildRecursiveCategoryItem(cat, 0)),
+          InkWell(
+            onTap: () => setState(() {
+              _selectedCategoryId = null;
+              _selectedSubcategoryId = null;
+              _selectedCategoryName = null;
+            }),
+            child: Container(
+              color: _selectedCategoryId == null ? const Color(0xFFFFF1F2) : Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.folder_open, color: Colors.grey),
+                  const SizedBox(width: 12),
+                  Text("All Categories", style: GoogleFonts.inter(fontSize: 14)),
+                  const Spacer(),
+                  if (_selectedCategoryId == null)
+                    Icon(Icons.check, color: AppTheme.primary, size: 18),
+                ],
+              ),
+            ),
+          ),
+
+          // List of Categories from API
+          ..._categories.map((cat) => _buildCategoryItem(cat)),
         ],
       ),
     );
   }
 
-  Widget _buildRecursiveCategoryItem(Map<String, dynamic> category, int depth) {
-    final subcategories = category['subcategories'] as List?;
-    final hasSub = subcategories != null && subcategories.isNotEmpty;
-    final slug = category['slug'] as String;
-    final isExpanded = _expandedItems.contains("cat_$slug");
-    final isSelected = _selectedCategorySlug == slug;
+  Widget _buildCategoryItem(CategoryWithSubcategories category) {
+    final hasSub = category.subcategories?.isNotEmpty ?? false;
+    final isExpanded = _expandedItems.contains("cat_${category.id}");
+    final isSelected = _selectedCategoryId == category.id && _selectedSubcategoryId == null;
 
     return Column(
       children: [
         InkWell(
           onTap: () {
-            if (hasSub) {
-              // If tapping parent, user might want to expand OR select. 
-              // Typically tapping the arrow expands, tapping body selects.
-              // For simplicity, let's say tapping selects, but we also have an arrow to expand.
-              setState(() => _selectedCategorySlug = slug);
-            } else {
-               setState(() => _selectedCategorySlug = slug);
-            }
+            setState(() {
+              _selectedCategoryId = category.id;
+              _selectedSubcategoryId = null;
+              _selectedCategoryName = category.name;
+            });
           },
           child: Container(
             color: isSelected ? const Color(0xFFFFF1F2) : Colors.transparent,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             child: Row(
               children: [
-                // Indentation
-                SizedBox(width: depth * 24.0),
-                
                 // Expand Icon (if has subs)
-                if (hasSub) 
+                if (hasSub)
                   InkWell(
-                    onTap: () => _toggleItem("cat_$slug"),
+                    onTap: () => _toggleItem("cat_${category.id}"),
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Icon(
-                        isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, 
-                        size: 18, 
-                        color: Colors.grey[600]
+                        isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                        size: 18,
+                        color: Colors.grey[600],
                       ),
                     ),
                   )
                 else
-                   SizedBox(width: 26), // alignment spacer
+                  const SizedBox(width: 26),
 
                 // Icon
-                if (depth == 0) ...[
-                  Text(category['icon'] ?? "📁", style: const TextStyle(fontSize: 16)),
-                  const SizedBox(width: 12),
-                ],
+                Text(category.icon ?? "📁", style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 12),
 
                 // Name
                 Expanded(
                   child: Text(
-                    category['name'],
+                    category.name,
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: isSelected ? AppTheme.primary : Colors.black87,
@@ -342,29 +467,63 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                     ),
                   ),
                 ),
-                
-                  if (isSelected) 
-                       Icon(Icons.check, color: AppTheme.primary, size: 18),
+
+                if (isSelected)
+                  Icon(Icons.check, color: AppTheme.primary, size: 18),
               ],
             ),
           ),
         ),
         // Draw Subcategories if expanded
         if (hasSub && isExpanded)
-          ...subcategories.map((sub) => _buildRecursiveCategoryItem(sub, depth + 1)),
+          ...category.subcategories!.map((sub) => _buildSubcategoryItem(sub, category.id)),
       ],
     );
   }
 
-  // --- Cascading Location Builder ---
-  // Structure: Province -> District -> Municipality -> Area
+  Widget _buildSubcategoryItem(Category subcategory, int parentId) {
+    final isSelected = _selectedSubcategoryId == subcategory.id;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedCategoryId = parentId;
+          _selectedSubcategoryId = subcategory.id;
+          _selectedCategoryName = subcategory.name;
+        });
+      },
+      child: Container(
+        color: isSelected ? const Color(0xFFFFF1F2) : Colors.transparent,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        child: Row(
+          children: [
+            const SizedBox(width: 50), // Indentation
+            Expanded(
+              child: Text(
+                subcategory.name,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: isSelected ? AppTheme.primary : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check, color: AppTheme.primary, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- Location Builder (simplified for now) ---
   Widget _buildLocationsContent() {
     return Container(
       color: Colors.grey[50],
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
         children: [
-           // Search Box
+          // Search Box
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: TextField(
@@ -374,76 +533,48 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                 prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
             ),
           ),
-          
-          // Locations Tree
-           ...MockFilterData.locations.map((loc) => _buildRecursiveLocationItem(loc, 0)),
+
+          // All Nepal Option
+          InkWell(
+            onTap: () => setState(() {
+              _selectedLocationId = null;
+              _selectedLocationName = null;
+            }),
+            child: Container(
+              color: _selectedLocationId == null ? const Color(0xFFFFF1F2) : Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.public, color: Colors.grey, size: 20),
+                  const SizedBox(width: 12),
+                  Text("All Nepal", style: GoogleFonts.inter(fontSize: 14)),
+                  const Spacer(),
+                  if (_selectedLocationId == null)
+                    Icon(Icons.check, color: AppTheme.primary, size: 18),
+                ],
+              ),
+            ),
+          ),
+
+          // TODO: Fetch and display actual locations from API
+          // For now, showing a placeholder message
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              "Location filter coming soon",
+              style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 13),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildRecursiveLocationItem(Map<String, dynamic> location, int depth) {
-    final children = location['children'] as List?;
-    final hasChildren = children != null && children.isNotEmpty;
-    final name = location['name'] as String;
-    // Use name as ID for simplicity in this mock
-    final isExpanded = _expandedItems.contains("loc_$name");
-    final isSelected = _selectedLocationName == name;
-
-    return Column(
-      children: [
-        // Location Row
-        Container(
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-          ),
-          child: Row(
-            children: [
-                 // Indentation
-                SizedBox(width: depth * 16.0),
-                
-                // Expand Button
-                IconButton(
-                  icon: Icon(
-                    isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
-                    size: 18,
-                    color: hasChildren ? Colors.grey[600] : Colors.transparent, // Hide arrow if no kids
-                  ),
-                  onPressed: hasChildren ? () => _toggleItem("loc_$name") : null,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 40),
-                ),
-
-                // Name (Selectable)
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _selectedLocationName = name),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        name,
-                        style: GoogleFonts.inter(
-                          fontSize: 14 - (depth * 0.5), // Slightly smaller for deeper levels
-                          color: isSelected ? AppTheme.primary : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-
-        // Render Children
-        if (hasChildren && isExpanded)
-          ...children.map((child) => _buildRecursiveLocationItem(child, depth + 1)),
-      ],
     );
   }
 
@@ -456,6 +587,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _minPriceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: "Min Price (Rs.)",
@@ -466,6 +598,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               const SizedBox(width: 16),
               Expanded(
                 child: TextField(
+                  controller: _maxPriceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: "Max Price (Rs.)",
@@ -475,31 +608,22 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: (){},
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
-              child: const Text("Apply Price"),
-            ),
-          )
         ],
       ),
     );
   }
 
-   Widget _buildConditionContent() {
-     final conditions = ["Any Condition", "New", "Used"];
+  Widget _buildConditionContent() {
+    final conditions = ["Any Condition", "Brand New", "Used"];
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: conditions.map((c) {
-          final val = c == "Any Condition" ? "" : c.toLowerCase();
+          final val = c == "Any Condition" ? "" : c; // Use exact value for DB match
           return RadioListTile(
-            title: Text(c), 
-            value: val, 
-            groupValue: _selectedCondition, 
+            title: Text(c),
+            value: val,
+            groupValue: _selectedCondition,
             onChanged: (v) => setState(() => _selectedCondition = v.toString()),
             dense: true,
             activeColor: AppTheme.primary,
@@ -514,10 +638,34 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          RadioListTile(value: "newest", groupValue: _selectedSort, onChanged: (v) => setState(() => _selectedSort = v.toString()), title: const Text("Newest First"), activeColor: AppTheme.primary),
-          RadioListTile(value: "oldest", groupValue: _selectedSort, onChanged: (v) => setState(() => _selectedSort = v.toString()), title: const Text("Oldest First"), activeColor: AppTheme.primary),
-          RadioListTile(value: "price_asc", groupValue: _selectedSort, onChanged: (v) => setState(() => _selectedSort = v.toString()), title: const Text("Price: Low to High"), activeColor: AppTheme.primary),
-          RadioListTile(value: "price_desc", groupValue: _selectedSort, onChanged: (v) => setState(() => _selectedSort = v.toString()), title: const Text("Price: High to Low"), activeColor: AppTheme.primary),
+          RadioListTile(
+            value: "newest",
+            groupValue: _selectedSort,
+            onChanged: (v) => setState(() => _selectedSort = v.toString()),
+            title: const Text("Newest First"),
+            activeColor: AppTheme.primary,
+          ),
+          RadioListTile(
+            value: "oldest",
+            groupValue: _selectedSort,
+            onChanged: (v) => setState(() => _selectedSort = v.toString()),
+            title: const Text("Oldest First"),
+            activeColor: AppTheme.primary,
+          ),
+          RadioListTile(
+            value: "price_asc",
+            groupValue: _selectedSort,
+            onChanged: (v) => setState(() => _selectedSort = v.toString()),
+            title: const Text("Price: Low to High"),
+            activeColor: AppTheme.primary,
+          ),
+          RadioListTile(
+            value: "price_desc",
+            groupValue: _selectedSort,
+            onChanged: (v) => setState(() => _selectedSort = v.toString()),
+            title: const Text("Price: High to Low"),
+            activeColor: AppTheme.primary,
+          ),
         ],
       ),
     );

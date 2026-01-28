@@ -12,7 +12,7 @@ import {
   registerWithPhone,
   resetPassword,
   type OtpPurposeType,
-} from '../services/auth.service';
+} from '../services/auth.service.js';
 
 const router = Router();
 
@@ -124,6 +124,39 @@ router.get(
 
     res.redirect(`${config.FRONTEND_URL}/api/auth/oauth-callback?token=${accessToken}&refreshToken=${refreshToken}&provider=google`);
   }
+);
+
+/**
+ * POST /api/auth/google-token
+ * Verify Google ID Token from mobile app and return session tokens
+ */
+router.post(
+  '/google-token',
+  rateLimiters.auth,
+  catchAsync(async (req: Request, res: Response) => {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      throw new ValidationError('idToken is required');
+    }
+
+    const result = await verifyGoogleToken(idToken);
+
+    if (!result.success) {
+      return res.status(401).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Google login successful',
+      token: result.token,
+      refreshToken: result.refreshToken,
+      user: result.user,
+    });
+  })
 );
 
 // ============================================================================

@@ -68,3 +68,4 @@ export function AboutSection({ shopSlug, initialDescription, bio, isOwner }: Abo
   );
 }
 
+

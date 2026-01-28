@@ -31,6 +31,7 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
             src={getImageUrl(ad.images[0]?.file_path || ad.images[0]?.filePath || ad.images[0]?.filename, 'ads') || ''}
             alt={ad.title}
             fill
+            unoptimized
             className="object-cover group-hover:scale-110 transition-transform duration-300"
             sizes="112px"
           />

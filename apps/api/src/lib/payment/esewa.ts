@@ -10,7 +10,7 @@ import type {
   PaymentVerifyParams,
   PaymentVerifyResponse,
   EsewaConfig,
-} from './types';
+} from './types.js';
 
 // eSewa API URLs
 const ESEWA_SANDBOX_URL = 'https://rc-epay.esewa.com.np';

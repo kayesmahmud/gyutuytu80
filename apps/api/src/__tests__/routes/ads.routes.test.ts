@@ -34,7 +34,7 @@ const mockAd = {
   title: 'Test iPhone 15 Pro',
   description: 'Brand new iPhone for sale',
   price: 150000,
-  condition: 'new',
+  condition: 'Brand New',
   status: 'approved',
   slug: 'test-iphone-15-pro-for-sale-kathmandu-1',
   view_count: 10,
@@ -189,7 +189,7 @@ describe('Ads Routes', () => {
       expect(prisma.ads.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            condition: 'new',
+            condition: 'Brand New',
           }),
         })
       );

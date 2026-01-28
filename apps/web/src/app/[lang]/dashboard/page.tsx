@@ -18,13 +18,17 @@ export default function DashboardPage() {
     activeTab,
     userAds,
     filteredAds,
+    paginatedAds,
     loading,
     error,
     stats,
     verificationStatus,
     showResubmitModal,
     resubmitType,
-    setActiveTab,
+    currentPage,
+    totalPages,
+    handleTabChange,
+    handlePageChange,
     handleDeleteAd,
     handleMarkAsSold,
     openResubmitModal,
@@ -129,9 +133,13 @@ export default function DashboardPage() {
         <AdsList
           userAds={userAds}
           filteredAds={filteredAds}
+          paginatedAds={paginatedAds}
           activeTab={activeTab}
           lang={lang}
-          onTabChange={setActiveTab}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onTabChange={handleTabChange}
+          onPageChange={handlePageChange}
           onDelete={handleDeleteAd}
           onMarkAsSold={handleMarkAsSold}
         />

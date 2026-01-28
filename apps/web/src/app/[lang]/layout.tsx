@@ -1,10 +1,19 @@
 import { notFound } from 'next/navigation';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Header, Footer, BottomNav } from '@/components/layout';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
 import AppStoreBanner from '@/components/pwa/AppStoreBanner';
+
+// Viewport configuration (separate from metadata in Next.js 15+)
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#6366f1',
+};
 
 const supportedLanguages = ['en', 'ne'] as const;
 type SupportedLanguage = typeof supportedLanguages[number];
@@ -26,17 +35,10 @@ export async function generateMetadata({
       ? 'नेपालको अग्रणी क्लासिफाइड मार्केटप्लेस'
       : "Nepal's Leading Classifieds Marketplace",
     manifest: '/manifest.json',
-    themeColor: '#6366f1',
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
       title: 'Thulo Bazaar',
-    },
-    viewport: {
-      width: 'device-width',
-      initialScale: 1,
-      maximumScale: 1,
-      userScalable: false, // Prevents zooming on mobile inputs
     },
     icons: {
       icon: '/logo.png',

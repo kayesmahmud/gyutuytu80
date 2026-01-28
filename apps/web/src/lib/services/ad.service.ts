@@ -387,13 +387,13 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
 // ============================================================================
 
 export function normalizeCondition(condition?: string): string {
-  if (!condition) return 'used';
+  if (!condition) return 'Used';
 
   const conditionLower = condition.toLowerCase();
   if (conditionLower === 'brand new' || conditionLower === 'new') {
-    return 'new';
+    return 'Brand New';
   }
-  return 'used';
+  return 'Used';
 }
 
 export function parseCustomFields(

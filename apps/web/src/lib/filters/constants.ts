@@ -15,8 +15,8 @@ export const SORT_OPTIONS: FilterOption[] = [
 
 export const CONDITION_OPTIONS: FilterOption[] = [
   { value: '', label: 'Any Condition', icon: null },
-  { value: 'new', label: 'New', icon: '✨' },
-  { value: 'used', label: 'Used', icon: '♻️' },
+  { value: 'Brand New', label: 'Brand New', icon: '✨' },
+  { value: 'Used', label: 'Used', icon: '♻️' },
 ];
 
 /** Default sort value */

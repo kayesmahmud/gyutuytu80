@@ -155,7 +155,7 @@ model ads {
   location_id                  Int?
   seller_name                  String?            @db.VarChar(100)
   seller_phone                 String?            @db.VarChar(20)
-  condition                    String?            @default("used") @db.VarChar(20)
+  condition                    String?            @default("Used") @db.VarChar(20)
   status                       String?            @default("pending") @db.VarChar(20)
   view_count                   Int?               @default(0)
   is_featured                  Boolean?           @default(false)

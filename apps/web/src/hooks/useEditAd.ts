@@ -35,21 +35,18 @@ const INITIAL_FORM_DATA: EditAdFormData = {
   subcategoryId: '',
   locationSlug: '',
   locationName: '',
-  condition: 'new',
+  condition: 'Brand New',
   isNegotiable: false,
   status: 'active',
 };
 
 const normalizeConditionForForm = (condition?: string) => {
-  if (!condition) return '';
+  if (!condition) return 'Used';
 
   const value = String(condition).toLowerCase();
 
   if (value === 'new' || value === 'brand new') return 'Brand New';
-  if (value === 'used') return 'Used';
-  if (value === 'reconditioned') return 'Reconditioned';
-
-  return typeof condition === 'string' ? condition : String(condition);
+  return 'Used'; // Default everything else to Used
 };
 
 export function useEditAd(adId: number, lang: string) {
@@ -509,5 +506,10 @@ export function useEditAd(adId: number, lang: string) {
     handleCustomFieldChange,
     handleRemoveExistingImage,
     handleSubmit,
+    // Verification status for image limits
+    isUserVerified:
+      session?.user?.businessVerificationStatus === 'approved' ||
+      session?.user?.businessVerificationStatus === 'verified' ||
+      session?.user?.individualVerified === true,
   };
 }

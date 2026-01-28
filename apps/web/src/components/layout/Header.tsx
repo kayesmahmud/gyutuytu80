@@ -173,7 +173,8 @@ export default function Header({ lang }: HeaderProps) {
                 alt="Thulobazaar"
                 width={84}
                 height={40}
-                className="h-8 w-auto object-contain"
+                className="h-8 object-contain"
+                style={{ width: 'auto' }}
                 priority
               />
             </Link>
@@ -197,7 +198,8 @@ export default function Header({ lang }: HeaderProps) {
               alt="Thulobazaar"
               width={84}
               height={40}
-              className="h-10 w-auto object-contain"
+              className="h-10 object-contain"
+              style={{ width: 'auto' }}
               priority
             />
           </Link>
@@ -431,7 +433,8 @@ export default function Header({ lang }: HeaderProps) {
                 alt="Thulobazaar"
                 width={84}
                 height={40}
-                className="h-8 w-auto object-contain"
+                className="h-8 object-contain"
+                style={{ width: 'auto' }}
               />
             </Link>
             <button

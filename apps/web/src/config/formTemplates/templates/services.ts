@@ -3,7 +3,7 @@
  */
 
 import type { FormTemplate } from '../types';
-import { JOB_CATEGORIES, OVERSEAS_COUNTRIES } from '../sharedFields';
+import { JOB_CATEGORIES } from '../sharedFields';
 
 const SERVICE_CATEGORIES = ['Servicing & Repair', 'IT Services', 'Professional Services', 'Gym & Fitness', 'Beauty Services'];
 const SERVICE_WITH_DOMESTIC = [...SERVICE_CATEGORIES.slice(0, 4), 'Domestic & Daycare Services'];
@@ -123,31 +123,6 @@ export const servicesTemplate: FormTemplate = {
       required: false,
       options: ['Home Tuition', 'Online', 'At Institute', 'Group Class'],
       appliesTo: ['Tuition'],
-    },
-    // For Overseas Jobs
-    {
-      name: 'country',
-      label: 'Country',
-      type: 'select',
-      required: true,
-      options: ['Bulgaria', 'Croatia', 'Serbia', 'Saudi Arabia', 'UAE', 'Qatar', 'Malaysia', 'Singapore', 'Japan', 'South Korea'],
-      appliesTo: [...OVERSEAS_COUNTRIES],
-    },
-    {
-      name: 'jobPosition',
-      label: 'Job Position',
-      type: 'text',
-      required: true,
-      placeholder: 'e.g., Construction Worker, Chef, Driver',
-      appliesTo: [...OVERSEAS_COUNTRIES],
-    },
-    {
-      name: 'visaType',
-      label: 'Visa Type',
-      type: 'select',
-      required: false,
-      options: ['Work Visa', 'Employment Visa', 'Sponsored'],
-      appliesTo: [...OVERSEAS_COUNTRIES],
     },
   ],
 };

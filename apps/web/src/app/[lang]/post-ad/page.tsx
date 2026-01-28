@@ -46,7 +46,13 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     handleCategoryChange,
     handleCustomFieldChange,
     handleSubmit,
+    isUserVerified,
   } = usePostAd(lang);
+
+  // Image limits based on verification status (TODO: fetch from settings)
+  const MAX_IMAGES_VERIFIED = 10;
+  const MAX_IMAGES_UNVERIFIED = 5;
+  const maxImages = isUserVerified ? MAX_IMAGES_VERIFIED : MAX_IMAGES_UNVERIFIED;
 
   if (status === 'loading' || loading) {
     return (
@@ -256,11 +262,41 @@ export default function PostAdPage({ params }: PostAdPageProps) {
 
               {/* Images */}
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">Photos *</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900 m-0">Photos *</h2>
+                  <span className="text-sm text-gray-500">
+                    Max {maxImages} images
+                  </span>
+                </div>
+
+                {/* Upgrade prompt for unverified users */}
+                {!isUserVerified && (
+                  <div className="mb-4 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <span className="text-xl">✨</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-indigo-900 m-0">
+                          Want to upload up to {MAX_IMAGES_VERIFIED} images?
+                        </p>
+                        <p className="text-xs text-indigo-700 mt-1 mb-2">
+                          Get verified to unlock more images and build buyer trust
+                        </p>
+                        <Link
+                          href={`/${lang}/verification`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md no-underline transition-colors"
+                        >
+                          Get Verified
+                          <span>→</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <ImageUpload
                   images={images}
                   onChange={setImages}
-                  maxImages={10}
+                  maxImages={maxImages}
                   maxSizeMB={5}
                 />
               </div>

@@ -6,7 +6,7 @@ import ShopProfileClient from './ShopProfileClient';
 import ShopSidebar from './ShopSidebar';
 import ShopEmptyState from './ShopEmptyState';
 import ReportShopButton from './ReportShopButton';
-import { AdCard } from '@/components/ads';
+import ShopAdCard from './ShopAdCard';
 import { getShopProfile, buildShopMetadata } from '@/lib/shops';
 
 interface ShopProfilePageProps {
@@ -66,7 +66,8 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
       },
     },
     orderBy: [
-      // Urgent > Sticky (Featured has its own homepage section)
+      // Featured > Urgent > Sticky (Featured also shows in homepage section)
+      { is_featured: 'desc' },
       { is_urgent: 'desc' },
       { is_sticky: 'desc' },
       { reviewed_at: { sort: 'desc', nulls: 'last' } }, // Sort by approval time, nulls last
@@ -167,8 +168,9 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
                 {ads.map((ad) => (
-                  <AdCard
+                  <ShopAdCard
                     key={ad.id}
+                    shopId={shop.id}
                     lang={lang}
                     ad={{
                       id: ad.id,

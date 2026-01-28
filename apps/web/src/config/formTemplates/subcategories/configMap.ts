@@ -3,6 +3,8 @@
  *
  * This file combines all subcategory configs into a single map
  * and provides helper functions to retrieve configs.
+ *
+ * Updated: Trigger rebuild
  */
 
 import type { SubcategoryConfig, SubcategoryConfigMap, FormField } from '../types';

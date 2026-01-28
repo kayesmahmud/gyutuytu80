@@ -43,7 +43,7 @@ export interface UseRegisterFormReturn {
   handleVerifyOtp: () => Promise<void>;
   handleEmailSubmit: (e: React.FormEvent) => Promise<void>;
   handlePhoneSubmit: (e: React.FormEvent) => Promise<void>;
-  handleSocialLogin: (provider: 'google' | 'facebook') => Promise<void>;
+  handleSocialLogin: () => Promise<void>;
   formatTime: (seconds: number) => string;
   clearMessages: () => void;
 }

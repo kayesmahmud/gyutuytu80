@@ -89,6 +89,16 @@ export const tvs: SubcategoryConfig = {
   ],
 };
 
+export const tvVideoAccessories: SubcategoryConfig = {
+  name: 'TV & Video Accessories',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., Samsung, LG, Sony, TCL, Hisense' } },
+    { field: modelField },
+    { field: warrantyField },
+  ],
+};
+
 export const camerasAccessories: SubcategoryConfig = {
   name: 'Cameras, Camcorders & Accessories',
   fields: [
@@ -119,6 +129,26 @@ export const computerAccessories: SubcategoryConfig = {
   ],
 };
 
+
+export const mobilePhoneAccessories: SubcategoryConfig = {
+  name: 'Mobile Phone Accessories',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., Spigen, Anker, Samsung, Apple' } },
+    { field: warrantyField },
+  ],
+};
+
+export const wearables: SubcategoryConfig = {
+  name: 'Wearables',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., Apple, Samsung, Fitbit, Garmin, Boat' } },
+    { field: modelField, override: { placeholder: 'e.g., Apple Watch Series 9, Galaxy Watch 6' } },
+    { field: warrantyField },
+  ],
+};
+
 export const audioEquipment: SubcategoryConfig = {
   name: 'Audio Equipment',
   fields: [
@@ -140,6 +170,16 @@ export const gamingConsoles: SubcategoryConfig = {
   ],
 };
 
+export const acHomeElectronics: SubcategoryConfig = {
+  name: 'ACs & Home Electronics',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., Voltas, LG, Samsung, Daikin, Panasonic' } },
+    { field: modelField },
+    { field: warrantyField },
+  ],
+};
+
 export const otherElectronics: SubcategoryConfig = {
   name: 'Other Electronics',
   fields: [
@@ -153,14 +193,18 @@ export const otherElectronics: SubcategoryConfig = {
 // Export all electronics subcategories as a map
 export const electronicsSubcategories: Record<string, SubcategoryConfig> = {
   'Mobile Phones': mobilePhones,
+  'Mobile Phone Accessories': mobilePhoneAccessories,
+  'Wearables': wearables,
   'Tablets & Accessories': tabletsAccessories,
   'Laptops': laptops,
   'Desktop Computers': desktopComputers,
   'TVs': tvs,
+  'TV & Video Accessories': tvVideoAccessories,
   'Cameras, Camcorders & Accessories': camerasAccessories,
   'Mobile & Tablet Accessories': mobileAccessories,
   'Computer Accessories': computerAccessories,
   'Audio Equipment': audioEquipment,
-  'Gaming Consoles': gamingConsoles,
+  'Video Game Consoles & Accessories': gamingConsoles,
+  'ACs & Home Electronics': acHomeElectronics,
   'Other Electronics': otherElectronics,
 };

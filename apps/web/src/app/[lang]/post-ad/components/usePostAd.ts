@@ -37,6 +37,7 @@ export function usePostAd(lang: string) {
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
   const isLoadingUserDefaultsRef = useRef(false);
   const pendingDraftCustomFieldsRef = useRef<Record<string, unknown> | null>(null);
+  const dataLoadedRef = useRef(false);
 
   // Draft management
   const {
@@ -197,7 +198,9 @@ export function usePostAd(lang: string) {
       router.push(`/${lang}/auth/signin`);
       return;
     }
-    if (status === 'authenticated') {
+    // Only load form data once when authenticated
+    if (status === 'authenticated' && !dataLoadedRef.current) {
+      dataLoadedRef.current = true;
       loadFormData();
     }
   }, [status, router, lang, loadFormData]);
@@ -493,5 +496,10 @@ export function usePostAd(lang: string) {
     handleCategoryChange,
     handleCustomFieldChange,
     handleSubmit,
+    // Verification status for image limits
+    isUserVerified:
+      session?.user?.businessVerificationStatus === 'approved' ||
+      session?.user?.businessVerificationStatus === 'verified' ||
+      session?.user?.individualVerified === true,
   };
 }

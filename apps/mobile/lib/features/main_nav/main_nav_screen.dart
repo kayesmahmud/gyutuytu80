@@ -6,21 +6,31 @@ import 'package:mobile/features/browse/browse_screen.dart';
 import 'package:mobile/features/post_ad/post_ad_screen.dart';
 import 'package:mobile/features/messages/messages_screen.dart';
 
+import 'package:mobile/features/profile/profile_screen.dart';
+
 class MainNavScreen extends StatefulWidget {
-  const MainNavScreen({super.key});
+  final int initialIndex;
+
+  const MainNavScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainNavScreen> createState() => _MainNavScreenState();
 }
 
 class _MainNavScreenState extends State<MainNavScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
   final List<Widget> _screens = [
     const HomeScreen(),
     const BrowseScreen(), 
     const MessagesScreen(),
-    const PlaceholderScreen(title: "Profile"),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

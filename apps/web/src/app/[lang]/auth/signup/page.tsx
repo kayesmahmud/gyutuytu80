@@ -30,6 +30,17 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
         <div className="bg-white border border-gray-200 rounded-lg shadow-md p-4 sm:p-6">
           <RegisterForm lang={lang} />
 
+          {/* Terms Agreement */}
+          <p className="text-center text-xs text-gray-500 mt-4">
+            By signing up, you agree to our{' '}
+            <Link
+              href={`/${lang}/support/terms-of-service`}
+              className="text-rose-500 hover:text-rose-600 underline"
+            >
+              Terms & Conditions
+            </Link>
+          </p>
+
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

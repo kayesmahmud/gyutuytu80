@@ -72,3 +72,4 @@ export function useShopAbout({ shopSlug, initialDescription, bio }: UseShopAbout
   };
 }
 
+

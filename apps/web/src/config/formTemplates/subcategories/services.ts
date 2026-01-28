@@ -19,9 +19,6 @@ import {
   subjectsField,
   gradeLevelField,
   modeOfTeachingField,
-  countryField,
-  jobPositionField,
-  visaTypeField,
 } from '../fields';
 
 // ============================================
@@ -36,7 +33,10 @@ export const tuition: SubcategoryConfig = {
     { field: gradeLevelField },
     { field: modeOfTeachingField },
     { field: experienceField },
-    { field: languagesField },
+    {
+      field: languagesField,
+      override: { options: ['English', 'Hindi', 'Chinese', 'Japanese', 'Korean', 'Arabic', 'Other'] },
+    },
     { field: availabilityField },
   ],
 };
@@ -158,35 +158,24 @@ export const freelanceJobs: SubcategoryConfig = {
 
 export const overseasMiddleEast: SubcategoryConfig = {
   name: 'Middle East Jobs',
-  fields: [
-    { field: countryField, override: { options: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Bahrain'] } },
-    { field: jobPositionField },
-    { field: visaTypeField },
-    { field: experienceRequiredField },
-    { field: salaryRangeField, override: { label: 'Expected Salary' } },
-  ],
+  fields: [],
 };
 
 export const overseasAsia: SubcategoryConfig = {
   name: 'Asia Jobs',
-  fields: [
-    { field: countryField, override: { options: ['Malaysia', 'Singapore', 'Japan', 'South Korea', 'Hong Kong', 'Taiwan'] } },
-    { field: jobPositionField },
-    { field: visaTypeField },
-    { field: experienceRequiredField },
-    { field: salaryRangeField, override: { label: 'Expected Salary' } },
-  ],
+  fields: [],
 };
 
 export const overseasEurope: SubcategoryConfig = {
   name: 'Europe Jobs',
-  fields: [
-    { field: countryField, override: { options: ['Bulgaria', 'Croatia', 'Serbia', 'Poland', 'Romania', 'Portugal', 'Malta'] } },
-    { field: jobPositionField },
-    { field: visaTypeField },
-    { field: experienceRequiredField },
-    { field: salaryRangeField, override: { label: 'Expected Salary' } },
-  ],
+  fields: [],
+};
+
+// ============================================
+
+export const uaeJobs: SubcategoryConfig = {
+  name: 'UAE',
+  fields: [],
 };
 
 // Export all services subcategories as a map
@@ -207,6 +196,7 @@ export const servicesSubcategories: Record<string, SubcategoryConfig> = {
   'Freelance Jobs': freelanceJobs,
   // Overseas Jobs
   'Middle East Jobs': overseasMiddleEast,
+  'UAE': uaeJobs,
   'Asia Jobs': overseasAsia,
   'Europe Jobs': overseasEurope,
 };

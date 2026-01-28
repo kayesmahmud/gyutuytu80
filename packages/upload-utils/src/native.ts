@@ -11,24 +11,28 @@ import { getMimeTypeFromExtension, getFileExtension } from './validation';
 
 /**
  * Type for expo-image-picker result asset
+ * Compatible with expo-image-picker v15-v17+
  */
 interface ImagePickerAsset {
   uri: string;
   width: number;
   height: number;
-  type?: 'image' | 'video';
-  fileName?: string;
-  fileSize?: number;
-  mimeType?: string;
-  base64?: string;
+  type?: 'image' | 'video' | 'livePhoto' | 'pairedVideo' | string;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  base64?: string | null;
+  pairedVideoAsset?: ImagePickerAsset | null;
 }
 
 /**
  * Type for expo-image-picker result
+ * Compatible with expo-image-picker v15-v17+
+ * assets is null when canceled, array when success
  */
 interface ImagePickerResult {
   canceled: boolean;
-  assets?: ImagePickerAsset[];
+  assets?: ImagePickerAsset[] | null;
 }
 
 /**
@@ -37,30 +41,30 @@ interface ImagePickerResult {
 export function imagePickerAssetToUploadFile(asset: ImagePickerAsset): CrossPlatformImage {
   // Generate filename if not provided
   const extension = asset.mimeType?.split('/')[1] || 'jpg';
-  const filename = asset.fileName || `image_${Date.now()}.${extension}`;
+  const filename = asset.fileName ?? `image_${Date.now()}.${extension}`;
 
-  // Get MIME type
-  const mimeType = asset.mimeType || getMimeTypeFromExtension(getFileExtension(filename));
+  // Get MIME type (handle null values)
+  const mimeType = asset.mimeType ?? getMimeTypeFromExtension(getFileExtension(filename));
 
   return {
     name: filename,
     type: mimeType,
-    size: asset.fileSize || 0,
+    size: asset.fileSize ?? 0,
     uri: asset.uri,
     dimensions: {
       width: asset.width,
       height: asset.height,
     },
-    base64: asset.base64,
+    base64: asset.base64 ?? undefined,
   };
 }
 
 /**
  * Convert expo-image-picker result to CrossPlatformImage array
- * Returns empty array if picker was cancelled
+ * Returns empty array if picker was cancelled or no assets
  */
 export function imagePickerResultToUploadFiles(result: ImagePickerResult): CrossPlatformImage[] {
-  if (result.canceled || !result.assets) {
+  if (result.canceled || !result.assets || result.assets.length === 0) {
     return [];
   }
   return result.assets.map(imagePickerAssetToUploadFile);
@@ -77,7 +81,14 @@ export function imagePickerResultToSingleFile(
 }
 
 /**
+ * MediaType for expo-image-picker v15+
+ * Note: 'livePhotos' only works on iOS
+ */
+export type MediaType = 'images' | 'videos' | 'livePhotos';
+
+/**
  * Image picker options builder
+ * Compatible with expo-image-picker v15-v17+
  */
 export interface PickerOptions {
   allowsEditing?: boolean;
@@ -85,7 +96,7 @@ export interface PickerOptions {
   quality?: number;
   allowsMultipleSelection?: boolean;
   selectionLimit?: number;
-  mediaTypes?: 'images' | 'videos' | 'all';
+  mediaTypes?: MediaType | MediaType[];
   base64?: boolean;
 }
 

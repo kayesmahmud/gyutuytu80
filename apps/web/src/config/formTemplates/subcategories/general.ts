@@ -111,6 +111,36 @@ export const homeDecor: SubcategoryConfig = {
   ],
 };
 
+export const homeTextiles: SubcategoryConfig = {
+  name: 'Home Textiles & Decoration',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., Bombay Dyeing, Portico, Spaces, Local' } },
+    { field: materialField },
+    { field: colorField },
+    { field: styleField },
+  ],
+};
+
+export const doors: SubcategoryConfig = {
+  name: 'Doors',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., CenturyPly, Greenply, Local' } },
+    { field: materialField },
+    { field: dimensionsField },
+  ],
+};
+
+export const householdItems: SubcategoryConfig = {
+  name: 'Household Items',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., Prestige, Milton, Local' } },
+    { field: materialField },
+  ],
+};
+
 export const kitchenAppliances: SubcategoryConfig = {
   name: 'Kitchen Appliances',
   fields: [
@@ -159,18 +189,34 @@ export const musicalInstruments: SubcategoryConfig = {
 };
 
 export const kidsItems: SubcategoryConfig = {
-  name: 'Kids Items',
+  name: "Children's Items",
   fields: [
     { field: conditionNewUsed },
-    { field: brandField, override: { placeholder: 'e.g., Fisher-Price, Lego, Hot Wheels' } },
+    { field: brandField },
   ],
 };
 
 export const booksStationary: SubcategoryConfig = {
   name: 'Books & Stationery',
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Like New', 'Good', 'Fair'] } },
+    { field: conditionNewUsed },
     { field: brandField, override: { required: false, placeholder: 'e.g., Publisher name' } },
+  ],
+};
+
+export const otherHobbySportKids: SubcategoryConfig = {
+  name: 'Other Hobby, Sport & Kids items',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField },
+  ],
+};
+
+export const musicBooksMovies: SubcategoryConfig = {
+  name: 'Music, Books & Movies',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., Publisher, Author, or Brand' } },
   ],
 };
 
@@ -210,7 +256,7 @@ export const officeEquipment: SubcategoryConfig = {
 export const rawMaterials: SubcategoryConfig = {
   name: 'Raw Materials',
   fields: [
-    { field: conditionNewUsed, override: { options: ['New'] } },
+    { field: conditionNewUsed },
     { field: quantityField },
   ],
 };
@@ -222,7 +268,6 @@ export const rawMaterials: SubcategoryConfig = {
 export const grocery: SubcategoryConfig = {
   name: 'Grocery',
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Sealed'] } },
     { field: brandField, override: { required: false } },
     { field: productTypeField, override: { options: ['Food Item', 'Beverage', 'Snacks', 'Dairy', 'Grains'] } },
     { field: quantityField },
@@ -233,7 +278,6 @@ export const grocery: SubcategoryConfig = {
 export const healthcare: SubcategoryConfig = {
   name: 'Healthcare',
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Sealed'] } },
     { field: brandField, override: { required: false } },
     { field: productTypeField, override: { options: ['Medicine', 'First Aid', 'Medical Device', 'Supplements'] } },
     { field: quantityField },
@@ -244,7 +288,6 @@ export const healthcare: SubcategoryConfig = {
 export const babyProducts: SubcategoryConfig = {
   name: 'Baby Products',
   fields: [
-    { field: conditionNewUsed },
     { field: brandField, override: { placeholder: 'e.g., Pampers, Johnson & Johnson, Huggies' } },
     { field: productTypeField, override: { options: ['Diapers', 'Baby Food', 'Baby Care', 'Feeding', 'Baby Clothes'] } },
     { field: quantityField },
@@ -254,9 +297,33 @@ export const babyProducts: SubcategoryConfig = {
 export const household: SubcategoryConfig = {
   name: 'Household',
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Sealed'] } },
+    { field: conditionNewUsed },
     { field: brandField, override: { required: false } },
     { field: productTypeField, override: { options: ['Cleaning', 'Laundry', 'Storage', 'Kitchen Items'] } },
+    { field: quantityField },
+  ],
+};
+
+
+export const fruitsVegetables: SubcategoryConfig = {
+  name: 'Fruits & Vegetables',
+  fields: [
+    { field: quantityField },
+  ],
+};
+
+
+export const meatSeafood: SubcategoryConfig = {
+  name: 'Meat & Seafood',
+  fields: [
+    { field: quantityField },
+    { field: expiryDateField },
+  ],
+};
+
+export const otherEssentials: SubcategoryConfig = {
+  name: 'Other Essentials',
+  fields: [
     { field: quantityField },
   ],
 };
@@ -286,7 +353,7 @@ export const farmingTools: SubcategoryConfig = {
 export const fertilizers: SubcategoryConfig = {
   name: 'Fertilizers & Pesticides',
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Sealed'] } },
+    { field: conditionNewUsed },
     { field: brandField, override: { required: false } },
     { field: quantityField },
     { field: expiryDateField },
@@ -296,11 +363,21 @@ export const fertilizers: SubcategoryConfig = {
 export const livestockFeed: SubcategoryConfig = {
   name: 'Livestock Feed',
   fields: [
-    { field: conditionNewUsed, override: { options: ['Brand New', 'Sealed'] } },
+    { field: conditionNewUsed },
     { field: brandField, override: { required: false } },
     { field: quantityField },
     { field: expiryDateField },
   ],
+};
+
+export const otherAgriculture: SubcategoryConfig = {
+  name: 'Other Agriculture',
+  fields: [],
+};
+
+export const licensesTitlesTenders: SubcategoryConfig = {
+  name: 'Licences, Titles & Tenders',
+  fields: [],
 };
 
 // Export all general subcategories as a map
@@ -312,27 +389,37 @@ export const generalSubcategories: Record<string, SubcategoryConfig> = {
   'Office & Shop Furniture': officeFurniture,
   "Children's Furniture": childrenFurniture,
   'Home Decor': homeDecor,
+  'Home Textiles & Decoration': homeTextiles,
+  'Household Items': householdItems,
+  'Doors': doors,
   'Kitchen Appliances': kitchenAppliances,
   'Home Appliances': homeAppliances,
   // Hobbies & Sports
   'Sports': sports,
   'Fitness & Gym': fitnessGym,
   'Musical Instruments': musicalInstruments,
-  'Kids Items': kidsItems,
+  "Children's Items": kidsItems,
   'Books & Stationery': booksStationary,
+  'Music, Books & Movies': musicBooksMovies,
+  'Other Hobby, Sport & Kids items': otherHobbySportKids,
   // Business & Industry (with correct brand placeholders)
   'Industry Machinery & Tools': industryMachinery,
   'Medical Equipment & Supplies': medicalEquipment,
   'Office Equipment': officeEquipment,
   'Raw Materials': rawMaterials,
+  'Licences, Titles & Tenders': licensesTitlesTenders,
   // Essentials
   'Grocery': grocery,
   'Healthcare': healthcare,
   'Baby Products': babyProducts,
   'Household': household,
+  'Fruits & Vegetables': fruitsVegetables,
+  'Meat & Seafood': meatSeafood,
+  'Other Essentials': otherEssentials,
   // Agriculture
   'Crops, Seeds & Plants': cropsSeedsPlants,
   'Farming Tools & Machinery': farmingTools,
   'Fertilizers & Pesticides': fertilizers,
   'Livestock Feed': livestockFeed,
+  'Other Agriculture': otherAgriculture,
 };

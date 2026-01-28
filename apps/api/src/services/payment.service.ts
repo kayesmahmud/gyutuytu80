@@ -4,12 +4,8 @@
  */
 
 import { prisma } from '@thulobazaar/database';
-import {
-  initiatePayment,
-  verifyPayment,
-  decodeEsewaCallback,
-} from '../lib/payment';
-import type { PaymentGateway, PaymentType } from '../lib/payment/types';
+import { initiatePayment, verifyPayment, getAvailableGateways, decodeEsewaCallback } from '../lib/payment/index.js';
+import type { PaymentGateway, PaymentType } from '../lib/payment/types.js';
 
 // ============================================================================
 // Types
