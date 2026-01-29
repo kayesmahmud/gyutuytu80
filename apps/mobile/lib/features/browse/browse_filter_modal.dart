@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/api/ad_client.dart';
+import 'package:mobile/core/api/location_client.dart';
 
 class BrowseFilterModal extends StatefulWidget {
   final String? initialExpandedSection;
@@ -22,6 +23,7 @@ class BrowseFilterModal extends StatefulWidget {
 
 class _BrowseFilterModalState extends State<BrowseFilterModal> {
   final AdClient _adClient = AdClient();
+  final LocationClient _locationClient = LocationClient();
 
   // Track expanded state of each section
   final Map<String, bool> _expandedSections = {
@@ -50,9 +52,56 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
   List<CategoryWithSubcategories> _categories = [];
   bool _loadingCategories = true;
 
+  // Location data from API
+  List<Province> _provinces = [];
+  List<District> _districts = [];
+  List<Municipality> _municipalities = [];
+  List<Area> _areas = [];
+
+  // Location loading states
+  bool _loadingProvinces = true;
+  bool _loadingDistricts = false;
+  bool _loadingMunicipalities = false;
+  bool _loadingAreas = false;
+
+  // Location selection state (hierarchical)
+  Province? _selectedProvince;
+  District? _selectedDistrict;
+  Municipality? _selectedMunicipality;
+  Area? _selectedArea;
+
   // Price controllers
   final TextEditingController _minPriceController = TextEditingController();
   final TextEditingController _maxPriceController = TextEditingController();
+  
+  // Location Search
+  final TextEditingController _locationSearchController = TextEditingController();
+  List<Location> _locationSearchResults = [];
+  bool _isSearchingLocation = false;
+  
+  void _searchLocations(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _locationSearchResults = [];
+        _isSearchingLocation = false;
+      });
+      return;
+    }
+    
+    setState(() => _isSearchingLocation = true);
+    
+    // Debounce could be added here, but direct call for now
+    try {
+      final results = await _locationClient.searchAllLocations(query);
+      if (mounted) {
+        setState(() {
+          _locationSearchResults = results;
+        });
+      }
+    } catch (e) {
+      print("Search error: $e");
+    }
+  }
 
   @override
   void initState() {
@@ -62,12 +111,14 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
     }
     _loadFromCurrentFilters();
     _fetchCategories();
+    _fetchProvinces();
   }
 
   @override
   void dispose() {
     _minPriceController.dispose();
     _maxPriceController.dispose();
+    _locationSearchController.dispose();
     super.dispose();
   }
 
@@ -76,7 +127,10 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
       final f = widget.currentFilters!;
       _selectedCategoryId = f.categoryId;
       _selectedSubcategoryId = f.subcategoryId;
-      _selectedLocationId = f.locationId;
+      // _selectedLocationId = f.locationId; // Handled by _loadLocationHierarchy
+      if (f.locationId != null) {
+        _loadLocationHierarchy(f.locationId!);
+      }
       _selectedCondition = f.condition ?? "";
       _minPrice = f.minPrice;
       _maxPrice = f.maxPrice;
@@ -95,6 +149,117 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
     }
   }
 
+  Future<void> _loadLocationHierarchy(int locationId) async {
+    try {
+      final response = await _locationClient.getLocationById(locationId);
+      if (response.data == null) return;
+
+      final location = response.data!;
+      
+      setState(() {
+        _selectedLocationId = location.id;
+        _selectedLocationName = location.name;
+      });
+
+      // Based on type, reconstruct the hierarchy
+      // The API returns parentId, so we can walk up if needed, 
+      // but simpler is to check type and fetch potential parents if we have their IDs.
+      // However, the base Location model only has immediate parentId.
+      // We might need to fetch the parent to get *its* parentId (e.g. Municipality -> District -> Province).
+
+      if (location.type == LocationType.province) {
+        setState(() {
+          _selectedProvince = Province(id: location.id, name: location.name);
+          _selectedDistrict = null;
+          _selectedMunicipality = null;
+          _selectedArea = null;
+        });
+        await _loadDistricts(location.id);
+      } 
+      else if (location.type == LocationType.district) {
+        if (location.parentId != null) {
+          // 1. Fetch Parent (Province)
+          final provRes = await _locationClient.getLocationById(location.parentId!);
+          if (provRes.data != null) {
+            final prov = provRes.data!;
+            setState(() {
+              _selectedProvince = Province(id: prov.id, name: prov.name);
+              // Don't set children here
+            });
+            // 2. Load siblings for the dropdowns
+            await _loadDistricts(prov.id, autoSelectId: location.id);
+            await _loadMunicipalities(location.id);
+          }
+        }
+      } 
+      else if (location.type == LocationType.municipality) {
+        if (location.parentId != null) {
+          // 1. Fetch Parent (District)
+          final distRes = await _locationClient.getLocationById(location.parentId!);
+          if (distRes.data != null) {
+            final dist = distRes.data!;
+            
+            // 2. Fetch Grandparent (Province)
+            if (dist.parentId != null) {
+              final provRes = await _locationClient.getLocationById(dist.parentId!);
+              if (provRes.data != null) {
+                final prov = provRes.data!;
+                
+                setState(() {
+                  _selectedProvince = Province(id: prov.id, name: prov.name);
+                 // Don't set children here
+                });
+
+                // 3. Load siblings
+                await _loadDistricts(prov.id, autoSelectId: dist.id);
+                await _loadMunicipalities(dist.id, autoSelectId: location.id);
+                await _loadAreas(location.id);
+              }
+            }
+          }
+        }
+      }
+      else if (location.type == LocationType.area) {
+        if (location.parentId != null) {
+          // 1. Fetch Parent (Municipality)
+          final munRes = await _locationClient.getLocationById(location.parentId!);
+          if (munRes.data != null) {
+            final mun = munRes.data!;
+
+            // 2. Fetch Grandparent (District)
+            if (mun.parentId != null) {
+              final distRes = await _locationClient.getLocationById(mun.parentId!);
+              if (distRes.data != null) {
+                final dist = distRes.data!;
+
+                // 3. Fetch Great-Grandparent (Province)
+                if (dist.parentId != null) {
+                  final provRes = await _locationClient.getLocationById(dist.parentId!);
+                  if (provRes.data != null) {
+                    final prov = provRes.data!;
+
+                    setState(() {
+                      _selectedProvince = Province(id: prov.id, name: prov.name);
+                      // Don't set children here, let the load functions do it
+                    });
+
+                    // 4. Load siblings with auto-select
+                    await _loadDistricts(prov.id, autoSelectId: dist.id);
+                    await _loadMunicipalities(dist.id, autoSelectId: mun.id);
+                    await _loadAreas(mun.id, autoSelectId: location.id);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+    } catch (e) {
+      print("Error loading location hierarchy: $e");
+    }
+  }
+
   Future<void> _fetchCategories() async {
     try {
       final categories = await _adClient.getCategories();
@@ -109,6 +274,119 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
         setState(() {
           _loadingCategories = false;
         });
+      }
+    }
+  }
+
+  Future<void> _fetchProvinces() async {
+    setState(() => _loadingProvinces = true);
+    try {
+      final provinces = await _locationClient.getProvinces();
+      if (mounted) {
+        setState(() {
+          _provinces = provinces;
+          _loadingProvinces = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingProvinces = false);
+      }
+    }
+  }
+
+  Future<void> _loadDistricts(int provinceId, {int? autoSelectId}) async {
+    setState(() {
+      _loadingDistricts = true;
+      _districts = [];
+      _selectedDistrict = null;
+      _municipalities = [];
+      _selectedMunicipality = null;
+      _areas = [];
+      _selectedArea = null;
+    });
+
+    try {
+      final districts = await _locationClient.getDistricts(provinceId);
+      if (mounted) {
+        District? selected;
+        if (autoSelectId != null) {
+          try {
+            selected = districts.firstWhere((e) => e.id == autoSelectId);
+          } catch (_) {}
+        }
+        
+        setState(() {
+          _districts = districts;
+          _selectedDistrict = selected;
+          _loadingDistricts = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingDistricts = false);
+      }
+    }
+  }
+
+  Future<void> _loadMunicipalities(int districtId, {int? autoSelectId}) async {
+    setState(() {
+      _loadingMunicipalities = true;
+      _municipalities = [];
+      _selectedMunicipality = null;
+      _areas = [];
+      _selectedArea = null;
+    });
+
+    try {
+      final municipalities = await _locationClient.getMunicipalities(districtId);
+      if (mounted) {
+        Municipality? selected;
+        if (autoSelectId != null) {
+          try {
+            selected = municipalities.firstWhere((e) => e.id == autoSelectId);
+          } catch (_) {}
+        }
+
+        setState(() {
+          _municipalities = municipalities;
+          _selectedMunicipality = selected;
+          _loadingMunicipalities = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingMunicipalities = false);
+      }
+    }
+  }
+
+  Future<void> _loadAreas(int municipalityId, {int? autoSelectId}) async {
+    setState(() {
+      _loadingAreas = true;
+      _areas = [];
+      _selectedArea = null;
+    });
+
+    try {
+      final areas = await _locationClient.getAreas(municipalityId);
+      if (mounted) {
+        Area? selected;
+        if (autoSelectId != null) {
+          try {
+            selected = areas.firstWhere((e) => e.id == autoSelectId);
+          } catch (_) {}
+        }
+
+        setState(() {
+          _areas = areas;
+          _selectedArea = selected;
+          _loadingAreas = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingAreas = false);
       }
     }
   }
@@ -156,11 +434,17 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
     final minPrice = double.tryParse(_minPriceController.text);
     final maxPrice = double.tryParse(_maxPriceController.text);
 
+    // Use most specific location selection (area > municipality > district > province)
+    final locationId = _selectedArea?.id ??
+        _selectedMunicipality?.id ??
+        _selectedDistrict?.id ??
+        _selectedProvince?.id;
+
     final filters = SearchFilters(
       categoryId: _selectedCategoryId,
       subcategoryId: _selectedSubcategoryId,
-      locationId: _selectedLocationId,
-      areaId: null,
+      locationId: locationId,
+      areaId: _selectedArea?.id,
       condition: _selectedCondition.isEmpty ? null : _selectedCondition,
       minPrice: minPrice,
       maxPrice: maxPrice,
@@ -180,6 +464,14 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
       _selectedCategoryName = null;
       _selectedLocationId = null;
       _selectedLocationName = null;
+      // Reset hierarchical location selection
+      _selectedProvince = null;
+      _selectedDistrict = null;
+      _selectedMunicipality = null;
+      _selectedArea = null;
+      _districts = [];
+      _municipalities = [];
+      _areas = [];
       _selectedCondition = "";
       _selectedSort = "newest";
       _minPrice = null;
@@ -275,7 +567,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
 
           // Bottom Action Bar
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -516,66 +808,366 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
     );
   }
 
-  // --- Location Builder (simplified for now) ---
+  // --- Location Builder with cascading dropdowns ---
   Widget _buildLocationsContent() {
+    final bool noLocationSelected = _selectedProvince == null;
+
     return Container(
       color: Colors.grey[50],
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search Box
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search location...",
-                hintStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-            ),
-          ),
-
           // All Nepal Option
           InkWell(
             onTap: () => setState(() {
-              _selectedLocationId = null;
-              _selectedLocationName = null;
+              _selectedProvince = null;
+              _selectedDistrict = null;
+              _selectedMunicipality = null;
+              _selectedArea = null;
+              _districts = [];
+              _municipalities = [];
+              _areas = [];
             }),
             child: Container(
-              color: _selectedLocationId == null ? const Color(0xFFFFF1F2) : Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              decoration: BoxDecoration(
+                color: noLocationSelected ? const Color(0xFFFFF1F2) : Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: noLocationSelected ? AppTheme.primary.withOpacity(0.3) : Colors.grey[300]!,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.public, color: Colors.grey, size: 20),
+                  Icon(Icons.public, color: noLocationSelected ? AppTheme.primary : Colors.grey, size: 20),
                   const SizedBox(width: 12),
-                  Text("All Nepal", style: GoogleFonts.inter(fontSize: 14)),
+                  Text(
+                    "All Nepal",
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: noLocationSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: noLocationSelected ? AppTheme.primary : Colors.black87,
+                    ),
+                  ),
                   const Spacer(),
-                  if (_selectedLocationId == null)
+                  if (noLocationSelected)
                     Icon(Icons.check, color: AppTheme.primary, size: 18),
                 ],
               ),
             ),
           ),
 
-          // TODO: Fetch and display actual locations from API
-          // For now, showing a placeholder message
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(
-              "Location filter coming soon",
-              style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 13),
-            ),
+          const SizedBox(height: 16),
+          
+          // --- LOCATION SEARCH INPUT ---
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _locationSearchController,
+                style: GoogleFonts.inter(color: Colors.black87, fontSize: 14), // Explicit text color
+                decoration: InputDecoration(
+                  hintText: "Search location...",
+                  hintStyle: GoogleFonts.inter(color: Colors.grey[500], fontSize: 14), // Explicit hint color
+                  prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: AppTheme.primary, width: 1),
+                  ),
+                  suffixIcon: _locationSearchController.text.isNotEmpty 
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 16),
+                        onPressed: () {
+                          _locationSearchController.clear();
+                          setState(() {
+                            _locationSearchResults = [];
+                            _isSearchingLocation = false;
+                          });
+                        },
+                      )
+                    : null,
+                ),
+                onChanged: _searchLocations,
+              ),
+              
+              // Search Results List (Conditional)
+              if (_isSearchingLocation) ...[
+                const SizedBox(height: 8),
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: _locationSearchResults.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Text("No locations found", style: TextStyle(color: Colors.grey)),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: _locationSearchResults.length,
+                          itemBuilder: (context, index) {
+                            final loc = _locationSearchResults[index];
+                            return InkWell(
+                              onTap: () {
+                                _loadLocationHierarchy(loc.id);
+                                _locationSearchController.clear();
+                                setState(() {
+                                  _locationSearchResults = [];
+                                  _isSearchingLocation = false;
+                                });
+                                FocusScope.of(context).unfocus(); // Close keyboard
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      loc.type == LocationType.province ? Icons.map :
+                                      loc.type == LocationType.district ? Icons.location_city :
+                                      Icons.place,
+                                      size: 16,
+                                      color: Colors.grey[600],
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: RichText(
+                                        text: TextSpan(
+                                          text: loc.name,
+                                          style: const TextStyle(color: Colors.black87, fontSize: 14),
+                                          children: [
+                                            TextSpan(
+                                              text: "  ${loc.type.name.toUpperCase()}",
+                                              style: TextStyle(
+                                                color: Colors.grey[400],
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ],
           ),
+          // ----------------------------
+
+          const SizedBox(height: 16),
+
+          // Province Dropdown
+          _buildLocationDropdown(
+            label: 'Province',
+            isLoading: _loadingProvinces,
+            hint: 'Select Province',
+            value: _selectedProvince,
+            items: _provinces,
+            itemLabel: (p) => p.name,
+            onChanged: (province) {
+              setState(() => _selectedProvince = province);
+              if (province != null) {
+                _loadDistricts(province.id);
+              }
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // District Dropdown
+          _buildLocationDropdown(
+            label: 'District',
+            isLoading: _loadingDistricts,
+            hint: _selectedProvince == null ? 'Select Province first' : 'Select District',
+            value: _selectedDistrict,
+            items: _districts,
+            itemLabel: (d) => d.name,
+            enabled: _selectedProvince != null,
+            onChanged: (district) {
+              setState(() => _selectedDistrict = district);
+              if (district != null) {
+                _loadMunicipalities(district.id);
+              }
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // Municipality Dropdown
+          _buildLocationDropdown(
+            label: 'Municipality',
+            isLoading: _loadingMunicipalities,
+            hint: _selectedDistrict == null ? 'Select District first' : 'Select Municipality',
+            value: _selectedMunicipality,
+            items: _municipalities,
+            itemLabel: (m) => m.name,
+            enabled: _selectedDistrict != null,
+            onChanged: (municipality) {
+              setState(() => _selectedMunicipality = municipality);
+              if (municipality != null) {
+                _loadAreas(municipality.id);
+              }
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // Area Dropdown (Optional)
+          _buildLocationDropdown(
+            label: 'Area (Optional)',
+            isLoading: _loadingAreas,
+            hint: _selectedMunicipality == null
+                ? 'Select Municipality first'
+                : (_areas.isEmpty ? 'No areas available' : 'Select Area'),
+            value: _selectedArea,
+            items: _areas,
+            itemLabel: (a) => a.name,
+            enabled: _selectedMunicipality != null && _areas.isNotEmpty,
+            onChanged: (area) {
+              setState(() => _selectedArea = area);
+            },
+          ),
+
+          // Selected location preview
+          if (_selectedProvince != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.location_on, color: AppTheme.primary, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _buildLocationPath(),
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Widget _buildLocationDropdown<T>({
+    required String label,
+    required bool isLoading,
+    required String hint,
+    required T? value,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required void Function(T?) onChanged,
+    bool enabled = true,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: enabled ? Colors.grey[700] : Colors.grey[400],
+              ),
+            ),
+            if (isLoading) ...[
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<T>(
+          value: value,
+          hint: Text(
+            hint,
+            style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 14),
+          ),
+          isExpanded: true,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: enabled ? Colors.white : Colors.grey[100],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppTheme.primary, width: 1),
+            ),
+          ),
+          items: items.map((item) => DropdownMenuItem(
+            value: item,
+            child: Text(itemLabel(item), style: GoogleFonts.inter(fontSize: 14)),
+          )).toList(),
+          onChanged: enabled ? onChanged : null,
+          icon: Icon(Icons.arrow_drop_down, color: enabled ? Colors.grey[600] : Colors.grey[400]),
+        ),
+      ],
+    );
+  }
+
+  String _buildLocationPath() {
+    final parts = <String>[];
+    if (_selectedArea != null) parts.add(_selectedArea!.name);
+    if (_selectedMunicipality != null) parts.add(_selectedMunicipality!.name);
+    if (_selectedDistrict != null) parts.add(_selectedDistrict!.name);
+    if (_selectedProvince != null) parts.add(_selectedProvince!.name);
+    return parts.join(', ');
   }
 
   Widget _buildPriceContent() {
