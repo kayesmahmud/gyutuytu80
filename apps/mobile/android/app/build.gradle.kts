@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.thulobazaar.mobile"
     compileSdk = flutter.compileSdkVersion
-    // ndkVersion = flutter.ndkVersion
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         // Enable core library desugaring for flutter_local_notifications

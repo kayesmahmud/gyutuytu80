@@ -1,0 +1,37 @@
+# Browse Screen Flow
+# Run: maestro test maestro/browse_flow.yaml
+
+appId: com.thulobazaar.mobile
+---
+- launchApp
+
+- assertVisible: "THULO.*BAZAAR"
+- takeScreenshot: 01_home
+
+- tapOn: "Browse"
+- assertVisible: "Search for anything"
+- takeScreenshot: 02_browse
+
+- scroll:
+    direction: DOWN
+- takeScreenshot: 03_browse_scrolled
+
+- scroll:
+    direction: DOWN
+- takeScreenshot: 04_browse_more
+
+- tapOn:
+    text: ".*Rs\\..*"
+    index: 0
+- takeScreenshot: 05_ad_detail
+
+- back
+
+- tapOn: "Messages"
+- takeScreenshot: 06_messages
+
+- tapOn: "Profile"
+- takeScreenshot: 07_profile
+
+- tapOn: "Home"
+- takeScreenshot: 08_home_final

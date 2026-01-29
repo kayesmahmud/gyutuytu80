@@ -1,0 +1,403 @@
+/// Ad models - mirrors @thulobazaar/types Ad interfaces
+
+enum AdStatus { pending, active, sold, rejected, expired }
+
+enum PromotionType { featured, urgent, spotlight, homepage }
+
+/// Main Ad model
+class Ad {
+  final int id;
+  final int userId;
+  final String title;
+  final String description;
+  final double price;
+  final int categoryId;
+  final int? subcategoryId;
+  final int locationId;
+  final int? areaId;
+  final String slug;
+  final AdStatus status;
+  final List<String> images;
+  final String? thumbnail;
+  final double? latitude;
+  final double? longitude;
+  final String? googleMapsLink;
+  final int viewCount;
+  final bool isNegotiable;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  // Promotion fields
+  final bool isFeatured;
+  final bool isUrgent;
+  final bool isSticky;
+  final DateTime? featuredUntil;
+  final DateTime? urgentUntil;
+  final DateTime? stickyUntil;
+
+  // Category-specific attributes
+  final Map<String, dynamic>? attributes;
+
+  // Condition field (new/used)
+  final String? condition;
+
+  Ad({
+    required this.id,
+    required this.userId,
+    required this.title,
+    required this.description,
+    required this.price,
+    required this.categoryId,
+    this.subcategoryId,
+    required this.locationId,
+    this.areaId,
+    required this.slug,
+    required this.status,
+    required this.images,
+    this.thumbnail,
+    this.latitude,
+    this.longitude,
+    this.googleMapsLink,
+    required this.viewCount,
+    required this.isNegotiable,
+    required this.createdAt,
+    required this.updatedAt,
+    this.isFeatured = false,
+    this.isUrgent = false,
+    this.isSticky = false,
+    this.featuredUntil,
+    this.urgentUntil,
+    this.stickyUntil,
+    this.attributes,
+    this.condition,
+  });
+
+  factory Ad.fromJson(Map<String, dynamic> json) {
+    try {
+      return Ad(
+        id: json['id'] as int,
+        userId: json['userId'] as int? ?? json['user_id'] as int? ?? 0,
+        title: json['title'] as String? ?? '',
+        description: json['description'] as String? ?? '',
+        price: _parseDouble(json['price']),
+        categoryId: json['categoryId'] as int? ?? json['category_id'] as int? ?? 0,
+        subcategoryId: json['subcategoryId'] as int? ?? json['subcategory_id'] as int?,
+        locationId: json['locationId'] as int? ?? json['location_id'] as int? ?? 0,
+        areaId: json['areaId'] as int? ?? json['area_id'] as int?,
+        slug: json['slug'] as String? ?? '',
+        status: _parseAdStatus(json['status']),
+        images: _parseImages(json['images']),
+        thumbnail: json['thumbnail'] as String?,
+        latitude: _parseDoubleNullable(json['latitude']),
+        longitude: _parseDoubleNullable(json['longitude']),
+        googleMapsLink: json['googleMapsLink'] as String? ?? json['google_maps_link'] as String?,
+        viewCount: json['viewCount'] as int? ?? json['view_count'] as int? ?? 0,
+        isNegotiable: json['isNegotiable'] as bool? ?? json['is_negotiable'] as bool? ?? false,
+        createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
+        updatedAt: _parseDateTime(json['updatedAt'] ?? json['updated_at']),
+        isFeatured: json['isFeatured'] as bool? ?? json['is_featured'] as bool? ?? false,
+        isUrgent: json['isUrgent'] as bool? ?? json['is_urgent'] as bool? ?? false,
+        isSticky: json['isSticky'] as bool? ?? json['is_sticky'] as bool? ?? false,
+        featuredUntil: _parseDateTimeNullable(json['featuredUntil'] ?? json['featured_until']),
+        urgentUntil: _parseDateTimeNullable(json['urgentUntil'] ?? json['urgent_until']),
+        stickyUntil: _parseDateTimeNullable(json['stickyUntil'] ?? json['sticky_until']),
+        attributes: json['attributes'] as Map<String, dynamic>? ?? json['custom_fields'] as Map<String, dynamic>?,
+        condition: json['condition'] as String?,
+      );
+    } catch (e, stack) {
+      print("🔴 Error parsing Ad.fromJson: $e");
+      print("JSON: $json");
+      print(stack);
+      rethrow;
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'title': title,
+      'description': description,
+      'price': price,
+      'categoryId': categoryId,
+      'subcategoryId': subcategoryId,
+      'locationId': locationId,
+      'areaId': areaId,
+      'slug': slug,
+      'status': status.name,
+      'images': images,
+      'thumbnail': thumbnail,
+      'latitude': latitude,
+      'longitude': longitude,
+      'googleMapsLink': googleMapsLink,
+      'viewCount': viewCount,
+      'isNegotiable': isNegotiable,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'isFeatured': isFeatured,
+      'isUrgent': isUrgent,
+      'isSticky': isSticky,
+      'featuredUntil': featuredUntil?.toIso8601String(),
+      'urgentUntil': urgentUntil?.toIso8601String(),
+      'stickyUntil': stickyUntil?.toIso8601String(),
+      'attributes': attributes,
+      'condition': condition,
+    };
+  }
+
+  /// Get the primary image (first image or thumbnail)
+  String? get primaryImage {
+    if (thumbnail != null && thumbnail!.isNotEmpty) return thumbnail;
+    if (images.isNotEmpty) return images.first;
+    return null;
+  }
+
+  Ad copyWith({
+    int? id,
+    int? userId,
+    String? title,
+    String? description,
+    double? price,
+    int? categoryId,
+    int? subcategoryId,
+    int? locationId,
+    int? areaId,
+    String? slug,
+    AdStatus? status,
+    List<String>? images,
+    String? thumbnail,
+    double? latitude,
+    double? longitude,
+    String? googleMapsLink,
+    int? viewCount,
+    bool? isNegotiable,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isFeatured,
+    bool? isUrgent,
+    bool? isSticky,
+    DateTime? featuredUntil,
+    DateTime? urgentUntil,
+    DateTime? stickyUntil,
+    Map<String, dynamic>? attributes,
+    String? condition,
+  }) {
+    return Ad(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      price: price ?? this.price,
+      categoryId: categoryId ?? this.categoryId,
+      subcategoryId: subcategoryId ?? this.subcategoryId,
+      locationId: locationId ?? this.locationId,
+      areaId: areaId ?? this.areaId,
+      slug: slug ?? this.slug,
+      status: status ?? this.status,
+      images: images ?? this.images,
+      thumbnail: thumbnail ?? this.thumbnail,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      googleMapsLink: googleMapsLink ?? this.googleMapsLink,
+      viewCount: viewCount ?? this.viewCount,
+      isNegotiable: isNegotiable ?? this.isNegotiable,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isFeatured: isFeatured ?? this.isFeatured,
+      isUrgent: isUrgent ?? this.isUrgent,
+      isSticky: isSticky ?? this.isSticky,
+      featuredUntil: featuredUntil ?? this.featuredUntil,
+      urgentUntil: urgentUntil ?? this.urgentUntil,
+      stickyUntil: stickyUntil ?? this.stickyUntil,
+      attributes: attributes ?? this.attributes,
+      condition: condition ?? this.condition,
+    );
+  }
+}
+
+/// Ad with additional details (seller info, category/location names)
+class AdWithDetails extends Ad {
+  final String userName;
+  final String? userAvatar;
+  final String? userPhone;
+  final bool userVerified;
+  final String categoryName;
+  final String? subcategoryName;
+  final String locationName;
+  final String? areaName;
+
+  // Additional seller info
+  final String? accountType;
+  final String? businessVerificationStatus;
+  final bool? individualVerified;
+  final String? shopSlug;
+
+  AdWithDetails({
+    required super.id,
+    required super.userId,
+    required super.title,
+    required super.description,
+    required super.price,
+    required super.categoryId,
+    super.subcategoryId,
+    required super.locationId,
+    super.areaId,
+    required super.slug,
+    required super.status,
+    required super.images,
+    super.thumbnail,
+    super.latitude,
+    super.longitude,
+    super.googleMapsLink,
+    required super.viewCount,
+    required super.isNegotiable,
+    required super.createdAt,
+    required super.updatedAt,
+    super.isFeatured,
+    super.isUrgent,
+    super.isSticky,
+    super.featuredUntil,
+    super.urgentUntil,
+    super.stickyUntil,
+    super.attributes,
+    super.condition,
+    required this.userName,
+    this.userAvatar,
+    this.userPhone,
+    required this.userVerified,
+    required this.categoryName,
+    this.subcategoryName,
+    required this.locationName,
+    this.areaName,
+    this.accountType,
+    this.businessVerificationStatus,
+    this.individualVerified,
+    this.shopSlug,
+  });
+
+  factory AdWithDetails.fromJson(Map<String, dynamic> json) {
+    final ad = Ad.fromJson(json);
+    return AdWithDetails(
+      id: ad.id,
+      userId: ad.userId,
+      title: ad.title,
+      description: ad.description,
+      price: ad.price,
+      categoryId: ad.categoryId,
+      subcategoryId: ad.subcategoryId,
+      locationId: ad.locationId,
+      areaId: ad.areaId,
+      slug: ad.slug,
+      status: ad.status,
+      images: ad.images,
+      thumbnail: ad.thumbnail,
+      latitude: ad.latitude,
+      longitude: ad.longitude,
+      googleMapsLink: ad.googleMapsLink,
+      viewCount: ad.viewCount,
+      isNegotiable: ad.isNegotiable,
+      createdAt: ad.createdAt,
+      updatedAt: ad.updatedAt,
+      isFeatured: ad.isFeatured,
+      isUrgent: ad.isUrgent,
+      isSticky: ad.isSticky,
+      featuredUntil: ad.featuredUntil,
+      urgentUntil: ad.urgentUntil,
+      stickyUntil: ad.stickyUntil,
+      attributes: ad.attributes,
+      condition: ad.condition,
+      userName: json['userName'] as String? ?? json['user_name'] as String? ?? json['sellerName'] as String? ?? 'Unknown',
+      userAvatar: json['userAvatar'] as String? ?? json['user_avatar'] as String?,
+      userPhone: json['userPhone'] as String? ?? json['user_phone'] as String?,
+      userVerified: json['userVerified'] as bool? ?? json['user_verified'] as bool? ?? false,
+      categoryName: json['categoryName'] as String? ?? json['category_name'] as String? ?? '',
+      subcategoryName: json['subcategoryName'] as String? ?? json['subcategory_name'] as String?,
+      locationName: json['locationName'] as String? ?? json['location_name'] as String? ?? '',
+      areaName: json['areaName'] as String? ?? json['area_name'] as String?,
+      accountType: json['accountType'] as String? ?? json['account_type'] as String?,
+      businessVerificationStatus: json['businessVerificationStatus'] as String? ?? json['business_verification_status'] as String?,
+      individualVerified: json['individualVerified'] as bool? ?? json['individual_verified'] as bool?,
+      shopSlug: json['shopSlug'] as String? ?? json['shop_slug'] as String?,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json.addAll({
+      'userName': userName,
+      'userAvatar': userAvatar,
+      'userPhone': userPhone,
+      'userVerified': userVerified,
+      'categoryName': categoryName,
+      'subcategoryName': subcategoryName,
+      'locationName': locationName,
+      'areaName': areaName,
+      'accountType': accountType,
+      'businessVerificationStatus': businessVerificationStatus,
+      'individualVerified': individualVerified,
+      'shopSlug': shopSlug,
+    });
+    return json;
+  }
+
+  /// Get the shop slug for navigation (uses shopSlug if available, else fallback to user-{userId})
+  String get effectiveShopSlug => shopSlug ?? 'user-$userId';
+}
+
+// Helper functions
+AdStatus _parseAdStatus(dynamic value) {
+  if (value == null) return AdStatus.pending;
+  final str = value.toString().toLowerCase();
+  switch (str) {
+    case 'active':
+      return AdStatus.active;
+    case 'sold':
+      return AdStatus.sold;
+    case 'rejected':
+      return AdStatus.rejected;
+    case 'expired':
+      return AdStatus.expired;
+    default:
+      return AdStatus.pending;
+  }
+}
+
+List<String> _parseImages(dynamic value) {
+  if (value == null) return [];
+  if (value is List) {
+    return value.map((e) {
+      if (e is String) return e;
+      if (e is Map && e['file_path'] != null) return e['file_path'] as String;
+      if (e is Map && e['filePath'] != null) return e['filePath'] as String;
+      return e.toString();
+    }).toList();
+  }
+  return [];
+}
+
+double _parseDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  return double.tryParse(value.toString()) ?? 0.0;
+}
+
+double? _parseDoubleNullable(dynamic value) {
+  if (value == null) return null;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  return double.tryParse(value.toString());
+}
+
+DateTime _parseDateTime(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is DateTime) return value;
+  return DateTime.tryParse(value.toString()) ?? DateTime.now();
+}
+
+DateTime? _parseDateTimeNullable(dynamic value) {
+  if (value == null) return null;
+  if (value is DateTime) return value;
+  return DateTime.tryParse(value.toString());
+}

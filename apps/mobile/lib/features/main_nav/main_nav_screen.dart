@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/features/home/home_screen.dart';
 import 'package:mobile/features/browse/browse_screen.dart';
 import 'package:mobile/features/post_ad/post_ad_screen.dart';
 import 'package:mobile/features/messages/messages_screen.dart';
-
+import 'package:mobile/features/auth/signin_screen.dart';
 import 'package:mobile/features/profile/profile_screen.dart';
 
 class MainNavScreen extends StatefulWidget {
@@ -43,16 +46,129 @@ class _MainNavScreenState extends State<MainNavScreen> {
   }
 
   void _navigateToPostAd() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const PostAdScreen()),
+    final authProvider = context.read<AuthProvider>();
+
+    if (authProvider.isLoggedIn) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const PostAdScreen()),
+      );
+    } else {
+      _showLoginPrompt();
+    }
+  }
+
+  void _showLoginPrompt() {
+    showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          24 + MediaQuery.of(context).viewPadding.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.lock_outline, size: 32, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Login Required',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textDark,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please login to post an ad on Thulobazaar',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close bottom sheet
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SignInScreen(
+                        onSuccess: () {
+                          // After successful login, navigate to post ad
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const PostAdScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Login to Continue',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Maybe Later',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_selectedIndex],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          // Minimize app to background instead of closing
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -103,7 +219,8 @@ class _MainNavScreenState extends State<MainNavScreen> {
         elevation: 4,
         child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ),
     );
   }
 }

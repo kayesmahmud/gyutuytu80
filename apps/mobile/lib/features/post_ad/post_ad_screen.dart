@@ -20,8 +20,9 @@ class PostAdScreen extends StatelessWidget {
           : null, // Default to hamburger
       ),
       drawer: const MainDrawer(),
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,6 +122,7 @@ class PostAdScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

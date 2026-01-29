@@ -57,7 +57,7 @@ export default async function HomePage({ params }: HomePageProps) {
         parent_id: null,
       },
       orderBy: {
-        id: 'asc',
+        display_order: 'asc',
       },
       // Get all 16 categories instead of limiting to 8
     }),

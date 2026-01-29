@@ -1,6 +1,8 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/api/auth_client.dart';
 import 'package:provider/provider.dart';
@@ -23,14 +25,53 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  static const String _rememberMeKey = 'remember_me';
+  static const String _savedPhoneKey = 'saved_phone';
+
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  // final _authClient = AuthClient(); // Not used directly anymore for state, but used for API calls locally
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  
+
   bool _rememberMe = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool(_rememberMeKey) ?? false;
+    final savedPhone = prefs.getString(_savedPhoneKey) ?? '';
+
+    if (rememberMe && savedPhone.isNotEmpty) {
+      setState(() {
+        _rememberMe = true;
+        _phoneController.text = savedPhone;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials(String phone) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setBool(_rememberMeKey, true);
+      await prefs.setString(_savedPhoneKey, phone);
+    } else {
+      await prefs.remove(_rememberMeKey);
+      await prefs.remove(_savedPhoneKey);
+    }
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   void _handleGoogleLogin() async {
     setState(() => _isLoading = true);
@@ -106,6 +147,8 @@ class _SignInScreenState extends State<SignInScreen> {
 
       if (result['success'] == true) {
         final token = result['token'];
+        // Save credentials if "Remember me" is checked
+        await _saveCredentials(rawPhone);
         // Update Global State
         await context.read<AuthProvider>().login(token);
 
@@ -204,30 +247,56 @@ class _SignInScreenState extends State<SignInScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Google Sign In
-                  OutlinedButton(
-                    onPressed: _isLoading ? null : _handleGoogleLogin,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: Colors.grey[300]!),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.g_mobiledata, size: 28, color: Colors.blue), 
-                        const SizedBox(width: 8),
-                        Text(
-                          'Continue with Google',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textDark,
-                          ),
+                  // Google Sign In Button
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _isLoading ? null : _handleGoogleLogin,
+                      borderRadius: BorderRadius.circular(28),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: Colors.grey[300]!, width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/images/google_logo.svg',
+                                width: 24,
+                                height: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Continue with Google',
+                              style: GoogleFonts.roboto(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
+                                letterSpacing: 0.25,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   

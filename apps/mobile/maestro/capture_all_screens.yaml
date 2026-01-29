@@ -1,0 +1,62 @@
+# Capture All Screens Flow
+# Run: maestro test maestro/capture_all_screens.yaml
+# Screenshots saved to: ~/.maestro/tests/
+
+appId: com.thulobazaar.mobile
+---
+- launchApp
+- waitForAnimationToEnd
+
+# ============ HOME ============
+- takeScreenshot: screens/01_home
+
+# ============ BROWSE ============
+- tapOn: "Browse"
+- waitForAnimationToEnd
+- takeScreenshot: screens/02_browse
+
+- inputText:
+    id: "search.*"
+    text: "phone"
+- takeScreenshot: screens/03_browse_search
+
+- clearState
+
+# ============ AD DETAIL ============
+- launchApp
+- tapOn: "Browse"
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*Rs\\..*"
+    index: 0
+- waitForAnimationToEnd
+- takeScreenshot: screens/04_ad_detail
+
+- scroll:
+    direction: DOWN
+- takeScreenshot: screens/05_ad_detail_scroll
+
+# ============ MESSAGES ============
+- back
+- tapOn: "Messages"
+- waitForAnimationToEnd
+- takeScreenshot: screens/06_messages
+
+# ============ PROFILE ============
+- tapOn: "Profile"
+- waitForAnimationToEnd
+- takeScreenshot: screens/07_profile
+
+# ============ POST AD ============
+- tapOn:
+    text: ".*POST.*|.*Post.*|.*\\+.*"
+- waitForAnimationToEnd
+- takeScreenshot: screens/08_post_ad
+
+- back
+
+# ============ DRAWER/MENU ============
+- tapOn:
+    id: ".*menu.*|.*drawer.*"
+- waitForAnimationToEnd
+- takeScreenshot: screens/09_drawer

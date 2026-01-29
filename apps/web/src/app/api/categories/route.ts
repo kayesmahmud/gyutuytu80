@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         created_at: true,
       },
       orderBy: {
-        name: 'asc',
+        display_order: 'asc',
       },
     });
 

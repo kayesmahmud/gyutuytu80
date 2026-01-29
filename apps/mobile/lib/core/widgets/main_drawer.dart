@@ -9,8 +9,6 @@ import 'package:mobile/features/dashboard/dashboard_screen.dart';
 import 'package:mobile/features/shop/shop_screen.dart';
 import 'package:mobile/features/verification/verification_screen.dart';
 import 'package:mobile/features/profile/profile_screen.dart';
-import 'package:mobile/features/browse/browse_screen.dart';
-
 class MainDrawer extends StatelessWidget {
   const MainDrawer({super.key});
 
@@ -51,10 +49,6 @@ class MainDrawer extends StatelessWidget {
                  child: Column(
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
-                     _buildMenuItem("Browse Ads", onTap: () {
-                       Navigator.pop(context);
-                       Navigator.push(context, MaterialPageRoute(builder: (_) => const BrowseScreen()));
-                     }),
                      _buildMenuItem("Get Verified", onTap: () {
                        Navigator.pop(context);
                        Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));

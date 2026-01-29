@@ -236,10 +236,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // Custom Stepper Indicator
-          _buildStepIndicator(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Custom Stepper Indicator
+            _buildStepIndicator(),
           const Divider(height: 1),
           
           // Step Content
@@ -253,6 +254,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           // Bottom Navigation
           _buildBottomBar(),
         ],
+        ),
       ),
     );
   }

@@ -8,7 +8,9 @@ import 'package:mobile/core/widgets/ad_card.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
+import 'package:mobile/core/data/mock_filter_data.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
+import 'package:mobile/features/main_nav/main_nav_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -77,10 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     // HERO SECTION with Gradient
                     _buildHeroSection(context),
-
-                    // Flash Sale Banner
-                    const SizedBox(height: 16),
-                    _buildFlashSaleBanner(),
 
                     // Browse Categories
                     const SizedBox(height: 24),
@@ -172,108 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Post Free Ad Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                // Navigate to post ad screen
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.add, size: 18),
-                  const SizedBox(width: 8),
-                  Text("POST FREE AD", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Browse All Ads Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                // Navigate to browse screen (index 1 in bottom nav)
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF59E0B),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Browse All Ads", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_ios, size: 14),
-                ],
-              ),
-            ),
-          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFlashSaleBanner() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Colors.orange, Colors.red]),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.local_fire_department, color: Colors.yellow, size: 28),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Flash Sale",
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  "Limited Time Only",
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                "Buy Now",
-                style: GoogleFonts.inter(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -306,35 +203,50 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoriesList() {
-    // Use API categories if available, otherwise show defaults
-    final categoriesToShow = _categories.isNotEmpty
-        ? _categories.take(6).toList()
-        : <CategoryWithSubcategories>[];
-
-    if (categoriesToShow.isEmpty) {
-      // Fallback to static categories
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 16),
-        child: Row(
-          children: [
-            _buildStaticCategoryItem(Icons.phone_android, "Mobile"),
-            _buildStaticCategoryItem(Icons.laptop, "Electronics"),
-            _buildStaticCategoryItem(Icons.directions_car, "Vehicles"),
-            _buildStaticCategoryItem(Icons.home, "Property"),
-            _buildStaticCategoryItem(Icons.checkroom, "Clothing"),
-          ],
-        ),
-      );
-    }
+    // Merge hardcoded categories with API categories
+    // - Hardcoded: always shown (works offline)
+    // - API: if new categories exist from backend, append them
+    final mergedCategories = _getMergedCategories();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.only(left: 16),
       child: Row(
-        children: categoriesToShow.map((cat) => _buildCategoryItem(cat)).toList(),
+        children: mergedCategories.map((cat) =>
+          _buildStaticEmojiCategoryItem(
+            cat['icon'] as String,
+            (cat['shortName'] ?? cat['name']) as String, // Use shortName for display
+            cat['slug'] as String,
+          )
+        ).toList(),
       ),
     );
+  }
+
+  /// Merges hardcoded categories with API categories
+  /// Returns hardcoded list + any new categories from API
+  List<Map<String, dynamic>> _getMergedCategories() {
+    // Start with hardcoded categories
+    final List<Map<String, dynamic>> merged = List.from(MockFilterData.categories);
+
+    // Get slugs from hardcoded categories for comparison
+    final hardcodedSlugs = MockFilterData.categories
+        .map((c) => c['slug'] as String)
+        .toSet();
+
+    // Add any new categories from API that don't exist in hardcoded list
+    for (final apiCategory in _categories) {
+      if (!hardcodedSlugs.contains(apiCategory.slug)) {
+        merged.add({
+          'name': apiCategory.name,
+          'shortName': apiCategory.name, // API categories use name as shortName
+          'icon': apiCategory.icon ?? '📁', // Default icon if none
+          'slug': apiCategory.slug,
+        });
+      }
+    }
+
+    return merged;
   }
 
   Widget _buildStaticCategoryItem(IconData icon, String label) {
@@ -359,6 +271,44 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textDark)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStaticEmojiCategoryItem(String emoji, String name, String slug) {
+    return Container(
+      margin: const EdgeInsets.only(right: 16),
+      child: GestureDetector(
+        onTap: () {
+          // TODO: Navigate to browse with category filter using slug
+        },
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: 24),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 70,
+              child: Text(
+                name,
+                style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textDark),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

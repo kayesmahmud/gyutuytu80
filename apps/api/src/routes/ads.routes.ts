@@ -55,8 +55,9 @@ router.get(
   catchAsync(async (req: Request, res: Response) => {
     const result = await getAds({
       search: req.query.search as string,
-      category: req.query.category as string,
-      location: req.query.location as string,
+      category: (req.query.category || req.query.category_id) as string,
+      subcategory: (req.query.subcategory || req.query.subcategory_id) as string,
+      location: (req.query.location || req.query.location_id) as string,
       minPrice: req.query.minPrice as string,
       maxPrice: req.query.maxPrice as string,
       condition: req.query.condition as string,

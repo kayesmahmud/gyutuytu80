@@ -4,6 +4,7 @@ import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/features/browse/browse_filter_modal.dart';
 import 'package:mobile/core/widgets/main_app_bar.dart';
+import 'package:mobile/core/widgets/main_drawer.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
 
 class BrowseScreen extends StatefulWidget {
@@ -140,6 +141,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: const MainAppBar(),
+      drawer: const MainDrawer(),
       body: SafeArea(
         child: Column(
           children: [
@@ -155,31 +157,30 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Container(
+                          child: SizedBox(
                             height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey[300]!),
-                            ),
-                            child: Row(
-                              children: [
-                                const SizedBox(width: 12),
-                                Icon(Icons.search, color: Colors.grey[500]),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _searchController,
-                                    onSubmitted: (_) => _onSearch(),
-                                    decoration: InputDecoration(
-                                      hintText: "Search for anything...",
-                                      hintStyle: GoogleFonts.inter(color: Colors.grey[500]),
-                                      border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                                    ),
-                                  ),
+                            child: TextField(
+                              controller: _searchController,
+                              onSubmitted: (_) => _onSearch(),
+                              decoration: InputDecoration(
+                                hintText: "Search for anything...",
+                                hintStyle: GoogleFonts.inter(color: Colors.grey[500]),
+                                filled: true,
+                                fillColor: Colors.grey[100],
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: Colors.grey[300]!),
                                 ),
-                              ],
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: Colors.grey[300]!),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(color: Color(0xFF10B981)),
+                                ),
+                              ),
                             ),
                           ),
                         ),

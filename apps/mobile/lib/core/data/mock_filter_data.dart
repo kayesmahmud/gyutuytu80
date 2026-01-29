@@ -2,21 +2,23 @@ import 'package:mobile/core/data/nepal_location_data.dart';
 
 class MockFilterData {
   static const List<Map<String, dynamic>> categories = [
+    // 1. Mobiles
     {
       "name": "Mobiles",
+      "shortName": "Mobiles",
       "icon": "📱",
       "slug": "mobiles",
       "subcategories": [
         {"name": "Mobile Phones", "slug": "mobile-phones"},
         {"name": "Tablets & Accessories", "slug": "tablets-accessories"},
         {"name": "Mobile & Tablet Accessories", "slug": "mobile-accessories"},
-        {"name": "Smart Watches", "slug": "smart-watches"}, // Note: Added based on typical structure, though not explicitly in electronics.ts export list but inferred from context if needed, otherwise sticking strictly to config map. Re-checked electronics.ts: "Smart Watches" is not a direct key but "Mobile & Tablet Accessories" is. Wait, "Mobile Phones" and "Tablets" are there. Let's stick to the keys in electronics.ts for accuracy. 
-        // Actually, looking at electronics.ts, there is no "Smart Watches" key. However, often "Wearables" or similar exists. "Other Electronics" might cover it. 
-        // Let's use exactly what is in electronics.ts:
+        {"name": "Smart Watches", "slug": "smart-watches"},
       ]
     },
+    // 2. Electronics
     {
       "name": "Electronics",
+      "shortName": "Electronics",
       "icon": "💻",
       "slug": "electronics",
       "subcategories": [
@@ -30,8 +32,10 @@ class MockFilterData {
         {"name": "Other Electronics", "slug": "other-electronics"},
       ]
     },
+    // 3. Vehicles
     {
       "name": "Vehicles",
+      "shortName": "Vehicles",
       "icon": "🚗",
       "slug": "vehicles",
       "subcategories": [
@@ -46,8 +50,10 @@ class MockFilterData {
         {"name": "Parking & Garage", "slug": "parking-garage"},
       ]
     },
+    // 4. Property
     {
       "name": "Property",
+      "shortName": "Property",
       "icon": "🏢",
       "slug": "property",
       "subcategories": [
@@ -61,23 +67,27 @@ class MockFilterData {
         {"name": "Rooms & Flatmates", "slug": "rooms-flatmates"},
       ]
     },
+    // 5. Home & Living
     {
-       "name": "Home & Living",
-       "icon": "🏠",
-       "slug": "home-living",
-       "subcategories": [
-          {"name": "Bedroom Furniture", "slug": "bedroom-furniture"},
-          {"name": "Living Room Furniture", "slug": "living-room-furniture"},
-          {"name": "Kitchen & Dining Furniture", "slug": "kitchen-dining-furniture"},
-          {"name": "Office & Shop Furniture", "slug": "office-shop-furniture"},
-          {"name": "Children's Furniture", "slug": "childrens-furniture"},
-          {"name": "Home Decor", "slug": "home-decor"},
-          {"name": "Kitchen Appliances", "slug": "kitchen-appliances"},
-          {"name": "Home Appliances", "slug": "home-appliances"},
-       ]
+      "name": "Home & Living",
+      "shortName": "Home & Living",
+      "icon": "🏠",
+      "slug": "home-living",
+      "subcategories": [
+        {"name": "Bedroom Furniture", "slug": "bedroom-furniture"},
+        {"name": "Living Room Furniture", "slug": "living-room-furniture"},
+        {"name": "Kitchen & Dining Furniture", "slug": "kitchen-dining-furniture"},
+        {"name": "Office & Shop Furniture", "slug": "office-shop-furniture"},
+        {"name": "Children's Furniture", "slug": "childrens-furniture"},
+        {"name": "Home Decor", "slug": "home-decor"},
+        {"name": "Kitchen Appliances", "slug": "kitchen-appliances"},
+        {"name": "Home Appliances", "slug": "home-appliances"},
+      ]
     },
+    // 6. Men's Fashion & Grooming
     {
       "name": "Men's Fashion & Grooming",
+      "shortName": "Men's Fashion",
       "icon": "👔",
       "slug": "mens-fashion",
       "subcategories": [
@@ -88,8 +98,10 @@ class MockFilterData {
         {"name": "Men's Grooming", "slug": "mens-grooming"},
       ]
     },
+    // 7. Women's Fashion & Beauty
     {
       "name": "Women's Fashion & Beauty",
+      "shortName": "Women's Fashion",
       "icon": "👗",
       "slug": "womens-fashion",
       "subcategories": [
@@ -101,8 +113,10 @@ class MockFilterData {
         {"name": "Bags & Luggage", "slug": "bags-luggage"},
       ]
     },
+    // 8. Hobbies, Sports & Kids
     {
       "name": "Hobbies, Sports & Kids",
+      "shortName": "Sports & Kids",
       "icon": "⚽",
       "slug": "hobbies-sports",
       "subcategories": [
@@ -113,19 +127,10 @@ class MockFilterData {
         {"name": "Books & Stationery", "slug": "books-stationery"},
       ]
     },
-    {
-      "name": "Business & Industry",
-      "icon": "🏭",
-      "slug": "business-industry",
-      "subcategories": [
-        {"name": "Industry Machinery & Tools", "slug": "industry-machinery"},
-        {"name": "Medical Equipment & Supplies", "slug": "medical-equipment"},
-        {"name": "Office Equipment", "slug": "office-equipment"},
-        {"name": "Raw Materials", "slug": "raw-materials"},
-      ]
-    },
+    // 9. Essentials
     {
       "name": "Essentials",
+      "shortName": "Essentials",
       "icon": "🛒",
       "slug": "essentials",
       "subcategories": [
@@ -135,19 +140,35 @@ class MockFilterData {
         {"name": "Household", "slug": "household"},
       ]
     },
+    // 10. Jobs
     {
-      "name": "Agriculture",
-      "icon": "🌾",
-      "slug": "agriculture",
+      "name": "Jobs",
+      "shortName": "Jobs",
+      "icon": "💼",
+      "slug": "jobs",
       "subcategories": [
-        {"name": "Crops, Seeds & Plants", "slug": "crops-seeds"},
-        {"name": "Farming Tools & Machinery", "slug": "farming-tools"},
-        {"name": "Fertilizers & Pesticides", "slug": "fertilizers"},
-        {"name": "Livestock Feed", "slug": "livestock-feed"},
+        {"name": "Full Time Jobs", "slug": "full-time-jobs"},
+        {"name": "Part Time Jobs", "slug": "part-time-jobs"},
+        {"name": "Internships", "slug": "internships"},
+        {"name": "Freelance Jobs", "slug": "freelance-jobs"},
       ]
     },
+    // 11. Overseas Jobs
+    {
+      "name": "Overseas Jobs",
+      "shortName": "Overseas Jobs",
+      "icon": "✈️",
+      "slug": "overseas-jobs",
+      "subcategories": [
+        {"name": "Middle East Jobs", "slug": "middle-east-jobs"},
+        {"name": "Asia Jobs", "slug": "asia-jobs"},
+        {"name": "Europe Jobs", "slug": "europe-jobs"},
+      ]
+    },
+    // 12. Pets & Animals
     {
       "name": "Pets & Animals",
+      "shortName": "Pets",
       "icon": "🐾",
       "slug": "pets",
       "subcategories": [
@@ -163,8 +184,10 @@ class MockFilterData {
         {"name": "Pet Accessories", "slug": "pet-accessories"},
       ]
     },
+    // 13. Services
     {
       "name": "Services",
+      "shortName": "Services",
       "icon": "🛠️",
       "slug": "services",
       "subcategories": [
@@ -172,31 +195,49 @@ class MockFilterData {
         {"name": "Servicing & Repair", "slug": "servicing-repair"},
         {"name": "IT Services", "slug": "it-services"},
         {"name": "Professional Services", "slug": "professional-services"},
-        {"name": "Gym & Fitness (Service)", "slug": "gym-fitness-service"}, // Disambiguated from Sports category
+        {"name": "Gym & Fitness (Service)", "slug": "gym-fitness-service"},
         {"name": "Beauty Services", "slug": "beauty-services"},
         {"name": "Body Massage", "slug": "body-massage"},
         {"name": "Domestic & Daycare Services", "slug": "domestic-daycare"},
       ]
     },
+    // 14. Education
     {
-      "name": "Jobs",
-      "icon": "💼",
-      "slug": "jobs",
+      "name": "Education",
+      "shortName": "Education",
+      "icon": "📚",
+      "slug": "education",
       "subcategories": [
-        {"name": "Full Time Jobs", "slug": "full-time-jobs"},
-        {"name": "Part Time Jobs", "slug": "part-time-jobs"},
-        {"name": "Internships", "slug": "internships"},
-        {"name": "Freelance Jobs", "slug": "freelance-jobs"},
+        {"name": "Schools & Colleges", "slug": "schools-colleges"},
+        {"name": "Coaching & Tuition", "slug": "coaching-tuition"},
+        {"name": "Online Courses", "slug": "online-courses"},
+        {"name": "Study Abroad", "slug": "study-abroad"},
       ]
     },
+    // 15. Business & Industry
     {
-      "name": "Overseas Jobs",
-      "icon": "✈️",
-      "slug": "overseas-jobs",
+      "name": "Business & Industry",
+      "shortName": "Business",
+      "icon": "🏭",
+      "slug": "business-industry",
       "subcategories": [
-        {"name": "Middle East Jobs", "slug": "middle-east-jobs"},
-        {"name": "Asia Jobs", "slug": "asia-jobs"},
-        {"name": "Europe Jobs", "slug": "europe-jobs"},
+        {"name": "Industry Machinery & Tools", "slug": "industry-machinery"},
+        {"name": "Medical Equipment & Supplies", "slug": "medical-equipment"},
+        {"name": "Office Equipment", "slug": "office-equipment"},
+        {"name": "Raw Materials", "slug": "raw-materials"},
+      ]
+    },
+    // 16. Agriculture
+    {
+      "name": "Agriculture",
+      "shortName": "Agriculture",
+      "icon": "🌾",
+      "slug": "agriculture",
+      "subcategories": [
+        {"name": "Crops, Seeds & Plants", "slug": "crops-seeds"},
+        {"name": "Farming Tools & Machinery", "slug": "farming-tools"},
+        {"name": "Fertilizers & Pesticides", "slug": "fertilizers"},
+        {"name": "Livestock Feed", "slug": "livestock-feed"},
       ]
     },
   ];

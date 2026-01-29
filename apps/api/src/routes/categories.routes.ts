@@ -27,7 +27,7 @@ router.get(
             orderBy: { name: 'asc' },
           },
         },
-        orderBy: { name: 'asc' },
+        orderBy: { display_order: 'asc' },
       });
     } else {
       // Get categories with ad count
@@ -37,7 +37,7 @@ router.get(
         LEFT JOIN ads a ON c.id = a.category_id AND a.status = 'approved'
         WHERE c.parent_id IS NULL
         GROUP BY c.id
-        ORDER BY c.name ASC
+        ORDER BY c.display_order ASC
       `;
     }
 

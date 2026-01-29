@@ -27,8 +27,22 @@ router.get(
 
     let locations: LocationWithCount[];
 
-    if (type !== undefined) {
-      // Filter by location type
+    if (type !== undefined && parent_id !== undefined) {
+      // Filter by BOTH type and parent_id
+      const queryType = type as string;
+      const queryParentId = parseInt(parent_id as string);
+
+      locations = await prisma.$queryRaw<LocationWithCount[]>`
+        SELECT l.*, COUNT(a.id)::int as ad_count
+        FROM locations l
+        LEFT JOIN ads a ON l.id = a.location_id AND a.status = 'approved'
+        WHERE l.type = ${queryType} AND l.parent_id = ${queryParentId}
+        GROUP BY l.id
+        ORDER BY l.name ASC
+      `;
+      console.log(`✅ Found ${locations.length} locations (type: ${queryType}, parent_id: ${queryParentId})`);
+    } else if (type !== undefined) {
+      // Filter by location type only
       locations = await prisma.$queryRaw<LocationWithCount[]>`
         SELECT l.*, COUNT(a.id)::int as ad_count
         FROM locations l
@@ -266,7 +280,7 @@ router.get(
       });
     } else {
       location = await prisma.locations.findFirst({
-        where: { slug: id },
+        where: { slug: id as string },
       });
     }
 

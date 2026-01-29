@@ -13,7 +13,10 @@ import { PAGINATION } from '../config/constants.js';
 export interface AdFilters {
   search?: string;
   category?: string;
+  subcategory?: string; // Added for precise subcategory filtering
+  categoryIds?: number[]; // Added for hierarchical filtering
   location?: string;
+  locationIds?: number[]; // Added for hierarchical filtering
   minPrice?: string;
   maxPrice?: string;
   condition?: string;
@@ -178,6 +181,98 @@ export async function getLocationHierarchy(locationId?: number): Promise<string>
 // Query Helpers
 // ============================================================================
 
+/**
+ * Recursively get all descendant location IDs (e.g. Province -> Districts -> Municipalities -> Areas)
+ */
+async function getLocationDescendantIds(locationId: number): Promise<number[]> {
+  const location = await prisma.locations.findUnique({
+    where: { id: locationId },
+    select: { type: true },
+  });
+
+  if (!location) return [locationId];
+
+  // If it's an area, just return the ID
+  if (location.type === 'area') {
+    return [locationId];
+  }
+
+  // Determine which children to fetch based on type
+  let childIds: number[] = [];
+
+  if (location.type === 'province') {
+    // Province -> Districts
+    const districts = await prisma.locations.findMany({
+      where: { parent_id: locationId, type: 'district' },
+      select: { id: true },
+    });
+    const districtIds = districts.map(d => d.id);
+    childIds.push(...districtIds);
+
+    // Districts -> Municipalities
+    if (districtIds.length > 0) {
+      const municipalities = await prisma.locations.findMany({
+        where: { parent_id: { in: districtIds }, type: 'municipality' },
+        select: { id: true },
+      });
+      const municipalityIds = municipalities.map(m => m.id);
+      childIds.push(...municipalityIds);
+
+      // Municipalities -> Areas
+      if (municipalityIds.length > 0) {
+        const areas = await prisma.locations.findMany({
+          where: { parent_id: { in: municipalityIds }, type: 'area' },
+          select: { id: true },
+        });
+        childIds.push(...areas.map(a => a.id));
+      }
+    }
+  } else if (location.type === 'district') {
+    // District -> Municipalities
+    const municipalities = await prisma.locations.findMany({
+      where: { parent_id: locationId, type: 'municipality' },
+      select: { id: true },
+    });
+    const municipalityIds = municipalities.map(m => m.id);
+    childIds.push(...municipalityIds);
+
+    // Municipalities -> Areas
+    if (municipalityIds.length > 0) {
+      const areas = await prisma.locations.findMany({
+        where: { parent_id: { in: municipalityIds }, type: 'area' },
+        select: { id: true },
+      });
+      childIds.push(...areas.map(a => a.id));
+    }
+  } else if (location.type === 'municipality') {
+    // Municipality -> Areas
+    const areas = await prisma.locations.findMany({
+      where: { parent_id: locationId, type: 'area' },
+      select: { id: true },
+    });
+    childIds.push(...areas.map(a => a.id));
+  }
+
+  // Return the original ID plus all descendant IDs
+  return [locationId, ...childIds];
+}
+
+/**
+ * Get all descendant category IDs (e.g. Parent Category -> Subcategories)
+ */
+async function getCategoryDescendantIds(categoryId: number): Promise<number[]> {
+  // Find all subcategories where parent_id matches
+  const subcategories = await prisma.categories.findMany({
+    where: { parent_id: categoryId },
+    select: { id: true },
+  });
+
+  const subcategoryIds = subcategories.map(c => c.id);
+
+  // Return original ID + subcategory IDs
+  return [categoryId, ...subcategoryIds];
+}
+
 function buildAdWhereClause(filters: AdFilters) {
   const where: any = { status: 'approved' };
 
@@ -188,11 +283,16 @@ function buildAdWhereClause(filters: AdFilters) {
     ];
   }
 
-  if (filters.category && filters.category !== 'all' && !isNaN(Number(filters.category))) {
+  if (filters.categoryIds && filters.categoryIds.length > 0) {
+    where.category_id = { in: filters.categoryIds };
+  } else if (filters.category && filters.category !== 'all' && !isNaN(Number(filters.category))) {
     where.category_id = parseInt(filters.category);
   }
 
-  if (filters.location && filters.location !== 'all' && !isNaN(Number(filters.location))) {
+  if (filters.locationIds && filters.locationIds.length > 0) {
+    where.location_id = { in: filters.locationIds };
+  } else if (filters.location && filters.location !== 'all' && !isNaN(Number(filters.location))) {
+    // Fallback if locationIds not provided but location string is
     where.location_id = parseInt(filters.location);
   }
 
@@ -334,6 +434,27 @@ const adDetailSelect = {
 };
 
 export async function getAds(filters: AdFilters) {
+  // Pre-process location filter to get all descendant IDs
+  if (filters.location && filters.location !== 'all' && !isNaN(Number(filters.location))) {
+    const locId = parseInt(filters.location);
+    const allLocationIds = await getLocationDescendantIds(locId);
+    filters.locationIds = allLocationIds;
+  }
+
+  // Pre-process category filter
+  // 1. If Subcategory is provided, it takes precedence (more specific)
+  if (filters.subcategory && filters.subcategory !== 'all' && !isNaN(Number(filters.subcategory))) {
+    const subId = parseInt(filters.subcategory);
+    const allSubIds = await getCategoryDescendantIds(subId);
+    filters.categoryIds = allSubIds;
+  }
+  // 2. Else if Category is provided
+  else if (filters.category && filters.category !== 'all' && !isNaN(Number(filters.category))) {
+    const catId = parseInt(filters.category);
+    const allCategoryIds = await getCategoryDescendantIds(catId);
+    filters.categoryIds = allCategoryIds;
+  }
+
   const where = buildAdWhereClause(filters);
   const orderBy = buildAdOrderBy(filters.sortBy);
 
