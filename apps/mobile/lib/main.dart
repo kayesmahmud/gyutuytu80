@@ -6,6 +6,7 @@ import 'package:marionette_flutter/marionette_flutter.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/providers/auth_provider.dart';
+import 'core/providers/chat_provider.dart';
 import 'core/services/notification_service.dart';
 import 'features/main_nav/main_nav_screen.dart';
 
@@ -46,8 +47,11 @@ void main() async {
   }
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+      ],
       child: const ThuloBazaarApp(),
     ),
   );

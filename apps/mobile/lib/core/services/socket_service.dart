@@ -69,6 +69,7 @@ class SocketService {
       final baseUrl = ApiConfig.baseUrl.replaceAll('/api', '');
 
       print('[SocketService] Connecting to $baseUrl');
+      print('[SocketService] Token: ${token.substring(0, 10)}...');
 
       _socket = io.io(
         baseUrl,
@@ -130,7 +131,7 @@ class SocketService {
 
     // Connection events
     _socket!.onConnect((_) {
-      print('[SocketService] ✅ Connected');
+      print('[SocketService] ✅ Connected to ${_socket?.io.uri}');
       _isConnected = true;
       _isConnecting = false;
       _reconnectAttempts = 0;

@@ -14,6 +14,9 @@ const httpServer = http.createServer(app);
 // Initialize Socket.IO
 const io = initializeSocketIO(httpServer);
 
+// Store io on Express app so REST routes can broadcast socket events
+app.set('io', io);
+
 // Graceful shutdown handler
 const gracefulShutdown = (signal: string) => {
   console.log(`\n${signal} received. Shutting down gracefully...`);

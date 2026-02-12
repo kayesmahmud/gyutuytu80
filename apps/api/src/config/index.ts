@@ -37,7 +37,7 @@ export const config = {
   TYPESENSE_API_KEY: process.env.TYPESENSE_API_KEY || '',
 
   // CORS
-  CORS_ORIGINS: (process.env.CORS_ORIGIN || 'http://localhost:3333').split(','),
+  CORS_ORIGINS: (process.env.CORS_ORIGIN || 'http://localhost:3333,http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000').split(','),
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),

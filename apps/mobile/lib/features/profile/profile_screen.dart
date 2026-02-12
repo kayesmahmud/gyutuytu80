@@ -4,6 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_theme.dart';
+import 'package:mobile/features/auth/signin_screen.dart';
+// import 'package:mobile/features/profile/edit_profile_screen.dart';
+import 'package:mobile/features/profile/security_settings_screen.dart';
+import 'package:mobile/features/profile/phone_verification_screen.dart';
+import 'package:mobile/features/verification/verification_screen.dart';
+import 'package:mobile/core/theme/app_theme.dart';
 import '../../core/api/auth_client.dart';
 import '../../core/api/api_config.dart';
 import '../../core/api/favorites_client.dart';
@@ -389,7 +395,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.bookmark_border),
+                const Icon(Icons.favorite_border),
                 const SizedBox(width: 4),
                 Text("${_favorites.length}", style: GoogleFonts.inter()),
               ],
@@ -583,45 +589,155 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
+
   Widget _buildSecurityTab() {
+    final bool isPhoneVerified = _user?['phoneVerified'] ?? false;
+    final String? phone = _user?['phone'];
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Security Settings", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-          const SizedBox(height: 8),
-          Text("Manage your account security", style: GoogleFonts.inter(color: Colors.grey[600])),
+          // Phone Verification Status Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isPhoneVerified ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isPhoneVerified ? Colors.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isPhoneVerified ? Icons.verified_user : Icons.warning_amber_rounded,
+                  color: isPhoneVerified ? Colors.green : Colors.orange,
+                  size: 32,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isPhoneVerified ? 'Phone Verified' : 'Verify Your Phone',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isPhoneVerified ? Colors.green[800] : Colors.orange[800],
+                          fontSize: 16,
+                        ),
+                      ),
+                      if (phone != null)
+                        Text(
+                          phone,
+                          style: TextStyle(
+                            color: isPhoneVerified ? Colors.green[800] : Colors.orange[800],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (!isPhoneVerified)
+                  ElevatedButton(
+                    onPressed: () async {
+                       await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PhoneVerificationScreen(
+                          onVerified: () => context.read<AuthProvider>().refreshProfile(),
+                        )),
+                      );
+                      // Force refresh regardless of callback sometimes
+                      if (mounted) context.read<AuthProvider>().refreshProfile();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: const Text('Verify'),
+                  ),
+              ],
+            ),
+          ),
+          
           const SizedBox(height: 24),
+          const Text(
+            'Security Settings',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
 
-          // Change Password
-          _buildSecurityItem(
-            icon: Icons.lock_outline,
-            title: "Change Password",
-            subtitle: "Update your password regularly for security",
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coming soon')));
-            },
+          // Security Options List
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey[200]!),
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.security, color: AppTheme.primary),
+                  title: const Text('Security Center'),
+                  subtitle: const Text('Password, 2FA, Active Sessions'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                     Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()),
+                    );
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.verified, color: AppTheme.primary),
+                  title: const Text('Verification Center'),
+                  subtitle: const Text('Identity, Business, Badges'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                     Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const VerificationScreen()),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
 
-          // Two-Factor Auth
-          _buildSecurityItem(
-            icon: Icons.security,
-            title: "Two-Factor Authentication",
-            subtitle: "Add an extra layer of security",
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coming soon')));
-            },
+          const SizedBox(height: 24),
+          const Text(
+            'Account Management',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-
-          // Active Sessions
-          _buildSecurityItem(
-            icon: Icons.devices,
-            title: "Active Sessions",
-            subtitle: "Manage devices logged into your account",
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coming soon')));
-            },
+          const SizedBox(height: 16),
+          
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey[200]!),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              title: const Text('Delete Account'),
+              subtitle: const Text('Permanently delete your account and data'),
+              onTap: () {
+                // TODO: Implement account deletion 
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Account deletion coming soon')),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -687,7 +803,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-              child: Icon(Icons.bookmark_border, size: 48, color: Colors.grey[400]),
+              child: Icon(Icons.favorite_border, size: 48, color: Colors.grey[400]),
             ),
             const SizedBox(height: 16),
             Text("No saved ads yet", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700])),

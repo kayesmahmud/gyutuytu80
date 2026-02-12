@@ -20,6 +20,10 @@ class ChatProvider extends ChangeNotifier {
   String? _error;
   int? _currentUserId;
 
+  // Announcements state
+  List<Announcement> _announcements = [];
+  bool _announcementsLoading = false;
+
   // Subscriptions
   final List<StreamSubscription> _subscriptions = [];
 
@@ -29,6 +33,9 @@ class ChatProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isConnected => _isConnected;
   String? get error => _error;
+  List<Announcement> get announcements => _announcements;
+  bool get announcementsLoading => _announcementsLoading;
+  int get unreadAnnouncementsCount => _announcements.where((a) => !a.isRead).length;
 
   List<Message> getMessages(int conversationId) {
     return _messagesByConversation[conversationId] ?? [];
@@ -53,13 +60,17 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> _connectSocket() async {
+    // Setup listeners first to capture any state changes
+    _setupSocketListeners();
+    
+    // Check current state
+    _isConnected = _socketService.isConnected;
+    notifyListeners();
+
+    // Attempt connection
     final connected = await _socketService.connect();
     _isConnected = connected;
     notifyListeners();
-
-    if (connected) {
-      _setupSocketListeners();
-    }
   }
 
   void _setupSocketListeners() {
@@ -129,6 +140,9 @@ class ChatProvider extends ChangeNotifier {
   void _handleNewMessage(Message message) {
     final conversationId = message.conversationId;
     if (conversationId == null) return;
+
+    // Skip own messages - already added via optimistic update in sendMessage()
+    if (message.senderId == _currentUserId) return;
 
     // Add to messages list
     if (_messagesByConversation[conversationId] == null) {
@@ -241,11 +255,16 @@ class ChatProvider extends ChangeNotifier {
 
   /// Load messages for a conversation
   Future<void> loadMessages(int conversationId) async {
+    print('DEBUG [ChatProvider.loadMessages] Loading messages for conversation $conversationId');
     final response = await _messageClient.getMessages(conversationId);
+    print('DEBUG [ChatProvider.loadMessages] Response success=${response.success}, data count=${response.data?.length ?? 'null'}, error=${response.error}');
 
     if (response.success && response.data != null) {
       _messagesByConversation[conversationId] = response.data!;
+      print('DEBUG [ChatProvider.loadMessages] Stored ${response.data!.length} messages. First: ${response.data!.isNotEmpty ? response.data!.first.content : "EMPTY"}, Last: ${response.data!.isNotEmpty ? response.data!.last.content : "EMPTY"}');
       notifyListeners();
+    } else {
+      print('DEBUG [ChatProvider.loadMessages] FAILED to load messages. Error: ${response.error}');
     }
   }
 
@@ -266,7 +285,40 @@ class ChatProvider extends ChangeNotifier {
     MessageType type = MessageType.text,
     String? attachmentUrl,
   }) async {
+    print('DEBUG: sending message: content=$content, conversationId=$conversationId');
     if (_isConnected) {
+      // Optimistic update
+      final tempMessage = Message(
+        id: DateTime.now().millisecondsSinceEpoch, // Temp ID
+        conversationId: conversationId,
+        senderId: _currentUserId!,
+        content: content,
+        type: type,
+        isRead: false,
+        createdAt: DateTime.now(),
+        attachmentUrl: attachmentUrl,
+        sender: MessageSender(id: _currentUserId!, name: 'Me', avatar: ''), // Placeholder
+      );
+
+      _messagesByConversation[conversationId] ??= [];
+      _messagesByConversation[conversationId]!.insert(0, tempMessage);
+
+      // Optimistic conversation list update
+      final index = _conversations.indexWhere((c) => c.id == conversationId);
+      if (index >= 0) {
+        final conversation = _conversations[index];
+        final updated = conversation.copyWith(
+          lastMessage: type == MessageType.image ? '📷 Image' : content,
+          lastMessageAt: DateTime.now(),
+        );
+        _conversations.removeAt(index);
+        _conversations.insert(0, updated);
+      } else {
+        // Conversation not in list (new?), reload to be safe
+        loadConversations();
+      }
+      notifyListeners();
+
       // Use Socket.IO
       _socketService.sendMessage(
         conversationId: conversationId,
@@ -277,15 +329,11 @@ class ChatProvider extends ChangeNotifier {
       return true;
     } else {
       // Fallback to REST API
-      final conversation = _conversations.firstWhere(
-        (c) => c.id == conversationId,
-        orElse: () => throw Exception('Conversation not found'),
-      );
-
       final response = await _messageClient.sendMessage(
-        recipientId: conversation.otherUserId,
+        conversationId: conversationId,
         message: content,
-        adId: conversation.adId,
+        type: type.name,
+        attachmentUrl: attachmentUrl,
       );
 
       if (response.success && response.data != null) {
@@ -399,6 +447,39 @@ class ChatProvider extends ChangeNotifier {
       messageId: messageId,
       conversationId: conversationId,
     );
+  }
+
+  // ==========================================
+  // ANNOUNCEMENTS
+  // ==========================================
+
+  /// Load announcements
+  Future<void> loadAnnouncements() async {
+    _announcementsLoading = true;
+    notifyListeners();
+
+    final response = await _messageClient.getAnnouncements(includeRead: true);
+    _announcementsLoading = false;
+
+    if (response.success && response.data != null) {
+      _announcements = response.data!;
+    }
+    notifyListeners();
+  }
+
+  /// Mark announcement as read
+  Future<void> markAnnouncementRead(int announcementId) async {
+    final response = await _messageClient.markAnnouncementRead(announcementId);
+    if (response.success) {
+      final index = _announcements.indexWhere((a) => a.id == announcementId);
+      if (index >= 0) {
+        _announcements[index] = _announcements[index].copyWith(
+          isRead: true,
+          readAt: DateTime.now(),
+        );
+        notifyListeners();
+      }
+    }
   }
 
   // ==========================================

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -8,6 +9,8 @@ import 'package:provider/provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../main_nav/main_nav_screen.dart';
 import 'signin_screen.dart';
+
+enum SignUpStep { phone, otp, details }
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -21,13 +24,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _otpController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _authClient = AuthClient();
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  
+
   bool _isLoading = false;
-  bool _otpSent = false;
+  SignUpStep _currentStep = SignUpStep.phone;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _agreedToTerms = false;
   String? _verificationToken;
+
+  // OTP timers
+  int _otpCooldown = 0;
+  int _otpExpiry = 0;
+  Timer? _cooldownTimer;
+  Timer? _expiryTimer;
 
   @override
   void dispose() {
@@ -35,7 +47,46 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _otpController.dispose();
     _fullNameController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _cooldownTimer?.cancel();
+    _expiryTimer?.cancel();
     super.dispose();
+  }
+
+  bool _isValidNepaliPhone(String phone) {
+    return RegExp(r'^(97|98)\d{8}$').hasMatch(phone);
+  }
+
+  String _formatTime(int seconds) {
+    final mins = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '$mins:${secs.toString().padLeft(2, '0')}';
+  }
+
+  void _startCooldownTimer() {
+    _cooldownTimer?.cancel();
+    setState(() => _otpCooldown = 60);
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_otpCooldown <= 1) {
+        timer.cancel();
+        if (mounted) setState(() => _otpCooldown = 0);
+      } else {
+        if (mounted) setState(() => _otpCooldown--);
+      }
+    });
+  }
+
+  void _startExpiryTimer(int expiresIn) {
+    _expiryTimer?.cancel();
+    setState(() => _otpExpiry = expiresIn);
+    _expiryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_otpExpiry <= 1) {
+        timer.cancel();
+        if (mounted) setState(() => _otpExpiry = 0);
+      } else {
+        if (mounted) setState(() => _otpExpiry--);
+      }
+    });
   }
 
   void _handleGoogleLogin() async {
@@ -54,20 +105,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       final authClient = AuthClient();
       final result = await authClient.googleLogin(idToken);
-      
+
       if (!mounted) return;
 
       if (result['success'] == true) {
-         final token = result['token'];
-         await context.read<AuthProvider>().login(token);
+        final token = result['token'];
+        await context.read<AuthProvider>().login(token);
 
-         if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const MainNavScreen()),
-              (route) => false,
-            );
-         }
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const MainNavScreen()),
+            (route) => false,
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'] ?? 'Google Sign Up failed')),
@@ -85,84 +136,169 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _handleSendOtp() async {
     final rawPhone = _phoneController.text.trim();
-    if (rawPhone.length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid phone number')));
+
+    if (!_isValidNepaliPhone(rawPhone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid phone number. Must be 10 digits starting with 97 or 98.')),
+      );
       return;
     }
 
-    final phone = "+977$rawPhone";
-
     setState(() => _isLoading = true);
-    
+
     try {
-      // Send OTP logic doesn't change global state, use client directly or wrap if needed
-      // For now, client direct is fine until login happens
-      final result = await _authClient.sendOtp(phone);
+      final result = await _authClient.sendOtp(rawPhone);
+      if (!mounted) return;
+
       if (result['success'] == true) {
-        setState(() => _otpSent = true);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP sent successfully')));
+        setState(() => _currentStep = SignUpStep.otp);
+        _startCooldownTimer();
+        final expiresIn = result['expiresIn'] as int? ?? 600;
+        _startExpiryTimer(expiresIn);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('OTP sent successfully! Check your phone.')),
+        );
       } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Failed to send OTP')));
+        // Handle cooldown from API response
+        final cooldown = result['cooldownRemaining'] as int?;
+        if (cooldown != null) {
+          setState(() => _otpCooldown = cooldown);
+          _startCooldownTimer();
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'] ?? result['message'] ?? 'Failed to send OTP')),
+        );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _handleRegister() async {
+  void _handleChangeNumber() {
+    _cooldownTimer?.cancel();
+    _expiryTimer?.cancel();
+    setState(() {
+      _currentStep = SignUpStep.phone;
+      _otpController.clear();
+      _otpCooldown = 0;
+      _otpExpiry = 0;
+      _verificationToken = null;
+    });
+  }
+
+  void _handleVerifyOtp() async {
     final rawPhone = _phoneController.text.trim();
     final otp = _otpController.text.trim();
-    final fullName = _fullNameController.text.trim();
-    final password = _passwordController.text;
 
-    if (otp.length != 6 || fullName.isEmpty || password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all fields correctly')));
+    if (otp.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a 6-digit OTP')),
+      );
       return;
     }
-
-    // Prepend Nepal code
-    final phone = "+977$rawPhone";
 
     setState(() => _isLoading = true);
 
     try {
-      // 1. Verify OTP
-      final verifyResult = await _authClient.verifyOtp(phone, otp);
-      if (verifyResult['success'] != true) {
-        throw Exception(verifyResult['message'] ?? 'Invalid OTP');
-      }
-      
-      final token = verifyResult['verificationToken'];
+      final verifyResult = await _authClient.verifyOtp(rawPhone, otp);
+      if (!mounted) return;
 
-      // 2. Register
-      final registerResult = await _authClient.register(phone, password, fullName, token);
-      
+      if (verifyResult['success'] == true) {
+        _expiryTimer?.cancel();
+        setState(() {
+          _verificationToken = verifyResult['verificationToken'];
+          _currentStep = SignUpStep.details;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Phone verified! Complete your registration.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(verifyResult['error'] ?? verifyResult['message'] ?? 'Invalid OTP')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString().replaceAll("Exception: ", "")}')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _handleCreateAccount() async {
+    final rawPhone = _phoneController.text.trim();
+    final fullName = _fullNameController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (fullName.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Full name must be at least 2 characters')),
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please agree to Terms & Conditions')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final registerResult = await _authClient.register(
+        rawPhone,
+        password,
+        fullName,
+        _verificationToken!,
+      );
+
+      if (!mounted) return;
+
       if (registerResult['success'] == true) {
         final authToken = registerResult['token'];
-        
+
         if (authToken != null) {
-          // Update Global State
           await context.read<AuthProvider>().login(authToken);
         }
 
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
-          context, 
+          context,
           MaterialPageRoute(builder: (_) => const MainNavScreen()),
-          (route) => false
+          (route) => false,
         );
       } else {
-        throw Exception(registerResult['message'] ?? 'Registration failed');
+        throw Exception(registerResult['error'] ?? registerResult['message'] ?? 'Registration failed');
       }
-
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString().replaceAll("Exception: ", "")}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString().replaceAll("Exception: ", "")}')),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -175,7 +311,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (_currentStep == SignUpStep.otp) {
+              _handleChangeNumber();
+            } else if (_currentStep == SignUpStep.details) {
+              // Can't go back from details (OTP already verified)
+              Navigator.pop(context);
+            } else {
+              Navigator.pop(context);
+            }
+          },
         ),
         title: Image.asset(
           'assets/images/logo.png',
@@ -202,7 +347,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Create an account',
+              _currentStep == SignUpStep.details ? 'Complete registration' : 'Create an account',
               style: GoogleFonts.inter(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -211,14 +356,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Join Thulobazaar to buy and sell easily',
+              _currentStep == SignUpStep.details
+                  ? 'Fill in your details to finish signing up'
+                  : 'Join Thulobazaar to buy and sell easily',
               style: GoogleFonts.inter(
                 fontSize: 16,
                 color: Colors.grey[600],
               ),
             ),
             const SizedBox(height: 32),
-            
+
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -227,7 +374,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 border: Border.all(color: Colors.grey[200]!),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -236,8 +383,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!_otpSent) ...[
-                     // Google Sign Up Button
+                  // ============== STEP 1: PHONE ==============
+                  if (_currentStep == SignUpStep.phone) ...[
+                    // Google Sign Up Button
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -292,70 +440,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                         Expanded(child: Divider(color: Colors.grey[200])),
-                         Padding(
-                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                           child: Text("or register with phone", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
-                         ),
-                         Expanded(child: Divider(color: Colors.grey[200])),
+                        Expanded(child: Divider(color: Colors.grey[200])),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text("or register with phone", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                        ),
+                        Expanded(child: Divider(color: Colors.grey[200])),
                       ],
                     ),
                     const SizedBox(height: 24),
-                  ],
 
-                  // Phone Number Input
-                  Text(
-                    'Phone Number *',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textDark,
-                      fontSize: 14,
+                    // Phone Number Input
+                    Text(
+                      'Phone Number *',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.textDark, fontSize: 14),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            border: Border(right: BorderSide(color: Colors.grey[300]!)),
-                            color: Colors.grey[50], 
-                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
-                          ),
-                          child: Text(
-                            '+977',
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.textDark,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            enabled: !_otpSent, // Disable editing after OTP sent
-                            decoration: const InputDecoration(
-                              hintText: '98XXXXXXXX',
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                            ),
-                            style: GoogleFonts.inter(fontSize: 15),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  if (!_otpSent) ...[
+                    const SizedBox(height: 8),
+                    _buildPhoneInput(enabled: true),
                     const SizedBox(height: 8),
                     Text(
                       'Enter 10-digit Nepali mobile number (starting with 97 or 98)',
@@ -365,117 +466,234 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleSendOtp, 
+                        onPressed: _isLoading || _otpCooldown > 0 ? null : _handleSendOtp,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        child: _isLoading 
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : Text(
-                            'Send OTP',
-                            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text(
+                                _otpCooldown > 0 ? 'Resend in ${_otpCooldown}s' : 'Send OTP',
+                                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                              ),
                       ),
                     ),
                   ],
 
-                  if (_otpSent) ...[
-                     const SizedBox(height: 24),
-                     Text('OTP Code *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
-                     const SizedBox(height: 8),
-                     TextFormField(
-                        controller: _otpController,
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        decoration: InputDecoration(
-                          hintText: 'Enter 6-digit code',
-                          counterText: "",
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        ),
-                     ),
-                     const SizedBox(height: 16),
-                     
-                     Text('Full Name *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
-                     const SizedBox(height: 8),
-                     TextFormField(
-                        controller: _fullNameController,
-                        decoration: InputDecoration(
-                          hintText: 'John Doe',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        ),
-                     ),
-                     const SizedBox(height: 16),
-
-                     Text('Password *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
-                     const SizedBox(height: 8),
-                     TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          hintText: 'Min 6 chars',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.grey),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
+                  // ============== STEP 2: OTP ==============
+                  if (_currentStep == SignUpStep.otp) ...[
+                    // OTP sent confirmation
+                    Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            'OTP sent to +977 ${_phoneController.text.trim()}',
+                            style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14),
                           ),
-                        ),
-                     ),
-                     const SizedBox(height: 24),
+                          if (_otpExpiry > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                'Expires in ${_formatTime(_otpExpiry)}',
+                                style: GoogleFonts.inter(fontSize: 12, color: Colors.orange[700]),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                     SizedBox(
+                    Text('Enter OTP *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _otpController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(fontSize: 24, letterSpacing: 8),
+                      decoration: InputDecoration(
+                        hintText: '------',
+                        counterText: "",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleRegister, 
+                        onPressed: _isLoading || _otpController.text.trim().length != 6 ? null : _handleVerifyOtp,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.success, // Green for success/register
+                          backgroundColor: AppTheme.primary,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        child: _isLoading 
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : Text(
-                            'Verify & Register',
-                            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                        child: _isLoading
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text(
+                                'Verify OTP',
+                                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Change number + Resend OTP
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: _handleChangeNumber,
+                          child: Text('Change number', style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600])),
                         ),
+                        TextButton(
+                          onPressed: _isLoading || _otpCooldown > 0 ? null : _handleSendOtp,
+                          child: Text(
+                            _otpCooldown > 0 ? 'Resend in ${_otpCooldown}s' : 'Resend OTP',
+                            style: GoogleFonts.inter(fontSize: 13, color: _otpCooldown > 0 ? Colors.grey[400] : AppTheme.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  // ============== STEP 3: DETAILS ==============
+                  if (_currentStep == SignUpStep.details) ...[
+                    // Verified badge
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      margin: const EdgeInsets.only(bottom: 24),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.check_circle, color: AppTheme.success, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '+977 ${_phoneController.text.trim()} verified',
+                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.success),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Text('Full Name *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _fullNameController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your full name',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Text('Password *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        hintText: 'At least 6 characters',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.grey),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Text('Confirm Password *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmPassword,
+                      decoration: InputDecoration(
+                        hintText: 'Re-enter password',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.grey),
+                          onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Terms & Conditions checkbox
+                    Row(
+                      children: [
+                        SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: Checkbox(
+                            value: _agreedToTerms,
+                            onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                            activeColor: AppTheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Wrap(
+                            children: [
+                              Text('I agree to the ', style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
+                              InkWell(
+                                onTap: () {},
+                                child: Text('Terms & Conditions', style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                              ),
+                              Text(' and ', style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
+                              InkWell(
+                                onTap: () {},
+                                child: Text('Privacy Policy', style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading || !_agreedToTerms ? null : _handleCreateAccount,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.success,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text(
+                                'Create account',
+                                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                              ),
                       ),
                     ),
                   ],
 
                   const SizedBox(height: 24),
-                  Center(
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      children: [
-                        Text('By signing up, you agree to our ', style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 13)),
-                        InkWell(
-                          onTap: () {},
-                          child: Text('Terms & Conditions', style: GoogleFonts.inter(color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
                   Row(
-                     children: [
-                       Expanded(child: Divider(color: Colors.grey[200])),
-                       Padding(
-                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                         child: Text("Already have an account?", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
-                       ),
-                       Expanded(child: Divider(color: Colors.grey[200])),
-                     ],
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey[200])),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text("Already have an account?", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey[200])),
+                    ],
                   ),
                   const SizedBox(height: 24),
 
@@ -498,6 +716,48 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPhoneInput({required bool enabled}) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              border: Border(right: BorderSide(color: Colors.grey[300]!)),
+              color: Colors.grey[50],
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
+            ),
+            child: Text(
+              '+977',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: AppTheme.textDark, fontSize: 15),
+            ),
+          ),
+          Expanded(
+            child: TextFormField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              enabled: enabled,
+              maxLength: 10,
+              decoration: const InputDecoration(
+                hintText: '98XXXXXXXX',
+                counterText: "",
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+              ),
+              style: GoogleFonts.inter(fontSize: 15),
+            ),
+          ),
+        ],
       ),
     );
   }

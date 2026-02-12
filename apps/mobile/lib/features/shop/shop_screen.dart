@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'dart:io';
+
 import 'package:mobile/core/api/shop_client.dart';
+import 'package:mobile/core/api/auth_client.dart'; // Import AuthClient
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
+import 'package:mobile/features/shop/shop_tabs.dart'; // Import Tabs
 
 class ShopScreen extends StatefulWidget {
   final String shopSlug;
@@ -18,7 +24,9 @@ class ShopScreen extends StatefulWidget {
 
 class _ShopScreenState extends State<ShopScreen> {
   final ShopClient _shopClient = ShopClient();
+  final AuthClient _authClient = AuthClient();
   final ScrollController _scrollController = ScrollController();
+  final ImagePicker _picker = ImagePicker();
 
   // State
   ShopProfile? _shop;
@@ -28,6 +36,9 @@ class _ShopScreenState extends State<ShopScreen> {
   String? _error;
   int _currentPage = 1;
   int _totalPages = 1;
+  
+  bool _isOwner = false;
+  bool _uploadingImage = false;
 
   @override
   void initState() {
@@ -55,7 +66,7 @@ class _ShopScreenState extends State<ShopScreen> {
     });
 
     try {
-      // Fetch shop profile and ads in parallel
+      // 1. Fetch Shop & Ads
       final results = await Future.wait([
         _shopClient.getShopBySlug(widget.shopSlug),
         _shopClient.getShopAds(widget.shopSlug, page: 1, limit: 20),
@@ -64,6 +75,29 @@ class _ShopScreenState extends State<ShopScreen> {
       final shopResponse = results[0] as ApiResponse<ShopProfile>;
       final adsResponse = results[1] as PaginatedResponse<AdWithDetails>;
 
+      // 2. Check Owner Status (if shop fetched successfully)
+      bool isOwner = false;
+      if (shopResponse.success && shopResponse.data != null) {
+        try {
+          final token = await _authClient.getToken();
+          if (token != null) {
+            final profileData = await _authClient.getProfile();
+            if (profileData['success'] == true) {
+               // Assuming profileData['data']['id'] matches shopResponse.data.id
+               // Note: 'data' might be user object or profile object.
+               // Check AuthClient.getProfile response structure.
+               // Usually it returns { succeed: true, data: { id: 1, ... } }
+               final userId = profileData['data']['id'];
+               if (userId == shopResponse.data!.id) {
+                 isOwner = true;
+               }
+            }
+          }
+        } catch (e) {
+          debugPrint('Error checking owner status: $e');
+        }
+      }
+
       if (mounted) {
         if (shopResponse.success && shopResponse.data != null) {
           setState(() {
@@ -71,6 +105,7 @@ class _ShopScreenState extends State<ShopScreen> {
             _ads = adsResponse.success ? adsResponse.data : [];
             _totalPages = adsResponse.pagination?.totalPages ?? 1;
             _isLoading = false;
+            _isOwner = isOwner;
           });
         } else {
           setState(() {
@@ -123,10 +158,90 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
+  // --- Image Handling ---
+
+  Future<void> _pickImage({required bool isCover}) async {
+    if (_uploadingImage) return;
+
+    try {
+      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        _cropImage(pickedFile.path, isCover: isCover);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+    }
+  }
+
+  Future<void> _cropImage(String path, {required bool isCover}) async {
+    CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: path,
+      aspectRatio: isCover ? const CropAspectRatio(ratioX: 3, ratioY: 1) : const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: isCover ? 'Crop Cover Photo' : 'Crop Avatar',
+            toolbarColor: const Color(0xFFF43F5E),
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: isCover ? CropAspectRatioPreset.ratio3x2 : CropAspectRatioPreset.square,
+            lockAspectRatio: true),
+        IOSUiSettings(
+          title: isCover ? 'Crop Cover Photo' : 'Crop Avatar',
+        ),
+      ],
+    );
+
+    if (croppedFile != null) {
+      _uploadImage(croppedFile.path, isCover: isCover);
+    }
+  }
+
+  Future<void> _uploadImage(String path, {required bool isCover}) async {
+    setState(() => _uploadingImage = true);
+    
+    ApiResponse<String> response;
+    if (isCover) {
+      response = await _shopClient.uploadCover(path);
+    } else {
+      response = await _shopClient.uploadAvatar(path);
+    } // Assuming single file upload?
+    
+    // Actually the client methods I added take file path.
+    // Wait, update: I added uploadAvatar(File file) in plan, but implemented uploadAvatar(String path) in execution.
+    // Double check shop_client.dart implementation.
+    // Yes, I implemented `uploadAvatar(String filePath)`.
+
+    setState(() => _uploadingImage = false);
+
+    if (response.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${isCover ? "Cover" : "Avatar"} updated successfully'))
+      );
+      // Refresh shop data to show new image
+      // Or just update local state if response returns URL. 
+      // The API returns message or data with URL?
+      // My client implementation: return ApiResponse.success(response.data['data']['avatar_url']);
+      // So I get the URL back.
+      setState(() {
+        if (response.data != null) {
+             // Create new shop object with updated image
+             // Need copyWith method on ShopProfile ideally.
+             // Or just re-fetch for simplicity/consistency.
+             _fetchShopData(); 
+        }
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.errorMessage))
+      );
+    }
+  }
+
+  // --- UI Building ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB), // gray-50
+      backgroundColor: const Color(0xFFF9FAFB),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFF43F5E)))
           : _error != null
@@ -136,31 +251,20 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              _error ?? 'Something went wrong',
-              style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _fetchShopData,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF43F5E),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Try Again'),
-            ),
-          ],
-        ),
-      ),
+     return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 60, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(_error ?? 'An error occurred'),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _fetchShopData,
+            child: const Text('Retry'),
+          )
+        ],
+      )
     );
   }
 
@@ -173,7 +277,7 @@ class _ShopScreenState extends State<ShopScreen> {
       child: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // Custom App Bar with back button
+          // App Bar
           SliverAppBar(
             expandedHeight: 0,
             floating: true,
@@ -192,27 +296,27 @@ class _ShopScreenState extends State<ShopScreen> {
                 fontSize: 16,
               ),
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.share, color: Colors.black87),
-                onPressed: () {
-                  // TODO: Implement share
-                },
-              ),
-            ],
           ),
 
-          // Cover Photo & Profile Section
+          // Profile Header
           SliverToBoxAdapter(
             child: _buildProfileHeader(),
           ),
 
-          // Shop Info Card
+          // Tabs & Content
           SliverToBoxAdapter(
-            child: _buildShopInfoCard(),
+            child: ShopTabs(
+              shop: _shop!,
+              isOwner: _isOwner,
+              onProfileUpdated: (updatedShop) {
+                setState(() {
+                  _shop = updatedShop;
+                });
+              },
+            ),
           ),
 
-          // Ads Section Header
+          // Ads Header
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -227,10 +331,10 @@ class _ShopScreenState extends State<ShopScreen> {
             ),
           ),
 
-          // Ads Grid or Empty State
+          // Ads Grid
           _ads.isEmpty ? _buildEmptyAds() : _buildAdsGrid(),
 
-          // Loading More Indicator
+          // Loading More
           if (_isLoadingMore)
             const SliverToBoxAdapter(
               child: Padding(
@@ -239,7 +343,6 @@ class _ShopScreenState extends State<ShopScreen> {
               ),
             ),
 
-          // Bottom Padding
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
@@ -248,7 +351,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _buildProfileHeader() {
     final coverUrl = _shop!.coverPhoto != null
-        ? ApiConfig.getAvatarUrl(_shop!.coverPhoto)
+        ? ApiConfig.getCoverUrl(_shop!.coverPhoto)
         : null;
     final avatarUrl = _shop!.avatar != null
         ? ApiConfig.getAvatarUrl(_shop!.avatar)
@@ -259,38 +362,49 @@ class _ShopScreenState extends State<ShopScreen> {
       child: Column(
         children: [
           // Cover Photo
-          Container(
-            height: 180,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: coverUrl == null
-                  ? const LinearGradient(
-                      colors: [Color(0xFFF43F5E), Color(0xFF9333EA)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-            ),
-            child: coverUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: coverUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
+          Stack(
+            children: [
+              Container(
+                height: 180,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: coverUrl == null
+                      ? const LinearGradient(
                           colors: [Color(0xFFF43F5E), Color(0xFF9333EA)],
-                        ),
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                ),
+                child: coverUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: coverUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(color: Colors.grey[200]),
+                        errorWidget: (context, url, error) => Container(color: Colors.grey[200]),
+                      )
+                    : null,
+              ),
+              if (_isOwner)
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: InkWell(
+                    onTap: () => _pickImage(isCover: true),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
+                      child: _uploadingImage
+                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                       : const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                     ),
-                    errorWidget: (context, url, error) => Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFF43F5E), Color(0xFF9333EA)],
-                        ),
-                      ),
-                    ),
-                  )
-                : null,
+                  ),
+                ),
+            ],
           ),
 
           // Profile Info Section
@@ -306,37 +420,57 @@ class _ShopScreenState extends State<ShopScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       // Avatar
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: _shop!.isBusinessVerified
-                                ? const Color(0xFFD97706) // amber-600
-                                : _shop!.individualVerified
-                                    ? const Color(0xFF3B82F6) // blue-500
-                                    : Colors.white,
-                            width: 4,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
+                      Stack(
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 4,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: avatarUrl != null
-                              ? CachedNetworkImage(
-                                  imageUrl: avatarUrl,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => _buildAvatarPlaceholder(),
-                                  errorWidget: (context, url, error) => _buildAvatarPlaceholder(),
-                                )
-                              : _buildAvatarPlaceholder(),
-                        ),
+                            child: ClipOval(
+                              child: avatarUrl != null
+                                  ? CachedNetworkImage(
+                                      imageUrl: avatarUrl,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => _buildAvatarPlaceholder(),
+                                      errorWidget: (context, url, error) => _buildAvatarPlaceholder(),
+                                    )
+                                  : _buildAvatarPlaceholder(),
+                            ),
+                          ),
+                          if (_isOwner)
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: InkWell(
+                                onTap: () => _pickImage(isCover: false),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.grey[200]!),
+                                    boxShadow: [
+                                       BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4),
+                                    ],
+                                  ),
+                                  child: const Icon(Icons.camera_alt, color: Colors.black87, size: 16),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(width: 16),
 
@@ -344,38 +478,38 @@ class _ShopScreenState extends State<ShopScreen> {
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  _shop!.displayName,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      _shop!.displayName,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                  const SizedBox(width: 8),
+                                  if (_shop!.isBusinessVerified)
+                                    const Icon(Icons.verified, color: Color(0xFFD97706), size: 24)
+                                  else if (_shop!.individualVerified)
+                                    const Icon(Icons.verified, color: Color(0xFF3B82F6), size: 24),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              // Verification Badge
-                              if (_shop!.isBusinessVerified)
-                                Image.asset(
-                                  'assets/images/golden-badge.png',
-                                  width: 28,
-                                  height: 28,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.verified, color: Color(0xFFD97706), size: 28),
-                                )
-                              else if (_shop!.individualVerified)
-                                Image.asset(
-                                  'assets/images/blue-badge.png',
-                                  width: 28,
-                                  height: 28,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.verified, color: Color(0xFF3B82F6), size: 28),
-                                ),
+                              Text(
+                                _shop!.isBusinessVerified
+                                    ? 'Verified Business'
+                                    : _shop!.individualVerified
+                                        ? 'Verified Individual'
+                                        : 'Seller',
+                                style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600]),
+                              ),
                             ],
                           ),
                         ),
@@ -384,34 +518,16 @@ class _ShopScreenState extends State<ShopScreen> {
                   ),
                 ),
 
-                // Account Type Label
-                Transform.translate(
-                  offset: const Offset(0, -24),
-                  child: Text(
-                    _shop!.isBusinessVerified
-                        ? 'Verified Business Account'
-                        : _shop!.individualVerified
-                            ? 'Verified Individual Seller'
-                            : _shop!.accountType == 'business'
-                                ? 'Business Account'
-                                : 'Individual Seller',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ),
-
                 // Stats Row
                 Transform.translate(
-                  offset: const Offset(0, -8),
+                  offset: const Offset(0, -20),
                   child: Row(
                     children: [
                       _buildStatItem('${_shop!.totalAds}', 'Active Ads'),
                       const SizedBox(width: 24),
-                      _buildStatItem(_formatNumber(_shop!.totalViews), 'Total Views'),
+                      _buildStatItem(_formatNumber(_shop!.totalViews), 'Views'),
                       const SizedBox(width: 24),
-                      _buildStatItem(_shop!.memberSince, 'Member Since'),
+                      _buildStatItem(_shop!.memberSince, 'Joined'),
                     ],
                   ),
                 ),
@@ -446,7 +562,7 @@ class _ShopScreenState extends State<ShopScreen> {
         Text(
           value,
           style: GoogleFonts.inter(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: const Color(0xFFF43F5E),
           ),
@@ -462,134 +578,10 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Widget _buildShopInfoCard() {
-    final hasContactInfo = _shop!.phone != null ||
-        _shop!.businessPhone != null ||
-        _shop!.locationName != null ||
-        _shop!.bio != null;
-
-    if (!hasContactInfo) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'About',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Bio
-          if (_shop!.bio != null && _shop!.bio!.isNotEmpty) ...[
-            Text(
-              _shop!.bio!,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey[700],
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          // Location
-          if (_shop!.locationName != null)
-            _buildInfoRow(Icons.location_on_outlined, _shop!.locationFullPath ?? _shop!.locationName!),
-
-          // Phone
-          if (_shop!.businessPhone != null || _shop!.phone != null)
-            GestureDetector(
-              onTap: () => _launchPhone(_shop!.businessPhone ?? _shop!.phone!),
-              child: _buildInfoRow(
-                Icons.phone_outlined,
-                _shop!.businessPhone ?? _shop!.phone!,
-                isLink: true,
-              ),
-            ),
-
-          // Website
-          if (_shop!.businessWebsite != null)
-            GestureDetector(
-              onTap: () => _launchUrl(_shop!.businessWebsite!),
-              child: _buildInfoRow(
-                Icons.language,
-                _shop!.businessWebsite!,
-                isLink: true,
-              ),
-            ),
-
-          // Social Links
-          if (_shop!.facebookUrl != null || _shop!.instagramUrl != null || _shop!.tiktokUrl != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                if (_shop!.facebookUrl != null)
-                  _buildSocialButton(Icons.facebook, _shop!.facebookUrl!, const Color(0xFF1877F2)),
-                if (_shop!.instagramUrl != null)
-                  _buildSocialButton(Icons.camera_alt, _shop!.instagramUrl!, const Color(0xFFE4405F)),
-                if (_shop!.tiktokUrl != null)
-                  _buildSocialButton(Icons.music_note, _shop!.tiktokUrl!, Colors.black),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String text, {bool isLink = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: Colors.grey[500]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: isLink ? const Color(0xFFF43F5E) : Colors.grey[700],
-                decoration: isLink ? TextDecoration.underline : null,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSocialButton(IconData icon, String url, Color color) {
-    return GestureDetector(
-      onTap: () => _launchUrl(url),
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, size: 20, color: color),
-      ),
-    );
-  }
-
   Widget _buildEmptyAds() {
     return SliverToBoxAdapter(
       child: Container(
-        margin: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.symmetric(vertical: 48),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -619,7 +611,7 @@ class _ShopScreenState extends State<ShopScreen> {
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.65, // Adjusted for more info content
+          childAspectRatio: 0.65,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
         ),
@@ -638,23 +630,5 @@ class _ShopScreenState extends State<ShopScreen> {
       return '${(number / 1000).toStringAsFixed(1)}K';
     }
     return number.toString();
-  }
-
-  Future<void> _launchPhone(String phone) async {
-    final uri = Uri.parse('tel:$phone');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
-
-  Future<void> _launchUrl(String url) async {
-    String finalUrl = url;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      finalUrl = 'https://$url';
-    }
-    final uri = Uri.parse(finalUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
   }
 }

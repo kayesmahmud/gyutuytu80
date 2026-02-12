@@ -41,6 +41,7 @@ router.get(
         locations: true,
         oauth_provider: true,
         password_hash: true,
+        two_factor_enabled: true,
       },
     });
 
@@ -71,6 +72,7 @@ router.get(
         createdAt: user.created_at,
         oauthProvider: user.oauth_provider,
         hasPassword: !!user.password_hash,
+        twoFactorEnabled: user.two_factor_enabled,
       },
     });
   })
@@ -114,6 +116,132 @@ router.put(
         phone: user.phone,
         bio: user.bio,
       },
+    });
+  })
+);
+
+
+/**
+ * PATCH /api/profile
+ * Update shop profile details (bio, business info)
+ */
+router.patch(
+  '/',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const { bio, businessName, businessDescription } = req.body;
+
+    const updateData: Record<string, any> = {
+      updated_at: new Date(),
+    };
+
+    if (bio !== undefined) updateData.bio = bio;
+    if (businessName !== undefined) updateData.business_name = businessName;
+    if (businessDescription !== undefined) updateData.business_description = businessDescription;
+
+    const user = await prisma.users.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    res.json({
+      success: true,
+      data: await getUserProfile(userId) || user,
+    });
+  })
+);
+
+/**
+ * PATCH /api/profile/contact
+ * Update shop contact details
+ */
+router.patch(
+  '/contact',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const { businessPhone, businessWebsite, facebookUrl, instagramUrl, tiktokUrl } = req.body;
+
+    await prisma.users.update({
+      where: { id: userId },
+      data: {
+        business_phone: businessPhone,
+        business_website: businessWebsite,
+        facebook_url: facebookUrl,
+        instagram_url: instagramUrl,
+        tiktok_url: tiktokUrl,
+        updated_at: new Date(),
+      },
+    });
+
+    res.json({
+      success: true,
+      data: await getUserProfile(userId),
+    });
+  })
+);
+
+/**
+ * PATCH /api/profile/category
+ * Update shop default category
+ */
+router.patch(
+  '/category',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const { categoryId, subcategoryId } = req.body;
+
+    await prisma.users.update({
+      where: { id: userId },
+      data: {
+        default_category_id: categoryId,
+        default_subcategory_id: subcategoryId,
+        updated_at: new Date(),
+      },
+    });
+
+    res.json({
+      success: true,
+      data: await getUserProfile(userId),
+    });
+  })
+);
+
+/**
+ * PATCH /api/profile/location
+ * Update shop location
+ */
+router.patch(
+  '/location',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const { locationSlug } = req.body;
+
+    let locationId: number | null = null;
+    if (locationSlug) {
+      const location = await prisma.locations.findUnique({
+        where: { slug: locationSlug },
+      });
+      if (!location) {
+        throw new NotFoundError('Location not found');
+      }
+      locationId = location.id;
+    }
+
+    await prisma.users.update({
+      where: { id: userId },
+      data: {
+        location_id: locationId,
+        updated_at: new Date(),
+      },
+    });
+
+    res.json({
+      success: true,
+      data: await getUserProfile(userId),
     });
   })
 );
@@ -342,7 +470,7 @@ router.get(
     const { userId } = req.params;
 
     const user = await prisma.users.findUnique({
-      where: { id: parseInt(userId) },
+      where: { id: parseInt(userId as string) },
       select: {
         id: true,
         full_name: true,
@@ -364,7 +492,7 @@ router.get(
 
     // Get user's ads count
     const adsCount = await prisma.ads.count({
-      where: { user_id: parseInt(userId), status: 'approved' },
+      where: { user_id: parseInt(userId as string), status: 'approved' },
     });
 
     res.json({
@@ -385,5 +513,54 @@ router.get(
     });
   })
 );
+
+// Helper function to get full profile response
+async function getUserProfile(userId: number) {
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: {
+      locations: true,
+      default_category: true,
+      default_subcategory: true,
+    }
+  });
+
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.full_name,
+    phone: user.phone,
+    avatar: user.avatar,
+    coverPhoto: user.cover_photo,
+    bio: user.bio,
+    businessDescription: user.business_description,
+    businessPhone: user.business_phone,
+    businessWebsite: user.business_website,
+    facebookUrl: user.facebook_url,
+    instagramUrl: user.instagram_url,
+    tiktokUrl: user.tiktok_url,
+    locationId: user.location_id,
+    locationName: user.locations?.name,
+    locationFullPath: user.locations?.slug,
+    categoryId: user.default_category_id,
+    categoryName: user.default_category?.name,
+    categorySlug: user.default_category?.slug,
+    categoryIcon: user.default_category?.icon,
+    subcategoryId: user.default_subcategory_id,
+    subcategoryName: user.default_subcategory?.name,
+    subcategorySlug: user.default_subcategory?.slug,
+    subcategoryIcon: user.default_subcategory?.icon,
+
+    accountType: user.account_type,
+    shopSlug: user.custom_shop_slug || user.shop_slug,
+    customShopSlug: user.custom_shop_slug,
+    businessName: user.business_name,
+    businessVerificationStatus: user.business_verification_status,
+    individualVerified: user.individual_verified,
+    createdAt: user.created_at,
+  };
+}
 
 export default router;

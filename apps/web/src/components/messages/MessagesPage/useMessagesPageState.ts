@@ -7,9 +7,10 @@ import type { TabType } from './types';
 
 interface UseMessagesPageStateProps {
   token: string | null;
+  currentUserId?: number;
 }
 
-export function useMessagesPageState({ token }: UseMessagesPageStateProps) {
+export function useMessagesPageState({ token, currentUserId }: UseMessagesPageStateProps) {
   const searchParams = useSearchParams();
 
   const [conversations, setConversations] = useState<any[]>([]);
@@ -57,7 +58,7 @@ export function useMessagesPageState({ token }: UseMessagesPageStateProps) {
   }, [token]);
 
   const sendMessage = connected ? socketSendMessage : sendMessageViaApi;
-  const markAsRead = connected ? socketMarkAsRead : async () => {};
+  const markAsRead = connected ? socketMarkAsRead : async () => { };
 
   // Load conversations
   const loadConversations = useCallback(async () => {
@@ -155,6 +156,9 @@ export function useMessagesPageState({ token }: UseMessagesPageStateProps) {
 
     const handleNewMessage = (messageData: any) => {
       if (messageData.conversationId === selectedConversation.id) {
+        // Skip own messages (already added via optimistic update in handleSendMessage)
+        if (currentUserId && messageData.senderId === currentUserId) return;
+
         setConversationMessages((prev) => {
           const exists = prev.some((msg) => msg.id === messageData.id);
           if (exists) return prev;
@@ -167,7 +171,7 @@ export function useMessagesPageState({ token }: UseMessagesPageStateProps) {
     return () => {
       socket.off('message:new', handleNewMessage);
     };
-  }, [socket, connected, selectedConversation]);
+  }, [socket, connected, selectedConversation, currentUserId]);
 
   // Select conversation handler
   const handleSelectConversation = useCallback(async (conversation: any) => {
@@ -218,8 +222,14 @@ export function useMessagesPageState({ token }: UseMessagesPageStateProps) {
         }
       } else {
         const result = await sendMessage(selectedConversation.id, content);
-        if (!connected && result?.data) {
-          setConversationMessages((prev) => [...prev, result.data]);
+        // Add message immediately (socket echo will be skipped for own messages)
+        if (result) {
+          const messageToAdd = result.data || result;
+          setConversationMessages((prev) => {
+            const exists = prev.some((msg) => msg.id === messageToAdd.id);
+            if (exists) return prev;
+            return [...prev, messageToAdd];
+          });
         }
       }
     } catch (err: any) {

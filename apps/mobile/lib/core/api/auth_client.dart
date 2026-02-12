@@ -157,6 +157,69 @@ class AuthClient {
     }
   }
 
+
+  // ==========================================
+  // SECURITY ENDPOINTS (/api/auth)
+  // ==========================================
+
+  // Change Password
+  Future<Map<String, dynamic>> changePassword(String currentPassword, String newPassword) async {
+    try {
+      final response = await _authDio.post('/change-password', data: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Update Phone
+  Future<Map<String, dynamic>> updatePhone(String phone, String verificationToken) async {
+    try {
+      final response = await _authDio.post('/update-phone', data: {
+        'phone': phone,
+        'verificationToken': verificationToken,
+      });
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Get Active Sessions
+  Future<Map<String, dynamic>> getSessions() async {
+    try {
+      final response = await _authDio.get('/sessions');
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Revoke Session
+  Future<Map<String, dynamic>> revokeSession(int sessionId) async {
+    try {
+      final response = await _authDio.delete('/sessions/$sessionId');
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Toggle 2FA
+  Future<Map<String, dynamic>> toggle2FA(bool enable) async {
+    try {
+      final response = await _authDio.post('/2fa/toggle', data: {
+        'enable': enable,
+      });
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
   // ==========================================
   // HELPERS
   // ==========================================

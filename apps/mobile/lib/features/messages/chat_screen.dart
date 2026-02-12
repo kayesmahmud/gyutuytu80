@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../core/api/api_config.dart';
+import '../../core/api/message_client.dart';
 import '../../core/models/message.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/chat_provider.dart';
@@ -32,11 +36,14 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
+  final ImagePicker _imagePicker = ImagePicker();
+  final MessageClient _messageClient = MessageClient();
 
-  ChatProvider? _chatProvider;
   int? _currentUserId;
   bool _isTyping = false;
   Timer? _typingDebounce;
+  File? _pendingImage;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -49,12 +56,10 @@ class _ChatScreenState extends State<ChatScreen> {
     final authProvider = context.read<AuthProvider>();
     _currentUserId = authProvider.userId;
 
-    // Get or create chat provider
-    _chatProvider = ChatProvider();
     if (_currentUserId != null) {
-      await _chatProvider!.initialize(_currentUserId!);
-      await _chatProvider!.loadMessages(widget.conversationId);
-      _chatProvider!.markAsRead(widget.conversationId);
+      final chatProvider = context.read<ChatProvider>();
+      await chatProvider.loadMessages(widget.conversationId);
+      chatProvider.markAsRead(widget.conversationId);
 
       if (mounted) {
         setState(() {});
@@ -64,18 +69,19 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _onTyping() {
-    if (_chatProvider == null) return;
+    if (!mounted) return;
+    final chatProvider = context.read<ChatProvider>();
 
     if (_messageController.text.isNotEmpty && !_isTyping) {
       _isTyping = true;
-      _chatProvider!.startTyping(widget.conversationId);
+      chatProvider.startTyping(widget.conversationId);
     }
 
     _typingDebounce?.cancel();
     _typingDebounce = Timer(const Duration(seconds: 2), () {
-      if (_isTyping) {
+      if (_isTyping && mounted) {
         _isTyping = false;
-        _chatProvider!.stopTyping(widget.conversationId);
+        context.read<ChatProvider>().stopTyping(widget.conversationId);
       }
     });
   }
@@ -92,20 +98,79 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty || _chatProvider == null) return;
+    if (text.isEmpty) return;
 
     _messageController.clear();
     _isTyping = false;
-    _chatProvider!.stopTyping(widget.conversationId);
+    final chatProvider = context.read<ChatProvider>();
+    chatProvider.stopTyping(widget.conversationId);
 
-    final success = await _chatProvider!.sendMessage(
+    final success = await chatProvider.sendMessage(
       conversationId: widget.conversationId,
       content: text,
     );
+    print('DEBUG: ChatScreen sent message result: $success');
 
     if (success) {
       _scrollToBottom();
     }
+  }
+
+  Future<void> _pickAndSendImage() async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      maxHeight: 1200,
+      imageQuality: 80,
+    );
+    if (picked == null) return;
+
+    setState(() {
+      _pendingImage = File(picked.path);
+    });
+  }
+
+  Future<void> _sendImage() async {
+    if (_pendingImage == null) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      final uploadResult = await _messageClient.uploadImage(_pendingImage!);
+      if (uploadResult.success && uploadResult.data != null) {
+        if (mounted) {
+          await context.read<ChatProvider>().sendMessage(
+                conversationId: widget.conversationId,
+                content: 'Image',
+                type: MessageType.image,
+                attachmentUrl: uploadResult.data!,
+              );
+        }
+        setState(() {
+          _pendingImage = null;
+          _isUploading = false;
+        });
+        _scrollToBottom();
+      } else {
+        setState(() => _isUploading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to upload image')),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isUploading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload error: $e')),
+        );
+      }
+    }
+  }
+
+  void _cancelImage() {
+    setState(() => _pendingImage = null);
   }
 
   @override
@@ -114,13 +179,15 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
-    _chatProvider?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_chatProvider == null) {
+    // Watch global provider
+    final chatProvider = context.watch<ChatProvider>();
+
+    if (chatProvider.isLoading && chatProvider.getMessages(widget.conversationId).isEmpty) {
       return Scaffold(
         appBar: AppBar(
           title: Text(widget.recipientName),
@@ -129,19 +196,17 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
-    return ChangeNotifierProvider.value(
-      value: _chatProvider!,
-      child: Scaffold(
-        backgroundColor: Colors.grey[50],
-        appBar: _buildAppBar(),
-        body: Column(
-          children: [
-            if (widget.adTitle != null) _buildAdBanner(),
-            Expanded(child: _buildMessageList()),
-            _buildTypingIndicator(),
-            _buildInputArea(),
-          ],
-        ),
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: _buildAppBar(),
+      body: Column(
+        children: [
+          if (widget.adTitle != null) _buildAdBanner(),
+          Expanded(child: _buildMessageList()),
+          _buildTypingIndicator(),
+          if (_pendingImage != null) _buildImagePreview(),
+          _buildInputArea(),
+        ],
       ),
     );
   }
@@ -264,6 +329,8 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context, chatProvider, child) {
         final messages = chatProvider.getMessages(widget.conversationId);
 
+        print('DEBUG: ChatScreen building list. Count: ${messages.length}');
+
         if (messages.isEmpty) {
           return _buildEmptyState();
         }
@@ -277,6 +344,7 @@ class _ChatScreenState extends State<ChatScreen> {
             final message = messages[index];
             final showDate = _shouldShowDate(messages, index);
             final isMe = message.senderId == _currentUserId;
+            print('DEBUG: Msg $index: sender=${message.senderId}, me=$_currentUserId, isMe=$isMe, content=${message.content}');
 
             return Column(
               children: [
@@ -355,6 +423,8 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
+    final isImage = message.type == MessageType.image && message.attachmentUrl != null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Align(
@@ -363,7 +433,9 @@ class _ChatScreenState extends State<ChatScreen> {
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 0.75,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: isImage
+              ? const EdgeInsets.all(4)
+              : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isMe ? const Color(0xFFDC143C) : Colors.white,
             borderRadius: BorderRadius.only(
@@ -383,42 +455,98 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                message.content,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  color: isMe ? Colors.white : Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    DateFormat('h:mm a').format(message.createdAt),
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: isMe
-                          ? Colors.white.withValues(alpha: 0.7)
-                          : Colors.grey[500],
+              if (isImage)
+                GestureDetector(
+                  onTap: () => _showFullImage(context, message.attachmentUrl!),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: CachedNetworkImage(
+                      imageUrl: _getFullImageUrl(message.attachmentUrl!),
+                      width: 220,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        width: 220,
+                        height: 160,
+                        color: Colors.grey[300],
+                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      ),
+                      errorWidget: (_, __, ___) => Container(
+                        width: 220,
+                        height: 160,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                      ),
                     ),
                   ),
-                  if (message.isEdited) ...[
-                    const SizedBox(width: 4),
+                )
+              else
+                Text(
+                  message.content,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    color: isMe ? Colors.white : Colors.black87,
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: isImage ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4) : EdgeInsets.zero,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      '(edited)',
+                      DateFormat('h:mm a').format(message.createdAt),
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: isMe
                             ? Colors.white.withValues(alpha: 0.7)
                             : Colors.grey[500],
-                        fontStyle: FontStyle.italic,
                       ),
                     ),
+                    if (message.isEdited) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        '(edited)',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: isMe
+                              ? Colors.white.withValues(alpha: 0.7)
+                              : Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getFullImageUrl(String url) {
+    if (url.startsWith('http')) return url;
+    return '${ApiConfig.baseUrl.replaceAll('/api', '')}$url';
+  }
+
+  void _showFullImage(BuildContext context, String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              child: CachedNetworkImage(
+                imageUrl: _getFullImageUrl(url),
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
         ),
       ),
@@ -452,6 +580,52 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildImagePreview() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        border: Border(top: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.file(
+              _pendingImage!,
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Image ready to send',
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700]),
+            ),
+          ),
+          if (_isUploading)
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else ...[
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.grey),
+              onPressed: _cancelImage,
+            ),
+            IconButton(
+              icon: const Icon(Icons.send, color: Color(0xFFDC143C)),
+              onPressed: _sendImage,
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -505,9 +679,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   IconButton(
                     icon: Icon(Icons.attach_file, color: Colors.grey[600]),
-                    onPressed: () {
-                      // TODO: Implement attachment
-                    },
+                    onPressed: _pickAndSendImage,
                   ),
                 ],
               ),

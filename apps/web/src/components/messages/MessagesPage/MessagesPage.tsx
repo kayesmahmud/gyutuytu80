@@ -15,6 +15,8 @@ export default function MessagesPage() {
   const { data: session } = useSession();
   const { backendToken, loading: tokenLoading, error: tokenError } = useBackendToken();
 
+  const currentUserId = session?.user?.id ? parseInt(session.user.id) : undefined;
+
   const {
     conversations,
     selectedConversation,
@@ -37,7 +39,7 @@ export default function MessagesPage() {
     clearError,
     startTyping,
     stopTyping,
-  } = useMessagesPageState({ token: backendToken });
+  } = useMessagesPageState({ token: backendToken, currentUserId });
 
   // Auth states
   if (!session) {
@@ -53,7 +55,6 @@ export default function MessagesPage() {
   }
 
   const isRealtimeConfigured = typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_BACKEND_URL;
-  const currentUserId = session?.user?.id ? parseInt(session.user.id) : undefined;
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -65,28 +66,25 @@ export default function MessagesPage() {
       )}
 
       {/* Sidebar */}
-      <div className={`${
-        selectedConversation || selectedAnnouncement ? 'hidden md:flex' : 'flex'
-      } w-full md:w-2/5 lg:w-1/3 xl:w-1/4 border-r border-gray-200 bg-white flex-shrink-0 flex-col`}>
+      <div className={`${selectedConversation || selectedAnnouncement ? 'hidden md:flex' : 'flex'
+        } w-full md:w-2/5 lg:w-1/3 xl:w-1/4 border-r border-gray-200 bg-white flex-shrink-0 flex-col`}>
         {/* Tab Buttons */}
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => handleTabChange('conversations')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-              activeTab === 'conversations'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-            }`}
+            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${activeTab === 'conversations'
+              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
           >
             Chats
           </button>
           <button
             onClick={() => handleTabChange('announcements')}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors relative ${
-              activeTab === 'announcements'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-            }`}
+            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors relative ${activeTab === 'announcements'
+              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
           >
             Announcements
             {announcementUnreadCount > 0 && (
@@ -121,9 +119,8 @@ export default function MessagesPage() {
       </div>
 
       {/* Main Content */}
-      <div className={`${
-        selectedConversation || selectedAnnouncement ? 'flex' : 'hidden md:flex'
-      } flex-1 flex-col min-w-0`}>
+      <div className={`${selectedConversation || selectedAnnouncement ? 'flex' : 'hidden md:flex'
+        } flex-1 flex-col min-w-0`}>
         {selectedConversation ? (
           <ChatWindow
             conversation={selectedConversation}

@@ -1,146 +1,208 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mobile/core/api/verification_client.dart';
-import 'package:mobile/features/verification/widgets/validated_step_indicator.dart';
-import 'package:mobile/features/verification/widgets/business_forms/business_info_step.dart';
-import 'package:mobile/features/verification/widgets/business_forms/business_document_step.dart';
-import 'package:mobile/features/verification/widgets/business_forms/business_review_step.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/api/verification_client.dart';
+import '../../core/models/verification_models.dart';
 
 class BusinessVerificationForm extends StatefulWidget {
-  final VoidCallback onSuccess;
-  final VoidCallback onCancel;
-  final int durationDays;
-  final double price;
-  final bool isFreeVerification;
-  final bool isResubmission;
-
-  const BusinessVerificationForm({
-    super.key,
-    required this.onSuccess,
-    required this.onCancel,
-    required this.durationDays,
-    required this.price,
-    this.isFreeVerification = false,
-    this.isResubmission = false,
-  });
+  const BusinessVerificationForm({Key? key}) : super(key: key);
 
   @override
   State<BusinessVerificationForm> createState() => _BusinessVerificationFormState();
 }
 
 class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
-  final VerificationClient _verificationClient = VerificationClient();
   final _formKey = GlobalKey<FormState>();
-  final ImagePicker _picker = ImagePicker();
+  final _client = VerificationClient();
+  final _picker = ImagePicker();
 
-  // Form fields
-  final _businessNameController = TextEditingController();
-  final _businessCategoryController = TextEditingController();
-  final _businessDescriptionController = TextEditingController();
-  final _businessWebsiteController = TextEditingController();
-  final _businessPhoneController = TextEditingController();
-  final _businessAddressController = TextEditingController();
+  String _businessName = '';
+  String _businessCategory = '';
+  String _businessDescription = '';
+  String _businessWebsite = '';
+  String _businessPhone = '';
+  String _businessAddress = '';
+  File? _licenseDocument;
 
-  // Files
-  File? _businessLicenseFile;
+  bool _isSubmitting = false;
 
-  // State
-  bool _isLoading = false;
-  String? _error;
-  int _currentStep = 0; // 0: Info, 1: Document, 2: Review
+  Future<void> _pickDocument() async {
+    // For MVP, using ImagePicker. In production, FilePicker might be better for PDFs.
+    // Assuming backend accepts images for license.
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _licenseDocument = File(pickedFile.path);
+      });
+    }
+  }
+
+  void _clearDocument() {
+    setState(() {
+      _licenseDocument = null;
+    });
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
+
+    if (_licenseDocument == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please upload business license document')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // 1. Upload business document
+      final uploadResult = await _client.uploadBusinessDocument(_licenseDocument!);
+
+      if (!uploadResult.success || uploadResult.data == null) {
+        throw Exception(uploadResult.error ?? 'Document upload failed');
+      }
+
+      final String uploadedFilename = uploadResult.data!['filename'];
+
+      // 2. Submit verification request
+      // Similar to Individual, defaulting duration/payment for MVP.
+      final submitResult = await _client.submitBusinessVerification(
+        businessName: _businessName,
+        licenseDocument: uploadedFilename,
+        businessCategory: _businessCategory,
+        businessDescription: _businessDescription,
+        businessWebsite: _businessWebsite,
+        businessPhone: _businessPhone,
+        businessAddress: _businessAddress,
+      );
+
+      if (submitResult.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Verification submitted successfully!')),
+          );
+          Navigator.pop(context, true); // Return success
+        }
+      } else {
+        throw Exception(submitResult.error ?? 'Submission failed');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
 
   @override
-  void dispose() {
-    _businessNameController.dispose();
-    _businessCategoryController.dispose();
-    _businessDescriptionController.dispose();
-    _businessWebsiteController.dispose();
-    _businessPhoneController.dispose();
-    _businessAddressController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 85,
-      );
-
-      if (image != null) {
-        setState(() {
-          _businessLicenseFile = File(image.path);
-          _error = null;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to pick image';
-      });
-    }
-  }
-
-  Future<void> _takePhoto() async {
-    try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 85,
-      );
-
-      if (image != null) {
-        setState(() {
-          _businessLicenseFile = File(image.path);
-          _error = null;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to take photo';
-      });
-    }
-  }
-
-  void _showImagePicker() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Business Verification'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
       ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Select Image Source',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                'Verify your business',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Provide your business details and license.',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 32),
+
+              // Business Name
+              TextFormField(
+                decoration: _inputDecoration('Business Name', LucideIcons.building),
+                validator: (v) => v?.isNotEmpty == true ? null : 'Required',
+                onSaved: (v) => _businessName = v!,
               ),
               const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.camera_alt, color: Color(0xFF6366F1)),
-                title: const Text('Take Photo'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _takePhoto();
-                },
+
+              // Category
+              TextFormField(
+                decoration: _inputDecoration('Category', LucideIcons.tag),
+                onSaved: (v) => _businessCategory = v ?? '',
               ),
-              ListTile(
-                leading: const Icon(Icons.photo_library, color: Color(0xFF6366F1)),
-                title: const Text('Choose from Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage();
-                },
+              const SizedBox(height: 20),
+
+              // Description
+              TextFormField(
+                decoration: _inputDecoration('Description', LucideIcons.fileText),
+                maxLines: 3,
+                onSaved: (v) => _businessDescription = v ?? '',
+              ),
+              const SizedBox(height: 20),
+
+              // Contact Info
+              TextFormField(
+                decoration: _inputDecoration('Phone', LucideIcons.phone),
+                keyboardType: TextInputType.phone,
+                onSaved: (v) => _businessPhone = v ?? '',
+              ),
+              const SizedBox(height: 20),
+              
+              TextFormField(
+                decoration: _inputDecoration('Address', LucideIcons.mapPin),
+                onSaved: (v) => _businessAddress = v ?? '',
+              ),
+              const SizedBox(height: 20),
+
+              TextFormField(
+                decoration: _inputDecoration('Website (Optional)', LucideIcons.globe),
+                keyboardType: TextInputType.url,
+                onSaved: (v) => _businessWebsite = v ?? '',
+              ),
+              const SizedBox(height: 32),
+
+              const Text('Business License', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+
+              _buildUploadButton('Upload License *', _licenseDocument),
+
+              const SizedBox(height: 40),
+              
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber, // Business color
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Submit Verification', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -149,269 +211,64 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
     );
   }
 
-  bool _validateStep(int step) {
-    setState(() => _error = null);
-
-    switch (step) {
-      case 0: // Info step
-        if (_businessNameController.text.trim().isEmpty) {
-          setState(() => _error = 'Please enter your business name');
-          return false;
-        }
-        return true;
-      case 1: // Document step
-        if (_businessLicenseFile == null) {
-          setState(() => _error = 'Please upload your business license document');
-          return false;
-        }
-        return true;
-      default:
-        return true;
-    }
-  }
-
-  void _nextStep() {
-    if (_validateStep(_currentStep)) {
-      setState(() {
-        _currentStep++;
-      });
-    }
-  }
-
-  void _previousStep() {
-    setState(() {
-      _currentStep--;
-    });
-  }
-
-  Future<void> _submit() async {
-    if (!_validateStep(0) || !_validateStep(1)) {
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final result = await _verificationClient.submitBusinessVerification(
-        businessName: _businessNameController.text.trim(),
-        businessLicenseDocPath: _businessLicenseFile!.path,
-        businessCategory: _businessCategoryController.text.trim().isNotEmpty
-            ? _businessCategoryController.text.trim()
-            : null,
-        businessDescription: _businessDescriptionController.text.trim().isNotEmpty
-            ? _businessDescriptionController.text.trim()
-            : null,
-        businessWebsite: _businessWebsiteController.text.trim().isNotEmpty
-            ? _businessWebsiteController.text.trim()
-            : null,
-        businessPhone: _businessPhoneController.text.trim().isNotEmpty
-            ? _businessPhoneController.text.trim()
-            : null,
-        businessAddress: _businessAddressController.text.trim().isNotEmpty
-            ? _businessAddressController.text.trim()
-            : null,
-        durationDays: widget.durationDays,
-        paymentAmount: widget.isFreeVerification ? 0 : widget.price,
-        paymentReference: widget.isFreeVerification ? 'FREE' : 'PENDING',
-        isFree: widget.isFreeVerification || widget.isResubmission,
-      );
-
-      if (result.success) {
-        widget.onSuccess();
-      } else {
-        setState(() {
-          _error = result.errorMessage ?? 'Failed to submit verification';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'An error occurred. Please try again.';
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: Text(
-          'Business Verification',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.grey[800],
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: widget.onCancel,
-        ),
-      ),
-      body: Column(
-        children: [
-          // Stepper indicator
-          // Stepper indicator
-          ValidatedStepIndicator(
-            currentStep: _currentStep,
-            steps: const ['Business Info', 'Document', 'Review'],
-          ),
-
-          // Error message
-          if (_error != null)
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEE2E2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _error!,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: const Color(0xFFEF4444),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Form content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: _buildCurrentStep(),
-              ),
-            ),
-          ),
-
-          // Bottom buttons
-          _buildBottomButtons(),
-        ],
-      ),
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      prefixIcon: Icon(icon),
     );
   }
 
-
-
-  Widget _buildCurrentStep() {
-    switch (_currentStep) {
-      case 0:
-        return BusinessInfoStep(
-          businessNameController: _businessNameController,
-          businessCategoryController: _businessCategoryController,
-          businessDescriptionController: _businessDescriptionController,
-          businessWebsiteController: _businessWebsiteController,
-          businessPhoneController: _businessPhoneController,
-          businessAddressController: _businessAddressController,
-        );
-      case 1:
-        return BusinessDocumentStep(
-          businessLicenseFile: _businessLicenseFile,
-          onPickImage: _showImagePicker,
-          onClearImage: () => setState(() => _businessLicenseFile = null),
-        );
-      case 2:
-        return BusinessReviewStep(
-          businessName: _businessNameController.text,
-          businessCategory: _businessCategoryController.text,
-          businessPhone: _businessPhoneController.text,
-          businessAddress: _businessAddressController.text,
-          durationDays: widget.durationDays,
-          price: widget.price,
-          isFreeVerification: widget.isFreeVerification,
-          businessLicenseFile: _businessLicenseFile,
-        );
-      default:
-        return SizedBox.shrink();
-    }
-  }
-
-// Extracted steps to widgets/business_forms/
-
-
-  Widget _buildBottomButtons() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          if (_currentStep > 0)
+  Widget _buildUploadButton(String label, File? file) {
+    return InkWell(
+      onTap: _pickDocument,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.grey.shade50,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: file != null ? Colors.green.withOpacity(0.1) : Colors.amber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                file != null ? LucideIcons.check : LucideIcons.upload,
+                color: file != null ? Colors.green : Colors.amber,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
             Expanded(
-              child: OutlinedButton(
-                onPressed: _previousStep,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(color: Colors.grey[300]!),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
-                ),
-                child: Text(
-                  'Back',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ),
-            ),
-          if (_currentStep > 0) const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: ElevatedButton(
-              onPressed: _isLoading
-                  ? null
-                  : (_currentStep == 2 ? _submit : _nextStep),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
-                disabledBackgroundColor: Colors.grey[300],
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      _currentStep == 2 ? 'Submit Application' : 'Continue',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                  if (file != null)
+                    Text(
+                      file.path.split('/').last,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      overflow: TextOverflow.ellipsis,
                     ),
+                ],
+              ),
             ),
-          ),
-        ],
+            if (file != null)
+              IconButton(
+                icon: const Icon(LucideIcons.x, size: 18, color: Colors.red),
+                onPressed: _clearDocument,
+              ),
+          ],
+        ),
       ),
     );
   }

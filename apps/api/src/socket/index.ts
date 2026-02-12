@@ -27,7 +27,18 @@ const onlineUsers = new Map<number, string>(); // userId -> socketId
 export function initializeSocketIO(httpServer: HttpServer): Server {
   const io = new Server(httpServer, {
     cors: {
-      origin: config.CORS_ORIGINS,
+      origin: (requestOrigin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!requestOrigin) return callback(null, true);
+
+        // Check against allowed origins
+        if (config.CORS_ORIGINS.includes(requestOrigin)) {
+          callback(null, true);
+        } else {
+          console.log(`❌ Blocked by CORS: ${requestOrigin}`);
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST'],
     },

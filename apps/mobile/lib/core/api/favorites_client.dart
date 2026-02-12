@@ -1,23 +1,27 @@
 import 'package:dio/dio.dart';
 import 'api_config.dart';
 import '../models/models.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Client for favorites/wishlist API
 class FavoritesClient {
   late final Dio _dio;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   FavoritesClient() {
     _dio = Dio(BaseOptions(
       baseUrl: ApiConfig.baseUrl,
       connectTimeout: ApiConfig.connectTimeout,
       receiveTimeout: ApiConfig.receiveTimeout,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     ));
   }
 
   Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return await _storage.read(key: 'auth_token');
   }
 
   /// Get user's favorite ads

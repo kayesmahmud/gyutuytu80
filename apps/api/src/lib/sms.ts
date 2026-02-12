@@ -4,6 +4,15 @@
  */
 
 import { prisma } from '@thulobazaar/database';
+import fs from 'fs';
+import path from 'path';
+
+const LOG_FILE = '/tmp/sms_debug.log';
+
+function logToFile(message: string) {
+  const timestamp = new Date().toISOString();
+  fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
+}
 
 const AAKASH_SMS_API_URL = 'https://sms.aakashsms.com/sms/v3/send';
 
@@ -135,6 +144,8 @@ export async function sendOtpSms(
   purpose: OtpPurpose = 'registration'
 ): Promise<SendSmsResponse> {
   const authToken = process.env.AAKASH_SMS_TOKEN;
+  logToFile(`Attempting to send OTP to ${phone} (Purpose: ${purpose})`);
+  console.log(`Log file path: ${LOG_FILE}`);
 
   // In non-production, allow OTP flow to continue even if token is missing
   if (!authToken) {
@@ -189,18 +200,22 @@ export async function sendOtpSms(
       };
     } else {
       console.error('AakashSMS API error:', data);
+      const errorMsg = data.message || data.response || 'Unknown error from SMS provider';
+      logToFile(`API Error sending OTP to ${formattedPhone}: ${JSON.stringify(data)}`);
       return {
         success: false,
         message: 'Failed to send OTP',
-        error: data.message || data.response || 'Unknown error from SMS provider',
+        error: errorMsg,
       };
     }
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Network error';
     console.error('AakashSMS request failed:', error);
+    logToFile(`Error sending OTP to ${formattedPhone}: ${errorMsg}`);
     return {
       success: false,
       message: 'Failed to send OTP',
-      error: error instanceof Error ? error.message : 'Network error',
+      error: errorMsg,
     };
   }
 }

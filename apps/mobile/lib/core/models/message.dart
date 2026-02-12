@@ -39,10 +39,16 @@ class Message {
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
+    final senderObj = json['sender'] != null
+        ? MessageSender.fromJson(json['sender'] as Map<String, dynamic>)
+        : null;
+        
+    final sId = json['senderId'] as int? ?? json['sender_id'] as int? ?? 0;
+
     return Message(
       id: json['id'] as int,
       conversationId: json['conversationId'] as int? ?? json['conversation_id'] as int?,
-      senderId: json['senderId'] as int? ?? json['sender_id'] as int? ?? 0,
+      senderId: (sId == 0 && senderObj != null) ? senderObj.id : sId,
       recipientId: json['recipientId'] as int? ?? json['recipient_id'] as int?,
       adId: json['adId'] as int? ?? json['ad_id'] as int?,
       content: json['content'] as String? ?? json['message'] as String? ?? '',
@@ -53,9 +59,7 @@ class Message {
       isRead: json['isRead'] as bool? ?? json['is_read'] as bool? ?? false,
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
       updatedAt: _parseDateTimeNullable(json['updatedAt'] ?? json['updated_at']),
-      sender: json['sender'] != null
-          ? MessageSender.fromJson(json['sender'] as Map<String, dynamic>)
-          : null,
+      sender: senderObj,
     );
   }
 
@@ -208,12 +212,36 @@ class Conversation {
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
+    // Extract other user from flat fields or participants array
+    int otherUserId = json['otherUserId'] as int? ?? json['other_user_id'] as int? ?? 0;
+    String otherUserName = json['otherUserName'] as String? ?? json['other_user_name'] as String? ?? 'Unknown';
+    String? otherUserAvatar = json['otherUserAvatar'] as String? ?? json['other_user_avatar'] as String?;
+
+    // Fallback: extract from participants array (Express format)
+    if (otherUserId == 0 && json['participants'] is List) {
+      final participants = json['participants'] as List;
+      if (participants.isNotEmpty) {
+        final other = participants[0] as Map<String, dynamic>;
+        otherUserId = other['id'] as int? ?? 0;
+        otherUserName = other['fullName'] as String? ?? other['full_name'] as String? ?? 'Unknown';
+        otherUserAvatar = other['avatar'] as String?;
+      }
+    }
+
+    // Extract last message from flat string or nested object
+    String lastMessage = json['lastMessage'] as String? ?? '';
+    if (lastMessage.isEmpty && json['last_message'] is Map) {
+      lastMessage = (json['last_message'] as Map)['content'] as String? ?? '';
+    } else if (lastMessage.isEmpty && json['last_message'] is String) {
+      lastMessage = json['last_message'] as String;
+    }
+
     return Conversation(
       id: json['id'] as int,
-      otherUserId: json['otherUserId'] as int? ?? json['other_user_id'] as int? ?? 0,
-      otherUserName: json['otherUserName'] as String? ?? json['other_user_name'] as String? ?? 'Unknown',
-      otherUserAvatar: json['otherUserAvatar'] as String? ?? json['other_user_avatar'] as String?,
-      lastMessage: json['lastMessage'] as String? ?? json['last_message'] as String? ?? '',
+      otherUserId: otherUserId,
+      otherUserName: otherUserName,
+      otherUserAvatar: otherUserAvatar,
+      lastMessage: lastMessage,
       lastMessageAt: _parseDateTime(json['lastMessageAt'] ?? json['last_message_at']),
       unreadCount: json['unreadCount'] as int? ?? json['unread_count'] as int? ?? 0,
       adTitle: json['adTitle'] as String? ?? json['ad_title'] as String?,
@@ -263,6 +291,72 @@ class Conversation {
       adTitle: adTitle ?? this.adTitle,
       adId: adId ?? this.adId,
       adImage: adImage ?? this.adImage,
+    );
+  }
+}
+
+/// Announcement model
+class Announcement {
+  final int id;
+  final String title;
+  final String content;
+  final String targetAudience;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
+  final bool isRead;
+  final DateTime? readAt;
+
+  Announcement({
+    required this.id,
+    required this.title,
+    required this.content,
+    required this.targetAudience,
+    required this.createdAt,
+    this.expiresAt,
+    this.isRead = false,
+    this.readAt,
+  });
+
+  factory Announcement.fromJson(Map<String, dynamic> json) {
+    return Announcement(
+      id: json['id'] as int,
+      title: json['title'] as String? ?? '',
+      content: json['content'] as String? ?? '',
+      targetAudience: json['targetAudience'] as String? ?? json['target_audience'] as String? ?? 'all_users',
+      createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
+      expiresAt: _parseDateTimeNullable(json['expiresAt'] ?? json['expires_at']),
+      isRead: json['isRead'] as bool? ?? json['is_read'] as bool? ?? false,
+      readAt: _parseDateTimeNullable(json['readAt'] ?? json['read_at']),
+    );
+  }
+
+  Announcement copyWith({bool? isRead, DateTime? readAt}) {
+    return Announcement(
+      id: id,
+      title: title,
+      content: content,
+      targetAudience: targetAudience,
+      createdAt: createdAt,
+      expiresAt: expiresAt,
+      isRead: isRead ?? this.isRead,
+      readAt: readAt ?? this.readAt,
+    );
+  }
+}
+
+/// Search result user
+class SearchUser {
+  final int id;
+  final String fullName;
+  final String? avatar;
+
+  SearchUser({required this.id, required this.fullName, this.avatar});
+
+  factory SearchUser.fromJson(Map<String, dynamic> json) {
+    return SearchUser(
+      id: json['id'] as int,
+      fullName: json['fullName'] as String? ?? json['full_name'] as String? ?? 'Unknown',
+      avatar: json['avatar'] as String?,
     );
   }
 }

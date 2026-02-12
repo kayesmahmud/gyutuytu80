@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/models.dart';
 import 'api_config.dart';
+
 
 /// Message API Client - handles all messaging-related API calls
 class MessageClient {
@@ -88,35 +91,65 @@ class MessageClient {
   /// Get messages for a conversation
   Future<ApiResponse<List<Message>>> getMessages(int conversationId) async {
     try {
-      final response = await _dio.get('/messages/$conversationId');
+      print('DEBUG [MessageClient.getMessages] Fetching /messages/conversations/$conversationId');
+      final response = await _dio.get('/messages/conversations/$conversationId');
+
+      print('DEBUG [MessageClient.getMessages] Status: ${response.statusCode}, success: ${response.data['success']}');
 
       if (response.data['success'] == true) {
-        final data = response.data['data'] as List<dynamic>;
-        final messages = data
+        // Express returns { data: { conversation, messages } }
+        final responseData = response.data['data'];
+        List<dynamic> messagesList;
+
+        if (responseData is Map && responseData.containsKey('messages')) {
+          messagesList = responseData['messages'] as List<dynamic>;
+          print('DEBUG [MessageClient.getMessages] Found ${messagesList.length} messages in data.messages');
+        } else if (responseData is List) {
+          messagesList = responseData;
+          print('DEBUG [MessageClient.getMessages] Found ${messagesList.length} messages in data (array)');
+        } else {
+          messagesList = [];
+          print('DEBUG [MessageClient.getMessages] WARNING: data format unrecognized: ${responseData.runtimeType}');
+        }
+
+        final messages = messagesList
             .map((e) => Message.fromJson(e as Map<String, dynamic>))
             .toList();
+        print('DEBUG [MessageClient.getMessages] Parsed ${messages.length} messages. Last content: ${messages.isNotEmpty ? messages.last.content : "EMPTY"}');
         return ApiResponse.success(messages);
       }
+      print('DEBUG [MessageClient.getMessages] API returned success=false: ${response.data}');
       return ApiResponse.failure(response.data['error'] ?? 'Failed to fetch messages');
     } on DioException catch (e) {
+      print('DEBUG [MessageClient.getMessages] DioException: ${e.type} ${e.message} ${e.response?.statusCode}');
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch messages',
       );
+    } catch (e) {
+      print('DEBUG [MessageClient.getMessages] Unexpected error: $e');
+      return ApiResponse.failure('Unexpected error: $e');
     }
   }
 
-  /// Send a message
+  /// Send a message via REST (fallback when Socket.IO is down)
   Future<ApiResponse<Message>> sendMessage({
-    required int recipientId,
+    required int conversationId,
     required String message,
+    String type = 'text',
+    String? attachmentUrl,
+    // Legacy params (unused with conversation-based API)
+    int? recipientId,
     int? adId,
   }) async {
     try {
-      final response = await _dio.post('/messages', data: {
-        'recipient_id': recipientId,
-        'message': message,
-        if (adId != null) 'ad_id': adId,
-      });
+      final response = await _dio.post(
+        '/messages/conversations/$conversationId/messages',
+        data: {
+          'content': message,
+          'type': type,
+          if (attachmentUrl != null) 'attachmentUrl': attachmentUrl,
+        },
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
@@ -131,18 +164,57 @@ class MessageClient {
     }
   }
 
-  /// Mark messages as read
+  /// Mark messages as read via REST
   Future<ApiResponse<void>> markAsRead(int conversationId) async {
     try {
-      final response = await _dio.post('/messages/$conversationId/read');
-
+      // Reading the conversation already updates last_read_at on the backend
+      final response = await _dio.get('/messages/conversations/$conversationId?limit=1');
       if (response.data['success'] == true) {
         return ApiResponse.success(null);
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to mark as read');
+      return ApiResponse.failure('Failed to mark as read');
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to mark as read',
+      );
+    }
+  }
+
+  // ==========================================
+  // IMAGE UPLOAD
+  // ==========================================
+
+  /// Upload an image for messaging
+  Future<ApiResponse<String>> uploadImage(File imageFile) async {
+    try {
+      final String fileName = imageFile.path.split('/').last;
+      String mimeType = 'image/jpeg';
+      final ext = fileName.split('.').last.toLowerCase();
+      
+      if (ext == 'png') mimeType = 'image/png';
+      else if (ext == 'gif') mimeType = 'image/gif';
+      else if (ext == 'webp') mimeType = 'image/webp';
+
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: fileName,
+          contentType: MediaType.parse(mimeType),
+        ),
+      });
+
+      final response = await _dio.post('/messages/upload', data: formData);
+
+      if (response.data['success'] == true) {
+        final url = response.data['data']['url'] as String;
+        return ApiResponse.success(url);
+      }
+      return ApiResponse.failure('Failed to upload image');
+    } on DioException catch (e) {
+      print('Upload Error: ${e.message}');
+      print('Upload Response: ${e.response?.data}');
+      return ApiResponse.failure(
+        e.response?.data?['error'] ?? 'Failed to upload image',
       );
     }
   }
@@ -170,45 +242,67 @@ class MessageClient {
   }
 
   // ==========================================
-  // CONTACT MESSAGES (Legacy)
+  // SEARCH USERS
   // ==========================================
 
-  /// Get sent messages
-  Future<ApiResponse<List<Message>>> getSentMessages() async {
+  /// Search users for starting new conversations
+  Future<ApiResponse<List<SearchUser>>> searchUsers(String query) async {
     try {
-      final response = await _dio.get('/contact-messages/sent');
+      final response = await _dio.get('/messages/search-users', queryParameters: {'q': query});
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
-        final messages = data
-            .map((e) => Message.fromJson(e as Map<String, dynamic>))
+        final users = data
+            .map((e) => SearchUser.fromJson(e as Map<String, dynamic>))
             .toList();
-        return ApiResponse.success(messages);
+        return ApiResponse.success(users);
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to fetch messages');
+      return ApiResponse.failure('Failed to search users');
     } on DioException catch (e) {
       return ApiResponse.failure(
-        e.response?.data?['error'] ?? 'Failed to fetch messages',
+        e.response?.data?['error'] ?? 'Failed to search users',
       );
     }
   }
 
-  /// Get received messages
-  Future<ApiResponse<List<Message>>> getReceivedMessages() async {
+  // ==========================================
+  // ANNOUNCEMENTS
+  // ==========================================
+
+  /// Get announcements
+  Future<ApiResponse<List<Announcement>>> getAnnouncements({bool includeRead = true}) async {
     try {
-      final response = await _dio.get('/contact-messages/received');
+      final response = await _dio.get(
+        '/announcements',
+        queryParameters: {'includeRead': includeRead.toString()},
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
-        final messages = data
-            .map((e) => Message.fromJson(e as Map<String, dynamic>))
+        final announcements = data
+            .map((e) => Announcement.fromJson(e as Map<String, dynamic>))
             .toList();
-        return ApiResponse.success(messages);
+        return ApiResponse.success(announcements);
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to fetch messages');
+      return ApiResponse.failure('Failed to fetch announcements');
     } on DioException catch (e) {
       return ApiResponse.failure(
-        e.response?.data?['error'] ?? 'Failed to fetch messages',
+        e.response?.data?['error'] ?? 'Failed to fetch announcements',
+      );
+    }
+  }
+
+  /// Mark announcement as read
+  Future<ApiResponse<void>> markAnnouncementRead(int announcementId) async {
+    try {
+      final response = await _dio.post('/announcements/$announcementId/read');
+      if (response.data['success'] == true) {
+        return ApiResponse.success(null);
+      }
+      return ApiResponse.failure('Failed to mark announcement as read');
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['error'] ?? 'Failed to mark as read',
       );
     }
   }

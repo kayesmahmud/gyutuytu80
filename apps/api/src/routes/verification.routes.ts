@@ -106,17 +106,17 @@ router.get(
       hasRequest: !!businessRequest,
       request: businessRequest
         ? {
-            id: businessRequest.id,
-            status: businessRequest.status,
-            businessName: businessRequest.business_name,
-            rejectionReason: businessRequest.rejection_reason,
-            durationDays: businessRequest.duration_days,
-            createdAt: businessRequest.created_at?.toISOString(),
-            paymentStatus: businessRequest.payment_status,
-            paymentAmount: businessRequest.payment_amount ? Number(businessRequest.payment_amount) : null,
-            canResubmitFree: businessRequest.status === 'rejected' &&
-              (businessRequest.payment_status === 'paid' || businessRequest.payment_status === 'free'),
-          }
+          id: businessRequest.id,
+          status: businessRequest.status,
+          businessName: businessRequest.business_name,
+          rejectionReason: businessRequest.rejection_reason,
+          durationDays: businessRequest.duration_days,
+          createdAt: businessRequest.created_at?.toISOString(),
+          paymentStatus: businessRequest.payment_status,
+          paymentAmount: businessRequest.payment_amount ? Number(businessRequest.payment_amount) : null,
+          canResubmitFree: businessRequest.status === 'rejected' &&
+            (businessRequest.payment_status === 'paid' || businessRequest.payment_status === 'free'),
+        }
         : undefined,
     };
 
@@ -154,18 +154,18 @@ router.get(
       hasRequest: !!individualRequest,
       request: individualRequest
         ? {
-            id: individualRequest.id,
-            status: individualRequest.status,
-            fullName: individualRequest.full_name,
-            idDocumentType: individualRequest.id_document_type,
-            rejectionReason: individualRequest.rejection_reason,
-            durationDays: individualRequest.duration_days,
-            createdAt: individualRequest.created_at?.toISOString(),
-            paymentStatus: individualRequest.payment_status,
-            paymentAmount: individualRequest.payment_amount ? Number(individualRequest.payment_amount) : null,
-            canResubmitFree: individualRequest.status === 'rejected' &&
-              (individualRequest.payment_status === 'paid' || individualRequest.payment_status === 'free'),
-          }
+          id: individualRequest.id,
+          status: individualRequest.status,
+          fullName: individualRequest.full_name,
+          idDocumentType: individualRequest.id_document_type,
+          rejectionReason: individualRequest.rejection_reason,
+          durationDays: individualRequest.duration_days,
+          createdAt: individualRequest.created_at?.toISOString(),
+          paymentStatus: individualRequest.payment_status,
+          paymentAmount: individualRequest.payment_amount ? Number(individualRequest.payment_amount) : null,
+          canResubmitFree: individualRequest.status === 'rejected' &&
+            (individualRequest.payment_status === 'paid' || individualRequest.payment_status === 'free'),
+        }
         : undefined,
     };
 
@@ -189,8 +189,17 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const { businessName, licenseDocument } = req.body;
+    const {
+      businessName,
+      licenseDocument,
+      businessCategory,
+      businessDescription,
+      businessWebsite,
+      businessPhone,
+      businessAddress,
+    } = req.body;
 
+    // 1. Update user record
     await prisma.users.update({
       where: { id: userId },
       data: {
@@ -198,6 +207,23 @@ router.post(
         business_name: businessName,
         business_license_document: licenseDocument,
         business_verification_status: 'pending',
+      },
+    });
+
+    // 2. Create a verification request record so editors can review it
+    await prisma.business_verification_requests.create({
+      data: {
+        user_id: userId,
+        business_name: businessName,
+        business_license_document: licenseDocument,
+        business_category: businessCategory || null,
+        business_description: businessDescription || null,
+        business_website: businessWebsite || null,
+        business_phone: businessPhone || null,
+        business_address: businessAddress || null,
+        status: 'pending',
+        duration_days: 365,
+        payment_status: 'free',
       },
     });
 
@@ -219,14 +245,29 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const { documentUrls } = req.body;
+    const { documentUrls, fullName, idType, idNumber } = req.body;
 
-    // For individual verification, we just mark as pending
-    // The actual verification would be done by admin
+    // 1. Update user record
     await prisma.users.update({
       where: { id: userId },
       data: {
         individual_verified: false, // Stays false until admin approves
+      },
+    });
+
+    // 2. Create a verification request record so editors can review it
+    await prisma.individual_verification_requests.create({
+      data: {
+        user_id: userId,
+        full_name: fullName || null,
+        id_document_type: idType || 'citizenship',
+        id_document_number: idNumber || '',
+        id_document_front: documentUrls?.id_document_front?.filename || documentUrls?.id_document_front?.url || null,
+        id_document_back: documentUrls?.id_document_back?.filename || documentUrls?.id_document_back?.url || null,
+        selfie_with_id: documentUrls?.selfie_with_id?.filename || documentUrls?.selfie_with_id?.url || null,
+        status: 'pending',
+        duration_days: 365,
+        payment_status: 'free',
       },
     });
 

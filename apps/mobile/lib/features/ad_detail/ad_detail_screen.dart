@@ -3,9 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
+import 'package:mobile/core/api/favorites_client.dart';
 import 'package:mobile/core/models/models.dart';
+import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/features/shop/shop_screen.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
 import 'package:mobile/features/ad_detail/widgets/ad_image_gallery.dart';
@@ -13,6 +16,7 @@ import 'package:mobile/features/ad_detail/widgets/ad_specifications.dart';
 import 'package:mobile/features/ad_detail/widgets/seller_card.dart';
 import 'package:mobile/features/ad_detail/widgets/floating_contact_bar.dart';
 import 'package:mobile/features/ad_detail/widgets/ad_detail_banners.dart';
+import 'package:mobile/features/auth/signin_screen.dart';
 
 class AdDetailScreen extends StatefulWidget {
   final int? adId;
@@ -26,15 +30,16 @@ class AdDetailScreen extends StatefulWidget {
 
 class _AdDetailScreenState extends State<AdDetailScreen> {
   final AdClient _adClient = AdClient();
+  final FavoritesClient _favoritesClient = FavoritesClient();
   final ScrollController _scrollController = ScrollController();
   
   AdWithDetails? _ad;
   List<AdWithDetails> _relatedAds = [];
   bool _isLoading = true;
   String? _error;
-// Removed unused state variables
+  
   bool _isFavorite = false;
-  int _favoriteCount = 0;
+  bool _isFavoriteLoading = false;
 
   // Scroll-aware contact bar
   double _lastScrollPosition = 0;
@@ -103,6 +108,11 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
           limit: 4,
           excludeAdId: ad.id,
         );
+        
+        // Check favorite status if logged in
+        if (mounted) {
+           _checkFavoriteStatus(ad.id);
+        }
 
         if (mounted) {
           setState(() {
@@ -124,6 +134,81 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
         setState(() {
           _error = 'Failed to load ad: $e';
           _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _checkFavoriteStatus(int adId) async {
+    final authProvider = context.read<AuthProvider>();
+    if (!authProvider.isLoggedIn) return;
+
+    try {
+      final response = await _favoritesClient.checkFavorite(adId);
+      if (mounted && response.success) {
+        setState(() {
+          _isFavorite = response.isFavorited;
+        });
+      }
+    } catch (e) {
+      print("Error checking favorite status: $e");
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final authProvider = context.read<AuthProvider>();
+    
+    if (!authProvider.isLoggedIn) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SignInScreen()),
+      );
+      return;
+    }
+
+    if (_ad == null || _isFavoriteLoading) return;
+
+    setState(() {
+      _isFavoriteLoading = true;
+    });
+
+    try {
+      ApiResult response;
+      if (_isFavorite) {
+        response = await _favoritesClient.removeFromFavorites(_ad!.id);
+      } else {
+        response = await _favoritesClient.addToFavorites(_ad!.id);
+      }
+
+      if (mounted) {
+        if (response.success) {
+          setState(() {
+            _isFavorite = !_isFavorite;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_isFavorite ? 'Added to favorites' : 'Removed from favorites'),
+              backgroundColor: _isFavorite ? Colors.green : Colors.grey[700],
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response.error ?? 'Failed to update favorite')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFavoriteLoading = false;
         });
       }
     }
@@ -194,8 +279,27 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                 ),
               ),
               actions: [
+                // Favorite Button
                 Container(
                   margin: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                  child: IconButton(
+                    icon: _isFavoriteLoading 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
+                        : Icon(
+                            _isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: _isFavorite ? Colors.red : Colors.black87,
+                          ),
+                    onPressed: _toggleFavorite,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+                // Share Button
+                Container(
+                  margin: const EdgeInsets.only(top: 8, bottom: 8, right: 16),
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,

@@ -159,14 +159,14 @@ export async function GET(
       isArchived: currentUserParticipant?.is_archived || false,
       ad: conversation.ads
         ? {
-            id: conversation.ads.id,
-            title: conversation.ads.title,
-            slug: conversation.ads.slug,
-            price: conversation.ads.price
-              ? parseFloat(conversation.ads.price.toString())
-              : null,
-            image: conversation.ads.ad_images[0]?.file_path || null,
-          }
+          id: conversation.ads.id,
+          title: conversation.ads.title,
+          slug: conversation.ads.slug,
+          price: conversation.ads.price
+            ? parseFloat(conversation.ads.price.toString())
+            : null,
+          image: conversation.ads.ad_images[0]?.file_path || null,
+        }
         : null,
       participants: conversation.conversation_participants.map((p) => ({
         id: p.users.id,
@@ -326,6 +326,34 @@ export async function POST(
       },
       data: { last_read_at: new Date() },
     });
+
+    // Bridge to Express Socket.IO: broadcast the new message to all connected clients
+    const messageData = {
+      id: message.id,
+      conversationId,
+      senderId: message.sender_id,
+      sender: {
+        id: message.users.id,
+        fullName: message.users.full_name,
+        avatar: message.users.avatar,
+      },
+      content: message.content,
+      type: message.type,
+      attachmentUrl: message.attachment_url,
+      createdAt: message.created_at,
+    };
+
+    // Fire-and-forget: notify Express backend to broadcast via Socket.IO
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+    fetch(`${backendUrl}/api/internal/broadcast-message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: process.env.INTERNAL_API_SECRET || 'thulobazaar-internal-2025',
+        messageData,
+        conversationId,
+      }),
+    }).catch((err) => console.error('Socket broadcast failed (non-critical):', err.message));
 
     return NextResponse.json(
       {

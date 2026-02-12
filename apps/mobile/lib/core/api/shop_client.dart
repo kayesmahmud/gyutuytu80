@@ -145,6 +145,125 @@ class ShopClient {
   }) {
     return getShopAds(sellerSlug, page: page, limit: limit);
   }
+
+
+  /// Update shop profile details (bio, description)
+  Future<ApiResponse<ShopProfile>> updateShopProfile(Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.patch('/profile', data: data);
+      if (response.data['success'] == true) {
+        return ApiResponse.success(ShopProfile.fromJson(response.data['data']));
+      }
+      return ApiResponse.failure(response.data['message'] ?? 'Failed to update profile');
+    } on DioException catch (e) {
+      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to update profile');
+    }
+  }
+
+  /// Update shop contact details
+  Future<ApiResponse<ShopProfile>> updateShopContact(Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.patch('/profile/contact', data: data);
+      if (response.data['success'] == true) {
+        // Contact update might verify phone, so refresh profile
+        return ApiResponse.success(ShopProfile.fromJson(response.data['data']));
+      }
+      return ApiResponse.failure(response.data['message'] ?? 'Failed to update contact info');
+    } on DioException catch (e) {
+      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to update contact info');
+    }
+  }
+
+  /// Update shop location
+  Future<ApiResponse<ShopProfile>> updateShopLocation(String locationSlug) async {
+    try {
+      final response = await _dio.patch('/profile/location', data: {'locationSlug': locationSlug});
+      if (response.data['success'] == true) {
+        return ApiResponse.success(ShopProfile.fromJson(response.data['data']));
+      }
+      return ApiResponse.failure(response.data['message'] ?? 'Failed to update location');
+    } on DioException catch (e) {
+      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to update location');
+    }
+  }
+
+  /// Update shop default category
+  Future<ApiResponse<ShopProfile>> updateShopCategory(int categoryId, int? subcategoryId) async {
+    try {
+      final response = await _dio.patch('/profile/category', data: {
+        'categoryId': categoryId,
+        'subcategoryId': subcategoryId,
+      });
+      if (response.data['success'] == true) {
+        return ApiResponse.success(ShopProfile.fromJson(response.data['data']));
+      }
+      return ApiResponse.failure(response.data['message'] ?? 'Failed to update category');
+    } on DioException catch (e) {
+      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to update category');
+    }
+  }
+
+  /// Upload avatar image
+  Future<ApiResponse<String>> uploadAvatar(String filePath) async {
+    try {
+      String fileName = filePath.split('/').last;
+      FormData formData = FormData.fromMap({
+        "avatar": await MultipartFile.fromFile(filePath, filename: fileName),
+      });
+
+      final response = await _dio.post('/profile/avatar', data: formData);
+      if (response.data['success'] == true) {
+        return ApiResponse.success(response.data['data']['avatar_url'] ?? 'Avatar uploaded');
+      }
+      return ApiResponse.failure(response.data['message'] ?? 'Failed to upload avatar');
+    } on DioException catch (e) {
+      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to upload avatar');
+    }
+  }
+
+  /// Remove avatar image
+  Future<ApiResponse<bool>> removeAvatar() async {
+    try {
+      final response = await _dio.delete('/profile/avatar');
+      if (response.data['success'] == true) {
+        return ApiResponse.success(true);
+      }
+      return ApiResponse.failure(response.data['message'] ?? 'Failed to remove avatar');
+    } on DioException catch (e) {
+      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to remove avatar');
+    }
+  }
+
+  /// Upload cover photo
+  Future<ApiResponse<String>> uploadCover(String filePath) async {
+    try {
+      String fileName = filePath.split('/').last;
+      FormData formData = FormData.fromMap({
+        "cover": await MultipartFile.fromFile(filePath, filename: fileName),
+      });
+
+      final response = await _dio.post('/profile/cover', data: formData);
+      if (response.data['success'] == true) {
+        return ApiResponse.success(response.data['data']['cover_url'] ?? 'Cover uploaded');
+      }
+      return ApiResponse.failure(response.data['message'] ?? 'Failed to upload cover');
+    } on DioException catch (e) {
+      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to upload cover');
+    }
+  }
+
+  /// Remove cover photo
+  Future<ApiResponse<bool>> removeCover() async {
+    try {
+      final response = await _dio.delete('/profile/cover');
+      if (response.data['success'] == true) {
+        return ApiResponse.success(true);
+      }
+      return ApiResponse.failure(response.data['message'] ?? 'Failed to remove cover');
+    } on DioException catch (e) {
+      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to remove cover');
+    }
+  }
 }
 
 /// Shop Profile model with extended seller info
@@ -172,6 +291,15 @@ class ShopProfile {
   final int? locationId;
   final String? locationName;
   final String? locationFullPath;
+  final int? categoryId;
+  final String? categoryName;
+  final String? categorySlug;
+  final String? categoryIcon;
+  final int? subcategoryId;
+  final String? subcategoryName;
+  final String? subcategorySlug;
+  final String? subcategoryIcon;
+
   final DateTime? createdAt;
 
   // Stats
@@ -203,6 +331,14 @@ class ShopProfile {
     this.locationId,
     this.locationName,
     this.locationFullPath,
+    this.categoryId,
+    this.categoryName,
+    this.categorySlug,
+    this.categoryIcon,
+    this.subcategoryId,
+    this.subcategoryName,
+    this.subcategorySlug,
+    this.subcategoryIcon,
     this.createdAt,
     this.totalAds = 0,
     this.totalViews = 0,
@@ -234,6 +370,13 @@ class ShopProfile {
   }
 
   factory ShopProfile.fromJson(Map<String, dynamic> json) {
+    // Handle nested objects if API returns them (e.g. defaultCategory: { ... })
+    // The web code suggests props are passed down, likely flattened or from nested objects.
+    // Let's safe-guard for both flattened and nested (defaultCategory object)
+    
+    final defaultCategory = json['defaultCategory'] as Map<String, dynamic>? ?? json['default_category'] as Map<String, dynamic>?;
+    final defaultSubcategory = json['defaultSubcategory'] as Map<String, dynamic>? ?? json['default_subcategory'] as Map<String, dynamic>?;
+
     return ShopProfile(
       id: json['id'] as int,
       fullName: json['fullName'] as String? ?? json['full_name'] as String? ?? '',
@@ -258,6 +401,17 @@ class ShopProfile {
       locationId: json['locationId'] as int? ?? json['location_id'] as int?,
       locationName: json['locationName'] as String? ?? json['location_name'] as String? ?? (json['location'] as Map<String, dynamic>?)?['name'] as String?,
       locationFullPath: json['locationFullPath'] as String? ?? json['location_full_path'] as String?,
+      
+      categoryId: defaultCategory?['id'] as int? ?? json['categoryId'] as int? ?? json['category_id'] as int?,
+      categoryName: defaultCategory?['name'] as String? ?? json['categoryName'] as String? ?? json['category_name'] as String?,
+      categorySlug: defaultCategory?['slug'] as String? ?? json['categorySlug'] as String? ?? json['category_slug'] as String?,
+      categoryIcon: defaultCategory?['icon'] as String? ?? json['categoryIcon'] as String? ?? json['category_icon'] as String?,
+      
+      subcategoryId: defaultSubcategory?['id'] as int? ?? json['subcategoryId'] as int? ?? json['subcategory_id'] as int?,
+      subcategoryName: defaultSubcategory?['name'] as String? ?? json['subcategoryName'] as String? ?? json['subcategory_name'] as String?,
+      subcategorySlug: defaultSubcategory?['slug'] as String? ?? json['subcategorySlug'] as String? ?? json['subcategory_slug'] as String?,
+      subcategoryIcon: defaultSubcategory?['icon'] as String? ?? json['subcategoryIcon'] as String? ?? json['subcategory_icon'] as String?,
+
       createdAt: _parseDateTime(json['memberSince'] ?? json['createdAt'] ?? json['created_at']),
       totalAds: json['totalAds'] as int? ?? json['total_ads'] as int? ?? 0,
       totalViews: json['totalViews'] as int? ?? json['total_views'] as int? ?? 0,

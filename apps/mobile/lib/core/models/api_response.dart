@@ -37,7 +37,7 @@ class ApiResponse<T> {
     }
     return ApiResponse(
       success: false,
-      error: json['error'] as String?,
+      error: _extractError(json['error']),
       message: json['message'] as String?,
     );
   }
@@ -137,7 +137,7 @@ class PaginatedResponse<T> {
         pagination: PaginationInfo.fromJson(json['pagination'] as Map<String, dynamic>? ?? {}),
       );
     }
-    return PaginatedResponse.failure(json['error'] as String? ?? 'Unknown error');
+    return PaginatedResponse.failure(_extractError(json['error']) ?? 'Unknown error');
   }
 
   /// Check if there are more pages to load
@@ -247,4 +247,19 @@ class SearchFilters {
       sortOrder: sortOrder,
     );
   }
+}
+
+/// Helper to extract error message from various API error formats.
+/// The backend error handler may return error as a Map ({statusCode, name, ...})
+/// or as a plain String.
+String? _extractError(dynamic error) {
+  if (error == null) return null;
+  if (error is String) return error;
+  if (error is Map) {
+    // Try common error map shapes
+    return error['message'] as String? ??
+        error['name'] as String? ??
+        error.toString();
+  }
+  return error.toString();
 }

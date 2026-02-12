@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// API Configuration
 /// Centralized configuration for API endpoints and URLs
 class ApiConfig {
@@ -9,15 +11,16 @@ class ApiConfig {
     const envUrl = String.fromEnvironment('API_URL');
     if (envUrl.isNotEmpty) return envUrl;
 
-    // For Android emulator, use 10.0.2.2 (maps to host's localhost)
-    // For physical devices on same network, use the actual IP
-    // Toggle this based on your testing setup:
-    const useEmulator = false; // Set to false for physical device testing
- 
-    if (useEmulator) {
-      return 'http://10.0.2.2:5000/api'; // Android emulator → host localhost
+    if (kIsWeb) {
+      return 'http://localhost:5000/api';
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      // Android Physical Device (via USB):
+      // Provides the most stable connection.
+      // Run: adb reverse tcp:5000 tcp:5000
+      return 'http://127.0.0.1:5000/api'; 
     } else {
-      return 'http://192.168.1.153:5000/api'; // Physical device on same WiFi
+      // iOS Simulator / Mac defaults to localhost
+      return 'http://localhost:5000/api';
     }
   }
 
@@ -53,6 +56,18 @@ class ApiConfig {
       return '$base$imagePath';
     }
     return '$uploadsBaseUrl/ads/$imagePath';
+  }
+
+  // Helper to get full cover image URL
+  static String getCoverUrl(String? coverPath) {
+    if (coverPath == null || coverPath.isEmpty) return '';
+    if (coverPath.startsWith('http')) return coverPath;
+    // If path already contains /uploads/, just prepend the base URL
+    if (coverPath.startsWith('/uploads/')) {
+      final base = baseUrl.replaceAll('/api', '');
+      return '$base$coverPath';
+    }
+    return '$uploadsBaseUrl/covers/$coverPath';
   }
 
   // Timeout settings

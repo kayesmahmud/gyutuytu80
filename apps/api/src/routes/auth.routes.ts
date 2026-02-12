@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import config from '../config/index.js';
+import { authenticateToken } from '../middleware/auth.js';
 import { rateLimiters } from '../middleware/rateLimiter.js';
 import { catchAsync, ValidationError } from '../middleware/errorHandler.js';
 import { formatPhoneNumber } from '../lib/sms.js';
@@ -11,6 +12,12 @@ import {
   loginWithPhone,
   registerWithPhone,
   resetPassword,
+  verifyGoogleToken,
+  changePassword,
+  updatePhone,
+  getSessions,
+  revokeSession,
+  toggle2FA,
   type OtpPurposeType,
 } from '../services/auth.service.js';
 
@@ -355,6 +362,147 @@ router.post(
     res.json({
       success: true,
       message: 'Password reset successful. You can now login with your new password.',
+    });
+  })
+);
+
+
+// ============================================================================
+// Security Routes
+// ============================================================================
+
+/**
+ * POST /api/auth/change-password
+ * Change user password
+ */
+router.post(
+  '/change-password',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      throw new ValidationError('Current and new password are required');
+    }
+
+    if (newPassword.length < 6) {
+      throw new ValidationError('New password must be at least 6 characters');
+    }
+
+    const result = await changePassword(userId, currentPassword, newPassword);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  })
+);
+
+/**
+ * POST /api/auth/update-phone
+ * Update verified phone number
+ */
+router.post(
+  '/update-phone',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const { phone, verificationToken } = req.body;
+
+    if (!phone || !verificationToken) {
+      throw new ValidationError('Phone number and verification token are required');
+    }
+
+    const result = await updatePhone(userId, phone, verificationToken);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Phone number updated successfully',
+    });
+  })
+);
+
+/**
+ * GET /api/auth/sessions
+ * Get active sessions
+ */
+router.get(
+  '/sessions',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const result = await getSessions(userId);
+
+    res.json({
+      success: true,
+      data: result.sessions,
+    });
+  })
+);
+
+/**
+ * DELETE /api/auth/sessions/:sessionId
+ * Revoke a session
+ */
+router.delete(
+  '/sessions/:sessionId',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const sessionId = parseInt(req.params.sessionId as string);
+
+    const result = await revokeSession(userId, sessionId);
+
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Session revoked successfully',
+    });
+  })
+);
+
+/**
+ * POST /api/auth/2fa/toggle
+ * Toggle 2FA
+ */
+router.post(
+  '/2fa/toggle',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const { enable } = req.body;
+
+    if (typeof enable !== 'boolean') {
+      throw new ValidationError('Enable flag must be a boolean');
+    }
+
+    const result = await toggle2FA(userId, enable);
+
+    res.json({
+      success: true,
+      message: `Two-factor authentication ${enable ? 'enabled' : 'disabled'} successfully`,
+      data: { enabled: result.enabled },
     });
   })
 );

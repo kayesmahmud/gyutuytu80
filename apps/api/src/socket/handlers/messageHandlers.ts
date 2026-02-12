@@ -45,6 +45,7 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
       const messageData = {
         id: message.id,
         conversationId: message.conversation_id,
+        senderId: message.sender_id,
         sender: {
           id: sender?.id,
           fullName: sender?.full_name,

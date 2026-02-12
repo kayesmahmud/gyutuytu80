@@ -24,6 +24,7 @@ import mockPaymentRoutes from './routes/mockPayment.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import categoryPricingTiersRoutes from './routes/categoryPricingTiers.routes.js';
 import favoritesRoutes from './routes/favorites.routes.js';
+import announcementsRoutes from './routes/announcements.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -50,10 +51,20 @@ export function createApp(): Express {
     })
   );
 
-  // CORS configuration
+  // CORS configuration - function-based to allow mobile apps (no Origin header)
   app.use(
     cors({
-      origin: config.CORS_ORIGINS,
+      origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, server-to-server)
+        if (!origin) return callback(null, true);
+
+        // Check against allowed origins list
+        if (config.CORS_ORIGINS.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
     })
   );
@@ -124,6 +135,33 @@ export function createApp(): Express {
   app.use('/api/payments', paymentRoutes);
   app.use('/api/category-pricing-tiers', categoryPricingTiersRoutes);
   app.use('/api/favorites', favoritesRoutes);
+  app.use('/api/announcements', announcementsRoutes);
+
+  // Internal endpoint: Next.js → Express Socket.IO bridge
+  // Called by Next.js API routes after saving a message to DB
+  app.post('/api/internal/broadcast-message', (req, res) => {
+    const { secret, messageData, conversationId } = req.body;
+
+    // Simple shared secret to prevent unauthorized broadcasts
+    const internalSecret = process.env.INTERNAL_API_SECRET || 'thulobazaar-internal-2025';
+    if (secret !== internalSecret) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+
+    const io = req.app.get('io');
+    if (io && conversationId) {
+      io.to(`conversation:${conversationId}`).emit('message:new', messageData);
+      io.to(`conversation:${conversationId}`).emit('conversation:updated', {
+        conversationId,
+        lastMessage: messageData,
+        timestamp: new Date(),
+      });
+      console.log(`📡 Broadcasted message ${messageData?.id} to conversation:${conversationId}`);
+      return res.json({ success: true });
+    }
+
+    return res.status(500).json({ success: false, message: 'Socket.IO not available' });
+  });
 
   // 404 handler
   app.use(notFound);

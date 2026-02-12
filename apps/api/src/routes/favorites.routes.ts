@@ -10,7 +10,7 @@ const router = Router();
  */
 router.get('/', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
 
     if (!userId) {
       return res.status(401).json({
@@ -138,7 +138,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
  */
 router.post('/', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     const { adId } = req.body;
 
     if (!userId) {
@@ -219,7 +219,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
  */
 router.delete('/:adId', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     const adId = parseInt(req.params.adId, 10);
 
     if (!userId) {
@@ -271,7 +271,7 @@ router.delete('/:adId', authenticateToken, async (req: Request, res: Response) =
  */
 router.get('/:adId', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.userId;
     const adId = parseInt(req.params.adId, 10);
 
     if (!userId) {

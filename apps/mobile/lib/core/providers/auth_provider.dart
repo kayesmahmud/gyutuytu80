@@ -59,6 +59,22 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<void> refreshProfile() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final response = await _authClient.getProfile();
+      if (response['success'] == true) {
+        _user = response['data'];
+      }
+    } catch (e) {
+      print("Error refreshing profile: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> login(String token) async {
     await _storage.write(key: 'auth_token', value: token);
     _isLoggedIn = true;

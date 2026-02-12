@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
+import 'package:mobile/core/providers/chat_provider.dart';
 import 'package:mobile/features/home/home_screen.dart';
 import 'package:mobile/features/browse/browse_screen.dart';
 import 'package:mobile/features/post_ad/post_ad_screen.dart';
@@ -27,6 +28,23 @@ class _MainNavScreenState extends State<MainNavScreen> {
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    
+    // Initialize chat if logged in
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.isAuthenticated && authProvider.userId != null) {
+        context.read<ChatProvider>().initialize(authProvider.userId!);
+      }
+      
+      // Listen for auth changes to init/dispose chat
+      authProvider.addListener(() {
+        if (authProvider.isAuthenticated && authProvider.userId != null) {
+          context.read<ChatProvider>().initialize(authProvider.userId!);
+        } else {
+          context.read<ChatProvider>().disconnect();
+        }
+      });
+    });
   }
 
   final List<Widget> _screens = [
@@ -100,7 +118,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
                 fontSize: 14,
                 color: Colors.grey[600],
               ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -179,37 +196,70 @@ class _MainNavScreenState extends State<MainNavScreen> {
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: const Color(0xFF10B981), // Emerald Green
-          unselectedItemColor: Colors.grey[400],
-          selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12),
-          unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view), 
-              activeIcon: Icon(Icons.grid_view_rounded),
-              label: 'Browse',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble),
-              label: 'Messages',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
+        child: Consumer<ChatProvider>(
+          builder: (context, chatProvider, child) {
+            return BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.white,
+              selectedItemColor: const Color(0xFF10B981), // Emerald Green
+              unselectedItemColor: Colors.grey[400],
+              selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12),
+              unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12),
+              items: [
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.grid_view), 
+                  activeIcon: Icon(Icons.grid_view_rounded),
+                  label: 'Browse',
+                ),
+                BottomNavigationBarItem(
+                  icon: Stack(
+                    children: [
+                      const Icon(Icons.chat_bubble_outline),
+                      if (chatProvider.unreadCount > 0)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 14,
+                              minHeight: 14,
+                            ),
+                            child: Text(
+                              '${chatProvider.unreadCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  activeIcon: const Icon(Icons.chat_bubble),
+                  label: 'Messages',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(

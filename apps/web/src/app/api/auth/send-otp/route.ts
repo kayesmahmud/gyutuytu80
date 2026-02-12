@@ -16,7 +16,7 @@ const sendOtpSchema = z.object({
   purpose: z.enum(['registration', 'login', 'password_reset', 'phone_verification']).default('registration'),
 });
 
-const MAX_OTP_ATTEMPTS = 3;
+const MAX_OTP_ATTEMPTS = 4;
 const OTP_COOLDOWN_SECONDS = 60;
 
 export async function POST(request: NextRequest) {
