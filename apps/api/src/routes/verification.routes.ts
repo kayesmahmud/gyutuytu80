@@ -181,6 +181,177 @@ router.get(
 );
 
 /**
+ * GET /api/verification/pricing
+ * Get verification pricing for users (checks free eligibility)
+ */
+router.get(
+  '/pricing',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const now = new Date();
+
+    // Get all active pricing
+    const pricings = await prisma.verification_pricing.findMany({
+      where: { is_active: true },
+      orderBy: [
+        { verification_type: 'asc' },
+        { duration_days: 'asc' },
+      ],
+    });
+
+    // Get active verification campaign (best one by discount)
+    const activeCampaigns = await prisma.verification_campaigns.findMany({
+      where: {
+        is_active: true,
+        start_date: { lte: now },
+        end_date: { gte: now },
+      },
+      orderBy: { discount_percentage: 'desc' },
+    });
+
+    // Filter campaigns that haven't reached max uses
+    const validCampaigns = activeCampaigns.filter((c) => {
+      if (c.max_uses && c.current_uses && c.current_uses >= c.max_uses) {
+        return false;
+      }
+      return true;
+    });
+
+    const activeCampaign = validCampaigns.length > 0 ? validCampaigns[0] : null;
+    let campaignData: any = null;
+
+    if (activeCampaign) {
+      const endDate = new Date(activeCampaign.end_date);
+      const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      campaignData = {
+        id: activeCampaign.id,
+        name: activeCampaign.name,
+        description: activeCampaign.description,
+        discountPercentage: activeCampaign.discount_percentage,
+        bannerText: activeCampaign.banner_text || `${activeCampaign.banner_emoji} ${activeCampaign.name} - ${activeCampaign.discount_percentage}% OFF!`,
+        bannerEmoji: activeCampaign.banner_emoji,
+        startDate: activeCampaign.start_date,
+        endDate: activeCampaign.end_date,
+        daysRemaining,
+        appliesToTypes: activeCampaign.applies_to_types || [],
+        minDurationDays: activeCampaign.min_duration_days,
+      };
+    }
+
+    // Get free verification settings
+    const settings = await prisma.site_settings.findMany({
+      where: {
+        setting_key: {
+          in: ['free_verification_enabled', 'free_verification_duration_days', 'free_verification_types'],
+        },
+      },
+    });
+
+    const settingsMap: Record<string, string | null> = {};
+    settings.forEach((s) => {
+      settingsMap[s.setting_key] = s.setting_value;
+    });
+
+    // Check if user is eligible for free verification
+    let isEligibleForFreeVerification = false;
+
+    if (settingsMap['free_verification_enabled'] === 'true') {
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: {
+          individual_verified: true,
+          individual_verification_expires_at: true,
+          business_verification_status: true,
+          business_verification_expires_at: true,
+        },
+      });
+
+      if (user) {
+        const hasHadIndividualVerification = user.individual_verified || user.individual_verification_expires_at;
+        const hasHadBusinessVerification = user.business_verification_status === 'approved' || user.business_verification_expires_at;
+        isEligibleForFreeVerification = !hasHadIndividualVerification && !hasHadBusinessVerification;
+      }
+    }
+
+    // Helper: format duration label
+    const formatDurationLabel = (days: number): string => {
+      switch (days) {
+        case 30: return '1 Month';
+        case 90: return '3 Months';
+        case 180: return '6 Months';
+        case 365: return '1 Year';
+        default: return `${days} Days`;
+      }
+    };
+
+    // Helper: get campaign discount for a type & duration
+    const getCampaignDiscount = (verificationType: string, durationDays: number): number => {
+      if (!campaignData) return 0;
+      if (campaignData.appliesToTypes.length > 0 && !campaignData.appliesToTypes.includes(verificationType)) return 0;
+      if (campaignData.minDurationDays && durationDays < campaignData.minDurationDays) return 0;
+      return campaignData.discountPercentage;
+    };
+
+    const calculateFinalPrice = (price: number, discountPercentage: number): number => {
+      if (discountPercentage <= 0) return price;
+      return Math.round(price * (1 - discountPercentage / 100));
+    };
+
+    // Group pricing by type
+    const individualPricing = pricings
+      .filter((p) => p.verification_type === 'individual')
+      .map((p) => {
+        const basePrice = parseFloat(p.price.toString());
+        const campaignDiscount = getCampaignDiscount('individual', p.duration_days);
+        return {
+          id: p.id,
+          durationDays: p.duration_days,
+          durationLabel: formatDurationLabel(p.duration_days),
+          price: basePrice,
+          discountPercentage: campaignDiscount,
+          finalPrice: calculateFinalPrice(basePrice, campaignDiscount),
+          hasCampaignDiscount: campaignDiscount > 0,
+        };
+      });
+
+    const businessPricing = pricings
+      .filter((p) => p.verification_type === 'business')
+      .map((p) => {
+        const basePrice = parseFloat(p.price.toString());
+        const campaignDiscount = getCampaignDiscount('business', p.duration_days);
+        return {
+          id: p.id,
+          durationDays: p.duration_days,
+          durationLabel: formatDurationLabel(p.duration_days),
+          price: basePrice,
+          discountPercentage: campaignDiscount,
+          finalPrice: calculateFinalPrice(basePrice, campaignDiscount),
+          hasCampaignDiscount: campaignDiscount > 0,
+        };
+      });
+
+    const freeVerification = {
+      enabled: settingsMap['free_verification_enabled'] === 'true',
+      durationDays: parseInt(settingsMap['free_verification_duration_days'] || '180', 10),
+      types: JSON.parse(settingsMap['free_verification_types'] || '["individual","business"]'),
+      isEligible: isEligibleForFreeVerification,
+    };
+
+    res.json({
+      success: true,
+      data: {
+        individual: individualPricing,
+        business: businessPricing,
+        freeVerification,
+        campaign: campaignData,
+      },
+    });
+  })
+);
+
+/**
  * POST /api/verification/business
  * Submit business verification request
  */
@@ -197,6 +368,10 @@ router.post(
       businessWebsite,
       businessPhone,
       businessAddress,
+      durationDays,
+      paymentStatus,
+      paymentAmount,
+      paymentReference,
     } = req.body;
 
     // 1. Update user record
@@ -211,7 +386,7 @@ router.post(
     });
 
     // 2. Create a verification request record so editors can review it
-    await prisma.business_verification_requests.create({
+    const businessRequest = await prisma.business_verification_requests.create({
       data: {
         user_id: userId,
         business_name: businessName,
@@ -222,8 +397,10 @@ router.post(
         business_phone: businessPhone || null,
         business_address: businessAddress || null,
         status: 'pending',
-        duration_days: 365,
-        payment_status: 'free',
+        duration_days: durationDays || 365,
+        payment_status: paymentStatus || 'free',
+        ...(paymentAmount && { payment_amount: paymentAmount }),
+        ...(paymentReference && { payment_reference: paymentReference }),
       },
     });
 
@@ -232,6 +409,7 @@ router.post(
     res.json({
       success: true,
       message: 'Business verification request submitted successfully',
+      data: { requestId: businessRequest.id },
     });
   })
 );
@@ -245,7 +423,7 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const { documentUrls, fullName, idType, idNumber } = req.body;
+    const { documentUrls, fullName, idType, idNumber, durationDays, paymentStatus, paymentAmount, paymentReference } = req.body;
 
     // 1. Update user record
     await prisma.users.update({
@@ -256,7 +434,7 @@ router.post(
     });
 
     // 2. Create a verification request record so editors can review it
-    await prisma.individual_verification_requests.create({
+    const individualRequest = await prisma.individual_verification_requests.create({
       data: {
         user_id: userId,
         full_name: fullName || null,
@@ -266,8 +444,10 @@ router.post(
         id_document_back: documentUrls?.id_document_back?.filename || documentUrls?.id_document_back?.url || null,
         selfie_with_id: documentUrls?.selfie_with_id?.filename || documentUrls?.selfie_with_id?.url || null,
         status: 'pending',
-        duration_days: 365,
-        payment_status: 'free',
+        duration_days: durationDays || 365,
+        payment_status: paymentStatus || 'free',
+        ...(paymentAmount && { payment_amount: paymentAmount }),
+        ...(paymentReference && { payment_reference: paymentReference }),
       },
     });
 
@@ -276,6 +456,7 @@ router.post(
     res.json({
       success: true,
       message: 'Individual verification request submitted successfully',
+      data: { requestId: individualRequest.id },
     });
   })
 );

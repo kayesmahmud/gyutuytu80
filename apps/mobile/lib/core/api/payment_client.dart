@@ -239,11 +239,14 @@ class PaymentClient {
   static bool isPaymentCallback(String url) {
     return url.contains('/payment/success') ||
         url.contains('/payment/failure') ||
-        url.contains('/payments/callback');
+        url.contains('/payments/callback') ||
+        url.contains('result=success') ||
+        url.contains('result=failure');
   }
 
   /// Check if payment was successful from callback URL
   static bool isPaymentSuccess(String url) {
-    return url.contains('/payment/success');
+    return url.contains('/payment/success') ||
+        url.contains('result=success');
   }
 }

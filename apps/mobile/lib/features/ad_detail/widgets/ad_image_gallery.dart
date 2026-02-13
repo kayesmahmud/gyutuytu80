@@ -56,27 +56,6 @@ class _AdImageGalleryState extends State<AdImageGallery> {
           },
         ),
 
-        // Promo Banner overlay (Tech Deals) - Example static
-        Positioned(
-          top: 50, // Below SafeArea/AppBar
-          left: 0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  colors: [Color(0xFF0EA5E9), Color(0xFF22D3EE)]),
-              borderRadius: BorderRadius.horizontal(right: Radius.circular(4)),
-            ),
-            child: Text(
-              "Verified Ad",
-              style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-
         // Arrows
         if (images.length > 1) ...[
           Positioned(

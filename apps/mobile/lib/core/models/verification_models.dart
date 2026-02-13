@@ -173,11 +173,13 @@ class VerificationSubmitResponse {
   final bool success;
   final String? error;
   final String? message;
+  final int? requestId;
 
   VerificationSubmitResponse({
     required this.success,
     this.error,
     this.message,
+    this.requestId,
   });
 
   factory VerificationSubmitResponse.fromJson(Map<String, dynamic> json) {
@@ -185,81 +187,141 @@ class VerificationSubmitResponse {
       success: json['success'] == true,
       error: json['success'] == true ? null : json['message'],
       message: json['message'] as String?,
+      requestId: json['data']?['requestId'] as int?,
     );
   }
 }
 
-class VerificationPricing {
-  final Map<String, VerificationPlan> individual;
-  final Map<String, VerificationPlan> business;
-  final Discount? activeCampaign;
-  final bool userEligibleForFree;
+class VerificationPricingResponse {
+  final List<PricingOption> individual;
+  final List<PricingOption> business;
+  final FreeVerificationInfo freeVerification;
+  final VerificationCampaign? campaign;
 
-  VerificationPricing({
+  VerificationPricingResponse({
     required this.individual,
     required this.business,
-    this.activeCampaign,
-    required this.userEligibleForFree,
+    required this.freeVerification,
+    this.campaign,
   });
 
-  factory VerificationPricing.fromJson(Map<String, dynamic> json) {
-    return VerificationPricing(
-      individual: (json['individual'] as Map<String, dynamic>).map(
-        (key, value) => MapEntry(key, VerificationPlan.fromJson(value)),
-      ),
-      business: (json['business'] as Map<String, dynamic>).map(
-        (key, value) => MapEntry(key, VerificationPlan.fromJson(value)),
-      ),
-      activeCampaign: json['activeCampaign'] != null
-          ? Discount.fromJson(json['activeCampaign'])
+  factory VerificationPricingResponse.fromJson(Map<String, dynamic> json) {
+    return VerificationPricingResponse(
+      individual: (json['individual'] as List<dynamic>?)
+              ?.map((e) => PricingOption.fromJson(e))
+              .toList() ??
+          [],
+      business: (json['business'] as List<dynamic>?)
+              ?.map((e) => PricingOption.fromJson(e))
+              .toList() ??
+          [],
+      freeVerification: FreeVerificationInfo.fromJson(
+          json['freeVerification'] ?? {}),
+      campaign: json['campaign'] != null
+          ? VerificationCampaign.fromJson(json['campaign'])
           : null,
-      userEligibleForFree: json['userEligibleForFree'] == true,
     );
   }
 }
 
-class VerificationPlan {
+class PricingOption {
+  final int id;
   final int durationDays;
-  final num price;
-  final num? discountedPrice;
-  final num? finalPrice;
-  final bool isFree;
+  final String durationLabel;
+  final double price;
+  final double discountPercentage;
+  final double finalPrice;
+  final bool hasCampaignDiscount;
 
-  VerificationPlan({
+  PricingOption({
+    required this.id,
     required this.durationDays,
+    required this.durationLabel,
     required this.price,
-    this.discountedPrice,
-    this.finalPrice,
-    required this.isFree,
+    required this.discountPercentage,
+    required this.finalPrice,
+    required this.hasCampaignDiscount,
   });
 
-  factory VerificationPlan.fromJson(Map<String, dynamic> json) {
-    return VerificationPlan(
+  factory PricingOption.fromJson(Map<String, dynamic> json) {
+    return PricingOption(
+      id: json['id'] ?? 0,
       durationDays: json['durationDays'] ?? 0,
-      price: json['price'] ?? 0,
-      discountedPrice: json['discountedPrice'],
-      finalPrice: json['finalPrice'],
-      isFree: json['isFree'] == true,
+      durationLabel: json['durationLabel'] ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0,
+      discountPercentage:
+          (json['discountPercentage'] as num?)?.toDouble() ?? 0,
+      finalPrice: (json['finalPrice'] as num?)?.toDouble() ?? 0,
+      hasCampaignDiscount: json['hasCampaignDiscount'] == true,
     );
   }
 }
 
-class Discount {
-  final String name;
-  final String type;
-  final num value;
+class FreeVerificationInfo {
+  final bool enabled;
+  final int durationDays;
+  final List<String> types;
+  final bool isEligible;
 
-  Discount({
-    required this.name,
-    required this.type,
-    required this.value,
+  FreeVerificationInfo({
+    required this.enabled,
+    required this.durationDays,
+    required this.types,
+    required this.isEligible,
   });
 
-  factory Discount.fromJson(Map<String, dynamic> json) {
-    return Discount(
-      name: json['name'] ?? '',
-      type: json['type'] ?? '',
-      value: json['value'] ?? 0,
+  factory FreeVerificationInfo.fromJson(Map<String, dynamic> json) {
+    return FreeVerificationInfo(
+      enabled: json['enabled'] == true,
+      durationDays: json['durationDays'] ?? 180,
+      types: (json['types'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          ['individual', 'business'],
+      isEligible: json['isEligible'] == true,
     );
   }
 }
+
+class VerificationCampaign {
+  final int id;
+  final String name;
+  final String? description;
+  final double discountPercentage;
+  final String bannerText;
+  final String? bannerEmoji;
+  final int daysRemaining;
+  final List<String> appliesToTypes;
+  final int? minDurationDays;
+
+  VerificationCampaign({
+    required this.id,
+    required this.name,
+    this.description,
+    required this.discountPercentage,
+    required this.bannerText,
+    this.bannerEmoji,
+    required this.daysRemaining,
+    required this.appliesToTypes,
+    this.minDurationDays,
+  });
+
+  factory VerificationCampaign.fromJson(Map<String, dynamic> json) {
+    return VerificationCampaign(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      description: json['description'],
+      discountPercentage:
+          (json['discountPercentage'] as num?)?.toDouble() ?? 0,
+      bannerText: json['bannerText'] ?? '',
+      bannerEmoji: json['bannerEmoji'],
+      daysRemaining: json['daysRemaining'] ?? 0,
+      appliesToTypes: (json['appliesToTypes'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      minDurationDays: json['minDurationDays'],
+    );
+  }
+}
+

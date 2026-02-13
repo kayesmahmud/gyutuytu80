@@ -122,6 +122,8 @@ class MessageClient {
       return ApiResponse.failure(response.data['error'] ?? 'Failed to fetch messages');
     } on DioException catch (e) {
       print('DEBUG [MessageClient.getMessages] DioException: ${e.type} ${e.message} ${e.response?.statusCode}');
+      print('DEBUG [MessageClient.getMessages] Underlying error: ${e.error}');
+      print('DEBUG [MessageClient.getMessages] Stack: ${e.stackTrace}');
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch messages',
       );

@@ -55,6 +55,38 @@ class VerificationClient {
     }
   }
 
+  /// Get verification pricing (plans, free eligibility, campaigns)
+  Future<VerificationPricingResponse?> getVerificationPricing() async {
+    try {
+      final token = await _getToken();
+      if (token == null) {
+        print('❌ [getVerificationPricing] No auth token');
+        return null;
+      }
+
+      final response = await _dio.get(
+        '/verification/pricing',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      print('🔍 [getVerificationPricing] Status: ${response.statusCode}');
+      print('🔍 [getVerificationPricing] Success: ${response.data['success']}');
+      print('🔍 [getVerificationPricing] Has data: ${response.data['data'] != null}');
+
+      if (response.data['success'] == true && response.data['data'] != null) {
+        final result = VerificationPricingResponse.fromJson(response.data['data']);
+        print('✅ [getVerificationPricing] Parsed: ${result.individual.length} individual, ${result.business.length} business plans');
+        return result;
+      }
+      print('⚠️ [getVerificationPricing] No data in response');
+      return null;
+    } catch (e, stackTrace) {
+      print('❌ [getVerificationPricing] Error: $e');
+      print('❌ [getVerificationPricing] Stack: $stackTrace');
+      return null;
+    }
+  }
+
   /// Upload business verification document
   Future<VerificationUploadResponse> uploadBusinessDocument(File file) async {
     try {
@@ -162,6 +194,10 @@ class VerificationClient {
     String? businessWebsite,
     String? businessPhone,
     String? businessAddress,
+    int? durationDays,
+    String? paymentStatus,
+    double? paymentAmount,
+    String? paymentReference,
   }) async {
     try {
       final token = await _getToken();
@@ -177,6 +213,10 @@ class VerificationClient {
         if (businessWebsite != null) 'businessWebsite': businessWebsite,
         if (businessPhone != null) 'businessPhone': businessPhone,
         if (businessAddress != null) 'businessAddress': businessAddress,
+        if (durationDays != null) 'durationDays': durationDays,
+        if (paymentStatus != null) 'paymentStatus': paymentStatus,
+        if (paymentAmount != null) 'paymentAmount': paymentAmount,
+        if (paymentReference != null) 'paymentReference': paymentReference,
       };
 
       final response = await _dio.post(
@@ -209,6 +249,10 @@ class VerificationClient {
     required String fullName,
     required String idType, // 'citizenship', 'passport', 'driving_license'
     required String idNumber,
+    int? durationDays,
+    String? paymentStatus,
+    double? paymentAmount,
+    String? paymentReference,
   }) async {
     try {
       final token = await _getToken();
@@ -221,6 +265,10 @@ class VerificationClient {
         'fullName': fullName,
         'idDocumentType': idType,
         'idDocumentNumber': idNumber,
+        if (durationDays != null) 'durationDays': durationDays,
+        if (paymentStatus != null) 'paymentStatus': paymentStatus,
+        if (paymentAmount != null) 'paymentAmount': paymentAmount,
+        if (paymentReference != null) 'paymentReference': paymentReference,
       };
 
       final response = await _dio.post(

@@ -107,8 +107,8 @@ export function buildEsewaFormData(params: PaymentInitiateParams): {
     product_code: config.merchantCode,
     product_service_charge: '0',
     product_delivery_charge: '0',
-    success_url: params.returnUrl,
-    failure_url: params.returnUrl.replace('/success', '/failure'),
+    success_url: `${params.returnUrl}${params.returnUrl.includes('?') ? '&' : '?'}result=success`,
+    failure_url: `${params.returnUrl}${params.returnUrl.includes('?') ? '&' : '?'}result=failure`,
     signed_field_names: 'total_amount,transaction_uuid,product_code',
     signature: signature,
   };

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../core/api/payment_client.dart';
@@ -77,38 +78,83 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void _setupWebView() {
     final paymentUrl = _paymentData!.paymentUrl;
 
+    final navDelegate = NavigationDelegate(
+      onPageStarted: (String url) {
+        _handleNavigation(url);
+      },
+      onPageFinished: (String url) {
+        setState(() {
+          _isLoading = false;
+        });
+      },
+      onWebResourceError: (WebResourceError error) {
+        if (error.errorType == WebResourceErrorType.unknown) return;
+        setState(() {
+          _error = 'Failed to load payment page: ${error.description}';
+          _isLoading = false;
+        });
+      },
+      onNavigationRequest: (NavigationRequest request) {
+        if (PaymentClient.isPaymentCallback(request.url)) {
+          _handlePaymentCallback(request.url);
+          return NavigationDecision.prevent;
+        }
+        return NavigationDecision.navigate;
+      },
+    );
+
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (String url) {
-            _handleNavigation(url);
-          },
-          onPageFinished: (String url) {
-            setState(() {
-              _isLoading = false;
-            });
-          },
-          onWebResourceError: (WebResourceError error) {
-            if (error.errorType == WebResourceErrorType.unknown) return;
-            setState(() {
-              _error = 'Failed to load payment page: ${error.description}';
-              _isLoading = false;
-            });
-          },
-          onNavigationRequest: (NavigationRequest request) {
-            // Check if this is a callback URL
-            if (PaymentClient.isPaymentCallback(request.url)) {
-              _handlePaymentCallback(request.url);
-              return NavigationDecision.prevent;
-            }
-            return NavigationDecision.navigate;
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse(paymentUrl));
+      ..setNavigationDelegate(navDelegate);
+
+    // eSewa requires POST — load an auto-submit HTML form
+    if (widget.gateway == PaymentGateway.esewa &&
+        paymentUrl.contains('epay/main/v2/form')) {
+      final uri = Uri.parse(paymentUrl);
+      final formUrl = '${uri.scheme}://${uri.host}${uri.path}';
+      final html = _buildEsewaAutoSubmitForm(formUrl, uri.queryParameters);
+      _webViewController!.loadHtmlString(html);
+    } else {
+      _webViewController!.loadRequest(Uri.parse(paymentUrl));
+    }
 
     setState(() {});
+  }
+
+  /// Builds an HTML page with hidden form fields that auto-submits via POST.
+  /// This matches how the web handles eSewa payments.
+  String _buildEsewaAutoSubmitForm(
+      String actionUrl, Map<String, String> fields) {
+    final hiddenInputs = fields.entries
+        .map((e) =>
+            '<input type="hidden" name="${HtmlEscape().convert(e.key)}" value="${HtmlEscape().convert(e.value)}" />')
+        .join('\n');
+
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { display:flex; justify-content:center; align-items:center; height:100vh; margin:0; font-family:sans-serif; background:#f9fafb; }
+    .loader { text-align:center; }
+    .spinner { width:40px; height:40px; border:4px solid #e5e7eb; border-top-color:#60BB46; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    p { color:#6b7280; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="loader">
+    <div class="spinner"></div>
+    <p>Redirecting to eSewa...</p>
+  </div>
+  <form id="esewaForm" method="POST" action="$actionUrl">
+    $hiddenInputs
+  </form>
+  <script>document.getElementById('esewaForm').submit();</script>
+</body>
+</html>
+''';
   }
 
   void _handleNavigation(String url) {

@@ -2,6 +2,13 @@ import { Server } from 'socket.io';
 import { prisma } from '@thulobazaar/database';
 import type { AuthenticatedSocket, SendMessagePayload } from '../types.js';
 
+// Safe callback helper — prevents crashes when client emits without a callback
+function safeCallback(callback: unknown, data: Record<string, unknown>) {
+  if (typeof callback === 'function') {
+    callback(data);
+  }
+}
+
 export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocket): void {
   const userId = socket.userId;
 
@@ -21,7 +28,7 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
       });
 
       if (!participant) {
-        return callback({ error: 'Not a member of this conversation' });
+        return safeCallback(callback, { error: 'Not a member of this conversation' });
       }
 
       // Insert message into database
@@ -84,10 +91,10 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
         timestamp: new Date(),
       });
 
-      callback({ success: true, message: messageData });
+      safeCallback(callback, { success: true, message: messageData });
     } catch (error) {
       console.error('❌ Error sending message:', error);
-      callback({ error: (error as Error).message });
+      safeCallback(callback, { error: (error as Error).message });
     }
   });
 
@@ -114,10 +121,10 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
         readAt: new Date(),
       });
 
-      callback({ success: true });
+      safeCallback(callback, { success: true });
     } catch (error) {
       console.error('❌ Error marking messages as read:', error);
-      callback({ error: (error as Error).message });
+      safeCallback(callback, { error: (error as Error).message });
     }
   });
 
@@ -136,7 +143,7 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
       });
 
       if (!message) {
-        return callback({ error: 'Message not found or unauthorized' });
+        return safeCallback(callback, { error: 'Message not found or unauthorized' });
       }
 
       await prisma.messages.update({
@@ -154,10 +161,10 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
         editedAt: new Date(),
       });
 
-      callback({ success: true });
+      safeCallback(callback, { success: true });
     } catch (error) {
       console.error('❌ Error editing message:', error);
-      callback({ error: (error as Error).message });
+      safeCallback(callback, { error: (error as Error).message });
     }
   });
 
@@ -176,7 +183,7 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
       });
 
       if (!message) {
-        return callback({ error: 'Message not found or unauthorized' });
+        return safeCallback(callback, { error: 'Message not found or unauthorized' });
       }
 
       await prisma.messages.update({
@@ -192,12 +199,10 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
         deletedAt: new Date(),
       });
 
-      callback({ success: true });
+      safeCallback(callback, { success: true });
     } catch (error) {
       console.error('❌ Error deleting message:', error);
-      callback({ error: (error as Error).message });
+      safeCallback(callback, { error: (error as Error).message });
     }
   });
 }
-
-
