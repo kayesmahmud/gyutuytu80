@@ -47,18 +47,32 @@ class _IndividualVerificationFormState
 
   Future<void> _pickImage(String type) async {
     final picked =
-        await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1200);
+        await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1200, imageQuality: 85);
     if (picked != null) {
+      // Validate file size (max 5MB)
+      final file = File(picked.path);
+      final fileSize = await file.length();
+      if (fileSize > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image must be less than 5MB. Please upload a smaller file.'),
+            ),
+          );
+        }
+        return;
+      }
+
       setState(() {
         switch (type) {
           case 'front':
-            _idFront = File(picked.path);
+            _idFront = file;
             break;
           case 'back':
-            _idBack = File(picked.path);
+            _idBack = file;
             break;
           case 'selfie':
-            _selfie = File(picked.path);
+            _selfie = file;
             break;
         }
       });

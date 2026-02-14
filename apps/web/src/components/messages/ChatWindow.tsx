@@ -94,7 +94,7 @@ export default function ChatWindow({
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      setUploadError('Image must be under 5MB');
+      setUploadError('Image must be less than 5MB. Please upload a smaller file.');
       return;
     }
 

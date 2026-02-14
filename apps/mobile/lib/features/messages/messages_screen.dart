@@ -10,10 +10,9 @@ import '../../core/api/message_client.dart';
 import '../../core/models/message.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/chat_provider.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/widgets/main_app_bar.dart';
 import '../../core/widgets/main_drawer.dart';
-import '../auth/signin_screen.dart';
+import '../../core/widgets/login_required_widget.dart';
 import 'chat_screen.dart';
 
 class MessagesScreen extends StatefulWidget {
@@ -43,7 +42,15 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final chatProvider = context.watch<ChatProvider>();
 
     if (!authProvider.isLoggedIn) {
-      return _buildLoginRequiredScreen();
+      return Scaffold(
+        appBar: const MainAppBar(),
+        drawer: const MainDrawer(),
+        body: const LoginRequiredWidget(
+          icon: Icons.chat_bubble_outline,
+          title: 'Login to View Messages',
+          subtitle: 'Sign in to see your conversations\nand chat with buyers and sellers',
+        ),
+      );
     }
 
     if (chatProvider.isLoading && chatProvider.conversations.isEmpty) {
@@ -648,74 +655,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildLoginRequiredScreen() {
-    return Scaffold(
-      appBar: const MainAppBar(),
-      drawer: const MainDrawer(),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-                child: Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[400]),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Login to View Messages',
-                style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Sign in to see your conversations\nand chat with buyers and sellers',
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SignInScreen(onSuccess: () {
-                          // MainNav handles initialization
-                        }),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text(
-                    'Login to Continue',
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SignInScreen()));
-                },
-                child: Text(
-                  'Create an Account',
-                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primary),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();

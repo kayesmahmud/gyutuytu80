@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
 import '../../core/api/auth_client.dart';
 import '../../core/api/verification_client.dart';
 import '../../core/models/verification_models.dart';
+import '../../core/providers/auth_provider.dart';
+import '../../core/widgets/login_required_widget.dart';
 import '../profile/profile_screen.dart';
 import 'verification_widgets.dart';
 import 'individual_verification_form.dart';
@@ -474,6 +477,28 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
+    if (!authProvider.isLoggedIn) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text(
+            'Verification',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 0,
+        ),
+        body: const LoginRequiredWidget(
+          icon: Icons.verified_outlined,
+          title: 'Login to Get Verified',
+          subtitle: 'Sign in to verify your account\nand build trust with buyers',
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

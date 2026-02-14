@@ -42,9 +42,41 @@ export interface SystemSettings {
   smsBroadcastRegular: string;
   smsBroadcastBusiness: string;
   smsBroadcastIndividual: string;
+  // Google Ads Settings
+  googleAdsEnabled: boolean;
+  adsenseClientId: string;
+  // Web AdSense Slot IDs
+  adSlotHomeHeroBanner: string;
+  adSlotHomeHeroBannerMobile: string;
+  adSlotHomeLeft: string;
+  adSlotHomeRight: string;
+  adSlotHomeInFeed: string;
+  adSlotHomeBottom: string;
+  adSlotAdDetailTop: string;
+  adSlotAdDetailTopMobile: string;
+  adSlotAdDetailLeft: string;
+  adSlotAdDetailRight: string;
+  adSlotAdDetailBottom: string;
+  adSlotAdsListingTop: string;
+  adSlotAdsListingTopMobile: string;
+  adSlotAdsListingSidebar: string;
+  adSlotAdsListingInFeed: string;
+  adSlotAdsListingBottom: string;
+  adSlotSearchTop: string;
+  adSlotSearchTopMobile: string;
+  adSlotSearchSidebar: string;
+  adSlotSearchInResults: string;
+  adSlotSearchBottom: string;
+  adSlotDashboardSidebar: string;
+  adSlotProfileSidebar: string;
+  // Mobile AdMob
+  admobAppIdAndroid: string;
+  admobAppIdIos: string;
+  admobBannerAndroid: string;
+  admobBannerIos: string;
 }
 
-export type SettingsTab = 'general' | 'ads' | 'users' | 'email' | 'sms';
+export type SettingsTab = 'general' | 'ads' | 'users' | 'email' | 'sms' | 'google-ads';
 
 export const DEFAULT_SETTINGS: SystemSettings = {
   siteName: 'Thulo Bazaar',
@@ -98,11 +130,42 @@ export const DEFAULT_SETTINGS: SystemSettings = {
     'Dear {name}, get verified on Thulo Bazaar to unlock more features! {message}',
   smsBroadcastBusiness: 'Dear Business Partner {name}, {message} - Thulo Bazaar',
   smsBroadcastIndividual: 'Dear Verified Seller {name}, {message} - Thulo Bazaar',
+  // Google Ads
+  googleAdsEnabled: false,
+  adsenseClientId: '',
+  adSlotHomeHeroBanner: '',
+  adSlotHomeHeroBannerMobile: '',
+  adSlotHomeLeft: '',
+  adSlotHomeRight: '',
+  adSlotHomeInFeed: '',
+  adSlotHomeBottom: '',
+  adSlotAdDetailTop: '',
+  adSlotAdDetailTopMobile: '',
+  adSlotAdDetailLeft: '',
+  adSlotAdDetailRight: '',
+  adSlotAdDetailBottom: '',
+  adSlotAdsListingTop: '',
+  adSlotAdsListingTopMobile: '',
+  adSlotAdsListingSidebar: '',
+  adSlotAdsListingInFeed: '',
+  adSlotAdsListingBottom: '',
+  adSlotSearchTop: '',
+  adSlotSearchTopMobile: '',
+  adSlotSearchSidebar: '',
+  adSlotSearchInResults: '',
+  adSlotSearchBottom: '',
+  adSlotDashboardSidebar: '',
+  adSlotProfileSidebar: '',
+  admobAppIdAndroid: '',
+  admobAppIdIos: '',
+  admobBannerAndroid: '',
+  admobBannerIos: '',
 };
 
 export const SETTINGS_TABS = [
   { id: 'general' as const, label: 'General', icon: '⚙️' },
   { id: 'ads' as const, label: 'Ad Settings', icon: '📢' },
+  { id: 'google-ads' as const, label: 'Google Ads', icon: '📊' },
   { id: 'users' as const, label: 'User Settings', icon: '👥' },
   { id: 'email' as const, label: 'Email', icon: '📧' },
   { id: 'sms' as const, label: 'SMS (Aakash)', icon: '📱' },

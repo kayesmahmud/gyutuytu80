@@ -14,10 +14,9 @@ class ApiConfig {
     if (kIsWeb) {
       return 'http://localhost:5000/api';
     } else if (defaultTargetPlatform == TargetPlatform.android) {
-      // Android Physical Device (via USB):
-      // Provides the most stable connection.
-      // Run: adb reverse tcp:5000 tcp:5000
-      return 'http://127.0.0.1:5000/api'; 
+      // Android device on same WiFi network
+      // Update IP when network changes (see IP_CHANGE_GUIDE.md)
+      return 'http://192.168.0.169:5000/api';
     } else {
       // iOS Simulator / Mac defaults to localhost
       return 'http://localhost:5000/api';

@@ -8,6 +8,7 @@ import 'core/theme/app_theme.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/providers/chat_provider.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/ad_service.dart';
 import 'features/main_nav/main_nav_screen.dart';
 
 /// Global navigator key for notification navigation
@@ -32,6 +33,14 @@ void main() async {
   } catch (e) {
     debugPrint('⚠️ Firebase not configured: $e');
     debugPrint('Push notifications will be disabled');
+  }
+
+  // Initialize Google Mobile Ads SDK + fetch remote config
+  try {
+    await AdService.initialize();
+    AdService.fetchConfig(); // Non-blocking — fetches in background
+  } catch (e) {
+    debugPrint('⚠️ AdMob init failed: $e');
   }
 
   // Initialize notifications only if Firebase is available

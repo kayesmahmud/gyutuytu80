@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { catchAsync, NotFoundError, ValidationError } from '../middleware/errorHandler.js';
 import { authenticateToken, optionalAuth } from '../middleware/auth.js';
 import { uploadAdImages } from '../middleware/upload.js';
+import { optimizeImage } from '../middleware/optimizeImage.js';
 import {
   getAds,
   getUserAds,
@@ -143,6 +144,7 @@ router.post(
   '/',
   authenticateToken,
   uploadAdImages.array('images', 10),
+  optimizeImage('ad'),
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const { title, description, price, categoryId, subcategoryId, locationId, attributes } = req.body;
@@ -199,6 +201,7 @@ router.put(
   '/:id',
   authenticateToken,
   uploadAdImages.array('images', 10),
+  optimizeImage('ad'),
   catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
     const userId = req.user!.userId;

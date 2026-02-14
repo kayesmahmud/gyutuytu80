@@ -28,7 +28,7 @@ export default function ImageUpload({
     // Check file size
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      return `File size must be less than ${maxSizeMB}MB`;
+      return `Image must be less than ${maxSizeMB}MB. Please upload a smaller file.`;
     }
 
     // Check file type

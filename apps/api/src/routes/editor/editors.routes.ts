@@ -5,6 +5,7 @@ import { catchAsync, ValidationError, AuthenticationError } from '../../middlewa
 import { authenticateToken } from '../../middleware/auth.js';
 import { SECURITY } from '../../config/constants.js';
 import { uploadAvatar } from '../../middleware/upload.js';
+import { optimizeImage } from '../../middleware/optimizeImage.js';
 
 const router = Router();
 
@@ -62,6 +63,7 @@ router.post(
   '/',
   authenticateToken,
   uploadAvatar.single('avatar'),
+  optimizeImage('avatar'),
   catchAsync(async (req: Request, res: Response) => {
     if (req.user!.role !== 'super_admin') {
       throw new AuthenticationError('Access denied. Super admin only.');
@@ -130,6 +132,7 @@ router.put(
   '/:id',
   authenticateToken,
   uploadAvatar.single('avatar'),
+  optimizeImage('avatar'),
   catchAsync(async (req: Request, res: Response) => {
     if (req.user!.role !== 'super_admin') {
       throw new AuthenticationError('Access denied. Super admin only.');

@@ -21,6 +21,7 @@ export {
   adsConfig,
   adSizes,
   adSlots,
+  fetchAdConfig,
   type AdSize,
   type AdSlot,
 } from './config';

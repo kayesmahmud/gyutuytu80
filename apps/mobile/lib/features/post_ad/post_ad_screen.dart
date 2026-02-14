@@ -1,14 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile/features/post_ad/create_ad_screen.dart';
+import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/core/widgets/main_app_bar.dart';
 import 'package:mobile/core/widgets/main_drawer.dart';
+import 'package:mobile/core/widgets/login_required_widget.dart';
 
 class PostAdScreen extends StatelessWidget {
   const PostAdScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
+    if (!authProvider.isLoggedIn) {
+      return Scaffold(
+        appBar: MainAppBar(
+          leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        ),
+        drawer: const MainDrawer(),
+        body: const LoginRequiredWidget(
+          icon: Icons.add_circle_outline,
+          title: 'Login to Post an Ad',
+          subtitle: 'Sign in to list your items\nand reach thousands of buyers',
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: MainAppBar(

@@ -84,8 +84,8 @@ export default function ShopProfileClient({
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Avatar must be less than 2MB');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be less than 5MB. Please upload a smaller file.');
         return;
       }
       const reader = new FileReader();
@@ -102,7 +102,7 @@ export default function ShopProfileClient({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Cover photo must be less than 5MB');
+        alert('Image must be less than 5MB. Please upload a smaller file.');
         return;
       }
       const reader = new FileReader();

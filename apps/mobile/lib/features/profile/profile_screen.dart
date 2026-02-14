@@ -16,6 +16,7 @@ import '../../core/api/favorites_client.dart';
 import '../../core/widgets/location_picker.dart';
 import '../auth/signin_screen.dart';
 import '../auth/signup_screen.dart';
+import 'package:mobile/core/widgets/login_required_widget.dart';
 import '../ad_detail/ad_detail_screen.dart';
 import 'package:intl/intl.dart';
 import '../main_nav/main_nav_screen.dart'; // For restarting app on logout
@@ -161,8 +162,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
 
     if (!authProvider.isLoggedIn) {
-      // User requested "show login screen screen only if user isnt login"
-      return const SignInScreen(isEmbedded: true);
+      return const Scaffold(
+        body: LoginRequiredWidget(
+          icon: Icons.person_outline,
+          title: 'Login to View Profile',
+          subtitle: 'Sign in to manage your profile,\nads, and account settings',
+        ),
+      );
     }
     
     // Ensure controllers are populated if not already (e.g. initial load)

@@ -3,6 +3,9 @@ import path from 'path';
 import fs from 'fs';
 import config from '../config/index.js';
 
+// Maximum file size for all uploads: 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 // Ensure upload directories exist
 const uploadsDir = path.resolve(config.UPLOAD_DIR);
 const avatarsDir = path.join(uploadsDir, 'avatars');
@@ -48,7 +51,7 @@ const avatarStorage = multer.diskStorage({
 export const uploadAvatar = multer({
   storage: avatarStorage,
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB limit
+    fileSize: MAX_FILE_SIZE, // 5MB limit
   },
   fileFilter: imageFilter,
 });
@@ -68,7 +71,7 @@ const coverStorage = multer.diskStorage({
 export const uploadCover = multer({
   storage: coverStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit for cover photos
+    fileSize: MAX_FILE_SIZE, // 5MB limit
   },
   fileFilter: imageFilter,
 });
@@ -88,7 +91,7 @@ const adImageStorage = multer.diskStorage({
 export const uploadAdImages = multer({
   storage: adImageStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit per image
+    fileSize: MAX_FILE_SIZE, // 5MB limit per image
   },
   fileFilter: imageFilter,
 });
@@ -108,7 +111,7 @@ const documentStorage = multer.diskStorage({
 export const uploadDocument = multer({
   storage: documentStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: MAX_FILE_SIZE, // 5MB limit
   },
   fileFilter: (_req, file, cb) => {
     const allowedMimes = [
@@ -142,7 +145,7 @@ const messageImageStorage = multer.diskStorage({
 export const uploadMessageImage = multer({
   storage: messageImageStorage,
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB limit
+    fileSize: MAX_FILE_SIZE, // 5MB limit
   },
   fileFilter: imageFilter,
 });
@@ -163,7 +166,7 @@ const businessVerificationStorage = multer.diskStorage({
 export const uploadBusinessVerification = multer({
   storage: businessVerificationStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: MAX_FILE_SIZE, // 5MB limit
   },
   fileFilter: (_req, file, cb) => {
     const allowedMimes = [
@@ -212,7 +215,7 @@ const individualVerificationStorage = multer.diskStorage({
 export const uploadIndividualVerification = multer({
   storage: individualVerificationStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: MAX_FILE_SIZE, // 5MB limit
   },
   fileFilter: (_req, file, cb) => {
     const allowedMimes = [

@@ -14,14 +14,16 @@
 /**
  * Maximum file sizes in bytes
  */
+export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB - universal limit for all uploads
+
 export const UPLOAD_LIMITS = {
-  AVATAR: 5 * 1024 * 1024, // 5MB
-  COVER: 10 * 1024 * 1024, // 10MB
-  AD_IMAGE: 10 * 1024 * 1024, // 10MB per image
+  AVATAR: MAX_FILE_SIZE, // 5MB
+  COVER: MAX_FILE_SIZE, // 5MB
+  AD_IMAGE: MAX_FILE_SIZE, // 5MB per image
   AD_IMAGES_COUNT: 10, // Max 10 images per ad
-  MESSAGE_IMAGE: 5 * 1024 * 1024, // 5MB
-  DOCUMENT: 10 * 1024 * 1024, // 10MB (verification docs)
-  VERIFICATION_DOC: 5 * 1024 * 1024, // 5MB
+  MESSAGE_IMAGE: MAX_FILE_SIZE, // 5MB
+  DOCUMENT: MAX_FILE_SIZE, // 5MB
+  VERIFICATION_DOC: MAX_FILE_SIZE, // 5MB
 } as const;
 
 /**
@@ -66,10 +68,10 @@ export const UPLOAD_FOLDERS = {
  */
 export const UPLOAD_LIMITS_DISPLAY = {
   AVATAR: '5MB',
-  COVER: '10MB',
-  AD_IMAGE: '10MB',
+  COVER: '5MB',
+  AD_IMAGE: '5MB',
   MESSAGE_IMAGE: '5MB',
-  DOCUMENT: '10MB',
+  DOCUMENT: '5MB',
   VERIFICATION_DOC: '5MB',
 } as const;
 

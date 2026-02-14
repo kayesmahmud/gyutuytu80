@@ -11,6 +11,8 @@ import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/data/mock_filter_data.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 import 'package:mobile/features/main_nav/main_nav_screen.dart';
+import 'package:mobile/core/widgets/ad_banner_widget.dart';
+import 'package:mobile/core/services/ad_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -92,8 +94,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     _buildAdsGrid(_latestAds.take(4).toList()),
 
-                    // Special Offer Orange Card
-                    _buildSpecialOfferCard(),
+                    // Google Ad Banner (top)
+                    AdBannerWidget(adUnitId: AdService.homeBannerTopId),
 
                     // Featured Ads Section
                     const SizedBox(height: 24),
@@ -101,8 +103,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     _buildFeaturedAdsGrid(_featuredAds.take(4).toList()),
 
-                    // Sell Your Items Banner
-                    _buildSellYourItemsBanner(),
+                    // Google Ad Banner (bottom)
+                    AdBannerWidget(adUnitId: AdService.homeBannerBottomId),
 
                     const SizedBox(height: 50), // Bottom padding
                   ],
@@ -378,63 +380,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSpecialOfferCard() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Colors.orange, Colors.deepOrange]),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.card_giftcard, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Special Offer",
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Free Delivery on Orders Above Rs. 1000",
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              "Order\nNow",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                color: Colors.orange,
-                fontWeight: FontWeight.bold,
-                fontSize: 10,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFeaturedHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -488,87 +433,6 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         children: ads.map((ad) => AdCard(ad: ad)).toList(),
-      ),
-    );
-  }
-
-  Widget _buildSellYourItemsBanner() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF059669)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.storefront, color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Sell",
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                        Text(
-                          "Your Items",
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "Reach millions of buyers",
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to post ad
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF10B981),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              "Post Ad\nFree",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
       ),
     );
   }

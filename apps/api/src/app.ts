@@ -6,6 +6,7 @@ import session from 'express-session';
 import config from './config/index.js';
 import passport from './config/passport.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { prisma } from '@thulobazaar/database';
 
 // Import routes (will be added as we migrate them)
 import authRoutes from './routes/auth.routes.js';
@@ -136,6 +137,78 @@ export function createApp(): Express {
   app.use('/api/category-pricing-tiers', categoryPricingTiersRoutes);
   app.use('/api/favorites', favoritesRoutes);
   app.use('/api/announcements', announcementsRoutes);
+
+  // Public endpoint: Ad configuration for web + mobile
+  app.get('/api/ad-config', async (_req, res) => {
+    try {
+      const settings = await prisma.site_settings.findMany({
+        where: {
+          setting_key: {
+            in: [
+              'google_ads_enabled', 'adsense_client_id',
+              'ad_slot_home_hero_banner', 'ad_slot_home_hero_banner_mobile',
+              'ad_slot_home_left', 'ad_slot_home_right',
+              'ad_slot_home_in_feed', 'ad_slot_home_bottom',
+              'ad_slot_ad_detail_top', 'ad_slot_ad_detail_top_mobile',
+              'ad_slot_ad_detail_left', 'ad_slot_ad_detail_right', 'ad_slot_ad_detail_bottom',
+              'ad_slot_ads_listing_top', 'ad_slot_ads_listing_top_mobile',
+              'ad_slot_ads_listing_sidebar', 'ad_slot_ads_listing_in_feed', 'ad_slot_ads_listing_bottom',
+              'ad_slot_search_top', 'ad_slot_search_top_mobile',
+              'ad_slot_search_sidebar', 'ad_slot_search_in_results', 'ad_slot_search_bottom',
+              'ad_slot_dashboard_sidebar', 'ad_slot_profile_sidebar',
+              'admob_app_id_android', 'admob_app_id_ios',
+              'admob_banner_android', 'admob_banner_ios',
+            ],
+          },
+        },
+      });
+
+      const map: Record<string, string> = {};
+      for (const s of settings) {
+        map[s.setting_key] = s.setting_value || '';
+      }
+
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.json({
+        enabled: map.google_ads_enabled === 'true',
+        web: {
+          clientId: map.adsense_client_id || '',
+          slots: {
+            homeHeroBanner: map.ad_slot_home_hero_banner || '',
+            homeHeroBannerMobile: map.ad_slot_home_hero_banner_mobile || '',
+            homeLeft: map.ad_slot_home_left || '',
+            homeRight: map.ad_slot_home_right || '',
+            homeInFeed: map.ad_slot_home_in_feed || '',
+            homeBottom: map.ad_slot_home_bottom || '',
+            adDetailTop: map.ad_slot_ad_detail_top || '',
+            adDetailTopMobile: map.ad_slot_ad_detail_top_mobile || '',
+            adDetailLeft: map.ad_slot_ad_detail_left || '',
+            adDetailRight: map.ad_slot_ad_detail_right || '',
+            adDetailBottom: map.ad_slot_ad_detail_bottom || '',
+            adsListingTop: map.ad_slot_ads_listing_top || '',
+            adsListingTopMobile: map.ad_slot_ads_listing_top_mobile || '',
+            adsListingSidebar: map.ad_slot_ads_listing_sidebar || '',
+            adsListingInFeed: map.ad_slot_ads_listing_in_feed || '',
+            adsListingBottom: map.ad_slot_ads_listing_bottom || '',
+            searchTop: map.ad_slot_search_top || '',
+            searchTopMobile: map.ad_slot_search_top_mobile || '',
+            searchSidebar: map.ad_slot_search_sidebar || '',
+            searchInResults: map.ad_slot_search_in_results || '',
+            searchBottom: map.ad_slot_search_bottom || '',
+            dashboardSidebar: map.ad_slot_dashboard_sidebar || '',
+            profileSidebar: map.ad_slot_profile_sidebar || '',
+          },
+        },
+        mobile: {
+          android: { appId: map.admob_app_id_android || '', bannerUnitId: map.admob_banner_android || '' },
+          ios: { appId: map.admob_app_id_ios || '', bannerUnitId: map.admob_banner_ios || '' },
+        },
+      });
+    } catch (error) {
+      console.error('Ad config fetch error:', error);
+      res.status(500).json({ enabled: false, web: { clientId: '', slots: {} }, mobile: { android: {}, ios: {} } });
+    }
+  });
 
   // Internal endpoint: Next.js → Express Socket.IO bridge
   // Called by Next.js API routes after saving a message to DB

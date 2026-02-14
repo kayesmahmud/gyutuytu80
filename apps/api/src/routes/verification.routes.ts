@@ -3,6 +3,7 @@ import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadBusinessVerification, uploadIndividualVerification } from '../middleware/upload.js';
+import { optimizeImage } from '../middleware/optimizeImage.js';
 
 const router = Router();
 
@@ -591,6 +592,7 @@ router.post(
   '/business/upload',
   authenticateToken,
   uploadBusinessVerification.single('business_license_document'),
+  optimizeImage('document'),
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
 
@@ -627,6 +629,7 @@ router.post(
     { name: 'id_document_back', maxCount: 1 },
     { name: 'selfie_with_id', maxCount: 1 },
   ]),
+  optimizeImage('document'),
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };

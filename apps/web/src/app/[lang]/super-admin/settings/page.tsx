@@ -11,6 +11,7 @@ import {
   UserSettingsTab,
   EmailSettingsTab,
   SmsSettingsTab,
+  GoogleAdsSettingsTab,
 } from './components';
 
 export default function SettingsPage({
@@ -126,6 +127,10 @@ export default function SettingsPage({
 
         {activeTab === 'ads' && (
           <AdSettingsTab settings={settings} updateSettings={updateSettings} />
+        )}
+
+        {activeTab === 'google-ads' && (
+          <GoogleAdsSettingsTab settings={settings} updateSettings={updateSettings} />
         )}
 
         {activeTab === 'users' && (

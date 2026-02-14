@@ -52,6 +52,9 @@
 		<key>NSCameraUsageDescription</key>
 		<string>We need access to your camera to take photos for your ad.</string>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>We need access to your microphone for video recording.</string> 
+		<string>We need access to your microphone for video recording.</string>
+		<!-- Google AdMob App ID (test ID - replace with real ID for production) -->
+		<key>GADApplicationIdentifier</key>
+		<string>ca-app-pub-3940256099942544~1458002511</string>
 	</dict>
 </plist>

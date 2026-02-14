@@ -63,7 +63,7 @@ export function EditEditorModal({ isOpen, onClose, onSuccess, editor }: EditEdit
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setErrors({ ...errors, image: 'Image size must be less than 5MB' });
+        setErrors({ ...errors, image: 'Image must be less than 5MB. Please upload a smaller file.' });
         return;
       }
 

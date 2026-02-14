@@ -19,6 +19,7 @@ class ChatScreen extends StatefulWidget {
   final String recipientName;
   final String? recipientAvatar;
   final String? adTitle;
+  final String? initialMessage;
 
   const ChatScreen({
     super.key,
@@ -26,6 +27,7 @@ class ChatScreen extends StatefulWidget {
     required this.recipientName,
     this.recipientAvatar,
     this.adTitle,
+    this.initialMessage,
   });
 
   @override
@@ -48,6 +50,9 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialMessage != null) {
+      _messageController.text = widget.initialMessage!;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
     _messageController.addListener(_onTyping);
   }
@@ -125,8 +130,22 @@ class _ChatScreenState extends State<ChatScreen> {
     );
     if (picked == null) return;
 
+    // Validate file size (max 5MB)
+    final file = File(picked.path);
+    final fileSize = await file.length();
+    if (fileSize > 5 * 1024 * 1024) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Image must be less than 5MB. Please upload a smaller file.'),
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
-      _pendingImage = File(picked.path);
+      _pendingImage = file;
     });
   }
 

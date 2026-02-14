@@ -47,9 +47,23 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
 
   Future<void> _pickDocument() async {
     final picked =
-        await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1200);
+        await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1200, imageQuality: 85);
     if (picked != null) {
-      setState(() => _licenseDocument = File(picked.path));
+      // Validate file size (max 5MB)
+      final file = File(picked.path);
+      final fileSize = await file.length();
+      if (fileSize > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image must be less than 5MB. Please upload a smaller file.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      setState(() => _licenseDocument = file);
     }
   }
 

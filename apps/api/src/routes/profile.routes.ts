@@ -3,6 +3,7 @@ import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadAvatar, uploadCover } from '../middleware/upload.js';
+import { optimizeImage } from '../middleware/optimizeImage.js';
 import { unlink } from 'fs/promises';
 import path from 'path';
 import config from '../config/index.js';
@@ -254,6 +255,7 @@ router.post(
   '/avatar',
   authenticateToken,
   uploadAvatar.single('avatar'),
+  optimizeImage('avatar'),
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
 
@@ -361,6 +363,7 @@ router.post(
   '/cover',
   authenticateToken,
   uploadCover.single('cover'),
+  optimizeImage('cover'),
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
 

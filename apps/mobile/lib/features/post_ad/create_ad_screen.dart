@@ -94,8 +94,33 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     try {
       final List<XFile> images = await _picker.pickMultiImage();
       if (images.isNotEmpty) {
+        // Validate each image is under 5MB
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        final List<XFile> validImages = [];
+        final List<String> oversizedNames = [];
+
+        for (final img in images) {
+          final size = await img.length();
+          if (size > maxSize) {
+            oversizedNames.add(img.name);
+          } else {
+            validImages.add(img);
+          }
+        }
+
+        if (oversizedNames.isNotEmpty && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${oversizedNames.length} image(s) exceed 5MB and were skipped. Please upload images under 5MB.',
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+
         setState(() {
-          _selectedImages.addAll(images);
+          _selectedImages.addAll(validImages);
           if (_selectedImages.length > 5) {
             _selectedImages = _selectedImages.sublist(0, 5);
           }

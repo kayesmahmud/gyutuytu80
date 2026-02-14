@@ -6,3 +6,4 @@ export * from './AdSettingsTab';
 export * from './UserSettingsTab';
 export * from './EmailSettingsTab';
 export * from './SmsSettingsTab';
+export * from './GoogleAdsSettingsTab';

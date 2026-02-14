@@ -16,6 +16,8 @@ import 'package:mobile/features/ad_detail/widgets/ad_specifications.dart';
 import 'package:mobile/features/ad_detail/widgets/seller_card.dart';
 import 'package:mobile/features/ad_detail/widgets/floating_contact_bar.dart';
 import 'package:mobile/features/ad_detail/widgets/ad_detail_banners.dart';
+import 'package:mobile/core/widgets/ad_banner_widget.dart';
+import 'package:mobile/core/services/ad_service.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
 
 class AdDetailScreen extends StatefulWidget {
@@ -502,14 +504,11 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   // 10. RELATED ADS
                   if (_relatedAds.isNotEmpty) _buildRelatedAds(),
  
-                  // 11. SELL YOUR ITEMS BANNER
-                  const SellYourItemsBanner(),
-
-                  // 12. SAFETY TIPS
+                  // 11. SAFETY TIPS
                   const SafetyTipsCard(),
 
-                  // 13. PREMIUM MEMBERSHIP
-                  const PremiumMembershipBanner(),
+                  // 13. AD BANNER
+                  AdBannerWidget(adUnitId: AdService.adDetailBannerId),
                   
                   // 14. BOTTOM PADDING
                   const SizedBox(height: 120),

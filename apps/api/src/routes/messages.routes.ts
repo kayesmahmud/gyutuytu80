@@ -3,6 +3,7 @@ import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadMessageImage } from '../middleware/upload.js';
+import { optimizeImage } from '../middleware/optimizeImage.js';
 
 const router = Router();
 
@@ -242,10 +243,22 @@ router.post(
       LIMIT 1
     `;
 
+    // Fetch the other user's info for the response
+    const otherUser = await prisma.users.findUnique({
+      where: { id: parseInt(String(targetParticipantId)) },
+      select: { id: true, full_name: true, avatar: true },
+    });
+
     if (existingConversation.length > 0) {
       return res.json({
         success: true,
-        data: { id: existingConversation[0].id, isNew: false },
+        data: {
+          id: existingConversation[0].id,
+          isNew: false,
+          otherUserId: otherUser?.id ?? parseInt(String(targetParticipantId)),
+          otherUserName: otherUser?.full_name ?? '',
+          otherUserAvatar: otherUser?.avatar ?? null,
+        },
       });
     }
 
@@ -269,7 +282,13 @@ router.post(
 
     res.status(201).json({
       success: true,
-      data: { id: conversation.id, isNew: true },
+      data: {
+        id: conversation.id,
+        isNew: true,
+        otherUserId: otherUser?.id ?? parseInt(String(targetParticipantId)),
+        otherUserName: otherUser?.full_name ?? '',
+        otherUserAvatar: otherUser?.avatar ?? null,
+      },
     });
   })
 );
@@ -309,6 +328,7 @@ router.post(
   '/upload',
   authenticateToken,
   uploadMessageImage.single('image'),
+  optimizeImage('message'),
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
 
