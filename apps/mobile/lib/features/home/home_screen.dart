@@ -15,7 +15,9 @@ import 'package:mobile/core/widgets/ad_banner_widget.dart';
 import 'package:mobile/core/services/ad_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final void Function(String query)? onSearch;
+
+  const HomeScreen({super.key, this.onSearch});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -23,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final AdClient _adClient = AdClient();
+  final TextEditingController _searchController = TextEditingController();
 
   // State
   List<CategoryWithSubcategories> _categories = [];
@@ -34,6 +37,19 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _submitSearch() {
+    final query = _searchController.text.trim();
+    if (query.isNotEmpty) {
+      widget.onSearch?.call(query);
+    }
   }
 
   Future<void> _fetchData() async {
@@ -84,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Browse Categories
                     const SizedBox(height: 24),
-                    _buildSectionHeader("Browse Categories", "View All >"),
+                    _buildSectionHeader("Browse Categories", ""),
                     const SizedBox(height: 12),
                     _buildCategoriesList(),
 
@@ -102,9 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildFeaturedHeader(),
                     const SizedBox(height: 12),
                     _buildFeaturedAdsGrid(_featuredAds.take(4).toList()),
-
-                    // Google Ad Banner (bottom)
-                    AdBannerWidget(adUnitId: AdService.homeBannerBottomId),
 
                     const SizedBox(height: 50), // Bottom padding
                   ],
@@ -152,6 +165,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Search Bar
           TextField(
+            controller: _searchController,
+            onSubmitted: (_) => _submitSearch(),
+            textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
@@ -162,13 +178,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
               ),
-              suffixIcon: Container(
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(6),
+              suffixIcon: GestureDetector(
+                onTap: _submitSearch,
+                child: Container(
+                  margin: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.search, color: Colors.white, size: 20),
                 ),
-                child: const Icon(Icons.search, color: Colors.white, size: 20),
               ),
             ),
           ),

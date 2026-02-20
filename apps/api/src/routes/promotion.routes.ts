@@ -190,7 +190,10 @@ router.get(
 
     const promotions = await prisma.ad_promotions.findMany({
       where: {
-        user_id: userId,
+        OR: [
+          { user_id: userId },
+          { promoted_by: userId },
+        ],
         expires_at: { gt: new Date() },
       },
       include: {
@@ -223,16 +226,16 @@ router.post(
     const userId = req.user!.userId;
     const { adId, promotionType, durationDays, paymentReference } = req.body;
 
-    // Verify ad ownership
-    const ad = await prisma.ads.findFirst({
-      where: { id: parseInt(adId), user_id: userId },
+    // Find ad (any user can promote any ad)
+    const ad = await prisma.ads.findUnique({
+      where: { id: parseInt(adId) },
     });
 
     if (!ad) {
-      throw new NotFoundError('Ad not found or you do not have permission');
+      throw new NotFoundError('Ad not found');
     }
 
-    // Get user info for account type
+    // Use the payer's account type for pricing
     const user = await prisma.users.findUnique({
       where: { id: userId },
       select: { account_type: true },
@@ -255,7 +258,8 @@ router.post(
     const promotion = await prisma.ad_promotions.create({
       data: {
         ad_id: parseInt(adId),
-        user_id: userId,
+        user_id: ad.user_id,
+        promoted_by: userId,
         promotion_type: promotionType,
         duration_days: duration,
         price_paid: pricePaid,
@@ -265,6 +269,11 @@ router.post(
         expires_at: expiresAt,
       },
     });
+
+    // Log if someone else promoted this ad
+    if (userId !== ad.user_id) {
+      console.log(`🎁 User ${userId} promoted ad ${adId} owned by user ${ad.user_id}`);
+    }
 
     // Update ad flags based on promotion type
     const updateData: any = {};
@@ -294,6 +303,93 @@ router.post(
       success: true,
       message: 'Promotion created successfully',
       data: promotion,
+    });
+  })
+);
+
+/**
+ * GET /api/promotion-pricing/active-campaigns
+ * Get currently active promotional campaigns (public endpoint)
+ *
+ * Query params:
+ * - tier: Filter by pricing tier (optional)
+ * - promotionType: Filter by promotion type (optional)
+ */
+router.get(
+  '/active-campaigns',
+  catchAsync(async (req: Request, res: Response) => {
+    const { tier, promotionType } = req.query;
+    const now = new Date();
+
+    const campaigns = await prisma.promotional_campaigns.findMany({
+      where: {
+        is_active: true,
+        start_date: { lte: now },
+        end_date: { gte: now },
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        discount_percentage: true,
+        promo_code: true,
+        banner_text: true,
+        banner_emoji: true,
+        start_date: true,
+        end_date: true,
+        applies_to_tiers: true,
+        applies_to_promotion_types: true,
+        min_duration_days: true,
+        max_uses: true,
+        current_uses: true,
+      },
+      orderBy: { discount_percentage: 'desc' },
+    });
+
+    const filteredCampaigns = campaigns.filter((c) => {
+      if (tier && c.applies_to_tiers && c.applies_to_tiers.length > 0) {
+        if (!c.applies_to_tiers.includes(tier as string)) return false;
+      }
+      if (promotionType && c.applies_to_promotion_types && c.applies_to_promotion_types.length > 0) {
+        if (!c.applies_to_promotion_types.includes(promotionType as string)) return false;
+      }
+      if (c.max_uses && c.current_uses && c.current_uses >= c.max_uses) {
+        return false;
+      }
+      return true;
+    });
+
+    const transformedCampaigns = filteredCampaigns.map((c) => {
+      const endDate = new Date(c.end_date);
+      const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      return {
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        discountPercentage: c.discount_percentage,
+        promoCode: c.promo_code,
+        bannerText: c.banner_text || `${c.banner_emoji} ${c.name} - ${c.discount_percentage}% OFF!`,
+        bannerEmoji: c.banner_emoji,
+        startDate: c.start_date,
+        endDate: c.end_date,
+        daysRemaining,
+        appliesToTiers: c.applies_to_tiers,
+        appliesToPromotionTypes: c.applies_to_promotion_types,
+        minDurationDays: c.min_duration_days,
+        usesRemaining: c.max_uses ? c.max_uses - (c.current_uses || 0) : null,
+      };
+    });
+
+    const bestCampaign = transformedCampaigns.length > 0 ? transformedCampaigns[0] : null;
+
+    res.json({
+      success: true,
+      data: {
+        campaigns: transformedCampaigns,
+        bestCampaign,
+        hasActiveCampaign: transformedCampaigns.length > 0,
+      },
     });
   })
 );

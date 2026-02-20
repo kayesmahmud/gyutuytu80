@@ -19,6 +19,7 @@ import 'package:mobile/features/ad_detail/widgets/ad_detail_banners.dart';
 import 'package:mobile/core/widgets/ad_banner_widget.dart';
 import 'package:mobile/core/services/ad_service.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
+import 'package:mobile/features/promotion/promote_ad_screen.dart';
 
 class AdDetailScreen extends StatefulWidget {
   final int? adId;
@@ -163,7 +164,11 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
     if (!authProvider.isLoggedIn) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const SignInScreen()),
+        MaterialPageRoute(
+          builder: (_) => SignInScreen(
+            onSuccess: () => Navigator.pop(context),
+          ),
+        ),
       );
       return;
     }
@@ -280,43 +285,17 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   padding: EdgeInsets.zero,
                 ),
               ),
-              actions: [
-                // Favorite Button
-                Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                  ),
-                  child: IconButton(
-                    icon: _isFavoriteLoading 
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
-                        : Icon(
-                            _isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: _isFavorite ? Colors.red : Colors.black87,
-                          ),
-                    onPressed: _toggleFavorite,
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-                // Share Button
-                Container(
-                  margin: const EdgeInsets.only(top: 8, bottom: 8, right: 16),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.share, color: Colors.black87),
-                    onPressed: () {
-                      // Share action
-                    },
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
+              actions: const [],
               flexibleSpace: FlexibleSpaceBar(
-                background: AdImageGallery(ad: ad),
+                background: AdImageGallery(
+                  ad: ad,
+                  isFavorite: _isFavorite,
+                  isFavoriteLoading: _isFavoriteLoading,
+                  onToggleFavorite: _toggleFavorite,
+                  onShare: () {
+                    // Share action
+                  },
+                ),
                 collapseMode: CollapseMode.parallax,
               ),
             ),
@@ -367,15 +346,17 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[200],
+                                  color: ad.condition!.toLowerCase() == 'brand new'
+                                      ? const Color(0xFF10B981)
+                                      : const Color(0xFF3B82F6),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   ad.condition!,
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
-                                    color: Colors.grey[700],
-                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -475,7 +456,10 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                     ),
                   ),
 
-                  // 8. SELLER INFORMATION CARD
+                  // 8. PROMOTE THIS AD
+                  _buildBoostButton(ad),
+
+                  // 8.5. SELLER INFORMATION CARD
                   SellerCard(ad: ad),
 
                   // 9. REPORT LINK
@@ -534,6 +518,88 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
 // Image Gallery extracted to widgets/ad_image_gallery.dart
 
 // Specifications and Seller Card extracted to widgets/
+
+  Widget _buildBoostButton(AdWithDetails ad) {
+    final thumbnail = ad.images.isNotEmpty
+        ? ApiConfig.getAdImageUrl(ad.images.first)
+        : null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              final auth = context.read<AuthProvider>();
+              if (!auth.isLoggedIn) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SignInScreen(
+                      onSuccess: () => Navigator.pop(context),
+                    ),
+                  ),
+                );
+                return;
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PromoteAdScreen(
+                    adId: ad.id,
+                    adTitle: ad.title,
+                    adThumbnail: thumbnail,
+                  ),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  const Icon(Icons.rocket_launch, color: Colors.white, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Promote this Ad',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          'Increase visibility with promotions',
+                          style: GoogleFonts.inter(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildRelatedAds() {
     return Column(

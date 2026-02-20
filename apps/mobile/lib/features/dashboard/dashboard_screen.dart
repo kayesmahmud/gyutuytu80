@@ -9,6 +9,7 @@ import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 import 'package:mobile/features/main_nav/main_nav_screen.dart';
+import 'package:mobile/features/promotion/promote_ad_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -168,76 +169,100 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
-        child: Column(
-          children: [
-            // Top App Bar
-            _buildTopBar(),
+        child: _isLoading
+            ? Column(
+                children: [
+                  _buildTopBar(),
+                  _buildGradientHeader(userName, counts),
+                  const Expanded(
+                    child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+                  ),
+                ],
+              )
+            : _error != null
+                ? Column(
+                    children: [
+                      _buildTopBar(),
+                      _buildGradientHeader(userName, counts),
+                      Expanded(child: _buildErrorState()),
+                    ],
+                  )
+                : RefreshIndicator(
+                    onRefresh: _fetchAds,
+                    color: AppTheme.primary,
+                    child: CustomScrollView(
+                      slivers: [
+                        // Top App Bar
+                        SliverToBoxAdapter(child: _buildTopBar()),
 
-            // Gradient Header with Stats
-            _buildGradientHeader(userName, counts),
+                        // Gradient Header with Stats
+                        SliverToBoxAdapter(child: _buildGradientHeader(userName, counts)),
 
-            // My Listings Section
-            Expanded(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // My Listings Header
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'My Listings',
-                            style: GoogleFonts.inter(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textDark,
+                        // White card section with rounded top
+                        SliverToBoxAdapter(
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // My Listings Header
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'My Listings',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.textDark,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Manage and track all your advertisements',
+                                        style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Filter Chips (2x2 grid)
+                                _buildFilterChips(counts),
+
+                                const SizedBox(height: 8),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Manage and track all your advertisements',
-                            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+                        ),
+
+                        // Ads List (or empty state)
+                        if (_filteredAds.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Container(
+                              color: Colors.white,
+                              child: _buildEmptyState(),
+                            ),
+                          )
+                        else
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) => Container(
+                                color: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: _buildAdItem(_filteredAds[index]),
+                              ),
+                              childCount: _filteredAds.length,
+                            ),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
-
-                    // Filter Chips (2x2 grid)
-                    _buildFilterChips(counts),
-
-                    const SizedBox(height: 8),
-
-                    // Ads List
-                    Expanded(
-                      child: _isLoading
-                          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
-                          : _error != null
-                              ? _buildErrorState()
-                              : _filteredAds.isEmpty
-                                  ? _buildEmptyState()
-                                  : RefreshIndicator(
-                                      onRefresh: _fetchAds,
-                                      color: AppTheme.primary,
-                                      child: ListView.builder(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        itemCount: _filteredAds.length,
-                                        itemBuilder: (context, index) => _buildAdItem(_filteredAds[index]),
-                                      ),
-                                    ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+                  ),
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
@@ -335,12 +360,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(8),
@@ -350,25 +376,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               child: Icon(icon, color: Colors.white, size: 18),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value.toString(),
-                    style: GoogleFonts.inter(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600]),
-                  ),
-                ],
+            const SizedBox(height: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                _formatCompactNumber(value),
+                style: GoogleFonts.inter(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                ),
               ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -566,7 +589,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Icon(Icons.visibility_outlined, size: 14, color: Colors.grey[500]),
                         const SizedBox(width: 4),
                         Text(
-                          '${ad.viewCount ?? 0}',
+                          _formatCompactNumber(ad.viewCount ?? 0),
                           style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
                         ),
                       ],
@@ -604,8 +627,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (isActive)
             GestureDetector(
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Promote feature coming soon')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PromoteAdScreen(
+                      adId: ad.id,
+                      adTitle: ad.title,
+                      adThumbnail: imageUrl,
+                    ),
+                  ),
                 );
               },
               child: Container(
@@ -874,6 +904,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
+  }
+
+  String _formatCompactNumber(int num) {
+    if (num >= 1000000) return '${(num / 1000000).toStringAsFixed(1)}M';
+    if (num >= 1000) return '${(num / 1000).toStringAsFixed(1)}K';
+    return num.toString();
   }
 
   String _formatPrice(double? price) {

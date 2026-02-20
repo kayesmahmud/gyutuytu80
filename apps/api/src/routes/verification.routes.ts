@@ -353,6 +353,60 @@ router.get(
 );
 
 /**
+ * Check if user already has an active (non-expired) verification or a pending request.
+ * Returns { blocked: true, reason, type } or { blocked: false }.
+ */
+async function checkVerificationEligibility(userId: number): Promise<{ blocked: boolean; reason?: string; type?: string }> {
+  const [user, pendingBusiness, pendingIndividual] = await Promise.all([
+    prisma.users.findUnique({
+      where: { id: userId },
+      select: {
+        business_verification_status: true,
+        business_verification_expires_at: true,
+        individual_verified: true,
+        individual_verification_expires_at: true,
+      },
+    }),
+    prisma.business_verification_requests.findFirst({
+      where: { user_id: userId, status: { in: ['pending', 'pending_payment'] } },
+      select: { id: true },
+    }),
+    prisma.individual_verification_requests.findFirst({
+      where: { user_id: userId, status: { in: ['pending', 'pending_payment'] } },
+      select: { id: true },
+    }),
+  ]);
+
+  if (!user) return { blocked: false };
+
+  // Check for pending requests first
+  if (pendingBusiness) {
+    return { blocked: true, reason: 'You already have a pending business verification request under review.', type: 'pending_business' };
+  }
+  if (pendingIndividual) {
+    return { blocked: true, reason: 'You already have a pending individual verification request under review.', type: 'pending_individual' };
+  }
+
+  // Check for active (non-expired) verification
+  const now = new Date();
+  const businessActive =
+    user.business_verification_status === 'approved' &&
+    (!user.business_verification_expires_at || user.business_verification_expires_at > now);
+  const individualActive =
+    user.individual_verified === true &&
+    (!user.individual_verification_expires_at || user.individual_verification_expires_at > now);
+
+  if (businessActive) {
+    return { blocked: true, reason: 'You already have an active business verification. You cannot apply until it expires.', type: 'active_business' };
+  }
+  if (individualActive) {
+    return { blocked: true, reason: 'You already have an active individual verification. You cannot apply until it expires.', type: 'active_individual' };
+  }
+
+  return { blocked: false };
+}
+
+/**
  * POST /api/verification/business
  * Submit business verification request
  */
@@ -361,6 +415,17 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
+
+    // Block if user already has active verification or pending request
+    const eligibility = await checkVerificationEligibility(userId);
+    if (eligibility.blocked) {
+      return res.status(400).json({
+        success: false,
+        message: eligibility.reason,
+        data: { blockedType: eligibility.type },
+      });
+    }
+
     const {
       businessName,
       licenseDocument,
@@ -424,6 +489,17 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
+
+    // Block if user already has active verification or pending request
+    const eligibility = await checkVerificationEligibility(userId);
+    if (eligibility.blocked) {
+      return res.status(400).json({
+        success: false,
+        message: eligibility.reason,
+        data: { blockedType: eligibility.type },
+      });
+    }
+
     const { documentUrls, fullName, idType, idNumber, durationDays, paymentStatus, paymentAmount, paymentReference } = req.body;
 
     // 1. Update user record

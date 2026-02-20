@@ -16,42 +16,48 @@ class FloatingContactBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 34), // Safe area bottom padding
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding + 8),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 16,
               offset: const Offset(0, -4)),
         ],
       ),
       child: Row(
         children: [
+          // Call - dark filled, icon only
+          _buildIconBtn(
+            Icons.phone,
+            const Color(0xFF374151),
+            () => _launchPhone(ad.userPhone),
+          ),
+          const SizedBox(width: 10),
+          // Chat - blue filled, takes more space
           Expanded(
-              child: _buildContactBtn(
-                  Icons.phone,
-                  "Call",
-                  const Color(0xFF1F2937),
-                  Colors.white,
-                  () => _launchPhone(ad.userPhone))),
-          const SizedBox(width: 12),
+            flex: 2,
+            child: _buildFilledBtn(
+              Icons.chat_bubble_outline_rounded,
+              "Chat",
+              const Color(0xFF2563EB),
+              () => _startChat(context),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // WhatsApp - green filled
           Expanded(
-              child: _buildContactBtn(
-                  Icons.chat_bubble_outline,
-                  "Chat",
-                  const Color(0xFF4B5563),
-                  Colors.white,
-                  () => _startChat(context))),
-          const SizedBox(width: 12),
-          Expanded(
-              child: _buildContactBtn(
-                  Icons.message,
-                  "WhatsApp",
-                  const Color(0xFF25D366),
-                  Colors.white,
-                  () => _launchWhatsApp(ad.userPhone))),
+            flex: 2,
+            child: _buildFilledBtn(
+              Icons.message_rounded,
+              "WhatsApp",
+              const Color(0xFF25D366),
+              () => _launchWhatsApp(ad.userPhone),
+            ),
+          ),
         ],
       ),
     );
@@ -62,7 +68,14 @@ class FloatingContactBar extends StatelessWidget {
 
     // Require login
     if (!authProvider.isLoggedIn) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const SignInScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SignInScreen(
+            onSuccess: () => Navigator.pop(context),
+          ),
+        ),
+      );
       return;
     }
 
@@ -127,26 +140,43 @@ class FloatingContactBar extends StatelessWidget {
     }
   }
 
-  Widget _buildContactBtn(
-      IconData icon, String label, Color bg, Color fg, VoidCallback onTap) {
-    return ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: bg,
-        foregroundColor: fg,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        elevation: 0,
+  Widget _buildIconBtn(IconData icon, Color bg, VoidCallback onTap) {
+    return SizedBox(
+      height: 48,
+      width: 52,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bg,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: EdgeInsets.zero,
+        ),
+        child: Icon(icon, size: 22),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(height: 2),
-          Text(label,
-              style: GoogleFonts.inter(
-                  fontSize: 10, fontWeight: FontWeight.bold)),
-        ],
+    );
+  }
+
+  Widget _buildFilledBtn(
+      IconData icon, String label, Color bg, VoidCallback onTap) {
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 18),
+        label: Text(label,
+            style: GoogleFonts.inter(
+                fontSize: 13, fontWeight: FontWeight.w600)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bg,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+        ),
       ),
     );
   }

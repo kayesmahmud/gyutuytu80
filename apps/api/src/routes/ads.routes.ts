@@ -65,6 +65,7 @@ router.get(
       sortBy: req.query.sortBy as string,
       limit: req.query.limit as string,
       offset: req.query.offset as string,
+      isFeatured: req.query.is_featured as string,
     });
 
     res.json({

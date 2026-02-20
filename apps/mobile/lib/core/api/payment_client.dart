@@ -247,6 +247,7 @@ class PaymentClient {
   /// Check if payment was successful from callback URL
   static bool isPaymentSuccess(String url) {
     return url.contains('/payment/success') ||
-        url.contains('result=success');
+        url.contains('result=success') ||
+        url.contains('status=Completed'); // Khalti appends status=Completed
   }
 }

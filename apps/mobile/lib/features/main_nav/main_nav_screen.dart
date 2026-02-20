@@ -23,19 +23,27 @@ class MainNavScreen extends StatefulWidget {
 
 class _MainNavScreenState extends State<MainNavScreen> {
   late int _selectedIndex;
+  final GlobalKey<BrowseScreenState> _browseKey = GlobalKey();
+  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
-    
+    _screens = [
+      HomeScreen(onSearch: _handleHomeSearch),
+      BrowseScreen(key: _browseKey),
+      const MessagesScreen(),
+      const ProfileScreen(),
+    ];
+
     // Initialize chat if logged in
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = context.read<AuthProvider>();
       if (authProvider.isAuthenticated && authProvider.userId != null) {
         context.read<ChatProvider>().initialize(authProvider.userId!);
       }
-      
+
       // Listen for auth changes to init/dispose chat
       authProvider.addListener(() {
         if (authProvider.isAuthenticated && authProvider.userId != null) {
@@ -47,12 +55,14 @@ class _MainNavScreenState extends State<MainNavScreen> {
     });
   }
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const BrowseScreen(), 
-    const MessagesScreen(),
-    const ProfileScreen(),
-  ];
+  void _handleHomeSearch(String query) {
+    if (query.isEmpty) return;
+    setState(() => _selectedIndex = 1);
+    // Use post-frame callback to ensure Browse tab is rendered before calling searchFor
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _browseKey.currentState?.searchFor(query);
+    });
+  }
 
   void _onItemTapped(int index) {
     if (index == 2) {

@@ -155,6 +155,8 @@ class PromotionCampaign {
   final DateTime endsAt;
   final bool isActive;
   final List<String>? applicableTypes;
+  final String? bannerEmoji;
+  final String? bannerText;
 
   PromotionCampaign({
     required this.id,
@@ -165,6 +167,8 @@ class PromotionCampaign {
     required this.endsAt,
     required this.isActive,
     this.applicableTypes,
+    this.bannerEmoji,
+    this.bannerText,
   });
 
   factory PromotionCampaign.fromJson(Map<String, dynamic> json) {
@@ -173,16 +177,24 @@ class PromotionCampaign {
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
       discountPercentage: json['discountPercentage'] as int? ?? json['discount_percentage'] as int? ?? 0,
-      startsAt: _parseDateTime(json['startsAt'] ?? json['starts_at']),
-      endsAt: _parseDateTime(json['endsAt'] ?? json['ends_at']),
+      startsAt: _parseDateTime(json['startsAt'] ?? json['starts_at'] ?? json['start_date']),
+      endsAt: _parseDateTime(json['endsAt'] ?? json['ends_at'] ?? json['end_date']),
       isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? false,
-      applicableTypes: (json['applicableTypes'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+      applicableTypes: (json['applicableTypes'] as List<dynamic>?)?.map((e) => e.toString()).toList()
+          ?? (json['applicable_types'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+      bannerEmoji: json['bannerEmoji'] as String? ?? json['banner_emoji'] as String?,
+      bannerText: json['bannerText'] as String? ?? json['banner_text'] as String?,
     );
   }
 
   bool get isCurrentlyActive {
     final now = DateTime.now();
     return isActive && now.isAfter(startsAt) && now.isBefore(endsAt);
+  }
+
+  int get daysRemaining {
+    final remaining = endsAt.difference(DateTime.now()).inDays;
+    return remaining < 0 ? 0 : remaining;
   }
 }
 
@@ -257,34 +269,65 @@ class PricingResponse {
   final List<PromotionPricing> pricing;
   final PromotionCampaign? activeCampaign;
   final String userAccountType;
+  final String pricingTier;
 
   PricingResponse({
     required this.pricing,
     this.activeCampaign,
     required this.userAccountType,
+    this.pricingTier = 'default',
   });
 
   factory PricingResponse.fromJson(Map<String, dynamic> json) {
+    // API returns 'pricing' as nested map, 'raw' as flat list — use 'raw'
+    final rawList = json['raw'] as List<dynamic>? ?? [];
+
     return PricingResponse(
-      pricing: (json['pricing'] as List<dynamic>?)
-              ?.map((e) => PromotionPricing.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      pricing: rawList
+          .map((e) => PromotionPricing.fromJson(e as Map<String, dynamic>))
+          .toList(),
       activeCampaign: json['activeCampaign'] != null || json['active_campaign'] != null
           ? PromotionCampaign.fromJson(
               (json['activeCampaign'] ?? json['active_campaign']) as Map<String, dynamic>)
           : null,
       userAccountType:
           json['userAccountType'] as String? ?? json['user_account_type'] as String? ?? 'individual',
+      pricingTier: json['adPricingTier'] as String? ?? 'default',
     );
   }
 
-  /// Get price for specific type and duration
-  PromotionPricing? getPricing(PromotionTypeEnum type, int durationDays) {
-    return pricing.firstWhere(
-      (p) => p.promotionType == type && p.durationDays == durationDays && p.isActive,
-      orElse: () => pricing.first,
-    );
+  /// Get price for specific type, duration, and account type — filtered by ad's pricing tier
+  PromotionPricing? getPricing(PromotionTypeEnum type, int durationDays, {String? accountType}) {
+    try {
+      // Match the ad's detected pricing tier first
+      return pricing.firstWhere(
+        (p) =>
+            p.promotionType == type &&
+            p.durationDays == durationDays &&
+            p.isActive &&
+            p.pricingTier == pricingTier &&
+            (accountType == null || p.accountType == accountType),
+      );
+    } catch (_) {
+      // Fallback: try 'default' tier if ad's tier has no pricing
+      try {
+        return pricing.firstWhere(
+          (p) =>
+              p.promotionType == type &&
+              p.durationDays == durationDays &&
+              p.isActive &&
+              p.pricingTier == 'default' &&
+              (accountType == null || p.accountType == accountType),
+        );
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  /// Get the individual base price (used as originalPrice for discount calculation)
+  PromotionPricing? getBasePrice(PromotionTypeEnum type, int durationDays) {
+    return getPricing(type, durationDays, accountType: 'individual');
   }
 }
 

@@ -13,7 +13,9 @@ import 'signin_screen.dart';
 enum SignUpStep { phone, otp, details }
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+  final VoidCallback? onSuccess;
+
+  const SignUpScreen({super.key, this.onSuccess});
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -113,11 +115,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
         await context.read<AuthProvider>().login(token);
 
         if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const MainNavScreen()),
-            (route) => false,
-          );
+          if (widget.onSuccess != null) {
+            widget.onSuccess!();
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const MainNavScreen()),
+              (route) => false,
+            );
+          }
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -286,11 +292,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
 
         if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const MainNavScreen()),
-          (route) => false,
-        );
+        if (widget.onSuccess != null) {
+          widget.onSuccess!();
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const MainNavScreen()),
+            (route) => false,
+          );
+        }
       } else {
         throw Exception(registerResult['error'] ?? registerResult['message'] ?? 'Registration failed');
       }
@@ -701,7 +711,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SignInScreen()));
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => SignInScreen(onSuccess: widget.onSuccess)));
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),

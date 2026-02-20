@@ -109,8 +109,24 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final status = type == 'individual' ? _individualStatus : _businessStatus;
     final request = type == 'individual' ? _ind?.request : _biz?.request;
 
-    // Verified or pending — no action
+    // Verified or pending — no action for this type
     if (status == 'verified' || status == 'pending') return;
+
+    // Block if the OTHER verification type is active or pending
+    final otherStatus = type == 'individual' ? _businessStatus : _individualStatus;
+    if (otherStatus == 'verified' || otherStatus == 'pending') {
+      final otherLabel = type == 'individual' ? 'business' : 'individual';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            otherStatus == 'verified'
+                ? 'You already have an active $otherLabel verification. Wait for it to expire before applying.'
+                : 'You already have a pending $otherLabel verification request.',
+          ),
+        ),
+      );
+      return;
+    }
 
     // Rejected with free resubmission — go straight to form
     if (status == 'rejected' && request?.canResubmitFree == true) {

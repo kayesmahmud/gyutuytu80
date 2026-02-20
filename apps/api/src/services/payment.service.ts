@@ -329,6 +329,14 @@ async function handleAdPromotionSuccess(
     accountType = 'individual_verified';
   }
 
+  // Get the ad to find its owner
+  const ad = await prisma.ads.findUnique({
+    where: { id: relatedId },
+    select: { user_id: true },
+  });
+
+  const adOwnerId = ad?.user_id ?? transaction.user_id;
+
   // Deactivate existing promotions
   await prisma.ad_promotions.updateMany({
     where: { ad_id: relatedId, is_active: true },
@@ -339,7 +347,8 @@ async function handleAdPromotionSuccess(
   await prisma.ad_promotions.create({
     data: {
       ad_id: relatedId,
-      user_id: transaction.user_id,
+      user_id: adOwnerId,
+      promoted_by: transaction.user_id,
       promotion_type: String(promotionType),
       duration_days: parseInt(String(durationDays), 10),
       price_paid: transaction.amount as number,
@@ -351,6 +360,11 @@ async function handleAdPromotionSuccess(
       is_active: true,
     },
   });
+
+  // Log if someone else promoted this ad
+  if (transaction.user_id !== adOwnerId) {
+    console.log(`🎁 User ${transaction.user_id} promoted ad ${relatedId} owned by user ${adOwnerId}`);
+  }
 
   // Update ad with promotion flags
   const updateData: Record<string, unknown> = {

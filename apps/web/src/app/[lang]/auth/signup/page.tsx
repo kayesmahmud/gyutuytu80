@@ -9,10 +9,13 @@ export const metadata: Metadata = {
 
 interface RegisterPageProps {
   params: Promise<{ lang: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function RegisterPage({ params }: RegisterPageProps) {
+export default async function RegisterPage({ params, searchParams }: RegisterPageProps) {
   const { lang } = await params;
+  const resolvedSearchParams = await searchParams;
+  const callbackUrl = typeof resolvedSearchParams.callbackUrl === 'string' ? resolvedSearchParams.callbackUrl : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
@@ -54,7 +57,7 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
           {/* Login Link */}
           <div className="text-center">
             <Link
-              href={`/${lang}/auth/signin`}
+              href={`/${lang}/auth/signin${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`}
               className="inline-block w-full px-4 py-2 rounded-lg font-semibold border-2 border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors"
             >
               Sign in instead

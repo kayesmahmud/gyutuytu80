@@ -238,13 +238,13 @@ class AdCard extends StatelessWidget {
                         ),
                       ),
                       
-                      // Verification badge logic
+                      // Verification badge
                       if (_isBusinessVerified) ...[
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified, size: 14, color: Color(0xFFD4AF37)), // Gold
+                        Image.asset('assets/images/golden-badge.png', width: 14, height: 14),
                       ] else if (_isIndividualVerified) ...[
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified, size: 14, color: Colors.blue), // Blue
+                        Image.asset('assets/images/blue-badge.png', width: 14, height: 14),
                       ],
                     ],
                   ),

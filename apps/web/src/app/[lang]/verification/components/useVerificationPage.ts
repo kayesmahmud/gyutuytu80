@@ -101,6 +101,22 @@ export function useVerificationPage(lang: string) {
       return;
     }
 
+    // Block if this type is already verified or pending
+    const thisData = type === 'business' ? verificationStatus?.business : verificationStatus?.individual;
+    if (thisData?.status === 'verified' || thisData?.status === 'pending') return;
+
+    // Block if the OTHER verification type is active or pending
+    const otherData = type === 'business' ? verificationStatus?.individual : verificationStatus?.business;
+    const otherLabel = type === 'business' ? 'individual' : 'business';
+    if (otherData?.status === 'verified') {
+      showError(`You already have an active ${otherLabel} verification. Wait for it to expire before applying.`);
+      return;
+    }
+    if (otherData?.status === 'pending') {
+      showError(`You already have a pending ${otherLabel} verification request.`);
+      return;
+    }
+
     setSelectedType(type);
     setSelectedDuration(null);
     setShowForm(false);

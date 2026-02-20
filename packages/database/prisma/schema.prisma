@@ -28,6 +28,7 @@ model ad_promotions {
   id                Int       @id @default(autoincrement())
   ad_id             Int
   user_id           Int
+  promoted_by       Int?
   promotion_type    String    @db.VarChar(20)
   duration_days     Int
   price_paid        Decimal   @db.Decimal(10, 2)
@@ -44,6 +45,7 @@ model ad_promotions {
   @@index([ad_id], map: "idx_ad_promotions_ad_id")
   @@index([expires_at], map: "idx_ad_promotions_expires_at")
   @@index([user_id], map: "idx_ad_promotions_user_id")
+  @@index([promoted_by], map: "idx_ad_promotions_promoted_by")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

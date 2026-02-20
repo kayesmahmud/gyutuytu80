@@ -211,16 +211,23 @@ class PromotionClient {
   // ACTIVE CAMPAIGNS
   // ==========================================
 
-  /// Get currently active promotion campaigns
-  Future<ApiResponse<List<PromotionCampaign>>> getActiveCampaigns() async {
+  /// Get best active promotion campaign (highest discount)
+  Future<ApiResponse<PromotionCampaign?>> getActiveCampaign({String? tier}) async {
     try {
-      final response = await _dio.get('/promotion-campaigns/active');
+      final queryParams = <String, dynamic>{};
+      if (tier != null) queryParams['tier'] = tier;
+
+      final response = await _dio.get('/promotion-pricing/active-campaigns', queryParameters: queryParams);
 
       if (response.data['success'] == true) {
-        final data = response.data['data'] as List<dynamic>;
-        return ApiResponse.success(
-          data.map((e) => PromotionCampaign.fromJson(e as Map<String, dynamic>)).toList(),
-        );
+        final data = response.data['data'] as Map<String, dynamic>;
+        final bestCampaign = data['bestCampaign'];
+        if (bestCampaign != null) {
+          return ApiResponse.success(
+            PromotionCampaign.fromJson(bestCampaign as Map<String, dynamic>),
+          );
+        }
+        return ApiResponse.success(null);
       }
       return ApiResponse.failure(response.data['message'] ?? 'Failed to fetch campaigns');
     } on DioException catch (e) {

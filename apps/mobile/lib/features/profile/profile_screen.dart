@@ -306,6 +306,27 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 end: Alignment.centerRight,
               ),
             ),
+            child: SafeArea(
+              bottom: false,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  onPressed: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                      // From bottom nav — go to home tab
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MainNavScreen()),
+                        (route) => false,
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                ),
+              ),
+            ),
           ),
           
           // Profile Info Part (Overlapping)

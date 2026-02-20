@@ -37,6 +37,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   bool _isLoading = true;
   bool _isVerifying = false;
+  bool _callbackHandled = false;
   String? _error;
   PaymentInitiateResponse? _paymentData;
   WebViewController? _webViewController;
@@ -52,6 +53,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() {
       _isLoading = true;
       _error = null;
+      _callbackHandled = false;
     });
 
     final response = await _paymentClient.initiatePayment(
@@ -165,6 +167,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _handlePaymentCallback(String url) async {
+    // Guard against duplicate calls (both onNavigationRequest and onPageStarted can fire)
+    if (_callbackHandled) return;
+    _callbackHandled = true;
+
     final params = PaymentClient.parseCallbackUrl(url);
     final isSuccess = PaymentClient.isPaymentSuccess(url);
 

@@ -2,11 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { signIn, useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { RegistrationType, PhoneStep, FormData, UseRegisterFormReturn } from './types';
 
 export function useRegisterForm(lang: string): UseRegisterFormReturn {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Extract pathname from callbackUrl to work with both localhost and IP addresses
+  const rawCallbackUrl = searchParams.get('callbackUrl');
+  const callbackUrl = rawCallbackUrl?.startsWith('/') ? rawCallbackUrl : (() => {
+    try { return new URL(rawCallbackUrl!).pathname; } catch { return null; }
+  })();
   const { status: sessionStatus } = useSession();
 
   // Registration type
@@ -54,9 +60,9 @@ export function useRegisterForm(lang: string): UseRegisterFormReturn {
   // Redirect if already logged in
   useEffect(() => {
     if (sessionStatus === 'authenticated') {
-      router.push(`/${lang}`);
+      router.push(callbackUrl || `/${lang}`);
     }
-  }, [sessionStatus, router, lang]);
+  }, [sessionStatus, router, lang, callbackUrl]);
 
   // Validate Nepali phone number
   const validateNepaliPhone = useCallback((phoneNumber: string): boolean => {
@@ -213,9 +219,12 @@ export function useRegisterForm(lang: string): UseRegisterFormReturn {
       });
 
       if (loginResult?.error) {
-        router.push(`/${lang}/auth/signin?registered=true`);
+        const signinUrl = callbackUrl
+          ? `/${lang}/auth/signin?registered=true&callbackUrl=${encodeURIComponent(callbackUrl)}`
+          : `/${lang}/auth/signin?registered=true`;
+        router.push(signinUrl);
       } else if (loginResult?.ok) {
-        router.push(`/${lang}`);
+        router.push(callbackUrl || `/${lang}`);
         router.refresh();
       }
     } catch (err: any) {
@@ -267,7 +276,10 @@ export function useRegisterForm(lang: string): UseRegisterFormReturn {
 
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => {
-        router.push(`/${lang}/auth/signin?registered=true&phone=true`);
+        const signinUrl = callbackUrl
+          ? `/${lang}/auth/signin?registered=true&phone=true&callbackUrl=${encodeURIComponent(callbackUrl)}`
+          : `/${lang}/auth/signin?registered=true&phone=true`;
+        router.push(signinUrl);
       }, 1500);
     } catch (err: any) {
       // Handle network errors specifically

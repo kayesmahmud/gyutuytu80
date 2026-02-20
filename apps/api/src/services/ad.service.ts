@@ -23,6 +23,7 @@ export interface AdFilters {
   sortBy?: string;
   limit?: string;
   offset?: string;
+  isFeatured?: string;
 }
 
 export interface CreateAdInput {
@@ -306,6 +307,11 @@ function buildAdWhereClause(filters: AdFilters) {
 
   if (filters.condition && filters.condition !== 'all') {
     where.condition = filters.condition;
+  }
+
+  if (filters.isFeatured === 'true') {
+    where.is_featured = true;
+    where.featured_until = { gt: new Date() };
   }
 
   return where;

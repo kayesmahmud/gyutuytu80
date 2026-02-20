@@ -481,7 +481,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SignUpScreen()));
+                         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => SignUpScreen(onSuccess: widget.onSuccess)));
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),

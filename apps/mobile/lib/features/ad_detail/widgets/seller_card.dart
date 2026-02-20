@@ -70,11 +70,10 @@ class SellerCard extends StatelessWidget {
                       ),
                       if (isVerified) ...[
                         const SizedBox(width: 4),
-                        Icon(Icons.verified,
-                            size: 16,
-                            color: isBusiness
-                                ? const Color(0xFFD4AF37)
-                                : Colors.blue),
+                        Image.asset(
+                          isBusiness ? 'assets/images/golden-badge.png' : 'assets/images/blue-badge.png',
+                          width: 16, height: 16,
+                        ),
                       ]
                     ],
                   ),

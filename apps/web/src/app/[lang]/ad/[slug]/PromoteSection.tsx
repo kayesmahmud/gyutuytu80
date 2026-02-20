@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { PromoteAdModal, PromotionBadge } from '@/components/promotion';
 
@@ -29,19 +29,22 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
   const sessionUserId = Number.isFinite(parsedId) ? parsedId : null;
   const isAdmin = (session?.user as any)?.role === 'admin';
 
-  // Check if current user owns this ad using session data directly
   const isOwner = (sessionUserId !== null && sessionUserId === ad.user_id) || isAdmin;
+  const isAuthenticated = status === 'authenticated';
 
-  // Don't show anything if not authenticated or not the owner
-  if (status === 'loading' || status === 'unauthenticated' || !isOwner) {
-    return null;
-  }
+  // Show loading state
+  if (status === 'loading') return null;
 
   const now = new Date();
   const hasActivePromotion =
     (ad.is_featured && ad.featured_until && new Date(ad.featured_until) > now) ||
     (ad.is_urgent && ad.urgent_until && new Date(ad.urgent_until) > now) ||
     (ad.is_sticky && ad.sticky_until && new Date(ad.sticky_until) > now);
+
+  const headerText = isOwner ? 'Promote Your Ad' : 'Boost this Ad';
+  const descriptionText = isOwner
+    ? 'Boost your ad visibility with our promotion packages!'
+    : 'Help this ad get more visibility with a promotion!';
 
   return (
     <>
@@ -61,7 +64,7 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
           alignItems: 'center',
           gap: '0.5rem'
         }}>
-          <span>🚀</span> Promote Your Ad
+          <span>{isOwner ? '🚀' : '⚡'}</span> {headerText}
         </h3>
 
         {/* Current Promotion Status */}
@@ -106,13 +109,19 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
             opacity: 0.95,
             lineHeight: '1.5'
           }}>
-            Boost your ad visibility with our promotion packages!
+            {descriptionText}
           </p>
         )}
 
         {/* Promote Button */}
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            if (!isAuthenticated) {
+              signIn(undefined, { callbackUrl: window.location.pathname });
+              return;
+            }
+            setShowModal(true);
+          }}
           style={{
             width: '100%',
             padding: '0.875rem',
@@ -135,7 +144,13 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
             e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
           }}
         >
-          {hasActivePromotion ? '✨ Extend or Change Promotion' : '🚀 Promote Now'}
+          {!isAuthenticated
+            ? '🔐 Sign in to Boost'
+            : hasActivePromotion
+              ? '✨ Extend or Change Promotion'
+              : isOwner
+                ? '🚀 Promote Now'
+                : '⚡ Boost this Ad'}
         </button>
 
         {/* Benefits */}

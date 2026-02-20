@@ -42,14 +42,27 @@ export async function POST(request: NextRequest) {
     const idDocumentBack = formData.get('id_document_back') as File | null;
     const selfieWithId = formData.get('selfie_with_id') as File | null;
 
-    // Check if user exists
-    const user = await prisma.users.findUnique({
-      where: { id: userId },
-      select: {
-        account_type: true,
-        individual_verified: true,
-      },
-    });
+    // Check if user exists and get verification state
+    const [user, pendingBusiness, pendingIndividual] = await Promise.all([
+      prisma.users.findUnique({
+        where: { id: userId },
+        select: {
+          account_type: true,
+          business_verification_status: true,
+          business_verification_expires_at: true,
+          individual_verified: true,
+          individual_verification_expires_at: true,
+        },
+      }),
+      prisma.business_verification_requests.findFirst({
+        where: { user_id: userId, status: { in: ['pending', 'pending_payment'] } },
+        select: { id: true },
+      }),
+      prisma.individual_verification_requests.findFirst({
+        where: { user_id: userId, status: { in: ['pending', 'pending_payment'] } },
+        select: { id: true },
+      }),
+    ]);
 
     if (!user) {
       return NextResponse.json(
@@ -58,35 +71,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if already verified
-    if (user.individual_verified) {
+    // Block if any pending request exists
+    if (pendingBusiness) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Your account is already verified',
-        },
+        { success: false, message: 'You already have a pending business verification request under review.' },
+        { status: 400 }
+      );
+    }
+    if (pendingIndividual) {
+      return NextResponse.json(
+        { success: false, message: 'You already have a pending individual verification request under review.' },
         { status: 400 }
       );
     }
 
-    // Check for existing requests
+    // Block if any active (non-expired) verification exists
+    const now = new Date();
+    const businessActive =
+      user.business_verification_status === 'approved' &&
+      (!user.business_verification_expires_at || user.business_verification_expires_at > now);
+    const individualActive =
+      user.individual_verified === true &&
+      (!user.individual_verification_expires_at || user.individual_verification_expires_at > now);
+
+    if (businessActive) {
+      return NextResponse.json(
+        { success: false, message: 'You already have an active business verification. You cannot apply until it expires.' },
+        { status: 400 }
+      );
+    }
+    if (individualActive) {
+      return NextResponse.json(
+        { success: false, message: 'You already have an active individual verification. You cannot apply until it expires.' },
+        { status: 400 }
+      );
+    }
+
+    // Check for existing rejected/pending_payment requests (for resubmission logic)
     const existingRequest = await prisma.individual_verification_requests.findFirst({
       where: {
         user_id: userId,
-        status: { in: ['pending', 'pending_payment', 'rejected'] },
+        status: { in: ['pending_payment', 'rejected'] },
       },
       select: { id: true, status: true, payment_amount: true, duration_days: true },
     });
-
-    if (existingRequest && existingRequest.status === 'pending') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'You already have a pending verification request',
-        },
-        { status: 400 }
-      );
-    }
 
     // If there's a pending_payment request, delete it so user can start fresh
     if (existingRequest && existingRequest.status === 'pending_payment') {

@@ -11,10 +11,10 @@ class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
 
   @override
-  State<BrowseScreen> createState() => _BrowseScreenState();
+  State<BrowseScreen> createState() => BrowseScreenState();
 }
 
-class _BrowseScreenState extends State<BrowseScreen> {
+class BrowseScreenState extends State<BrowseScreen> {
   final AdClient _adClient = AdClient();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -127,6 +127,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
       _filters = _filters.copyWith(query: _searchController.text.trim());
     });
     _fetchAds(refresh: true);
+  }
+
+  /// Called from HomeScreen search to trigger search with a query
+  void searchFor(String query) {
+    _searchController.text = query;
+    _onSearch();
   }
 
   void _applyFilters(SearchFilters newFilters) {

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/api/promotion_client.dart';
 import '../../core/models/models.dart';
 import '../../core/models/promotion.dart';
 import '../../core/models/payment.dart';
+import '../../core/providers/auth_provider.dart';
 import '../payment/gateway_selector.dart';
 
-/// Promote Ad Screen - allows users to promote their ads
+/// Promote Ad Screen - allows any user to promote any ad
 class PromoteAdScreen extends StatefulWidget {
   final int adId;
   final String adTitle;
@@ -29,6 +31,8 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
   String? _error;
   PricingResponse? _pricingData;
   AdPromotion? _activePromotion;
+  PromotionCampaign? _activeCampaign;
+  String _userAccountType = 'individual';
 
   PromotionTypeEnum _selectedType = PromotionTypeEnum.featured;
   int _selectedDuration = 7;
@@ -38,7 +42,27 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
   @override
   void initState() {
     super.initState();
+    _detectAccountType();
     _loadData();
+  }
+
+  void _detectAccountType() {
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    if (user == null) return;
+
+    final accountType = (user['accountType'] ?? user['account_type'] ?? 'individual') as String;
+    final bizStatus = (user['businessVerificationStatus'] ?? user['business_verification_status'] ?? '') as String;
+    final individualVerified = user['individualVerified'] ?? user['individual_verified'] ?? false;
+
+    if (accountType == 'business' && bizStatus == 'approved') {
+      _userAccountType = 'business';
+    } else if (accountType == 'individual' &&
+        (individualVerified == true || bizStatus == 'verified')) {
+      _userAccountType = 'individual_verified';
+    } else {
+      _userAccountType = 'individual';
+    }
   }
 
   Future<void> _loadData() async {
@@ -50,10 +74,12 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     final results = await Future.wait([
       _promotionClient.getPricing(adId: widget.adId),
       _promotionClient.getAdActivePromotion(widget.adId),
+      _promotionClient.getActiveCampaign(),
     ]);
 
     final pricingResponse = results[0] as ApiResponse<PricingResponse>;
     final promotionResponse = results[1] as ApiResponse<AdPromotion?>;
+    final campaignResponse = results[2] as ApiResponse<PromotionCampaign?>;
 
     setState(() {
       _isLoading = false;
@@ -66,33 +92,60 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       if (promotionResponse.success) {
         _activePromotion = promotionResponse.data;
       }
+
+      if (campaignResponse.success) {
+        _activeCampaign = campaignResponse.data;
+      }
+
     });
   }
 
-  double? _getPrice() {
-    if (_pricingData == null) return null;
-    final pricing = _pricingData!.getPricing(_selectedType, _selectedDuration);
-    return pricing?.finalPrice;
+  // ==========================================
+  // PRICING CALCULATION (matches web logic)
+  // ==========================================
+
+  int _getAccountDiscount() {
+    if (_userAccountType == 'business') return 40;
+    if (_userAccountType == 'individual_verified') return 20;
+    return 0;
   }
 
-  double? _getOriginalPrice() {
-    if (_pricingData == null) return null;
-    final pricing = _pricingData!.getPricing(_selectedType, _selectedDuration);
-    return pricing?.price;
+  int _getCampaignDiscount() {
+    return _activeCampaign?.discountPercentage ?? 0;
   }
 
   int _getTotalDiscount() {
-    if (_pricingData == null) return 0;
-    final pricing = _pricingData!.getPricing(_selectedType, _selectedDuration);
-    int discount = pricing?.discountPercentage ?? 0;
-    if (_pricingData!.activeCampaign != null) {
-      discount += _pricingData!.activeCampaign!.discountPercentage;
-    }
-    return discount.clamp(0, 90);
+    final total = _getAccountDiscount() + _getCampaignDiscount();
+    return total.clamp(0, 90);
+  }
+
+  /// Get the individual base price (original price before any discounts)
+  double? _getOriginalPrice() {
+    if (_pricingData == null) return null;
+    final basePrice = _pricingData!.getBasePrice(_selectedType, _selectedDuration);
+    return basePrice?.price;
+  }
+
+  /// Get the final price after all additive discounts
+  double? _getFinalPrice() {
+    final original = _getOriginalPrice();
+    if (original == null) return null;
+    final discount = _getTotalDiscount();
+    return (original * (1 - discount / 100)).roundToDouble();
+  }
+
+  double _getAccountSavings() {
+    final original = _getOriginalPrice() ?? 0;
+    return original * _getAccountDiscount() / 100;
+  }
+
+  double _getCampaignSavings() {
+    final original = _getOriginalPrice() ?? 0;
+    return original * _getCampaignDiscount() / 100;
   }
 
   void _proceedToPayment() {
-    final price = _getPrice();
+    final price = _getFinalPrice();
     if (price == null || price <= 0) return;
 
     GatewaySelector.show(
@@ -144,7 +197,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your ad is now ${_selectedType.displayName.toLowerCase()} for $_selectedDuration days',
+              'This ad is now ${_selectedType.displayName.toLowerCase()} for $_selectedDuration days',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -175,6 +228,10 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       ),
     );
   }
+
+  // ==========================================
+  // BUILD
+  // ==========================================
 
   @override
   Widget build(BuildContext context) {
@@ -207,16 +264,22 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
             const SizedBox(height: 16),
             _buildActivePromotionBanner(),
           ],
+          if (_pricingData != null && _pricingData!.pricingTier != 'default') ...[
+            const SizedBox(height: 16),
+            _buildPricingTierBadge(),
+          ],
+          if (_activeCampaign != null) ...[
+            const SizedBox(height: 16),
+            _buildCampaignBanner(),
+          ],
+          const SizedBox(height: 16),
+          _buildAccountTypeBadge(),
           const SizedBox(height: 24),
           _buildPromotionTypes(),
           const SizedBox(height: 24),
           _buildDurationSelector(),
           const SizedBox(height: 24),
           _buildPriceSummary(),
-          if (_pricingData?.activeCampaign != null) ...[
-            const SizedBox(height: 16),
-            _buildCampaignBanner(),
-          ],
           const SizedBox(height: 100), // Space for bottom bar
         ],
       ),
@@ -247,6 +310,10 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       ),
     );
   }
+
+  // ==========================================
+  // AD PREVIEW
+  // ==========================================
 
   Widget _buildAdPreview() {
     return Container(
@@ -304,6 +371,10 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     );
   }
 
+  // ==========================================
+  // ACTIVE PROMOTION BANNER
+  // ==========================================
+
   Widget _buildActivePromotionBanner() {
     final promo = _activePromotion!;
     final timeRemaining = promo.timeRemaining;
@@ -354,6 +425,179 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       ),
     );
   }
+
+  // ==========================================
+  // PRICING TIER BADGE
+  // ==========================================
+
+  Widget _buildPricingTierBadge() {
+    final tier = _pricingData!.pricingTier;
+    final tierLabels = {
+      'electronics': 'Electronics',
+      'vehicles': 'Vehicles',
+      'property': 'Property',
+    };
+    final label = tierLabels[tier] ?? tier;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, size: 18, color: Color(0xFFD97706)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '$label category pricing applies to this ad',
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFFD97706),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // CAMPAIGN BANNER
+  // ==========================================
+
+  Widget _buildCampaignBanner() {
+    final campaign = _activeCampaign!;
+    final emoji = campaign.bannerEmoji ?? '🎉';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF6366F1).withValues(alpha: 0.1),
+            const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 22)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  campaign.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6366F1),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Extra ${campaign.discountPercentage}% OFF automatically applied!',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                if (campaign.daysRemaining > 0)
+                  Text(
+                    '${campaign.daysRemaining} days remaining',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              '-${campaign.discountPercentage}%',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // ACCOUNT TYPE BADGE
+  // ==========================================
+
+  Widget _buildAccountTypeBadge() {
+    final Color bgColor;
+    final Color textColor;
+    final IconData icon;
+    final String label;
+
+    switch (_userAccountType) {
+      case 'business':
+        bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.1);
+        textColor = const Color(0xFFD97706);
+        icon = Icons.verified;
+        label = 'Verified Business Seller (40% OFF)';
+        break;
+      case 'individual_verified':
+        bgColor = const Color(0xFF3B82F6).withValues(alpha: 0.1);
+        textColor = const Color(0xFF2563EB);
+        icon = Icons.check_circle;
+        label = 'Verified Individual Seller (20% OFF)';
+        break;
+      default:
+        bgColor = Colors.grey[100]!;
+        textColor = Colors.grey[600]!;
+        icon = Icons.person;
+        label = 'Individual Seller (Standard Price)';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: textColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // PROMOTION TYPES
+  // ==========================================
 
   Widget _buildPromotionTypes() {
     return Column(
@@ -469,6 +713,10 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     );
   }
 
+  // ==========================================
+  // DURATION SELECTOR
+  // ==========================================
+
   Widget _buildDurationSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,12 +778,22 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     );
   }
 
-  Widget _buildPriceSummary() {
-    final price = _getPrice();
-    final originalPrice = _getOriginalPrice();
-    final discount = _getTotalDiscount();
+  // ==========================================
+  // PRICE SUMMARY (with discount breakdown)
+  // ==========================================
 
-    if (price == null) return const SizedBox.shrink();
+  Widget _buildPriceSummary() {
+    final originalPrice = _getOriginalPrice();
+    final finalPrice = _getFinalPrice();
+    final accountDiscount = _getAccountDiscount();
+    final campaignDiscount = _getCampaignDiscount();
+    final totalDiscount = _getTotalDiscount();
+
+    if (originalPrice == null || finalPrice == null) return const SizedBox.shrink();
+
+    final accountSavings = _getAccountSavings();
+    final campaignSavings = _getCampaignSavings();
+    final totalSavings = originalPrice - finalPrice;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -546,39 +804,77 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       ),
       child: Column(
         children: [
+          // Original price
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Base Price',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               Text(
-                'Rs. ${originalPrice?.toStringAsFixed(0) ?? '--'}',
+                'Rs. ${originalPrice.toStringAsFixed(0)}',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
-                  decoration: discount > 0 ? TextDecoration.lineThrough : null,
+                  decoration: totalDiscount > 0 ? TextDecoration.lineThrough : null,
                 ),
               ),
             ],
           ),
-          if (discount > 0) ...[
+
+          // Account discount line
+          if (accountDiscount > 0) ...[
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.discount, size: 16, color: Color(0xFF10B981)),
+                    Icon(
+                      _userAccountType == 'business' ? Icons.verified : Icons.check_circle,
+                      size: 16,
+                      color: const Color(0xFF3B82F6),
+                    ),
                     const SizedBox(width: 6),
                     Text(
-                      'Discount ($discount%)',
+                      _userAccountType == 'business'
+                          ? 'Business Discount ($accountDiscount%)'
+                          : 'Verified Discount ($accountDiscount%)',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
+                        color: Color(0xFF3B82F6),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '-Rs. ${accountSavings.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF3B82F6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          // Campaign discount line
+          if (campaignDiscount > 0) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.celebration, size: 16, color: Color(0xFF10B981)),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${_activeCampaign?.name ?? 'Campaign'} ($campaignDiscount%)',
+                      style: const TextStyle(
+                        fontSize: 13,
                         color: Color(0xFF10B981),
                         fontWeight: FontWeight.w500,
                       ),
@@ -586,9 +882,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                   ],
                 ),
                 Text(
-                  '-Rs. ${(originalPrice! - price).toStringAsFixed(0)}',
+                  '-Rs. ${campaignSavings.toStringAsFixed(0)}',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Color(0xFF10B981),
                     fontWeight: FontWeight.w500,
                   ),
@@ -596,7 +892,37 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
               ],
             ),
           ],
+
+          // Total savings
+          if (totalDiscount > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.savings, size: 16, color: Color(0xFF10B981)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'You save Rs. ${totalSavings.toStringAsFixed(0)} ($totalDiscount% OFF)',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const Divider(height: 24),
+
+          // Final total
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -608,7 +934,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                 ),
               ),
               Text(
-                'Rs. ${price.toStringAsFixed(0)}',
+                'Rs. ${finalPrice.toStringAsFixed(0)}',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -622,76 +948,14 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     );
   }
 
-  Widget _buildCampaignBanner() {
-    final campaign = _pricingData!.activeCampaign!;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF6366F1).withValues(alpha: 0.1),
-            const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.celebration,
-            color: Color(0xFF6366F1),
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  campaign.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF6366F1),
-                  ),
-                ),
-                if (campaign.description != null)
-                  Text(
-                    campaign.description!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF6366F1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              '-${campaign.discountPercentage}%',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ==========================================
+  // BOTTOM BAR
+  // ==========================================
 
   Widget? _buildBottomBar() {
     if (_isLoading || _error != null) return null;
 
-    final price = _getPrice();
+    final price = _getFinalPrice();
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -731,6 +995,10 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       ),
     );
   }
+
+  // ==========================================
+  // HELPERS
+  // ==========================================
 
   Color _getTypeColor(PromotionTypeEnum type) {
     switch (type) {

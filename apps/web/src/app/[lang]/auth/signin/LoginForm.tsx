@@ -24,6 +24,11 @@ export default function LoginForm({ lang }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
+  // Extract pathname from callbackUrl to work with both localhost and IP addresses
+  const rawCallbackUrl = searchParams.get('callbackUrl');
+  const callbackUrl = rawCallbackUrl?.startsWith('/') ? rawCallbackUrl : (() => {
+    try { return new URL(rawCallbackUrl!).pathname; } catch { return null; }
+  })();
 
   // Phone login state
   const [phoneFormData, setPhoneFormData] = useState({
@@ -84,9 +89,9 @@ export default function LoginForm({ lang }: LoginFormProps) {
         }
       }
 
-      router.push(`/${lang}`);
+      router.push(callbackUrl || `/${lang}`);
     }
-  }, [status, session, router, lang]);
+  }, [status, session, router, lang, callbackUrl]);
 
   // Show loading state while checking session
   if (status === 'loading') {
@@ -131,7 +136,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
       if (result?.error) {
         setError(result.error);
       } else if (result?.ok) {
-        router.push(`/${lang}`);
+        router.push(callbackUrl || `/${lang}`);
         router.refresh();
       }
     } catch (err) {

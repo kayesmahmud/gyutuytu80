@@ -9,10 +9,13 @@ export const metadata: Metadata = {
 
 interface LoginPageProps {
   params: Promise<{ lang: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function LoginPage({ params }: LoginPageProps) {
+export default async function LoginPage({ params, searchParams }: LoginPageProps) {
   const { lang } = await params;
+  const resolvedSearchParams = await searchParams;
+  const callbackUrl = typeof resolvedSearchParams.callbackUrl === 'string' ? resolvedSearchParams.callbackUrl : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
@@ -42,7 +45,7 @@ export default async function LoginPage({ params }: LoginPageProps) {
 
           {/* Register Link */}
           <Link
-            href={`/${lang}/auth/signup`}
+            href={`/${lang}/auth/signup${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`}
             className="block w-full py-3 px-4 text-center rounded-lg font-semibold border-2 border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors duration-200"
           >
             Create an account

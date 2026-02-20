@@ -497,9 +497,9 @@ class _ShopScreenState extends State<ShopScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   if (_shop!.isBusinessVerified)
-                                    const Icon(Icons.verified, color: Color(0xFFD97706), size: 24)
+                                    Image.asset('assets/images/golden-badge.png', width: 24, height: 24)
                                   else if (_shop!.individualVerified)
-                                    const Icon(Icons.verified, color: Color(0xFF3B82F6), size: 24),
+                                    Image.asset('assets/images/blue-badge.png', width: 24, height: 24),
                                 ],
                               ),
                               Text(
