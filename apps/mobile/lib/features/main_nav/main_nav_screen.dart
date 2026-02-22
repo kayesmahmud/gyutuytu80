@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
@@ -110,7 +111,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                 color: Colors.grey[100],
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.lock_outline, size: 32, color: Colors.grey[600]),
+              child: Icon(LucideIcons.lock, size: 32, color: Colors.grey[600]),
             ),
             const SizedBox(height: 16),
             Text(
@@ -196,89 +197,89 @@ class _MainNavScreenState extends State<MainNavScreen> {
       },
       child: Scaffold(
         body: _screens[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Consumer<ChatProvider>(
-          builder: (context, chatProvider, child) {
-            return BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: _onItemTapped,
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.white,
-              selectedItemColor: const Color(0xFF10B981), // Emerald Green
-              unselectedItemColor: Colors.grey[400],
-              selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12),
-              unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12),
-              items: [
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.home_outlined),
-                  activeIcon: Icon(Icons.home),
-                  label: 'Home',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.grid_view), 
-                  activeIcon: Icon(Icons.grid_view_rounded),
-                  label: 'Browse',
-                ),
-                BottomNavigationBarItem(
-                  icon: Stack(
-                    children: [
-                      const Icon(Icons.chat_bubble_outline),
-                      if (chatProvider.unreadCount > 0)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 14,
-                              minHeight: 14,
-                            ),
-                            child: Text(
-                              '${chatProvider.unreadCount}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Consumer<ChatProvider>(
+            builder: (context, chatProvider, child) {
+              return BottomNavigationBar(
+                currentIndex: _selectedIndex,
+                onTap: _onItemTapped,
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Colors.white,
+                selectedItemColor: const Color(0xFF10B981),
+                unselectedItemColor: Colors.grey[400],
+                selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12),
+                unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12),
+                items: [
+                  const BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.home),
+                    activeIcon: Icon(LucideIcons.home),
+                    label: 'Home',
+                  ),
+                  const BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.layoutGrid),
+                    activeIcon: Icon(LucideIcons.layoutGrid),
+                    label: 'Browse',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Stack(
+                      children: [
+                        const Icon(LucideIcons.messageCircle),
+                        if (chatProvider.unreadCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
                               ),
-                              textAlign: TextAlign.center,
+                              constraints: const BoxConstraints(
+                                minWidth: 14,
+                                minHeight: 14,
+                              ),
+                              child: Text(
+                                '${chatProvider.unreadCount}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
+                    activeIcon: const Icon(LucideIcons.messageCircle),
+                    label: 'Messages',
                   ),
-                  activeIcon: const Icon(Icons.chat_bubble),
-                  label: 'Messages',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline),
-                  activeIcon: Icon(Icons.person),
-                  label: 'Profile',
-                ),
-              ],
-            );
-          },
+                  const BottomNavigationBarItem(
+                    icon: Icon(LucideIcons.user),
+                    activeIcon: Icon(LucideIcons.user),
+                    label: 'Profile',
+                  ),
+                ],
+              );
+            },
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToPostAd,
-        backgroundColor: const Color(0xFF10B981),
-        shape: const CircleBorder(),
-        elevation: 4,
-        child: const Icon(Icons.add, color: Colors.white, size: 32),
-      ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _navigateToPostAd,
+          backgroundColor: const Color(0xFF10B981),
+          shape: const CircleBorder(),
+          elevation: 4,
+          child: const Icon(LucideIcons.plus, color: Colors.white, size: 32),
+        ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );
