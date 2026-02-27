@@ -5,7 +5,7 @@
 
 import { Router, Request, Response } from 'express';
 import { prisma } from '@thulobazaar/database';
-import { authenticateToken, requireEditorOrAdmin } from '../middleware/auth';
+import { authenticateToken, requireEditorOrAdmin } from '../middleware/auth.js';
 
 const router = Router();
 

@@ -15,7 +15,7 @@ import {
   updateAd,
   updateAdImages,
   deleteAd,
-} from '../services/ad.service';
+} from '../services/ad.service.js';
 
 const router = Router();
 
