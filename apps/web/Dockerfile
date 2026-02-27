@@ -21,6 +21,12 @@ COPY .npmrc ./
 
 RUN npm install
 
+# npm's macOS-generated lock file doesn't resolve Linux-musl native bindings
+# (npm/cli#4828). Install them explicitly for Next.js SWC + CSS compilation.
+RUN npm install --no-save \
+    @next/swc-linux-x64-musl \
+    lightningcss-linux-x64-musl
+
 # ---- Stage 2: Build shared packages + Next.js ----
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -33,11 +39,13 @@ COPY . .
 RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
 
 # Build shared packages in dependency order
-# upload-utils uses tsup (rollup) which needs platform-specific native bindings;
-# compile with tsc directly instead to avoid rollup dependency
+# upload-utils normally uses tsup (rollup) but rollup also has platform-specific
+# native bindings. Use tsc directly and patch exports to avoid the dependency.
 RUN npm run build -w packages/types && \
     npm run build -w packages/utils && \
-    cd packages/upload-utils && npx tsc --module commonjs --moduleResolution node && cd /app && \
+    cd packages/upload-utils && npx tsc --module commonjs --moduleResolution node && \
+    node -e "const fs=require('fs'),p=JSON.parse(fs.readFileSync('package.json','utf8'));delete p.exports;delete p.module;fs.writeFileSync('package.json',JSON.stringify(p,null,2))" && \
+    cd /app && \
     npm run build -w packages/api-client
 
 # NEXT_PUBLIC_ vars must be set at build time (inlined into client-side JS)
@@ -48,7 +56,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_API_HOSTNAME=$NEXT_PUBLIC_API_HOSTNAME
 
-# Build Next.js with Turbopack (default in Next.js 16, handles Tailwind v4 @import natively)
+# Build Next.js
 RUN cd apps/web && npx next build
 
 # ---- Stage 3: Production image (alpine is fine — only runs pure JS) ----
