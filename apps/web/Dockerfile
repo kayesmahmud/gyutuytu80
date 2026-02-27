@@ -22,10 +22,12 @@ COPY .npmrc ./
 RUN npm install
 
 # npm's macOS-generated lock file doesn't resolve Linux-musl native bindings
-# (npm/cli#4828). Install them explicitly for Next.js SWC + CSS compilation.
+# (npm/cli#4828). Install ALL platform-specific packages explicitly.
 RUN npm install --no-save \
     @next/swc-linux-x64-musl \
-    lightningcss-linux-x64-musl
+    lightningcss-linux-x64-musl \
+    @tailwindcss/oxide-linux-x64-musl \
+    @unrs/resolver-binding-linux-x64-musl
 
 # ---- Stage 2: Build shared packages + Next.js ----
 FROM node:20-alpine AS builder
