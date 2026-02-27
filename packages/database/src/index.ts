@@ -1,5 +1,5 @@
 // Export Prisma Client instance and health check
-export { prisma, checkDatabaseHealth } from './client';
+export { prisma, checkDatabaseHealth } from './client.js';
 
 // Re-export Prisma types for convenience
 export type {
