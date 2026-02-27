@@ -21,6 +21,12 @@ COPY .npmrc ./
 
 RUN npm install
 
+# npm's macOS-generated lock file doesn't resolve Linux-musl native bindings
+# (npm/cli#4828). Install sharp's musl bindings explicitly for Alpine.
+RUN npm install --no-save \
+    @img/sharp-linuxmusl-x64 \
+    @img/sharp-libvips-linuxmusl-x64
+
 # ---- Stage 2: Build shared packages + API ----
 FROM node:20-alpine AS builder
 WORKDIR /app
