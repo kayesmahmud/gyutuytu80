@@ -113,6 +113,7 @@ jobs:
         run: |
           npm run build -w packages/types
           npm run build -w packages/utils
+          npm run build -w packages/upload-utils
           npm run build -w packages/api-client
         env:
           SKIP_ENV_VALIDATION: true

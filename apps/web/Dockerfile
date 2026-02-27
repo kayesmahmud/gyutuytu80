@@ -32,9 +32,10 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
 
-# Build shared packages in dependency order (upload-utils uses tsup, pre-built dist is included)
+# Build shared packages in dependency order
 RUN npm run build -w packages/types && \
     npm run build -w packages/utils && \
+    npm run build -w packages/upload-utils && \
     npm run build -w packages/api-client
 
 # NEXT_PUBLIC_ vars must be set at build time (inlined into client-side JS)
