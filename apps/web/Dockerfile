@@ -27,7 +27,9 @@ RUN npm install --no-save \
     @next/swc-linux-x64-musl \
     lightningcss-linux-x64-musl \
     @tailwindcss/oxide-linux-x64-musl \
-    @unrs/resolver-binding-linux-x64-musl
+    @unrs/resolver-binding-linux-x64-musl \
+    @img/sharp-linuxmusl-x64 \
+    @img/sharp-libvips-linuxmusl-x64
 
 # ---- Stage 2: Build shared packages + Next.js ----
 FROM node:20-alpine AS builder
