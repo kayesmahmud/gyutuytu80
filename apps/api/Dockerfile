@@ -42,9 +42,11 @@ RUN npm run build -w packages/types && \
     cd /app && \
     npm run build -w packages/api-client
 
-# Build database package for production (source is .ts, prod needs .js)
-RUN cd packages/database && npx tsc --noCheck && \
-    node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); p.main='./dist/index.js'; p.exports={'.': {import:'./dist/index.js', types:'./dist/index.d.ts'}}; fs.writeFileSync('package.json', JSON.stringify(p,null,2))"
+# Build database package for production (source is .ts, prod needs .js).
+# Compile as CommonJS so extensionless relative imports work at runtime.
+# Also strip "type":"module" so Node treats .js files as CJS.
+RUN cd packages/database && npx tsc --noCheck --module commonjs --moduleResolution node && \
+    node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); delete p.type; p.main='./dist/index.js'; p.exports={'.': {types:'./dist/index.d.ts', import:'./dist/index.js', require:'./dist/index.js', default:'./dist/index.js'}}; fs.writeFileSync('package.json', JSON.stringify(p,null,2))"
 
 # Build Express API (--noCheck skips type checking, handled separately in CI)
 RUN cd apps/api && npx tsc --noCheck
