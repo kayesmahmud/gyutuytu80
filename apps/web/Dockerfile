@@ -1,5 +1,5 @@
 # ---- Stage 1: Install dependencies ----
-FROM node:20-alpine AS deps
+FROM node:20-slim AS deps
 WORKDIR /app
 
 # Copy root package files for workspaces
@@ -22,7 +22,7 @@ COPY .npmrc ./
 RUN npm install
 
 # ---- Stage 2: Build shared packages + Next.js ----
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 WORKDIR /app
 
 # Copy all node_modules (including nested workspace-specific ones like apps/web/node_modules/tailwindcss v4)
@@ -49,7 +49,7 @@ ENV NEXT_PUBLIC_API_HOSTNAME=$NEXT_PUBLIC_API_HOSTNAME
 # Build Next.js with Turbopack (default in Next.js 16, handles Tailwind v4 @import natively)
 RUN cd apps/web && npx next build
 
-# ---- Stage 3: Production image ----
+# ---- Stage 3: Production image (alpine is fine — only runs pure JS) ----
 FROM node:20-alpine AS runner
 WORKDIR /app
 
