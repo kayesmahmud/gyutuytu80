@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/models/verification.dart';
 
@@ -27,7 +28,7 @@ class FreeVerificationBanner extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.celebration, color: Colors.white, size: 24),
+            child: const Icon(LucideIcons.partyPopper, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(

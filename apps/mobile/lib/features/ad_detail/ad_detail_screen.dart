@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -240,7 +241,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+            Icon(LucideIcons.alertCircle, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
               _error ?? 'Something went wrong',
@@ -280,7 +281,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   color: Colors.white,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                  icon: const Icon(LucideIcons.arrowLeft, color: Colors.black87),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                 ),
@@ -437,7 +438,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.location_on, color: Color(0xFFEF4444), size: 24),
+                              const Icon(LucideIcons.mapPin, color: Color(0xFFEF4444), size: 24),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
@@ -469,7 +470,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                       onTap: () {},
                       child: Row(
                         children: [
-                          const Icon(Icons.flag, color: Color(0xFFEF4444), size: 16),
+                          const Icon(LucideIcons.flag, color: Color(0xFFEF4444), size: 16),
                           const SizedBox(width: 8),
                           Text(
                             "Report this ad",
@@ -567,7 +568,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 children: [
-                  const Icon(Icons.rocket_launch, color: Colors.white, size: 22),
+                  const Icon(LucideIcons.rocket, color: Colors.white, size: 22),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -591,7 +592,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                  const Icon(LucideIcons.chevronRight, color: Colors.white70, size: 16),
                 ],
               ),
             ),

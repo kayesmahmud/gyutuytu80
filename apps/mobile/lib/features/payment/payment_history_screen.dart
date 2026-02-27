@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../../core/api/payment_client.dart';
 import '../../core/models/models.dart';
@@ -193,7 +194,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.error_outline,
+              LucideIcons.alertCircle,
               size: 64,
               color: Colors.grey[400],
             ),
@@ -229,7 +230,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.receipt_long_outlined,
+                LucideIcons.receipt,
                 size: 48,
                 color: Colors.grey[400],
               ),
@@ -332,7 +333,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.tag, size: 14, color: Colors.grey[500]),
+                        Icon(LucideIcons.tag, size: 14, color: Colors.grey[500]),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(

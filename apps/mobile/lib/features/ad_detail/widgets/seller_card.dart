@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/features/shop/shop_screen.dart';
@@ -48,7 +49,7 @@ class SellerCard extends StatelessWidget {
                   : null,
               backgroundColor: Colors.grey[200],
               child: ad.userAvatar == null
-                  ? const Icon(Icons.person, color: Colors.grey)
+                  ? const Icon(LucideIcons.user, color: Colors.grey)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -87,7 +88,7 @@ class SellerCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey[400], size: 24),
+            Icon(LucideIcons.chevronRight, color: Colors.grey[400], size: 24),
           ],
         ),
       ),

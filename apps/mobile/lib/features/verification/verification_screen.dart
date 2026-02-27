@@ -244,7 +244,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       color: Colors.grey.shade200,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.close, size: 18, color: Colors.grey[600]),
+                    child: Icon(LucideIcons.x, size: 18, color: Colors.grey[600]),
                   ),
                 ),
               ],
@@ -372,7 +372,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     ),
                     ElevatedButton.icon(
                       onPressed: _onProceed,
-                      icon: const Icon(Icons.arrow_forward, size: 18),
+                      icon: const Icon(LucideIcons.arrowRight, size: 18),
                       label: const Text('Proceed'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.indigo,
@@ -508,7 +508,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           elevation: 0,
         ),
         body: const LoginRequiredWidget(
-          icon: Icons.verified_outlined,
+          icon: LucideIcons.badgeCheck,
           title: 'Login to Get Verified',
           subtitle: 'Sign in to verify your account\nand build trust with buyers',
         ),
@@ -705,7 +705,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _loadData,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(LucideIcons.refreshCw),
               label: const Text('Try Again'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo,

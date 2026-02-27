@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/models/verification.dart';
 
@@ -136,7 +137,7 @@ class VerificationDurationSelector extends StatelessWidget {
                 color: const Color(0xFF10B981).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.celebration,
+              child: const Icon(LucideIcons.partyPopper,
                   color: Color(0xFF10B981), size: 20),
             ),
             const SizedBox(width: 12),
@@ -164,7 +165,7 @@ class VerificationDurationSelector extends StatelessWidget {
               ),
             ),
             if (isFreeVerification)
-              const Icon(Icons.check_circle,
+              const Icon(LucideIcons.checkCircle,
                   color: Color(0xFF10B981), size: 24),
           ],
         ),
@@ -247,7 +248,7 @@ class VerificationDurationSelector extends StatelessWidget {
             ),
             if (isSelected) ...[
               const SizedBox(width: 8),
-              const Icon(Icons.check_circle,
+              const Icon(LucideIcons.checkCircle,
                   color: Color(0xFF6366F1), size: 24),
             ],
           ],

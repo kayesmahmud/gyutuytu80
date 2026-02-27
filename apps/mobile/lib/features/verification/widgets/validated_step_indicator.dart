@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ValidatedStepIndicator extends StatelessWidget {
@@ -35,7 +36,7 @@ class ValidatedStepIndicator extends StatelessWidget {
                   ),
                   child: Center(
                     child: isCompleted
-                        ? const Icon(Icons.check, color: Colors.white, size: 16)
+                        ? const Icon(LucideIcons.check, color: Colors.white, size: 16)
                         : Text(
                             '${index + 1}',
                             style: GoogleFonts.inter(
@@ -62,7 +63,7 @@ class ValidatedStepIndicator extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Icon(
-                      Icons.chevron_right,
+                      LucideIcons.chevronRight,
                       size: 16,
                       color: Colors.grey[400],
                     ),

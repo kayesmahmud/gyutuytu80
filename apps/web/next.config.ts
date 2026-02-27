@@ -2,9 +2,12 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
+  // Skip TS checking during build — handled separately in CI via tsc --noEmit
+  typescript: { ignoreBuildErrors: true },
   transpilePackages: ['@thulobazaar/types', '@thulobazaar/utils', '@thulobazaar/api-client'],
   // Allow dev requests from network IP for mobile testing
-  allowedDevOrigins: ['http://192.168.0.169:3333'],
+  allowedDevOrigins: ['192.168.0.114'],
   // Empty turbopack config to silence Next.js 16 warning about webpack config
   // This allows us to keep using webpack config while acknowledging Turbopack is available
   turbopack: {},
@@ -27,6 +30,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      // Local development
       {
         protocol: 'http',
         hostname: 'localhost',
@@ -35,10 +39,17 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'http',
-        hostname: '192.168.0.169',
+        hostname: '192.168.0.114',
         port: '5000',
         pathname: '/uploads/**',
       },
+      // Production: API domain serves uploads
+      ...(process.env.NEXT_PUBLIC_API_HOSTNAME ? [{
+        protocol: 'https' as const,
+        hostname: process.env.NEXT_PUBLIC_API_HOSTNAME,
+        pathname: '/uploads/**',
+      }] : []),
+      // OAuth providers
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
@@ -78,10 +89,11 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     return [
       {
         source: '/uploads/:path*',
-        destination: 'http://localhost:5000/uploads/:path*',
+        destination: `${apiUrl}/uploads/:path*`,
       },
     ];
   },

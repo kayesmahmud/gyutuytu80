@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class BusinessDocumentStep extends StatelessWidget {
@@ -82,7 +83,7 @@ class BusinessDocumentStep extends StatelessWidget {
                               color: Colors.red.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 18),
+                            child: const Icon(LucideIcons.x, color: Colors.white, size: 18),
                           ),
                         ),
                       ),
@@ -95,7 +96,7 @@ class BusinessDocumentStep extends StatelessWidget {
                             color: const Color(0xFF10B981),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Icon(Icons.check, color: Colors.white, size: 16),
+                          child: const Icon(LucideIcons.check, color: Colors.white, size: 16),
                         ),
                       ),
                     ],
@@ -103,7 +104,7 @@ class BusinessDocumentStep extends StatelessWidget {
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.cloud_upload_outlined, size: 48, color: Colors.grey[400]),
+                      Icon(LucideIcons.upload, size: 48, color: Colors.grey[400]),
                       const SizedBox(height: 12),
                       Text(
                         'Tap to upload business license',
@@ -133,7 +134,7 @@ class BusinessDocumentStep extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
+                  const Icon(LucideIcons.checkCircle, color: Color(0xFF10B981), size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'Accepted Documents',
@@ -175,7 +176,7 @@ class BusinessDocumentStep extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.warning_amber, color: Color(0xFFF59E0B), size: 20),
+                  const Icon(LucideIcons.alertTriangle, color: Color(0xFFF59E0B), size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'Photo Requirements',

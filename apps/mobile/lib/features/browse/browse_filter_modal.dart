@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/models/models.dart';
@@ -440,6 +441,12 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
         _selectedDistrict?.id ??
         _selectedProvince?.id;
 
+    // Build location display name from most specific selection
+    final locationName = _selectedArea?.name ??
+        _selectedMunicipality?.name ??
+        _selectedDistrict?.name ??
+        _selectedProvince?.name;
+
     final filters = SearchFilters(
       categoryId: _selectedCategoryId,
       subcategoryId: _selectedSubcategoryId,
@@ -451,6 +458,8 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
       sortBy: sortBy,
       sortOrder: sortOrder,
       query: widget.currentFilters?.query, // Preserve search query
+      categoryName: _selectedCategoryName,
+      locationName: locationName,
     );
 
     widget.onApplyFilters?.call(filters);
@@ -519,7 +528,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(LucideIcons.x),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -652,7 +661,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                   ),
                 ),
                 Icon(
-                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
                   color: Colors.grey[600],
                 ),
               ],
@@ -690,12 +699,12 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.folder_open, color: Colors.grey),
+                  const Icon(LucideIcons.folderOpen, color: Colors.grey),
                   const SizedBox(width: 12),
                   Text("All Categories", style: GoogleFonts.inter(fontSize: 14)),
                   const Spacer(),
                   if (_selectedCategoryId == null)
-                    Icon(Icons.check, color: AppTheme.primary, size: 18),
+                    Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
                 ],
               ),
             ),
@@ -735,7 +744,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Icon(
-                        isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                        isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
                         size: 18,
                         color: Colors.grey[600],
                       ),
@@ -761,7 +770,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                 ),
 
                 if (isSelected)
-                  Icon(Icons.check, color: AppTheme.primary, size: 18),
+                  Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
               ],
             ),
           ),
@@ -801,7 +810,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               ),
             ),
             if (isSelected)
-              Icon(Icons.check, color: AppTheme.primary, size: 18),
+              Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
           ],
         ),
       ),
@@ -840,7 +849,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(
                 children: [
-                  Icon(Icons.public, color: noLocationSelected ? AppTheme.primary : Colors.grey, size: 20),
+                  Icon(LucideIcons.globe, color: noLocationSelected ? AppTheme.primary : Colors.grey, size: 20),
                   const SizedBox(width: 12),
                   Text(
                     "All Nepal",
@@ -852,7 +861,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                   ),
                   const Spacer(),
                   if (noLocationSelected)
-                    Icon(Icons.check, color: AppTheme.primary, size: 18),
+                    Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
                 ],
               ),
             ),
@@ -870,7 +879,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                 decoration: InputDecoration(
                   hintText: "Search location...",
                   hintStyle: GoogleFonts.inter(color: Colors.grey[500], fontSize: 14), // Explicit hint color
-                  prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+                  prefixIcon: const Icon(LucideIcons.search, size: 20, color: Colors.grey),
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
@@ -888,7 +897,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                   ),
                   suffixIcon: _locationSearchController.text.isNotEmpty 
                     ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16),
+                        icon: const Icon(LucideIcons.x, size: 16),
                         onPressed: () {
                           _locationSearchController.clear();
                           setState(() {
@@ -945,9 +954,9 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                                 child: Row(
                                   children: [
                                     Icon(
-                                      loc.type == LocationType.province ? Icons.map :
-                                      loc.type == LocationType.district ? Icons.location_city :
-                                      Icons.place,
+                                      loc.type == LocationType.province ? LucideIcons.map :
+                                      loc.type == LocationType.district ? LucideIcons.building2 :
+                                      LucideIcons.mapPin,
                                       size: 16,
                                       color: Colors.grey[600],
                                     ),
@@ -1068,7 +1077,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.location_on, color: AppTheme.primary, size: 18),
+                  Icon(LucideIcons.mapPin, color: AppTheme.primary, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1155,7 +1164,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
             child: Text(itemLabel(item), style: GoogleFonts.inter(fontSize: 14)),
           )).toList(),
           onChanged: enabled ? onChanged : null,
-          icon: Icon(Icons.arrow_drop_down, color: enabled ? Colors.grey[600] : Colors.grey[400]),
+          icon: Icon(LucideIcons.chevronDown, color: enabled ? Colors.grey[600] : Colors.grey[400]),
         ),
       ],
     );

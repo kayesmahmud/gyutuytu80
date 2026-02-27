@@ -194,7 +194,7 @@ export default function AppStoreBanner() {
       </div>
 
       {/* Add keyframe animations */}
-      <style jsx global>{`
+      <style>{`
         @keyframes scale-in {
           0% {
             opacity: 0;

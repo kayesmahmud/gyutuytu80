@@ -1,5 +1,6 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -184,7 +185,7 @@ class _SignInScreenState extends State<SignInScreen> {
       backgroundColor: Colors.white,
       appBar: widget.isEmbedded ? null : AppBar( // Hide AppBar if embedded
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(LucideIcons.arrowLeft),
           onPressed: () => Navigator.pop(context),
         ),
         title: Image.asset(
@@ -383,7 +384,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
                           color: Colors.grey
                         ),
                         onPressed: () {

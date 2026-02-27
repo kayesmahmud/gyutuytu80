@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -46,7 +47,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         appBar: const MainAppBar(),
         drawer: const MainDrawer(),
         body: const LoginRequiredWidget(
-          icon: Icons.chat_bubble_outline,
+          icon: LucideIcons.messageCircle,
           title: 'Login to View Messages',
           subtitle: 'Sign in to see your conversations\nand chat with buyers and sellers',
         ),
@@ -108,7 +109,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         floatingActionButton: FloatingActionButton(
           backgroundColor: const Color(0xFFDC143C),
           onPressed: () => _showNewConversationSheet(context),
-          child: const Icon(Icons.edit, color: Colors.white),
+          child: const Icon(LucideIcons.pencil, color: Colors.white),
         ),
         body: TabBarView(
           children: [
@@ -175,7 +176,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
       color: Colors.orange.shade100,
       child: Row(
         children: [
-          Icon(Icons.cloud_off, size: 16, color: Colors.orange.shade800),
+          Icon(LucideIcons.cloudOff, size: 16, color: Colors.orange.shade800),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -314,7 +315,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.sell_outlined, size: 14, color: Colors.grey[400]),
+                        Icon(LucideIcons.tag, size: 14, color: Colors.grey[400]),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -389,7 +390,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.campaign_outlined,
+                LucideIcons.megaphone,
                 size: 22,
                 color: announcement.isRead ? Colors.grey[400] : const Color(0xFF3B82F6),
               ),
@@ -472,7 +473,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.campaign, color: Colors.white, size: 28),
+                    const Icon(LucideIcons.megaphone, color: Colors.white, size: 28),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -574,7 +575,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+            Icon(LucideIcons.alertCircle, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               chatProvider.error ?? 'Failed to load conversations',
@@ -607,7 +608,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-              child: Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[400]),
+              child: Icon(LucideIcons.messageCircle, size: 48, color: Colors.grey[400]),
             ),
             const SizedBox(height: 24),
             Text(
@@ -637,7 +638,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-              child: Icon(Icons.campaign_outlined, size: 48, color: Colors.grey[400]),
+              child: Icon(LucideIcons.megaphone, size: 48, color: Colors.grey[400]),
             ),
             const SizedBox(height: 24),
             Text(
@@ -753,7 +754,7 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: 'Search users by name...',
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(LucideIcons.search),
                 suffixIcon: _isSearching
                     ? const Padding(
                         padding: EdgeInsets.all(14),

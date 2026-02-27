@@ -24,6 +24,9 @@ export default function ImageUpload({
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+  const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
+
   const validateFile = (file: File): string | null => {
     // Check file size
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
@@ -31,9 +34,13 @@ export default function ImageUpload({
       return `Image must be less than ${maxSizeMB}MB. Please upload a smaller file.`;
     }
 
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      return 'Only image files are allowed';
+    // Check file type by MIME and extension
+    const extension = file.name.toLowerCase().split('.').pop() || '';
+    const isValidMime = ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase());
+    const isValidExt = ALLOWED_EXTENSIONS.includes(extension);
+
+    if (!isValidMime && !isValidExt) {
+      return `"${file.name}" is not a supported image format. Please use JPG, PNG, GIF, WebP, or AVIF.`;
     }
 
     return null;
@@ -130,7 +137,7 @@ export default function ImageUpload({
           ref={inputRef}
           type="file"
           multiple
-          accept="image/*"
+          accept="image/jpeg,image/png,image/gif,image/webp,image/avif"
           onChange={handleChange}
           className="hidden"
         />
@@ -144,7 +151,7 @@ export default function ImageUpload({
         </p>
 
         <p className="text-sm text-gray-500">
-          PNG, JPG, GIF up to {maxSizeMB}MB (Max {maxImages} images)
+          JPG, PNG, GIF, WebP, AVIF up to {maxSizeMB}MB (Max {maxImages} images)
         </p>
 
         <p className="text-sm text-rose-500 mt-2 font-medium">

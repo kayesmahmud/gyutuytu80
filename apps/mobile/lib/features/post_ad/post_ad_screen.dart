@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/features/post_ad/create_ad_screen.dart';
@@ -19,14 +20,14 @@ class PostAdScreen extends StatelessWidget {
         appBar: MainAppBar(
           leading: Navigator.canPop(context)
             ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                icon: const Icon(LucideIcons.arrowLeft, color: Colors.black),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
         ),
         drawer: const MainDrawer(),
         body: const LoginRequiredWidget(
-          icon: Icons.add_circle_outline,
+          icon: LucideIcons.plusCircle,
           title: 'Login to Post an Ad',
           subtitle: 'Sign in to list your items\nand reach thousands of buyers',
         ),
@@ -38,7 +39,7 @@ class PostAdScreen extends StatelessWidget {
       appBar: MainAppBar(
         leading: Navigator.canPop(context) 
           ? IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              icon: const Icon(LucideIcons.arrowLeft, color: Colors.black),
               onPressed: () => Navigator.pop(context),
             )
           : null, // Default to hamburger
@@ -109,7 +110,7 @@ class PostAdScreen extends StatelessWidget {
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),
-                      icon: const Icon(Icons.add, size: 18),
+                      icon: const Icon(LucideIcons.plus, size: 18),
                       label: Text(
                         "Start New Ad",
                         style: GoogleFonts.inter(fontWeight: FontWeight.w600),

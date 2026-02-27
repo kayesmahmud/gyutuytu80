@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -255,7 +256,7 @@ class _ShopScreenState extends State<ShopScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 60, color: Colors.grey),
+          const Icon(LucideIcons.alertCircle, size: 60, color: Colors.grey),
           const SizedBox(height: 16),
           Text(_error ?? 'An error occurred'),
           const SizedBox(height: 16),
@@ -285,7 +286,7 @@ class _ShopScreenState extends State<ShopScreen> {
             backgroundColor: Colors.white,
             elevation: 1,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+              icon: const Icon(LucideIcons.arrowLeft, color: Colors.black87),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -400,7 +401,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       ),
                       child: _uploadingImage
                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                       : const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                       : const Icon(LucideIcons.camera, color: Colors.white, size: 20),
                     ),
                   ),
                 ),
@@ -466,7 +467,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4),
                                     ],
                                   ),
-                                  child: const Icon(Icons.camera_alt, color: Colors.black87, size: 16),
+                                  child: const Icon(LucideIcons.camera, color: Colors.black87, size: 16),
                                 ),
                               ),
                             ),

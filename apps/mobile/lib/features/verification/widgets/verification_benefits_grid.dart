@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class VerificationBenefitsGrid extends StatelessWidget {
@@ -8,22 +9,22 @@ class VerificationBenefitsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final benefits = [
       {
-        'icon': Icons.verified,
+        'icon': LucideIcons.badgeCheck,
         'title': 'Verified Badge',
         'desc': 'Stand out from the crowd'
       },
       {
-        'icon': Icons.trending_up,
+        'icon': LucideIcons.trendingUp,
         'title': 'More Visibility',
         'desc': 'Higher in search results'
       },
       {
-        'icon': Icons.security,
+        'icon': LucideIcons.shield,
         'title': 'Build Trust',
         'desc': 'Buyers trust verified sellers'
       },
       {
-        'icon': Icons.star,
+        'icon': LucideIcons.star,
         'title': 'Premium Support',
         'desc': 'Priority customer service'
       },

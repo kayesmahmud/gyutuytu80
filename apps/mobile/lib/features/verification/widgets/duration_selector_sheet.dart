@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/models/verification_models.dart';
 
 /// Bottom sheet for selecting verification duration/pricing.
@@ -65,7 +66,7 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(LucideIcons.x),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -197,7 +198,7 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                               _selected!.finalPrice <= 0,
                             );
                           },
-                          icon: const Icon(Icons.arrow_forward, size: 18),
+                          icon: const Icon(LucideIcons.arrowRight, size: 18),
                           label: const Text('Proceed'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.indigo,

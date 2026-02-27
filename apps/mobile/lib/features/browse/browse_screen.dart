@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/models/models.dart';
@@ -135,6 +136,15 @@ class BrowseScreenState extends State<BrowseScreen> {
     _onSearch();
   }
 
+  /// Called from HomeScreen category carousel to filter by category
+  void filterByCategory(int categoryId, String categoryName) {
+    _searchController.clear();
+    _applyFilters(SearchFilters(
+      categoryId: categoryId,
+      categoryName: categoryName,
+    ));
+  }
+
   void _applyFilters(SearchFilters newFilters) {
     setState(() {
       _filters = newFilters;
@@ -199,7 +209,7 @@ class BrowseScreenState extends State<BrowseScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.search, color: Colors.white),
+                            icon: const Icon(LucideIcons.search, color: Colors.white),
                             onPressed: _onSearch,
                           ),
                         ),
@@ -215,10 +225,36 @@ class BrowseScreenState extends State<BrowseScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        _buildFilterChip(context, "All Nepal", icon: Icons.location_on, openSection: "Locations"),
-                        _buildFilterChip(context, "Category", icon: Icons.grid_view, openSection: "Categories"),
-                        _buildFilterChip(context, "Condition", icon: Icons.tag, openSection: "Condition"),
-                        _buildFilterChip(context, "Sort by", icon: Icons.sort, openSection: "Sort By"),
+                        _buildFilterChip(
+                          context,
+                          _filters.locationName ?? "All Nepal",
+                          icon: LucideIcons.mapPin,
+                          openSection: "Locations",
+                          isActive: _filters.locationId != null,
+                        ),
+                        _buildFilterChip(
+                          context,
+                          _filters.categoryName ?? "Category",
+                          icon: LucideIcons.layoutGrid,
+                          openSection: "Categories",
+                          isActive: _filters.categoryId != null,
+                        ),
+                        _buildFilterChip(
+                          context,
+                          _filters.condition != null
+                              ? (_filters.condition == 'new' ? 'Brand New' : 'Used')
+                              : "Condition",
+                          icon: LucideIcons.tag,
+                          openSection: "Condition",
+                          isActive: _filters.condition != null,
+                        ),
+                        _buildFilterChip(
+                          context,
+                          "Sort by",
+                          icon: LucideIcons.arrowUpDown,
+                          openSection: "Sort By",
+                          isActive: _filters.sortBy != null,
+                        ),
                         InkWell(
                           onTap: () => _showFilterModal(context),
                           child: Container(
@@ -229,7 +265,7 @@ class BrowseScreenState extends State<BrowseScreen> {
                                shape: BoxShape.circle,
                                border: Border.all(color: Colors.grey[300]!),
                              ),
-                             child: Icon(Icons.tune, size: 18, color: Colors.grey[700]),
+                             child: Icon(LucideIcons.slidersHorizontal, size: 18, color: Colors.grey[700]),
                           ),
                         ),
                       ],
@@ -257,7 +293,7 @@ class BrowseScreenState extends State<BrowseScreen> {
         },
         mini: true,
         backgroundColor: Colors.red,
-        child: const Icon(Icons.arrow_upward, color: Colors.white),
+        child: const Icon(LucideIcons.arrowUp, color: Colors.white),
       ),
     );
   }
@@ -274,7 +310,7 @@ class BrowseScreenState extends State<BrowseScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+            Icon(LucideIcons.alertCircle, size: 48, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
               _error!,
@@ -299,7 +335,7 @@ class BrowseScreenState extends State<BrowseScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inbox_outlined, size: 48, color: Colors.grey[400]),
+            Icon(LucideIcons.inbox, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No ads found',
@@ -370,34 +406,36 @@ class BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  Widget _buildFilterChip(BuildContext context, String label, {IconData? icon, String? openSection}) {
+  Widget _buildFilterChip(BuildContext context, String label, {IconData? icon, String? openSection, bool isActive = false}) {
     return InkWell(
       onTap: () => _showFilterModal(context, expandSection: openSection),
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isActive ? const Color(0xFFECFDF5) : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(
+            color: isActive ? const Color(0xFF10B981) : Colors.grey[300]!,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: Colors.grey[700]),
+              Icon(icon, size: 16, color: isActive ? const Color(0xFF10B981) : Colors.grey[700]),
               const SizedBox(width: 6),
             ],
             Text(
               label,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: Colors.grey[800],
-                fontWeight: FontWeight.w500,
+                color: isActive ? const Color(0xFF10B981) : Colors.grey[800],
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
             const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.grey[500]),
+            Icon(LucideIcons.chevronDown, size: 16, color: isActive ? const Color(0xFF10B981) : Colors.grey[500]),
           ],
         ),
       ),

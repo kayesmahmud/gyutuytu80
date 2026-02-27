@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../api/api_config.dart';
 import '../models/models.dart';
@@ -81,13 +82,13 @@ class AdCard extends StatelessWidget {
                             ),
                             errorWidget: (context, url, error) => Container(
                               color: Colors.grey[100],
-                              child: Icon(Icons.image_outlined, size: 40, color: Colors.grey[300]),
+                              child: Icon(LucideIcons.image, size: 40, color: Colors.grey[300]),
                             ),
                           )
                         : Container(
                             color: Colors.grey[100],
                             child: Center(
-                              child: Icon(Icons.image_outlined, size: 40, color: Colors.grey[300]),
+                              child: Icon(LucideIcons.image, size: 40, color: Colors.grey[300]),
                             ),
                           ),
                   ),
@@ -106,7 +107,7 @@ class AdCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.camera_alt, color: Colors.white, size: 10),
+                            const Icon(LucideIcons.camera, color: Colors.white, size: 10),
                             const SizedBox(width: 4),
                             Text(
                               '${ad.images.length}',
@@ -131,7 +132,7 @@ class AdCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star, color: Colors.white, size: 10),
+                            const Icon(LucideIcons.star, color: Colors.white, size: 10),
                             const SizedBox(width: 2),
                             Text(
                               'FEATURED',
@@ -195,7 +196,7 @@ class AdCard extends StatelessWidget {
                   // Category: Folder icon + Traditional Wear
                   Row(
                     children: [
-                      Icon(Icons.folder_open, size: 14, color: Colors.grey[500]),
+                      Icon(LucideIcons.folderOpen, size: 14, color: Colors.grey[500]),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -254,7 +255,7 @@ class AdCard extends StatelessWidget {
                   // Date: Clock + Dec 27, 2025 • 12:06 AM
                   Row(
                     children: [
-                       Icon(Icons.access_time, size: 12, color: Colors.grey[400]),
+                       Icon(LucideIcons.clock, size: 12, color: Colors.grey[400]),
                        const SizedBox(width: 4),
                        Expanded(
                          child: Text(

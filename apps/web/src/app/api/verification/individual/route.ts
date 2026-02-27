@@ -219,7 +219,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for active verification campaign
-    const now = new Date();
     const activeCampaign = await prisma.verification_campaigns.findFirst({
       where: {
         is_active: true,

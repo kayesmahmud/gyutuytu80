@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SafetyTipsCard extends StatelessWidget {
@@ -34,7 +35,7 @@ class SafetyTipsCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          const Icon(Icons.circle, size: 6, color: Color(0xFFC2410C)),
+          const Icon(LucideIcons.circle, size: 6, color: Color(0xFFC2410C)),
           const SizedBox(width: 8),
           Expanded(
               child: Text(text,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/api/payment_client.dart';
 import '../../core/models/payment.dart';
 import 'payment_screen.dart';
@@ -164,7 +165,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.payment,
+              LucideIcons.creditCard,
               color: Color(0xFFDC143C),
               size: 24,
             ),
@@ -233,7 +234,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
         child: Column(
           children: [
             Icon(
-              Icons.error_outline,
+              LucideIcons.alertCircle,
               size: 48,
               color: Colors.grey[400],
             ),
@@ -259,7 +260,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
         child: Column(
           children: [
             Icon(
-              Icons.payment_outlined,
+              LucideIcons.creditCard,
               size: 48,
               color: Colors.grey[400],
             ),
@@ -380,7 +381,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
                 color: isSelected ? const Color(0xFFDC143C) : Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  ? const Icon(LucideIcons.check, size: 16, color: Colors.white)
                   : null,
             ),
           ],
@@ -396,7 +397,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
       child: Row(
         children: [
           Icon(
-            Icons.lock_outline,
+            LucideIcons.lock,
             size: 16,
             color: Colors.grey[600],
           ),

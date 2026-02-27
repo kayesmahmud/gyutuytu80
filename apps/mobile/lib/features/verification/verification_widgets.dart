@@ -1153,7 +1153,7 @@ class VerificationStepIndicator extends StatelessWidget {
           ),
           child: Center(
             child: isCompleted
-                ? const Icon(Icons.check, color: Colors.white, size: 16)
+                ? const Icon(LucideIcons.check, color: Colors.white, size: 16)
                 : Text(
                     '$step',
                     style: TextStyle(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class IndividualInfoStep extends StatelessWidget {
@@ -144,7 +145,7 @@ class IndividualInfoStep extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.lightbulb_outline, color: Color(0xFF6366F1), size: 20),
+                  const Icon(LucideIcons.lightbulb, color: Color(0xFF6366F1), size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'Tips',

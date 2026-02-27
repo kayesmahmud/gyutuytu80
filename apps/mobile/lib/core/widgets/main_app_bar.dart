@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
   final PreferredSizeWidget? bottom;
@@ -14,7 +15,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       centerTitle: true,
       leading: leading ?? IconButton(
-        icon: const Icon(Icons.menu, color: Colors.black),
+        icon: const Icon(LucideIcons.menu, color: Colors.black),
         onPressed: () {
           Scaffold.of(context).openDrawer();
         },

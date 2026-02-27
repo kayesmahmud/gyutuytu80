@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mobile/core/providers/auth_provider.dart';
@@ -35,7 +36,7 @@ class MainDrawer extends StatelessWidget {
                       errorBuilder: (context, error, stackTrace) => Text("THULO BAZAAR", style: GoogleFonts.poppins(color: const Color(0xFFDC2626), fontWeight: FontWeight.bold)),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.grey, size: 28),
+                      icon: const Icon(LucideIcons.x, color: Colors.grey, size: 28),
                       onPressed: () => Navigator.pop(context),
                     ),
                  ],
@@ -59,15 +60,15 @@ class MainDrawer extends StatelessWidget {
                      const SizedBox(height: 16),
                      
                      if (isLoggedIn) ...[
-                        _buildMenuItem("My Profile", icon: Icons.person_outline, onTap: () {
+                        _buildMenuItem("My Profile", icon: LucideIcons.user, onTap: () {
                           Navigator.pop(context);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
                         }),
-                        _buildMenuItem("Dashboard", icon: Icons.dashboard_outlined, onTap: () {
+                        _buildMenuItem("Dashboard", icon: LucideIcons.layoutDashboard, onTap: () {
                           Navigator.pop(context);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
                         }),
-                        _buildMenuItem("My Shop", icon: Icons.store_outlined, onTap: () {
+                        _buildMenuItem("My Shop", icon: LucideIcons.store, onTap: () {
                           Navigator.pop(context);
                           // Get user's shop slug (custom or fallback to user-{id})
                           final shopSlug = user?['shopSlug'] ?? user?['shop_slug'] ?? user?['customShopSlug'] ?? user?['custom_shop_slug'] ?? 'user-${user?['id']}';
@@ -135,10 +136,10 @@ class MainDrawer extends StatelessWidget {
                      const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
                      const SizedBox(height: 16),
 
-                     _buildMenuItem("Help Center", icon: Icons.help_outline),
-                     _buildMenuItem("FAQ", icon: Icons.description_outlined),
-                     _buildMenuItem("Support Tickets", icon: Icons.confirmation_number_outlined),
-                     _buildMenuItem("Contact Us", icon: Icons.mail_outline),
+                     _buildMenuItem("Help Center", icon: LucideIcons.helpCircle),
+                     _buildMenuItem("FAQ", icon: LucideIcons.fileText),
+                     _buildMenuItem("Support Tickets", icon: LucideIcons.ticket),
+                     _buildMenuItem("Contact Us", icon: LucideIcons.mail),
                    ],
                  ),
                ),

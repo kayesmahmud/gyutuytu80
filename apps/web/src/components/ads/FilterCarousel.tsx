@@ -91,7 +91,7 @@ export default function FilterCarousel({
       </div>
 
       {/* Hide scrollbar CSS (inline for component isolation) */}
-      <style jsx>{`
+      <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }

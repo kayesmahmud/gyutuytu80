@@ -174,13 +174,13 @@ export default function FAQClient() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 sm:p-6 border-b border-gray-100">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <span>{FAQ_SECTIONS[expandedSection].icon}</span>
-              {FAQ_SECTIONS[expandedSection].title}
+              <span>{FAQ_SECTIONS[expandedSection]?.icon}</span>
+              {FAQ_SECTIONS[expandedSection]?.title}
             </h2>
           </div>
 
           <div className="divide-y divide-gray-100">
-            {FAQ_SECTIONS[expandedSection].faqs.map((faq, faqIndex) => (
+            {FAQ_SECTIONS[expandedSection]?.faqs.map((faq, faqIndex) => (
               <div key={faqIndex}>
                 <button
                   onClick={() => toggleFaq(expandedSection, faqIndex)}

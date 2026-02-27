@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
 
@@ -15,7 +16,7 @@ class LoginRequiredWidget extends StatelessWidget {
 
   const LoginRequiredWidget({
     super.key,
-    this.icon = Icons.lock_outline,
+    this.icon = LucideIcons.lock,
     required this.title,
     required this.subtitle,
     this.onLoginSuccess,

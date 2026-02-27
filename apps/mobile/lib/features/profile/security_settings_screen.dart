@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mobile/core/api/auth_client.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/profile/phone_verification_screen.dart';
@@ -220,12 +221,12 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     children: [
                       ListTile(
                         leading: Icon(
-                          _isPhoneVerified ? Icons.verified : Icons.phonelink_ring, 
+                          _isPhoneVerified ? LucideIcons.badgeCheck : LucideIcons.smartphoneNfc, 
                           color: _isPhoneVerified ? Colors.green : AppTheme.primary
                         ),
                         title: const Text('Phone Verification'),
                         subtitle: Text(_isPhoneVerified ? 'Verified: $_phone' : 'Verify your phone number'),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(LucideIcons.chevronRight),
                         onTap: () async {
                            await Navigator.push(
                             context,
@@ -238,15 +239,15 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                       ),
                       const Divider(height: 1),
                       ListTile(
-                        leading: const Icon(Icons.lock_outline, color: AppTheme.primary),
+                        leading: const Icon(LucideIcons.lock, color: AppTheme.primary),
                         title: const Text('Change Password'),
                         subtitle: const Text('Update your login password'),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(LucideIcons.chevronRight),
                         onTap: _showChangePasswordDialog,
                       ),
                       const Divider(height: 1),
                       SwitchListTile(
-                        secondary: const Icon(Icons.security, color: AppTheme.primary),
+                        secondary: const Icon(LucideIcons.shield, color: AppTheme.primary),
                         title: const Text('Two-Factor Authentication'),
                         subtitle: const Text('Secure your account with 2FA'),
                         value: _is2faEnabled,
@@ -284,12 +285,12 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                         child: ListTile(
                           leading: const CircleAvatar(
                             backgroundColor: Colors.white,
-                            child: Icon(Icons.devices, color: Colors.grey),
+                            child: Icon(LucideIcons.monitor, color: Colors.grey),
                           ),
                           title: Text('Session started'),
                           subtitle: Text(dateStr),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            icon: const Icon(LucideIcons.trash2, color: Colors.red),
                             onPressed: () => _revokeSession(session['id']),
                           ),
                         ),

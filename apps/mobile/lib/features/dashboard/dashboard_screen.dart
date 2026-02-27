@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -275,7 +276,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black87),
+            icon: const Icon(LucideIcons.menu, color: Colors.black87),
             onPressed: () => Navigator.pop(context),
           ),
           const Spacer(),
@@ -326,21 +327,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               _buildStatCard(
-                icon: Icons.bar_chart_rounded,
+                icon: LucideIcons.barChart3,
                 iconBgColor: const Color(0xFF3B82F6),
                 value: _allAds.length,
                 label: 'Total',
               ),
               const SizedBox(width: 12),
               _buildStatCard(
-                icon: Icons.check_circle,
+                icon: LucideIcons.checkCircle,
                 iconBgColor: const Color(0xFF22C55E),
                 value: counts['Active'] ?? 0,
                 label: 'Active',
               ),
               const SizedBox(width: 12),
               _buildStatCard(
-                icon: Icons.visibility,
+                icon: LucideIcons.eye,
                 iconBgColor: const Color(0xFFEC4899),
                 value: _totalViews,
                 label: 'Views',
@@ -407,18 +408,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // First row: Active, Pending
           Row(
             children: [
-              Expanded(child: _buildFilterChip('Active', counts['Active'] ?? 0, Icons.check_circle, Colors.green)),
+              Expanded(child: _buildFilterChip('Active', counts['Active'] ?? 0, LucideIcons.checkCircle, Colors.green)),
               const SizedBox(width: 12),
-              Expanded(child: _buildFilterChip('Pending', counts['Pending'] ?? 0, Icons.schedule, Colors.orange)),
+              Expanded(child: _buildFilterChip('Pending', counts['Pending'] ?? 0, LucideIcons.clock, Colors.orange)),
             ],
           ),
           const SizedBox(height: 12),
           // Second row: Rejected, Sold
           Row(
             children: [
-              Expanded(child: _buildFilterChip('Rejected', counts['Rejected'] ?? 0, Icons.close, Colors.red)),
+              Expanded(child: _buildFilterChip('Rejected', counts['Rejected'] ?? 0, LucideIcons.x, Colors.red)),
               const SizedBox(width: 12),
-              Expanded(child: _buildFilterChip('Sold', counts['Sold'] ?? 0, Icons.check, Colors.purple)),
+              Expanded(child: _buildFilterChip('Sold', counts['Sold'] ?? 0, LucideIcons.check, Colors.purple)),
             ],
           ),
         ],
@@ -469,7 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+          Icon(LucideIcons.alertCircle, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(_error!, style: GoogleFonts.inter(color: Colors.grey[600])),
           const SizedBox(height: 16),
@@ -488,7 +489,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
+          Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No ads found',
@@ -548,9 +549,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                           errorWidget: (context, url, error) =>
-                              Icon(Icons.image_outlined, color: Colors.grey[400]),
+                              Icon(LucideIcons.image, color: Colors.grey[400]),
                         )
-                      : Icon(Icons.image_outlined, color: Colors.grey[400]),
+                      : Icon(LucideIcons.image, color: Colors.grey[400]),
                 ),
               ),
               const SizedBox(width: 14),
@@ -575,7 +576,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         _buildStatusBadge(ad.status.name),
                         const SizedBox(width: 10),
-                        Icon(Icons.calendar_today_outlined, size: 13, color: Colors.grey[500]),
+                        Icon(LucideIcons.calendar, size: 13, color: Colors.grey[500]),
                         const SizedBox(width: 4),
                         Text(
                           _formatDate(ad.createdAt),
@@ -586,7 +587,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.visibility_outlined, size: 14, color: Colors.grey[500]),
+                        Icon(LucideIcons.eye, size: 14, color: Colors.grey[500]),
                         const SizedBox(width: 4),
                         Text(
                           _formatCompactNumber(ad.viewCount ?? 0),
@@ -652,7 +653,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.bolt, size: 18, color: Colors.white),
+                    const Icon(LucideIcons.zap, size: 18, color: Colors.white),
                     const SizedBox(width: 6),
                     Text(
                       'Promote',
@@ -675,7 +676,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // View Button
               Expanded(
                 child: _buildActionButton(
-                  icon: Icons.visibility_outlined,
+                  icon: LucideIcons.eye,
                   label: 'View',
                   color: Colors.blue,
                   filled: true,
@@ -693,7 +694,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (isActive) ...[
                 Expanded(
                   child: _buildActionButton(
-                    icon: Icons.check_circle_outline,
+                    icon: LucideIcons.checkCircle,
                     label: 'Sold',
                     color: Colors.green,
                     filled: true,
@@ -706,7 +707,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Delete Button (outlined)
               Expanded(
                 child: _buildActionButton(
-                  icon: Icons.delete_outline,
+                  icon: LucideIcons.trash2,
                   label: 'Delete',
                   color: Colors.red,
                   filled: false,
@@ -766,25 +767,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         bgColor = Colors.green[50]!;
         textColor = Colors.green[700]!;
         label = 'Active';
-        icon = Icons.check;
+        icon = LucideIcons.check;
         break;
       case 'pending':
         bgColor = Colors.orange[50]!;
         textColor = Colors.orange[700]!;
         label = 'Pending';
-        icon = Icons.schedule;
+        icon = LucideIcons.clock;
         break;
       case 'sold':
         bgColor = Colors.purple[50]!;
         textColor = Colors.purple[700]!;
         label = 'Sold';
-        icon = Icons.check;
+        icon = LucideIcons.check;
         break;
       case 'rejected':
         bgColor = Colors.red[50]!;
         textColor = Colors.red[700]!;
         label = 'Rejected';
-        icon = Icons.close;
+        icon = LucideIcons.x;
         break;
       default:
         bgColor = Colors.grey[100]!;
@@ -837,11 +838,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home_outlined, 'Home', 0),
-              _buildNavItem(Icons.grid_view_outlined, 'Browse', 1),
+              _buildNavItem(LucideIcons.home, 'Home', 0),
+              _buildNavItem(LucideIcons.layoutGrid, 'Browse', 1),
               _buildFabButton(),
-              _buildNavItem(Icons.message_outlined, 'Messages', 2),
-              _buildNavItem(Icons.person_outline, 'Profile', 3),
+              _buildNavItem(LucideIcons.messageSquare, 'Messages', 2),
+              _buildNavItem(LucideIcons.user, 'Profile', 3),
             ],
           ),
         ),
@@ -901,7 +902,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+        child: const Icon(LucideIcons.plus, color: Colors.white, size: 28),
       ),
     );
   }

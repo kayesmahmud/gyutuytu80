@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_theme.dart';
@@ -16,8 +17,9 @@ import 'package:mobile/core/services/ad_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(String query)? onSearch;
+  final void Function(int categoryId, String categoryName)? onCategoryTap;
 
-  const HomeScreen({super.key, this.onSearch});
+  const HomeScreen({super.key, this.onSearch, this.onCategoryTap});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -186,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: const Color(0xFF10B981),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Icon(Icons.search, color: Colors.white, size: 20),
+                  child: const Icon(LucideIcons.search, color: Colors.white, size: 20),
                 ),
               ),
             ),
@@ -301,7 +303,14 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.only(right: 16),
       child: GestureDetector(
         onTap: () {
-          // TODO: Navigate to browse with category filter using slug
+          // Find category ID from API categories by slug
+          final apiCat = _categories.cast<CategoryWithSubcategories?>().firstWhere(
+            (c) => c?.slug == slug,
+            orElse: () => null,
+          );
+          if (apiCat != null && widget.onCategoryTap != null) {
+            widget.onCategoryTap!(apiCat.id, apiCat.name);
+          }
         },
         child: Column(
           children: [
@@ -407,7 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.star, color: Colors.amber, size: 24),
+              const Icon(LucideIcons.star, color: Colors.amber, size: 24),
               const SizedBox(width: 8),
               Text(
                 "Featured Ads",

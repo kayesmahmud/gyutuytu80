@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class VerificationHeroHeader extends StatelessWidget {
@@ -25,7 +26,7 @@ class VerificationHeroHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
-              Icons.verified,
+              LucideIcons.badgeCheck,
               size: 48,
               color: Colors.white,
             ),

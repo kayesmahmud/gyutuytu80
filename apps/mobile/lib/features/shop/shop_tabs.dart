@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/core/api/shop_client.dart';
@@ -38,10 +39,10 @@ class _ShopTabsState extends State<ShopTabs> {
           ),
           child: Row(
             children: [
-              _buildTab('About', 'about', Icons.info_outline),
-              _buildTab('Contact', 'contact', Icons.contact_phone_outlined),
-              _buildTab('Categories', 'categories', Icons.category_outlined),
-              _buildTab('Location', 'location', Icons.location_on_outlined),
+              _buildTab('About', 'about', LucideIcons.info),
+              _buildTab('Contact', 'contact', LucideIcons.phoneCall),
+              _buildTab('Categories', 'categories', LucideIcons.layoutGrid),
+              _buildTab('Location', 'location', LucideIcons.mapPin),
             ],
           ),
         ),
@@ -208,7 +209,7 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
             Text('About', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
-                icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
                 onPressed: () => setState(() => _isEditing = true),
               ),
           ],
@@ -329,22 +330,22 @@ class _ShopContactSectionState extends State<ShopContactSection> {
             Text('Contact Information', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
-                icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
                 onPressed: () => setState(() => _isEditing = true),
               ),
           ],
         ),
         const SizedBox(height: 12),
         if (widget.shop.businessPhone != null)
-          _buildContactRow(Icons.phone, 'Phone', widget.shop.businessPhone!),
+          _buildContactRow(LucideIcons.phone, 'Phone', widget.shop.businessPhone!),
         if (widget.shop.businessWebsite != null)
-          _buildContactRow(Icons.language, 'Website', widget.shop.businessWebsite!),
+          _buildContactRow(LucideIcons.globe, 'Website', widget.shop.businessWebsite!),
         if (widget.shop.facebookUrl != null)
-          _buildContactRow(Icons.facebook, 'Facebook', widget.shop.facebookUrl!),
+          _buildContactRow(LucideIcons.facebook, 'Facebook', widget.shop.facebookUrl!),
         if (widget.shop.instagramUrl != null)
-          _buildContactRow(Icons.camera_alt, 'Instagram', widget.shop.instagramUrl!),
+          _buildContactRow(LucideIcons.instagram, 'Instagram', widget.shop.instagramUrl!),
         if (widget.shop.tiktokUrl != null)
-          _buildContactRow(Icons.music_note, 'TikTok', widget.shop.tiktokUrl!),
+          _buildContactRow(LucideIcons.music, 'TikTok', widget.shop.tiktokUrl!),
         
         if (widget.shop.businessPhone == null && 
             widget.shop.businessWebsite == null &&
@@ -523,7 +524,7 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
             Text('Category', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
-                icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
                 onPressed: _startEditing,
               ),
           ],
@@ -534,9 +535,9 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
          // I should update ShopProfile model to include these fields.
          // Let's display simple text for now.
         if (widget.shop.categoryName != null)
-          _buildCategoryRow(Icons.category, widget.shop.categoryName!),
+          _buildCategoryRow(LucideIcons.layoutGrid, widget.shop.categoryName!),
         if (widget.shop.subcategoryName != null)
-           _buildCategoryRow(Icons.subdirectory_arrow_right, widget.shop.subcategoryName!),
+           _buildCategoryRow(LucideIcons.cornerDownRight, widget.shop.subcategoryName!),
         
         if (widget.shop.categoryName == null)
            Text(
@@ -695,14 +696,14 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
             Text('Location', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
-                icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
                 onPressed: _startEditing,
               ),
           ],
         ),
         const SizedBox(height: 12),
         if (widget.shop.locationFullPath != null)
-          _buildLocationRow(Icons.location_on, widget.shop.locationFullPath!),
+          _buildLocationRow(LucideIcons.mapPin, widget.shop.locationFullPath!),
         if (widget.shop.locationFullPath == null)
            Text('No location set.', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic)),
       ],

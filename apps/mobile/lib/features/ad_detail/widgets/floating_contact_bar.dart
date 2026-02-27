@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/core/models/models.dart';
@@ -32,7 +33,7 @@ class FloatingContactBar extends StatelessWidget {
         children: [
           // Call - dark filled, icon only
           _buildIconBtn(
-            Icons.phone,
+            LucideIcons.phone,
             const Color(0xFF374151),
             () => _launchPhone(ad.userPhone),
           ),
@@ -41,7 +42,7 @@ class FloatingContactBar extends StatelessWidget {
           Expanded(
             flex: 2,
             child: _buildFilledBtn(
-              Icons.chat_bubble_outline_rounded,
+              LucideIcons.messageCircle,
               "Chat",
               const Color(0xFF2563EB),
               () => _startChat(context),
@@ -52,7 +53,7 @@ class FloatingContactBar extends StatelessWidget {
           Expanded(
             flex: 2,
             child: _buildFilledBtn(
-              Icons.message_rounded,
+              LucideIcons.messageSquare,
               "WhatsApp",
               const Color(0xFF25D366),
               () => _launchWhatsApp(ad.userPhone),

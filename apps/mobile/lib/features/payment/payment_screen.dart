@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../core/api/payment_client.dart';
 import '../../core/models/models.dart';
@@ -220,7 +221,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.check_circle,
+                LucideIcons.checkCircle,
                 color: Color(0xFF10B981),
                 size: 48,
               ),
@@ -299,7 +300,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.error_outline,
+                LucideIcons.alertCircle,
                 color: Color(0xFFEF4444),
                 size: 48,
               ),
@@ -376,7 +377,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: const Icon(LucideIcons.x),
           onPressed: () => _showCancelConfirmation(),
         ),
       ),
@@ -487,7 +488,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.error_outline,
+                LucideIcons.alertCircle,
                 color: Color(0xFFEF4444),
                 size: 48,
               ),

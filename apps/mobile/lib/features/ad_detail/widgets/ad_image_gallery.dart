@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 
@@ -59,7 +60,7 @@ class _AdImageGalleryState extends State<AdImageGallery> {
       return Container(
         color: Colors.grey[100],
         child: Center(
-            child: Icon(Icons.image_outlined,
+            child: Icon(LucideIcons.image,
                 size: 60, color: Colors.grey[300])),
       );
     }
@@ -94,7 +95,7 @@ class _AdImageGalleryState extends State<AdImageGallery> {
                 radius: 16,
                 child: IconButton(
                   padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.chevron_left,
+                  icon: const Icon(LucideIcons.chevronLeft,
                       size: 20, color: Colors.black),
                   onPressed: () {
                     if (_currentImageIndex > 0) {
@@ -117,7 +118,7 @@ class _AdImageGalleryState extends State<AdImageGallery> {
                 radius: 16,
                 child: IconButton(
                   padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.chevron_right,
+                  icon: const Icon(LucideIcons.chevronRight,
                       size: 20, color: Colors.black),
                   onPressed: () {
                     if (_currentImageIndex < images.length - 1) {
@@ -166,7 +167,7 @@ class _AdImageGalleryState extends State<AdImageGallery> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
                       )
                     : Icon(
-                        widget.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        LucideIcons.heart,
                         color: widget.isFavorite ? Colors.red : Colors.black87,
                         size: 20,
                       ),
@@ -174,7 +175,7 @@ class _AdImageGalleryState extends State<AdImageGallery> {
               ),
               const SizedBox(width: 8),
               _buildCircleButton(
-                child: const Icon(Icons.share, color: Colors.black87, size: 20),
+                child: const Icon(LucideIcons.share2, color: Colors.black87, size: 20),
                 onTap: widget.onShare,
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
@@ -248,7 +249,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: const Icon(LucideIcons.x, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -317,7 +318,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           ),
           child: Center(
             child: isActive 
-              ? const Icon(Icons.check, size: 18, color: Colors.white)
+              ? const Icon(LucideIcons.check, size: 18, color: Colors.white)
               : Text(
                   "${step + 1}", 
                   style: GoogleFonts.inter(
@@ -440,7 +441,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                 _attributeValues.clear(); 
               });
             },
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+            icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
           ),
           
           if (_selectedCategory != null && _selectedCategory!.subcategories.isNotEmpty) ...[
@@ -460,7 +461,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                 _selectedSubCategory = val;
                 _attributeValues.clear();
               }),
-              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+              icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
             ),
           ],
           
@@ -530,7 +531,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(color: Colors.blue[50], shape: BoxShape.circle),
-                        child: Icon(Icons.add_a_photo_outlined, size: 24, color: Colors.blue[600]),
+                        child: Icon(LucideIcons.camera, size: 24, color: Colors.blue[600]),
                       ),
                       const SizedBox(height: 8),
                       Text("Tap to upload", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.black87)),
@@ -553,7 +554,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
                                 ),
-                                child: const Icon(Icons.add, color: Colors.grey),
+                                child: const Icon(LucideIcons.plus, color: Colors.grey),
                               ),
                            );
                          }
@@ -587,7 +588,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                                   color: Colors.red,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                child: const Icon(LucideIcons.x, size: 14, color: Colors.white),
                               ),
                             ),
                           ),
@@ -622,7 +623,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                 _selectedMunicipality = null;
               });
             },
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+            icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
           ),
           
           if (_selectedProvince != null) ...[
@@ -644,7 +645,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   _selectedMunicipality = null;
                 });
               },
-              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+              icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
             ),
           ],
 
@@ -667,7 +668,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   _selectedArea = null;
                 });
               },
-              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+              icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
             ),
           ],
 
@@ -689,7 +690,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   _selectedArea = val;
                 });
               },
-              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+              icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
             ),
           ],
         ],
@@ -721,7 +722,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(Icons.phone_android, size: 20, color: Colors.grey),
+                  const Icon(LucideIcons.smartphone, size: 20, color: Colors.grey),
                   const SizedBox(width: 8),
                   Text(_verifiedPhone, style: GoogleFonts.inter(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
                   const SizedBox(width: 8),
@@ -735,7 +736,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                      child: Row(
                        mainAxisSize: MainAxisSize.min,
                        children: [
-                         const Icon(Icons.check_circle, size: 12, color: Color(0xFF10B981)),
+                         const Icon(LucideIcons.checkCircle, size: 12, color: Color(0xFF10B981)),
                          const SizedBox(width: 4),
                          Text("Verified", style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF047857), fontWeight: FontWeight.w600)),
                        ],

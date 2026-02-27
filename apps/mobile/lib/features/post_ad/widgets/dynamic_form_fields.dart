@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile/features/post_ad/services/form_template_service.dart';
@@ -32,7 +33,7 @@ class DynamicFormFields extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.assignment_outlined, color: Colors.blue, size: 20),
+              const Icon(LucideIcons.clipboardList, color: Colors.blue, size: 20),
               const SizedBox(width: 8),
               Text(
                 "Additional Details",
@@ -108,7 +109,7 @@ class DynamicFormFields extends StatelessWidget {
         return DropdownButtonFormField<String>(
           value: values[field.name],
           decoration: _inputDecoration(field.placeholder ?? 'Select ${field.label}'),
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+          icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
           onChanged: (val) => onChanged(field.name, val),
           validator: (val) {
             if (field.required && val == null) {
@@ -194,7 +195,7 @@ class DynamicFormFields extends StatelessWidget {
       readOnly: true,
       controller: TextEditingController(text: currentValue ?? ''),
       decoration: _inputDecoration(field.placeholder ?? 'Select date').copyWith(
-        suffixIcon: const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+        suffixIcon: const Icon(LucideIcons.calendar, size: 18, color: Colors.grey),
       ),
       validator: (val) {
         if (field.required && (val == null || val.isEmpty)) {

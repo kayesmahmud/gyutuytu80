@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -235,7 +236,7 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: Colors.white,
       elevation: 1,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        icon: const Icon(LucideIcons.arrowLeft, color: Colors.black87),
         onPressed: () => Navigator.pop(context),
       ),
       title: Consumer<ChatProvider>(
@@ -307,7 +308,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.black54),
+          icon: const Icon(LucideIcons.moreVertical, color: Colors.black54),
           onPressed: () {
             // TODO: Show options menu
           },
@@ -325,7 +326,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.sell_outlined, size: 16, color: Colors.grey[600]),
+          Icon(LucideIcons.tag, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -493,7 +494,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         width: 220,
                         height: 160,
                         color: Colors.grey[300],
-                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                        child: const Icon(LucideIcons.imageOff, color: Colors.grey),
                       ),
                     ),
                   ),
@@ -635,11 +636,11 @@ class _ChatScreenState extends State<ChatScreen> {
             )
           else ...[
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.grey),
+              icon: const Icon(LucideIcons.x, color: Colors.grey),
               onPressed: _cancelImage,
             ),
             IconButton(
-              icon: const Icon(Icons.send, color: Color(0xFFDC143C)),
+              icon: const Icon(LucideIcons.send, color: Color(0xFFDC143C)),
               onPressed: _sendImage,
             ),
           ],
@@ -697,7 +698,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.attach_file, color: Colors.grey[600]),
+                    icon: Icon(LucideIcons.paperclip, color: Colors.grey[600]),
                     onPressed: _pickAndSendImage,
                   ),
                 ],
@@ -715,7 +716,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.send,
+                LucideIcons.send,
                 color: Colors.white,
                 size: 22,
               ),
@@ -739,7 +740,7 @@ class _ChatScreenState extends State<ChatScreen> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.chat_bubble_outline,
+              LucideIcons.messageCircle,
               size: 36,
               color: Colors.grey[400],
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../api/location_client.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
@@ -305,7 +306,7 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(LucideIcons.x),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -460,7 +461,7 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.location_on, color: AppTheme.primary, size: 20),
+                          Icon(LucideIcons.mapPin, color: AppTheme.primary, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(

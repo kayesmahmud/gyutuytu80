@@ -3,24 +3,21 @@ import 'package:flutter/foundation.dart';
 /// API Configuration
 /// Centralized configuration for API endpoints and URLs
 class ApiConfig {
-  // Detect if running on emulator vs physical device
-  // Emulator uses 10.0.2.2 to reach host machine's localhost
-  // Physical device uses the actual IP address
+  // Production API URL (used in release builds)
+  static const String _productionUrl = 'https://api.thulobazaar.com.np/api';
+
+  // Local development IP — both devices must be on the same WiFi network
+  static const String _localIp = '192.168.0.113';
+
   static String get baseUrl {
     // Check for environment override first
     const envUrl = String.fromEnvironment('API_URL');
     if (envUrl.isNotEmpty) return envUrl;
 
-    if (kIsWeb) {
-      return 'http://localhost:5000/api';
-    } else if (defaultTargetPlatform == TargetPlatform.android) {
-      // Android device on same WiFi network
-      // Update IP when network changes (see IP_CHANGE_GUIDE.md)
-      return 'http://192.168.0.169:5000/api';
-    } else {
-      // iOS Simulator / Mac defaults to localhost
-      return 'http://localhost:5000/api';
-    }
+    // Use production URL in release mode, local IP in debug mode
+    if (kReleaseMode) return _productionUrl;
+
+    return 'http://$_localIp:5000/api';
   }
 
   // Auth endpoints

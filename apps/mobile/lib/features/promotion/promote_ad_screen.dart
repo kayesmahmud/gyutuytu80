@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/api/promotion_client.dart';
 import '../../core/models/models.dart';
@@ -182,7 +183,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.celebration,
+                LucideIcons.partyPopper,
                 color: Color(0xFF10B981),
                 size: 48,
               ),
@@ -293,7 +294,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+            Icon(LucideIcons.alertCircle, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               _error!,
@@ -337,9 +338,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                 ? Image.network(
                     widget.adThumbnail!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.image, color: Colors.grey),
+                    errorBuilder: (_, __, ___) => const Icon(LucideIcons.image, color: Colors.grey),
                   )
-                : const Icon(Icons.image, color: Colors.grey),
+                : const Icon(LucideIcons.image, color: Colors.grey),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -448,7 +449,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, size: 18, color: Color(0xFFD97706)),
+          const Icon(LucideIcons.info, size: 18, color: Color(0xFFD97706)),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -554,19 +555,19 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       case 'business':
         bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.1);
         textColor = const Color(0xFFD97706);
-        icon = Icons.verified;
+        icon = LucideIcons.badgeCheck;
         label = 'Verified Business Seller (40% OFF)';
         break;
       case 'individual_verified':
         bgColor = const Color(0xFF3B82F6).withValues(alpha: 0.1);
         textColor = const Color(0xFF2563EB);
-        icon = Icons.check_circle;
+        icon = LucideIcons.checkCircle;
         label = 'Verified Individual Seller (20% OFF)';
         break;
       default:
         bgColor = Colors.grey[100]!;
         textColor = Colors.grey[600]!;
-        icon = Icons.person;
+        icon = LucideIcons.user;
         label = 'Individual Seller (Standard Price)';
     }
 
@@ -704,7 +705,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                 color: isSelected ? color : Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  ? const Icon(LucideIcons.check, size: 16, color: Colors.white)
                   : null,
             ),
           ],
@@ -832,7 +833,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                 Row(
                   children: [
                     Icon(
-                      _userAccountType == 'business' ? Icons.verified : Icons.check_circle,
+                      _userAccountType == 'business' ? LucideIcons.badgeCheck : LucideIcons.checkCircle,
                       size: 16,
                       color: const Color(0xFF3B82F6),
                     ),
@@ -869,7 +870,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.celebration, size: 16, color: Color(0xFF10B981)),
+                    const Icon(LucideIcons.partyPopper, size: 16, color: Color(0xFF10B981)),
                     const SizedBox(width: 6),
                     Text(
                       '${_activeCampaign?.name ?? 'Campaign'} ($campaignDiscount%)',
@@ -905,7 +906,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.savings, size: 16, color: Color(0xFF10B981)),
+                  const Icon(LucideIcons.piggyBank, size: 16, color: Color(0xFF10B981)),
                   const SizedBox(width: 6),
                   Text(
                     'You save Rs. ${totalSavings.toStringAsFixed(0)} ($totalDiscount% OFF)',

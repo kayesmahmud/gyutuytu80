@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile/core/api/ad_client.dart';
@@ -268,7 +269,7 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+          Icon(LucideIcons.alertCircle, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(_error!, style: GoogleFonts.inter(color: Colors.grey[600])),
           const SizedBox(height: 16),
@@ -287,7 +288,7 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
+          Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No ads found',
@@ -345,9 +346,9 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               ),
                               errorWidget: (context, url, error) =>
-                                  Icon(Icons.image_outlined, color: Colors.grey[400]),
+                                  Icon(LucideIcons.image, color: Colors.grey[400]),
                             )
-                          : Icon(Icons.image_outlined, color: Colors.grey[400]),
+                          : Icon(LucideIcons.image, color: Colors.grey[400]),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -377,7 +378,7 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
                           children: [
                             _buildStatusBadge(ad.status.name),
                             const SizedBox(width: 8),
-                            Icon(Icons.visibility, size: 14, color: Colors.grey[500]),
+                            Icon(LucideIcons.eye, size: 14, color: Colors.grey[500]),
                             const SizedBox(width: 4),
                             Text(
                               '${ad.viewCount ?? 0}',
@@ -391,7 +392,7 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
 
                   // Menu
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, color: Colors.grey[600]),
+                    icon: Icon(LucideIcons.moreVertical, color: Colors.grey[600]),
                     onSelected: (value) {
                       switch (value) {
                         case 'view':
@@ -439,7 +440,7 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
               ),
               child: Row(
                 children: [
-                  Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
+                  Icon(LucideIcons.clock, size: 14, color: Colors.grey[500]),
                   const SizedBox(width: 4),
                   Text(
                     'Posted ${_formatDate(ad.createdAt)}',

@@ -167,6 +167,10 @@ class SearchFilters {
   final String? sortOrder; // 'asc', 'desc'
   final String? condition; // 'new', 'used'
 
+  // Display names for UI (not sent to API)
+  final String? categoryName;
+  final String? locationName;
+
   SearchFilters({
     this.query,
     this.categoryId,
@@ -179,6 +183,8 @@ class SearchFilters {
     this.sortBy,
     this.sortOrder,
     this.condition,
+    this.categoryName,
+    this.locationName,
   });
 
   /// Convert to query parameters map
@@ -211,6 +217,8 @@ class SearchFilters {
     String? sortBy,
     String? sortOrder,
     String? condition,
+    String? categoryName,
+    String? locationName,
   }) {
     return SearchFilters(
       query: query ?? this.query,
@@ -224,6 +232,8 @@ class SearchFilters {
       sortBy: sortBy ?? this.sortBy,
       sortOrder: sortOrder ?? this.sortOrder,
       condition: condition ?? this.condition,
+      categoryName: categoryName ?? this.categoryName,
+      locationName: locationName ?? this.locationName,
     );
   }
 

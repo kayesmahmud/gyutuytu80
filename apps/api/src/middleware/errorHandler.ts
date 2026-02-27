@@ -164,6 +164,13 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
+  // Detect multer file filter errors (thrown as plain Error, not MulterError)
+  if (err.message && err.message.startsWith('Only image files')) {
+    err.statusCode = 400;
+    err.status = 'fail';
+    err.isOperational = true;
+  }
+
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 

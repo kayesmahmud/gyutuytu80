@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -164,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (!authProvider.isLoggedIn) {
       return const Scaffold(
         body: LoginRequiredWidget(
-          icon: Icons.person_outline,
+          icon: LucideIcons.user,
           title: 'Login to View Profile',
           subtitle: 'Sign in to manage your profile,\nads, and account settings',
         ),
@@ -209,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       backgroundColor: Colors.white,
       elevation: 0,
        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.settings_outlined, color: Colors.black)),
+          IconButton(onPressed: () {}, icon: const Icon(LucideIcons.settings, color: Colors.black)),
         ],
     );
   }
@@ -221,8 +222,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           _buildGuestHeaderCard(context),
           const SizedBox(height: 24),
           _buildSectionHeader("Account Settings"),
-          _buildMenuItem(context, icon: Icons.settings_outlined, title: "Settings", onTap: () {}),
-          _buildMenuItem(context, icon: Icons.help_outline, title: "Help Center", onTap: () {}),
+          _buildMenuItem(context, icon: LucideIcons.settings, title: "Settings", onTap: () {}),
+          _buildMenuItem(context, icon: LucideIcons.helpCircle, title: "Help Center", onTap: () {}),
         ],
       ),
     );
@@ -237,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-            child: const Icon(Icons.person, size: 48, color: Colors.grey),
+            child: const Icon(LucideIcons.user, size: 48, color: Colors.grey),
           ),
           const SizedBox(height: 16),
           Text("Welcome to Thulobazaar", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
@@ -323,7 +324,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       );
                     }
                   },
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: const Icon(LucideIcons.arrowLeft, color: Colors.white),
                 ),
               ),
             ),
@@ -360,9 +361,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                               width: 80,
                               height: 80,
                               placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
-                              errorWidget: (context, url, error) => const Icon(Icons.person, color: Colors.grey, size: 40),
+                              errorWidget: (context, url, error) => const Icon(LucideIcons.user, color: Colors.grey, size: 40),
                             )
-                          : const Icon(Icons.person, color: Colors.grey, size: 40),
+                          : const Icon(LucideIcons.user, color: Colors.grey, size: 40),
                      ),
                    ),
                 ),
@@ -416,13 +417,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         indicatorColor: AppTheme.primary,
         indicatorSize: TabBarIndicatorSize.tab,
         tabs: [
-          const Tab(icon: Icon(Icons.person_outline)),
-          const Tab(icon: Icon(Icons.lock_outline)),
+          const Tab(icon: Icon(LucideIcons.user)),
+          const Tab(icon: Icon(LucideIcons.lock)),
           Tab(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.favorite_border),
+                const Icon(LucideIcons.heart),
                 const SizedBox(width: 4),
                 Text("${_favorites.length}", style: GoogleFonts.inter()),
               ],
@@ -500,7 +501,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
+                const Icon(LucideIcons.checkCircle, color: Color(0xFF10B981), size: 20),
                 const SizedBox(width: 8),
                 Text(_phoneController.text, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
                 const SizedBox(width: 8),
@@ -526,7 +527,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
               child: Row(
                 children: [
-                  Icon(Icons.location_on_outlined, color: Colors.grey[600], size: 20),
+                  Icon(LucideIcons.mapPin, color: Colors.grey[600], size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -538,7 +539,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const SizedBox(width: 8),
                   Text("Change", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.primary, fontSize: 13)),
                   const SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_ios, size: 12, color: AppTheme.primary),
+                  Icon(LucideIcons.chevronRight, size: 12, color: AppTheme.primary),
                 ],
               ),
             ),
@@ -639,7 +640,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: Row(
               children: [
                 Icon(
-                  isPhoneVerified ? Icons.verified_user : Icons.warning_amber_rounded,
+                  isPhoneVerified ? LucideIcons.shieldCheck : LucideIcons.alertTriangle,
                   color: isPhoneVerified ? Colors.green : Colors.orange,
                   size: 32,
                 ),
@@ -710,10 +711,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.security, color: AppTheme.primary),
+                  leading: const Icon(LucideIcons.shield, color: AppTheme.primary),
                   title: const Text('Security Center'),
                   subtitle: const Text('Password, 2FA, Active Sessions'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(LucideIcons.chevronRight),
                   onTap: () {
                      Navigator.push(
                       context,
@@ -723,10 +724,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 ),
                 const Divider(),
                 ListTile(
-                  leading: const Icon(Icons.verified, color: AppTheme.primary),
+                  leading: const Icon(LucideIcons.badgeCheck, color: AppTheme.primary),
                   title: const Text('Verification Center'),
                   subtitle: const Text('Identity, Business, Badges'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(LucideIcons.chevronRight),
                   onTap: () {
                      Navigator.push(
                       context,
@@ -755,7 +756,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               side: BorderSide(color: Colors.grey[200]!),
             ),
             child: ListTile(
-              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              leading: const Icon(LucideIcons.trash2, color: Colors.red),
               title: const Text('Delete Account'),
               subtitle: const Text('Permanently delete your account and data'),
               onTap: () {
@@ -792,7 +793,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
         title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
         subtitle: Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600])),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        trailing: const Icon(LucideIcons.chevronRight, size: 16, color: Colors.grey),
         onTap: onTap,
       ),
     );
@@ -808,7 +809,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+            Icon(LucideIcons.alertCircle, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(_favoritesError!, style: GoogleFonts.inter(color: Colors.grey[600])),
             const SizedBox(height: 16),
@@ -830,7 +831,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-              child: Icon(Icons.favorite_border, size: 48, color: Colors.grey[400]),
+              child: Icon(LucideIcons.heart, size: 48, color: Colors.grey[400]),
             ),
             const SizedBox(height: 16),
             Text("No saved ads yet", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700])),
@@ -843,7 +844,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 MaterialPageRoute(builder: (_) => const MainNavScreen(initialIndex: 1)),
                 (route) => false,
               ),
-              icon: const Icon(Icons.search),
+              icon: const Icon(LucideIcons.search),
               label: const Text("Browse Ads"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
@@ -898,9 +899,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            errorWidget: (context, url, error) => Icon(Icons.image_outlined, color: Colors.grey[400]),
+                            errorWidget: (context, url, error) => Icon(LucideIcons.image, color: Colors.grey[400]),
                           )
-                        : Icon(Icons.image_outlined, color: Colors.grey[400]),
+                        : Icon(LucideIcons.image, color: Colors.grey[400]),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -960,7 +961,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.visibility_outlined, size: 16, color: AppTheme.primary),
+                          Icon(LucideIcons.eye, size: 16, color: AppTheme.primary),
                           const SizedBox(width: 6),
                           Text("View", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.primary, fontSize: 13)),
                         ],
@@ -977,7 +978,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.delete_outline, size: 16, color: Colors.grey[600]),
+                          Icon(LucideIcons.trash2, size: 16, color: Colors.grey[600]),
                           const SizedBox(width: 6),
                           Text("Remove", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey[600], fontSize: 13)),
                         ],
@@ -1026,7 +1027,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       child: ListTile(
         leading: Icon(icon, color: Colors.grey[700], size: 22),
         title: Text(title, style: GoogleFonts.inter(fontSize: 15, color: Colors.grey[900])),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+        trailing: const Icon(LucideIcons.chevronRight, size: 14, color: Colors.grey),
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       ),

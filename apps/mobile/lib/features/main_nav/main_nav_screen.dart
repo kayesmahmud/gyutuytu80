@@ -32,7 +32,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
     super.initState();
     _selectedIndex = widget.initialIndex;
     _screens = [
-      HomeScreen(onSearch: _handleHomeSearch),
+      HomeScreen(onSearch: _handleHomeSearch, onCategoryTap: _handleCategoryTap),
       BrowseScreen(key: _browseKey),
       const MessagesScreen(),
       const ProfileScreen(),
@@ -59,18 +59,27 @@ class _MainNavScreenState extends State<MainNavScreen> {
   void _handleHomeSearch(String query) {
     if (query.isEmpty) return;
     setState(() => _selectedIndex = 1);
-    // Use post-frame callback to ensure Browse tab is rendered before calling searchFor
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _browseKey.currentState?.searchFor(query);
     });
   }
 
+  void _handleCategoryTap(int categoryId, String categoryName) {
+    setState(() => _selectedIndex = 1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _browseKey.currentState?.filterByCategory(categoryId, categoryName);
+    });
+  }
+
+  // Convert nav index to screen index (nav 2 is FAB spacer, skip it)
+  int _navToScreen(int navIndex) => navIndex > 2 ? navIndex - 1 : navIndex;
+  // Convert screen index to nav index
+  int _screenToNav(int screenIndex) => screenIndex >= 2 ? screenIndex + 1 : screenIndex;
+
   void _onItemTapped(int index) {
-    if (index == 2) {
-      // FAB handles this
-    }
+    if (index == 2) return; // FAB spacer — ignore tap
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = _navToScreen(index);
     });
   }
 
@@ -210,7 +219,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
           child: Consumer<ChatProvider>(
             builder: (context, chatProvider, child) {
               return BottomNavigationBar(
-                currentIndex: _selectedIndex,
+                currentIndex: _screenToNav(_selectedIndex),
                 onTap: _onItemTapped,
                 type: BottomNavigationBarType.fixed,
                 backgroundColor: Colors.white,
@@ -228,6 +237,11 @@ class _MainNavScreenState extends State<MainNavScreen> {
                     icon: Icon(LucideIcons.layoutGrid),
                     activeIcon: Icon(LucideIcons.layoutGrid),
                     label: 'Browse',
+                  ),
+                  // Spacer for FAB — invisible, FAB covers this slot
+                  const BottomNavigationBarItem(
+                    icon: SizedBox.shrink(),
+                    label: '',
                   ),
                   BottomNavigationBarItem(
                     icon: Stack(

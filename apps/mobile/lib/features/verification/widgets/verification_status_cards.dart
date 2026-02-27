@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/models/verification.dart';
 
@@ -113,7 +114,7 @@ class VerificationStatusCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline,
+                    const Icon(LucideIcons.info,
                         color: Color(0xFFEF4444), size: 18),
                     const SizedBox(width: 8),
                     Expanded(
@@ -161,7 +162,7 @@ class VerificationStatusCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber,
+                    const Icon(LucideIcons.alertTriangle,
                         color: Color(0xFFF59E0B), size: 18),
                     const SizedBox(width: 8),
                     Text(
@@ -218,19 +219,19 @@ class VerificationStatusBadge extends StatelessWidget {
         bgColor = const Color(0xFFD1FAE5);
         textColor = const Color(0xFF10B981);
         text = 'Verified';
-        iconData = Icons.check_circle;
+        iconData = LucideIcons.checkCircle;
         break;
       case VerificationStatusType.pending:
         bgColor = const Color(0xFFFEF3C7);
         textColor = const Color(0xFFF59E0B);
         text = 'Pending';
-        iconData = Icons.hourglass_empty;
+        iconData = LucideIcons.hourglass;
         break;
       case VerificationStatusType.rejected:
         bgColor = const Color(0xFFFEE2E2);
         textColor = const Color(0xFFEF4444);
         text = 'Rejected';
-        iconData = Icons.cancel;
+        iconData = LucideIcons.xCircle;
         break;
       default:
         bgColor = Colors.grey[100]!;

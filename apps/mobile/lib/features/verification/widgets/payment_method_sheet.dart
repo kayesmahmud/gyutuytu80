@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/models/payment.dart';
 
 /// Bottom sheet for selecting payment method (Khalti / eSewa)
@@ -55,7 +56,7 @@ class PaymentMethodSheet extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(LucideIcons.x),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -72,7 +73,7 @@ class PaymentMethodSheet extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.verified, color: Colors.indigo, size: 20),
+                      Icon(LucideIcons.badgeCheck, color: Colors.indigo, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -111,7 +112,7 @@ class PaymentMethodSheet extends StatelessWidget {
                   name: 'Khalti',
                   description: 'Pay with Khalti wallet or bank',
                   color: Colors.purple,
-                  icon: Icons.account_balance_wallet,
+                  icon: LucideIcons.wallet,
                   onTap: () {
                     Navigator.pop(context);
                     onSelect(PaymentGateway.khalti);
@@ -122,7 +123,7 @@ class PaymentMethodSheet extends StatelessWidget {
                   name: 'eSewa',
                   description: 'Pay with eSewa wallet',
                   color: Colors.green,
-                  icon: Icons.phone_android,
+                  icon: LucideIcons.smartphone,
                   onTap: () {
                     Navigator.pop(context);
                     onSelect(PaymentGateway.esewa);
@@ -196,7 +197,7 @@ class _GatewayCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+            Icon(LucideIcons.chevronRight, size: 16, color: Colors.grey[400]),
           ],
         ),
       ),

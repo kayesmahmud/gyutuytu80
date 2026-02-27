@@ -69,7 +69,7 @@ export default function HeroSearch({ lang }: HeroSearchProps) {
       </div>
 
       {/* Custom CSS Animation for search wobble */}
-      <style jsx>{`
+      <style>{`
         @keyframes search-wobble {
           0%, 100% { transform: rotate(-15deg) scale(1.1); }
           25% { transform: rotate(15deg) scale(1.2); }

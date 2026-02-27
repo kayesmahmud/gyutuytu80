@@ -281,7 +281,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         elevation: 0,
         leading: _step == 'payment'
             ? IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(LucideIcons.arrowLeft),
                 onPressed: () => setState(() => _step = 'form'),
               )
             : null,
@@ -401,7 +401,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                               color: Colors.green,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(Icons.check,
+                            child: const Icon(LucideIcons.check,
                                 color: Colors.white, size: 16),
                           ),
                         ),
@@ -672,9 +672,9 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: color, size: 24)
+              Icon(LucideIcons.checkCircle, color: color, size: 24)
             else
-              Icon(Icons.circle_outlined, color: Colors.grey[400], size: 24),
+              Icon(LucideIcons.circle, color: Colors.grey[400], size: 24),
           ],
         ),
       ),
