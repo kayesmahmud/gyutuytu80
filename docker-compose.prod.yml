@@ -36,6 +36,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - AAKASH_SMS_TOKEN=${AAKASH_SMS_TOKEN}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3333"]
       interval: 30s
@@ -79,6 +80,7 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - EMAIL_FROM=${EMAIL_FROM}
+      - AAKASH_SMS_TOKEN=${AAKASH_SMS_TOKEN}
     volumes:
       - uploads-data:/app/uploads
     depends_on:
