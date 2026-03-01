@@ -26,6 +26,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build packages
+        run: |
+          npm run build -w packages/types
+          npm run build -w packages/utils
+          cd packages/upload-utils && npx tsc --module commonjs --moduleResolution node && cd ../..
+          npm run build -w packages/api-client
+
       - name: Type Check
         run: npm run type-check
         working-directory: apps/web
@@ -51,6 +58,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build packages
+        run: |
+          npm run build -w packages/types
+          npm run build -w packages/utils
+          cd packages/upload-utils && npx tsc --module commonjs --moduleResolution node && cd ../..
+          npm run build -w packages/api-client
+
       - name: Run Unit Tests
         run: npm run test:run
         working-directory: apps/web
@@ -70,6 +84,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build packages
+        run: |
+          npm run build -w packages/types
+          npm run build -w packages/utils
+          cd packages/upload-utils && npx tsc --module commonjs --moduleResolution node && cd ../..
+          npm run build -w packages/api-client
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
@@ -113,7 +134,7 @@ jobs:
         run: |
           npm run build -w packages/types
           npm run build -w packages/utils
-          npm run build -w packages/upload-utils
+          cd packages/upload-utils && npx tsc --module commonjs --moduleResolution node && cd ../..
           npm run build -w packages/api-client
         env:
           SKIP_ENV_VALIDATION: true
