@@ -9,6 +9,9 @@ import { prisma } from '@thulobazaar/database';
 // =============================================================================
 
 export async function GET(request: NextRequest) {
+  // Use NEXTAUTH_URL for redirects to avoid Docker internal URLs (0.0.0.0:3333)
+  const baseUrl = process.env.NEXTAUTH_URL || request.url;
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const token = searchParams.get('token');
@@ -18,16 +21,15 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       console.error('❌ No token in OAuth callback');
-      return NextResponse.redirect(new URL('/en/auth/signin?error=NoToken', request.url));
+      return NextResponse.redirect(new URL('/en/auth/signin?error=NoToken', baseUrl));
     }
 
     // Verify and decode the token
     const jwtSecret = process.env.JWT_SECRET;
-    console.log('🔑 JWT_SECRET available:', !!jwtSecret, 'length:', jwtSecret?.length || 0);
 
     if (!jwtSecret) {
       console.error('❌ JWT_SECRET not configured');
-      return NextResponse.redirect(new URL('/en/auth/signin?error=Configuration', request.url));
+      return NextResponse.redirect(new URL('/en/auth/signin?error=Configuration', baseUrl));
     }
 
     let decoded: { userId: number; email: string; role?: string };
@@ -36,11 +38,10 @@ export async function GET(request: NextRequest) {
       console.log('✅ Token verified:', { userId: decoded.userId, email: decoded.email });
     } catch (err: any) {
       console.error('❌ Token verification failed:', err?.message || err);
-      console.error('Token (first 50 chars):', token?.substring(0, 50));
-      return NextResponse.redirect(new URL('/en/auth/signin?error=InvalidToken', request.url));
+      return NextResponse.redirect(new URL('/en/auth/signin?error=InvalidToken', baseUrl));
     }
 
-    // Fetch the full user from database (userId is a number/Int in the database)
+    // Fetch the full user from database
     const user = await prisma.users.findUnique({
       where: { id: Number(decoded.userId) },
       select: {
@@ -58,15 +59,13 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       console.error('❌ User not found:', decoded.userId);
-      return NextResponse.redirect(new URL('/en/auth/signin?error=UserNotFound', request.url));
+      return NextResponse.redirect(new URL('/en/auth/signin?error=UserNotFound', baseUrl));
     }
 
     console.log('✅ User found:', user.email);
 
     const refreshToken = searchParams.get('refreshToken');
 
-    // Create a response that stores the token and user in localStorage via client-side redirect
-    // We'll redirect to a client page that handles the storage
     const userData = encodeURIComponent(JSON.stringify({
       id: user.id,
       email: user.email,
@@ -79,12 +78,12 @@ export async function GET(request: NextRequest) {
       avatar: user.avatar,
     }));
 
-    // Redirect to a client-side handler that will store the token
+    // Redirect to client-side handler that stores the token
     return NextResponse.redirect(
-      new URL(`/en/auth/oauth-success?token=${token}&refreshToken=${refreshToken}&user=${userData}`, request.url)
+      new URL(`/en/auth/oauth-success?token=${token}&refreshToken=${refreshToken}&user=${userData}`, baseUrl)
     );
   } catch (error) {
     console.error('❌ OAuth callback error:', error);
-    return NextResponse.redirect(new URL('/en/auth/signin?error=CallbackError', request.url));
+    return NextResponse.redirect(new URL('/en/auth/signin?error=CallbackError', baseUrl));
   }
 }
