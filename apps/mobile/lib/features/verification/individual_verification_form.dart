@@ -317,7 +317,7 @@ class _IndividualVerificationFormState
 
           // Step indicator (paid flows only)
           if (!widget.isFreeVerification && !widget.isResubmission)
-            VerificationStepIndicator(
+            const VerificationStepIndicator(
               currentStep: 1,
               accentColor: Colors.indigo,
             ),
@@ -417,7 +417,7 @@ class _IndividualVerificationFormState
       padding: const EdgeInsets.all(20),
       children: [
         // Step indicator
-        VerificationStepIndicator(
+        const VerificationStepIndicator(
           currentStep: 2,
           accentColor: Colors.indigo,
         ),
@@ -433,11 +433,11 @@ class _IndividualVerificationFormState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(LucideIcons.receipt, size: 20, color: Colors.indigo),
-                  const SizedBox(width: 8),
-                  const Text(
+                  SizedBox(width: 8),
+                  Text(
                     'Order Summary',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,

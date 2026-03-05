@@ -461,7 +461,7 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                       ),
                       child: Row(
                         children: [
-                          Icon(LucideIcons.mapPin, color: AppTheme.primary, size: 20),
+                          const Icon(LucideIcons.mapPin, color: AppTheme.primary, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -556,7 +556,7 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
             ),
             if (isLoading) ...[
               const SizedBox(width: 8),
-              SizedBox(
+              const SizedBox(
                 width: 16,
                 height: 16,
                 child: CircularProgressIndicator(
@@ -588,7 +588,7 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: AppTheme.primary, width: 2),
+        borderSide: const BorderSide(color: AppTheme.primary, width: 2),
       ),
       disabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),

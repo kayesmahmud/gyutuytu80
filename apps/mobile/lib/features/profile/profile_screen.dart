@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
@@ -715,7 +716,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
+                  const Icon(
                     LucideIcons.chevronRight,
                     size: 12,
                     color: AppTheme.primary,
@@ -1305,7 +1306,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             LucideIcons.eye,
                             size: 16,
                             color: AppTheme.primary,

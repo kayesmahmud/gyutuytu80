@@ -10,3 +10,4 @@ export 'api_response.dart';
 export 'verification.dart';
 export 'payment.dart';
 export 'promotion.dart';
+export 'support_ticket.dart';

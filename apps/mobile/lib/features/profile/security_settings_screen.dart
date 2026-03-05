@@ -287,7 +287,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                             backgroundColor: Colors.white,
                             child: Icon(LucideIcons.monitor, color: Colors.grey),
                           ),
-                          title: Text('Session started'),
+                          title: const Text('Session started'),
                           subtitle: Text(dateStr),
                           trailing: IconButton(
                             icon: const Icon(LucideIcons.trash2, color: Colors.red),

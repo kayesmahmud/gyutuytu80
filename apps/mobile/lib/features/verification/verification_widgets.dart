@@ -885,12 +885,12 @@ class FaqSection extends StatelessWidget {
             color: Colors.indigo.shade50,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(LucideIcons.helpCircle, size: 18, color: Colors.indigo),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'Frequently Asked Questions',
                 style: TextStyle(
                   color: Colors.indigo,

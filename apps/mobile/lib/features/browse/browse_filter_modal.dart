@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -705,7 +706,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                   Text("All Categories", style: GoogleFonts.inter(fontSize: 14)),
                   const Spacer(),
                   if (_selectedCategoryId == null)
-                    Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
+                    const Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
                 ],
               ),
             ),
@@ -771,7 +772,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                 ),
 
                 if (isSelected)
-                  Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
+                  const Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
               ],
             ),
           ),
@@ -811,7 +812,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               ),
             ),
             if (isSelected)
-              Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
+              const Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
           ],
         ),
       ),
@@ -862,7 +863,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                   ),
                   const Spacer(),
                   if (noLocationSelected)
-                    Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
+                    const Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
                 ],
               ),
             ),
@@ -894,7 +895,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppTheme.primary, width: 1),
+                    borderSide: const BorderSide(color: AppTheme.primary, width: 1),
                   ),
                   suffixIcon: _locationSearchController.text.isNotEmpty 
                     ? IconButton(
@@ -1078,7 +1079,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
               ),
               child: Row(
                 children: [
-                  Icon(LucideIcons.mapPin, color: AppTheme.primary, size: 18),
+                  const Icon(LucideIcons.mapPin, color: AppTheme.primary, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1124,7 +1125,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
             ),
             if (isLoading) ...[
               const SizedBox(width: 8),
-              SizedBox(
+              const SizedBox(
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
@@ -1157,7 +1158,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.primary, width: 1),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 1),
             ),
           ),
           items: items.map((item) => DropdownMenuItem(

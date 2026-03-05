@@ -130,7 +130,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       String actionUrl, Map<String, String> fields) {
     final hiddenInputs = fields.entries
         .map((e) =>
-            '<input type="hidden" name="${HtmlEscape().convert(e.key)}" value="${HtmlEscape().convert(e.value)}" />')
+            '<input type="hidden" name="${const HtmlEscape().convert(e.key)}" value="${const HtmlEscape().convert(e.value)}" />')
         .join('\n');
 
     return '''

@@ -73,7 +73,7 @@ class PaymentMethodSheet extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(LucideIcons.badgeCheck, color: Colors.indigo, size: 20),
+                      const Icon(LucideIcons.badgeCheck, color: Colors.indigo, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(

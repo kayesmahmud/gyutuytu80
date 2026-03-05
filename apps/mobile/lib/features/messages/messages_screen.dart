@@ -48,10 +48,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final chatProvider = context.watch<ChatProvider>();
 
     if (!authProvider.isLoggedIn) {
-      return Scaffold(
-        appBar: const MainAppBar(),
-        drawer: const MainDrawer(),
-        body: const LoginRequiredWidget(
+      return const Scaffold(
+        appBar: MainAppBar(),
+        drawer: MainDrawer(),
+        body: LoginRequiredWidget(
           icon: LucideIcons.messageCircle,
           title: 'Login to View Messages',
           subtitle:

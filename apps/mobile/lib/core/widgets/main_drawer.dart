@@ -10,6 +10,9 @@ import 'package:mobile/features/dashboard/dashboard_screen.dart';
 import 'package:mobile/features/shop/shop_screen.dart';
 import 'package:mobile/features/verification/verification_screen.dart';
 import 'package:mobile/features/profile/profile_screen.dart';
+import 'package:mobile/features/help/help_center_screen.dart';
+import 'package:mobile/features/contact/contact_screen.dart';
+import 'package:mobile/features/support/support_tickets_screen.dart';
 class MainDrawer extends StatelessWidget {
   const MainDrawer({super.key});
 
@@ -136,10 +139,22 @@ class MainDrawer extends StatelessWidget {
                      const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
                      const SizedBox(height: 16),
 
-                     _buildMenuItem("Help Center", icon: LucideIcons.helpCircle),
-                     _buildMenuItem("FAQ", icon: LucideIcons.fileText),
-                     _buildMenuItem("Support Tickets", icon: LucideIcons.ticket),
-                     _buildMenuItem("Contact Us", icon: LucideIcons.mail),
+                     _buildMenuItem("Help Center", icon: LucideIcons.helpCircle, onTap: () {
+                       Navigator.pop(context);
+                       Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen()));
+                     }),
+                     _buildMenuItem("FAQ", icon: LucideIcons.fileText, onTap: () {
+                       Navigator.pop(context);
+                       Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen()));
+                     }),
+                     _buildMenuItem("Support Tickets", icon: LucideIcons.ticket, onTap: () {
+                       Navigator.pop(context);
+                       Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportTicketsScreen()));
+                     }),
+                     _buildMenuItem("Contact Us", icon: LucideIcons.mail, onTap: () {
+                       Navigator.pop(context);
+                       Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactScreen()));
+                     }),
                    ],
                  ),
                ),
