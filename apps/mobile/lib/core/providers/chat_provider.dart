@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:flutter/foundation.dart';
 import '../api/message_client.dart';
 import '../models/message.dart';
@@ -12,6 +14,9 @@ class ChatProvider extends ChangeNotifier {
   // State
   List<Conversation> _conversations = [];
   Map<int, List<Message>> _messagesByConversation = {};
+  final Map<int, bool> _hasMoreMessages = {};
+  final Map<int, int> _messagePages = {};
+  static const int _messagesPerPage = 50;
   Set<int> _onlineUsers = {};
   Map<int, Set<int>> _typingUsers = {}; // conversationId -> typing userIds
   int _unreadCount = 0;
@@ -39,6 +44,10 @@ class ChatProvider extends ChangeNotifier {
 
   List<Message> getMessages(int conversationId) {
     return _messagesByConversation[conversationId] ?? [];
+  }
+
+  bool hasMoreMessages(int conversationId) {
+    return _hasMoreMessages[conversationId] ?? true;
   }
 
   bool isUserOnline(int userId) => _onlineUsers.contains(userId);
@@ -253,18 +262,33 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load messages for a conversation
+  /// Load messages for a conversation (first page)
   Future<void> loadMessages(int conversationId) async {
-    print('DEBUG [ChatProvider.loadMessages] Loading messages for conversation $conversationId');
-    final response = await _messageClient.getMessages(conversationId);
-    print('DEBUG [ChatProvider.loadMessages] Response success=${response.success}, data count=${response.data?.length ?? 'null'}, error=${response.error}');
+    _messagePages[conversationId] = 1;
+    final response = await _messageClient.getMessages(conversationId, page: 1, limit: _messagesPerPage);
 
     if (response.success && response.data != null) {
       _messagesByConversation[conversationId] = response.data!;
-      print('DEBUG [ChatProvider.loadMessages] Stored ${response.data!.length} messages. First: ${response.data!.isNotEmpty ? response.data!.first.content : "EMPTY"}, Last: ${response.data!.isNotEmpty ? response.data!.last.content : "EMPTY"}');
+      _hasMoreMessages[conversationId] = response.data!.length >= _messagesPerPage;
       notifyListeners();
     } else {
-      print('DEBUG [ChatProvider.loadMessages] FAILED to load messages. Error: ${response.error}');
+      if (kDebugMode) developer.log('Failed to load messages: ${response.error}', name: 'ChatProvider');
+    }
+  }
+
+  /// Load older messages for a conversation (pagination)
+  Future<void> loadMoreMessages(int conversationId) async {
+    if (!(_hasMoreMessages[conversationId] ?? true)) return;
+
+    final nextPage = (_messagePages[conversationId] ?? 1) + 1;
+    final response = await _messageClient.getMessages(conversationId, page: nextPage, limit: _messagesPerPage);
+
+    if (response.success && response.data != null) {
+      _messagesByConversation[conversationId] ??= [];
+      _messagesByConversation[conversationId]!.addAll(response.data!);
+      _messagePages[conversationId] = nextPage;
+      _hasMoreMessages[conversationId] = response.data!.length >= _messagesPerPage;
+      notifyListeners();
     }
   }
 
@@ -285,7 +309,6 @@ class ChatProvider extends ChangeNotifier {
     MessageType type = MessageType.text,
     String? attachmentUrl,
   }) async {
-    print('DEBUG: sending message: content=$content, conversationId=$conversationId');
     if (_isConnected) {
       // Optimistic update
       final tempMessage = Message(

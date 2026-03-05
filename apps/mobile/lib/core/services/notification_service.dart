@@ -1,19 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:dio/dio.dart';
-import '../api/api_config.dart';
+import '../api/dio_client.dart';
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('[NotificationService] Background message: ${message.notification?.title}');
+  if (kDebugMode) developer.log('Background message: ${message.notification?.title}', name: 'NotificationService');
   // Handle background message if needed
 }
 
@@ -25,7 +24,6 @@ class NotificationService {
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   // Navigation callback for handling notification taps
   Function(String? route, Map<String, dynamic>? data)? onNotificationTap;
@@ -33,6 +31,11 @@ class NotificationService {
   // Stream controllers for notification events
   final _notificationController = StreamController<NotificationData>.broadcast();
   Stream<NotificationData> get notificationStream => _notificationController.stream;
+
+  // Guard against duplicate listener setup
+  bool _handlersSetup = false;
+  StreamSubscription<RemoteMessage>? _foregroundSub;
+  StreamSubscription<RemoteMessage>? _messageOpenSub;
 
   // Android notification channel
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
@@ -68,9 +71,9 @@ class NotificationService {
       // Setup message handlers
       _setupMessageHandlers();
 
-      print('[NotificationService] Initialized successfully');
+      if (kDebugMode) developer.log('Initialized successfully', name: 'NotificationService');
     } catch (e) {
-      print('[NotificationService] Initialization error: $e');
+      if (kDebugMode) developer.log('Initialization error: $e', name: 'NotificationService');
     }
   }
 
@@ -86,7 +89,7 @@ class NotificationService {
       sound: true,
     );
 
-    print('[NotificationService] Permission status: ${settings.authorizationStatus}');
+    if (kDebugMode) developer.log('Permission status: ${settings.authorizationStatus}', name: 'NotificationService');
 
     if (Platform.isIOS) {
       await _firebaseMessaging.setForegroundNotificationPresentationOptions(
@@ -132,14 +135,14 @@ class NotificationService {
 
   /// Handle notification tap
   void _onNotificationTap(NotificationResponse response) {
-    print('[NotificationService] Notification tapped: ${response.payload}');
+    if (kDebugMode) developer.log('Notification tapped: ${response.payload}', name: 'NotificationService');
     _handleNotificationTap(response.payload);
   }
 
   /// Handle background notification tap (must be static or top-level)
   @pragma('vm:entry-point')
   static void _onBackgroundNotificationTap(NotificationResponse response) {
-    print('[NotificationService] Background notification tapped: ${response.payload}');
+    if (kDebugMode) developer.log('Background notification tapped: ${response.payload}', name: 'NotificationService');
     // Can't navigate directly here, but we can store the data
   }
 
@@ -160,7 +163,7 @@ class NotificationService {
         type: NotificationType.tap,
       ));
     } catch (e) {
-      print('[NotificationService] Error parsing notification payload: $e');
+      if (kDebugMode) developer.log('Error parsing notification payload: $e', name: 'NotificationService');
     }
   }
 
@@ -168,29 +171,32 @@ class NotificationService {
   Future<String?> _getToken() async {
     try {
       _fcmToken = await _firebaseMessaging.getToken();
-      print('[NotificationService] FCM Token: $_fcmToken');
+      if (kDebugMode) developer.log('FCM Token: $_fcmToken', name: 'NotificationService');
 
       // Listen for token refresh
       _firebaseMessaging.onTokenRefresh.listen((newToken) {
-        print('[NotificationService] FCM Token refreshed: $newToken');
+        if (kDebugMode) developer.log('FCM Token refreshed: $newToken', name: 'NotificationService');
         _fcmToken = newToken;
         _registerTokenWithServer(newToken);
       });
 
       return _fcmToken;
     } catch (e) {
-      print('[NotificationService] Error getting FCM token: $e');
+      if (kDebugMode) developer.log('Error getting FCM token: $e', name: 'NotificationService');
       return null;
     }
   }
 
   /// Setup Firebase message handlers
   void _setupMessageHandlers() {
+    if (_handlersSetup) return;
+    _handlersSetup = true;
+
     // Foreground messages
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    _foregroundSub = FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
     // App opened from notification
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationOpen);
+    _messageOpenSub = FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationOpen);
 
     // Check if app was opened from terminated state
     _checkInitialMessage();
@@ -198,7 +204,7 @@ class NotificationService {
 
   /// Handle foreground message
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    print('[NotificationService] Foreground message: ${message.notification?.title}');
+    if (kDebugMode) developer.log('Foreground message: ${message.notification?.title}', name: 'NotificationService');
 
     final notification = message.notification;
     final data = message.data;
@@ -226,7 +232,7 @@ class NotificationService {
 
   /// Handle notification open (from background)
   void _handleNotificationOpen(RemoteMessage message) {
-    print('[NotificationService] App opened from notification: ${message.data}');
+    if (kDebugMode) developer.log('App opened from notification: ${message.data}', name: 'NotificationService');
 
     final data = message.data;
     final route = data['route'] as String?;
@@ -246,7 +252,7 @@ class NotificationService {
   Future<void> _checkInitialMessage() async {
     final message = await _firebaseMessaging.getInitialMessage();
     if (message != null) {
-      print('[NotificationService] Initial message: ${message.data}');
+      if (kDebugMode) developer.log('Initial message: ${message.data}', name: 'NotificationService');
       // Delay to allow app to fully initialize
       await Future.delayed(const Duration(milliseconds: 500));
       _handleNotificationOpen(message);
@@ -302,25 +308,14 @@ class NotificationService {
 
   Future<void> _registerTokenWithServer(String token) async {
     try {
-      final authToken = await _storage.read(key: 'auth_token');
-      if (authToken == null) return;
-
-      final dio = Dio(BaseOptions(
-        baseUrl: ApiConfig.baseUrl,
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Content-Type': 'application/json',
-        },
-      ));
-
-      await dio.post('/users/fcm-token', data: {
+      await DioClient.instance.dio.post('/users/fcm-token', data: {
         'fcmToken': token,
         'platform': Platform.isIOS ? 'ios' : 'android',
       });
 
-      print('[NotificationService] FCM token registered with server');
+      if (kDebugMode) developer.log('FCM token registered with server', name: 'NotificationService');
     } catch (e) {
-      print('[NotificationService] Error registering FCM token: $e');
+      if (kDebugMode) developer.log('Error registering FCM token: $e', name: 'NotificationService');
     }
   }
 
@@ -329,37 +324,26 @@ class NotificationService {
     if (_fcmToken == null) return;
 
     try {
-      final authToken = await _storage.read(key: 'auth_token');
-      if (authToken == null) return;
-
-      final dio = Dio(BaseOptions(
-        baseUrl: ApiConfig.baseUrl,
-        headers: {
-          'Authorization': 'Bearer $authToken',
-          'Content-Type': 'application/json',
-        },
-      ));
-
-      await dio.delete('/users/fcm-token', data: {
+      await DioClient.instance.dio.delete('/users/fcm-token', data: {
         'fcmToken': _fcmToken,
       });
 
-      print('[NotificationService] FCM token unregistered from server');
+      if (kDebugMode) developer.log('FCM token unregistered from server', name: 'NotificationService');
     } catch (e) {
-      print('[NotificationService] Error unregistering FCM token: $e');
+      if (kDebugMode) developer.log('Error unregistering FCM token: $e', name: 'NotificationService');
     }
   }
 
   /// Subscribe to topic
   Future<void> subscribeToTopic(String topic) async {
     await _firebaseMessaging.subscribeToTopic(topic);
-    print('[NotificationService] Subscribed to topic: $topic');
+    if (kDebugMode) developer.log('Subscribed to topic: $topic', name: 'NotificationService');
   }
 
   /// Unsubscribe from topic
   Future<void> unsubscribeFromTopic(String topic) async {
     await _firebaseMessaging.unsubscribeFromTopic(topic);
-    print('[NotificationService] Unsubscribed from topic: $topic');
+    if (kDebugMode) developer.log('Unsubscribed from topic: $topic', name: 'NotificationService');
   }
 
   /// Clear all notifications
@@ -369,6 +353,8 @@ class NotificationService {
 
   /// Dispose resources
   void dispose() {
+    _foregroundSub?.cancel();
+    _messageOpenSub?.cancel();
     _notificationController.close();
   }
 }

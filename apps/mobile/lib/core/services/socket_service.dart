@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../api/api_config.dart';
@@ -68,8 +70,8 @@ class SocketService {
       // Get base URL without /api suffix
       final baseUrl = ApiConfig.baseUrl.replaceAll('/api', '');
 
-      print('[SocketService] Connecting to $baseUrl');
-      print('[SocketService] Token: ${token.substring(0, 10)}...');
+      if (kDebugMode) developer.log('Connecting to $baseUrl', name: 'SocketService');
+      if (kDebugMode) developer.log('Token: ${token.substring(0, 10)}...', name: 'SocketService');
 
       _socket = io.io(
         baseUrl,
@@ -119,7 +121,7 @@ class SocketService {
 
       return await completer.future;
     } catch (e) {
-      print('[SocketService] Connection error: $e');
+      if (kDebugMode) developer.log('Connection error: $e', name: 'SocketService');
       _error = e.toString();
       _isConnecting = false;
       return false;
@@ -131,7 +133,7 @@ class SocketService {
 
     // Connection events
     _socket!.onConnect((_) {
-      print('[SocketService] ✅ Connected to ${_socket?.io.uri}');
+      if (kDebugMode) developer.log('Connected to ${_socket?.io.uri}', name: 'SocketService');
       _isConnected = true;
       _isConnecting = false;
       _reconnectAttempts = 0;
@@ -140,57 +142,57 @@ class SocketService {
     });
 
     _socket!.onDisconnect((_) {
-      print('[SocketService] ❌ Disconnected');
+      if (kDebugMode) developer.log('Disconnected', name: 'SocketService');
       _isConnected = false;
       _connectionController.add(false);
     });
 
     _socket!.onConnectError((error) {
-      print('[SocketService] Connection error: $error');
+      if (kDebugMode) developer.log('Connection error: $error', name: 'SocketService');
       _error = error.toString();
       _isConnecting = false;
       _errorController.add(_error!);
     });
 
     _socket!.onReconnect((_) {
-      print('[SocketService] Reconnecting...');
+      if (kDebugMode) developer.log('Reconnecting...', name: 'SocketService');
       _reconnectAttempts++;
     });
 
     _socket!.onReconnectFailed((_) {
-      print('[SocketService] Reconnect failed after $_maxReconnectAttempts attempts');
+      if (kDebugMode) developer.log('Reconnect failed after $_maxReconnectAttempts attempts', name: 'SocketService');
       _error = 'Failed to reconnect';
       _errorController.add(_error!);
     });
 
     // Message events
     _socket!.on('message:new', (data) {
-      print('[SocketService] New message received');
+      if (kDebugMode) developer.log('New message received', name: 'SocketService');
       try {
         final message = Message.fromJson(data as Map<String, dynamic>);
         _messageController.add(message);
       } catch (e) {
-        print('[SocketService] Error parsing message: $e');
+        if (kDebugMode) developer.log('Error parsing message: $e', name: 'SocketService');
       }
     });
 
     _socket!.on('message:edited', (data) {
-      print('[SocketService] Message edited');
+      if (kDebugMode) developer.log('Message edited', name: 'SocketService');
       try {
         final message = Message.fromJson(data as Map<String, dynamic>);
         _messageEditedController.add(message);
       } catch (e) {
-        print('[SocketService] Error parsing edited message: $e');
+        if (kDebugMode) developer.log('Error parsing edited message: $e', name: 'SocketService');
       }
     });
 
     _socket!.on('message:deleted', (data) {
-      print('[SocketService] Message deleted');
+      if (kDebugMode) developer.log('Message deleted', name: 'SocketService');
       try {
         final messageId = data['messageId'] as int? ?? data['id'] as int? ?? 0;
         _messageDeletedController.add(messageId);
       } catch (e) {
-        print('[SocketService] Error parsing deleted message: $e');
+        if (kDebugMode) developer.log('Error parsing deleted message: $e', name: 'SocketService');
       }
     });
 
@@ -200,7 +202,7 @@ class SocketService {
         final user = TypingUser.fromJson(data as Map<String, dynamic>);
         _typingStartController.add(user);
       } catch (e) {
-        print('[SocketService] Error parsing typing start: $e');
+        if (kDebugMode) developer.log('Error parsing typing start: $e', name: 'SocketService');
       }
     });
 
@@ -209,17 +211,17 @@ class SocketService {
         final user = TypingUser.fromJson(data as Map<String, dynamic>);
         _typingStopController.add(user);
       } catch (e) {
-        print('[SocketService] Error parsing typing stop: $e');
+        if (kDebugMode) developer.log('Error parsing typing stop: $e', name: 'SocketService');
       }
     });
 
     // Conversation events
     _socket!.on('conversation:updated', (data) {
-      print('[SocketService] Conversation updated');
+      if (kDebugMode) developer.log('Conversation updated', name: 'SocketService');
       try {
         _conversationUpdatedController.add(data as Map<String, dynamic>);
       } catch (e) {
-        print('[SocketService] Error parsing conversation update: $e');
+        if (kDebugMode) developer.log('Error parsing conversation update: $e', name: 'SocketService');
       }
     });
 
@@ -237,7 +239,7 @@ class SocketService {
     // Error events
     _socket!.on('error', (data) {
       final message = data['message'] as String? ?? 'Unknown error';
-      print('[SocketService] Error: $message');
+      if (kDebugMode) developer.log('Error: $message', name: 'SocketService');
       _errorController.add(message);
     });
   }
@@ -254,7 +256,7 @@ class SocketService {
     String? attachmentUrl,
   }) {
     if (!_isConnected || _socket == null) {
-      print('[SocketService] Cannot send message: not connected');
+      if (kDebugMode) developer.log('Cannot send message: not connected', name: 'SocketService');
       return;
     }
 
@@ -366,7 +368,7 @@ class SocketService {
 
   /// Disconnect from the server
   void disconnect() {
-    print('[SocketService] Disconnecting...');
+    if (kDebugMode) developer.log('Disconnecting...', name: 'SocketService');
     _socket?.disconnect();
     _socket?.dispose();
     _socket = null;

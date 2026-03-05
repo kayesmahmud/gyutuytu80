@@ -1,41 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/models.dart';
 import '../models/payment.dart';
 import 'api_config.dart';
+import 'dio_client.dart';
 
 /// Payment API Client - handles payment-related API calls
 class PaymentClient {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.baseUrl,
-    connectTimeout: ApiConfig.connectTimeout,
-    receiveTimeout: ApiConfig.receiveTimeout,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  ));
+  final Dio _dio;
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  PaymentClient() {
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (DioException e, handler) {
-        print("PaymentClient Error: ${e.message}");
-        if (e.response != null) {
-          print("Response Data: ${e.response?.data}");
-        }
-        return handler.next(e);
-      },
-    ));
-  }
+  PaymentClient({Dio? dio}) : _dio = dio ?? DioClient.instance.dio;
 
   // ==========================================
   // AVAILABLE GATEWAYS

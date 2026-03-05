@@ -1,40 +1,17 @@
+import 'dart:developer' as developer;
 import 'dart:io';
-import 'package:dio/dio.dart';
-import 'package:http_parser/http_parser.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../models/models.dart';
-import 'api_config.dart';
 
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http_parser/http_parser.dart';
+import '../models/models.dart';
+import 'dio_client.dart';
 
 /// Message API Client - handles all messaging-related API calls
 class MessageClient {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.baseUrl,
-    connectTimeout: ApiConfig.connectTimeout,
-    receiveTimeout: ApiConfig.receiveTimeout,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  ));
+  final Dio _dio;
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  MessageClient() {
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (DioException e, handler) {
-        print("MessageClient Error: ${e.message}");
-        return handler.next(e);
-      },
-    ));
-  }
+  MessageClient({Dio? dio}) : _dio = dio ?? DioClient.instance.dio;
 
   // ==========================================
   // CONVERSATIONS
@@ -88,13 +65,13 @@ class MessageClient {
   // MESSAGES
   // ==========================================
 
-  /// Get messages for a conversation
-  Future<ApiResponse<List<Message>>> getMessages(int conversationId) async {
+  /// Get messages for a conversation with pagination
+  Future<ApiResponse<List<Message>>> getMessages(int conversationId, {int page = 1, int limit = 50}) async {
     try {
-      print('DEBUG [MessageClient.getMessages] Fetching /messages/conversations/$conversationId');
-      final response = await _dio.get('/messages/conversations/$conversationId');
-
-      print('DEBUG [MessageClient.getMessages] Status: ${response.statusCode}, success: ${response.data['success']}');
+      final response = await _dio.get(
+        '/messages/conversations/$conversationId',
+        queryParameters: {'page': page, 'limit': limit},
+      );
 
       if (response.data['success'] == true) {
         // Express returns { data: { conversation, messages } }
@@ -103,32 +80,26 @@ class MessageClient {
 
         if (responseData is Map && responseData.containsKey('messages')) {
           messagesList = responseData['messages'] as List<dynamic>;
-          print('DEBUG [MessageClient.getMessages] Found ${messagesList.length} messages in data.messages');
         } else if (responseData is List) {
           messagesList = responseData;
-          print('DEBUG [MessageClient.getMessages] Found ${messagesList.length} messages in data (array)');
         } else {
           messagesList = [];
-          print('DEBUG [MessageClient.getMessages] WARNING: data format unrecognized: ${responseData.runtimeType}');
+          if (kDebugMode) developer.log('Unrecognized data format: ${responseData.runtimeType}', name: 'MessageClient');
         }
 
         final messages = messagesList
             .map((e) => Message.fromJson(e as Map<String, dynamic>))
             .toList();
-        print('DEBUG [MessageClient.getMessages] Parsed ${messages.length} messages. Last content: ${messages.isNotEmpty ? messages.last.content : "EMPTY"}');
         return ApiResponse.success(messages);
       }
-      print('DEBUG [MessageClient.getMessages] API returned success=false: ${response.data}');
       return ApiResponse.failure(response.data['error'] ?? 'Failed to fetch messages');
     } on DioException catch (e) {
-      print('DEBUG [MessageClient.getMessages] DioException: ${e.type} ${e.message} ${e.response?.statusCode}');
-      print('DEBUG [MessageClient.getMessages] Underlying error: ${e.error}');
-      print('DEBUG [MessageClient.getMessages] Stack: ${e.stackTrace}');
+      if (kDebugMode) developer.log('getMessages error: ${e.type} ${e.message}', name: 'MessageClient');
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch messages',
       );
     } catch (e) {
-      print('DEBUG [MessageClient.getMessages] Unexpected error: $e');
+      if (kDebugMode) developer.log('getMessages unexpected: $e', name: 'MessageClient');
       return ApiResponse.failure('Unexpected error: $e');
     }
   }
@@ -213,8 +184,7 @@ class MessageClient {
       }
       return ApiResponse.failure('Failed to upload image');
     } on DioException catch (e) {
-      print('Upload Error: ${e.message}');
-      print('Upload Response: ${e.response?.data}');
+      if (kDebugMode) developer.log('Upload error: ${e.message}', name: 'MessageClient');
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to upload image',
       );
@@ -238,7 +208,7 @@ class MessageClient {
       }
       return 0;
     } on DioException catch (e) {
-      print('Error fetching unread count: $e');
+      if (kDebugMode) developer.log('Error fetching unread count: $e', name: 'MessageClient');
       return 0;
     }
   }

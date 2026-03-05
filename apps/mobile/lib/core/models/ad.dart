@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
+
 /// Ad models - mirrors @thulobazaar/types Ad interfaces
 
 enum AdStatus { pending, active, sold, rejected, expired }
@@ -105,9 +108,9 @@ class Ad {
         condition: json['condition'] as String?,
       );
     } catch (e, stack) {
-      print("🔴 Error parsing Ad.fromJson: $e");
-      print("JSON: $json");
-      print(stack);
+      if (kDebugMode) developer.log('Error parsing Ad.fromJson: $e', name: 'Ad');
+      if (kDebugMode) developer.log('JSON: $json', name: 'Ad');
+      if (kDebugMode) developer.log('$stack', name: 'Ad');
       rethrow;
     }
   }

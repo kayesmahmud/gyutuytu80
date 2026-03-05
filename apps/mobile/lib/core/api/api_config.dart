@@ -25,8 +25,8 @@ class ApiConfig {
 
   // Image/uploads base URL
   static String get uploadsBaseUrl {
-    // Remove /api from baseUrl to get uploads path
-    final base = baseUrl.replaceAll('/api', '');
+    // Remove trailing /api only (not /api in subdomain like api.thulobazaar.com.np)
+    final base = baseUrl.replaceFirst(RegExp(r'/api$'), '');
     return '$base/uploads';
   }
 
@@ -36,7 +36,7 @@ class ApiConfig {
     if (avatar.startsWith('http')) return avatar;
     // If path already contains /uploads/, just prepend the base URL
     if (avatar.startsWith('/uploads/')) {
-      final base = baseUrl.replaceAll('/api', '');
+      final base = baseUrl.replaceFirst(RegExp(r'/api$'), '');
       return '$base$avatar';
     }
     return '$uploadsBaseUrl/avatars/$avatar';
@@ -48,7 +48,7 @@ class ApiConfig {
     if (imagePath.startsWith('http')) return imagePath;
     // If path already contains /uploads/, just prepend the base URL
     if (imagePath.startsWith('/uploads/')) {
-      final base = baseUrl.replaceAll('/api', '');
+      final base = baseUrl.replaceFirst(RegExp(r'/api$'), '');
       return '$base$imagePath';
     }
     return '$uploadsBaseUrl/ads/$imagePath';
@@ -60,7 +60,7 @@ class ApiConfig {
     if (coverPath.startsWith('http')) return coverPath;
     // If path already contains /uploads/, just prepend the base URL
     if (coverPath.startsWith('/uploads/')) {
-      final base = baseUrl.replaceAll('/api', '');
+      final base = baseUrl.replaceFirst(RegExp(r'/api$'), '');
       return '$base$coverPath';
     }
     return '$uploadsBaseUrl/covers/$coverPath';

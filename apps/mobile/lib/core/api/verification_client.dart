@@ -1,41 +1,20 @@
+import 'dart:developer' as developer;
 import 'dart:io';
+
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'api_config.dart';
+import 'package:flutter/foundation.dart';
 import '../models/verification_models.dart';
+import 'dio_client.dart';
 
 class VerificationClient {
-  late final Dio _dio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final Dio _dio;
 
-  VerificationClient() {
-    _dio = Dio(BaseOptions(
-      baseUrl: ApiConfig.baseUrl,
-      connectTimeout: ApiConfig.connectTimeout,
-      receiveTimeout: ApiConfig.receiveTimeout,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
-  }
-
-  Future<String?> _getToken() async {
-    return await _storage.read(key: 'auth_token');
-  }
+  VerificationClient({Dio? dio}) : _dio = dio ?? DioClient.instance.dio;
 
   /// Get current user's verification status
   Future<VerificationStatusResponse> getVerificationStatus() async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return VerificationStatusResponse(success: false, error: 'Not authenticated');
-      }
-
-      final response = await _dio.get(
-        '/verification/status',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.get('/verification/status');
 
       if (response.data['success'] == true) {
         return VerificationStatusResponse.fromJson(response.data);
@@ -58,31 +37,15 @@ class VerificationClient {
   /// Get verification pricing (plans, free eligibility, campaigns)
   Future<VerificationPricingResponse?> getVerificationPricing() async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        print('❌ [getVerificationPricing] No auth token');
-        return null;
-      }
-
-      final response = await _dio.get(
-        '/verification/pricing',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      print('🔍 [getVerificationPricing] Status: ${response.statusCode}');
-      print('🔍 [getVerificationPricing] Success: ${response.data['success']}');
-      print('🔍 [getVerificationPricing] Has data: ${response.data['data'] != null}');
+      final response = await _dio.get('/verification/pricing');
 
       if (response.data['success'] == true && response.data['data'] != null) {
-        final result = VerificationPricingResponse.fromJson(response.data['data']);
-        print('✅ [getVerificationPricing] Parsed: ${result.individual.length} individual, ${result.business.length} business plans');
-        return result;
+        return VerificationPricingResponse.fromJson(response.data['data']);
       }
-      print('⚠️ [getVerificationPricing] No data in response');
+      if (kDebugMode) developer.log('No data in pricing response', name: 'VerificationClient');
       return null;
-    } catch (e, stackTrace) {
-      print('❌ [getVerificationPricing] Error: $e');
-      print('❌ [getVerificationPricing] Stack: $stackTrace');
+    } catch (e) {
+      if (kDebugMode) developer.log('Error fetching pricing: $e', name: 'VerificationClient');
       return null;
     }
   }
@@ -90,11 +53,6 @@ class VerificationClient {
   /// Upload business verification document
   Future<VerificationUploadResponse> uploadBusinessDocument(File file) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return VerificationUploadResponse(success: false, error: 'Not authenticated');
-      }
-
       String fileName = file.path.split('/').last;
       FormData formData = FormData.fromMap({
         'business_license_document': await MultipartFile.fromFile(
@@ -106,7 +64,6 @@ class VerificationClient {
       final response = await _dio.post(
         '/verification/business/upload',
         data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.data['success'] == true) {
@@ -135,11 +92,6 @@ class VerificationClient {
     String idType = 'citizenship',
   }) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return VerificationUploadResponse(success: false, error: 'Not authenticated');
-      }
-
       final Map<String, dynamic> fileMap = {};
 
       fileMap['id_document_front'] = await MultipartFile.fromFile(
@@ -164,7 +116,6 @@ class VerificationClient {
       final response = await _dio.post(
         '/verification/individual/upload',
         data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.data['success'] == true) {
@@ -200,11 +151,6 @@ class VerificationClient {
     String? paymentReference,
   }) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return VerificationSubmitResponse(success: false, error: 'Not authenticated');
-      }
-
       final data = {
         'businessName': businessName,
         'licenseDocument': licenseDocument,
@@ -219,11 +165,7 @@ class VerificationClient {
         if (paymentReference != null) 'paymentReference': paymentReference,
       };
 
-      final response = await _dio.post(
-        '/verification/business',
-        data: data,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.post('/verification/business', data: data);
 
       if (response.data['success'] == true) {
         return VerificationSubmitResponse.fromJson(response.data);
@@ -255,11 +197,6 @@ class VerificationClient {
     String? paymentReference,
   }) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return VerificationSubmitResponse(success: false, error: 'Not authenticated');
-      }
-
       final data = {
         'documentUrls': documentUrls,
         'fullName': fullName,
@@ -271,11 +208,7 @@ class VerificationClient {
         if (paymentReference != null) 'paymentReference': paymentReference,
       };
 
-      final response = await _dio.post(
-        '/verification/individual',
-        data: data,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.post('/verification/individual', data: data);
 
       if (response.data['success'] == true) {
         return VerificationSubmitResponse.fromJson(response.data);

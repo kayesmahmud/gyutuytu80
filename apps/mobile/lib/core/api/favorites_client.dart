@@ -1,41 +1,19 @@
 import 'package:dio/dio.dart';
-import 'api_config.dart';
 import '../models/models.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dio_client.dart';
 
 /// Client for favorites/wishlist API
 class FavoritesClient {
-  late final Dio _dio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final Dio _dio;
 
-  FavoritesClient() {
-    _dio = Dio(BaseOptions(
-      baseUrl: ApiConfig.baseUrl,
-      connectTimeout: ApiConfig.connectTimeout,
-      receiveTimeout: ApiConfig.receiveTimeout,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
-  }
-
-  Future<String?> _getToken() async {
-    return await _storage.read(key: 'auth_token');
-  }
+  FavoritesClient({Dio? dio}) : _dio = dio ?? DioClient.instance.dio;
 
   /// Get user's favorite ads
   Future<FavoritesResponse> getFavorites({int limit = 50, int page = 1}) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return FavoritesResponse(success: false, error: 'Not authenticated');
-      }
-
       final response = await _dio.get(
         '/favorites',
         queryParameters: {'limit': limit, 'page': page},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.data['success'] == true) {
@@ -66,15 +44,9 @@ class FavoritesClient {
   /// Add ad to favorites
   Future<ApiResult> addToFavorites(int adId) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return ApiResult(success: false, error: 'Not authenticated');
-      }
-
       final response = await _dio.post(
         '/favorites',
         data: {'adId': adId},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       return ApiResult(
@@ -94,15 +66,7 @@ class FavoritesClient {
   /// Remove ad from favorites
   Future<ApiResult> removeFromFavorites(int adId) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return ApiResult(success: false, error: 'Not authenticated');
-      }
-
-      final response = await _dio.delete(
-        '/favorites/$adId',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.delete('/favorites/$adId');
 
       return ApiResult(
         success: response.data['success'] == true,
@@ -121,15 +85,7 @@ class FavoritesClient {
   /// Check if ad is in favorites
   Future<IsFavoritedResponse> checkFavorite(int adId) async {
     try {
-      final token = await _getToken();
-      if (token == null) {
-        return IsFavoritedResponse(success: false, isFavorited: false);
-      }
-
-      final response = await _dio.get(
-        '/favorites/$adId',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.get('/favorites/$adId');
 
       if (response.data['success'] == true) {
         return IsFavoritedResponse(
@@ -139,7 +95,7 @@ class FavoritesClient {
       }
 
       return IsFavoritedResponse(success: false, isFavorited: false);
-    } on DioException catch (e) {
+    } on DioException {
       return IsFavoritedResponse(success: false, isFavorited: false);
     } catch (e) {
       return IsFavoritedResponse(success: false, isFavorited: false);

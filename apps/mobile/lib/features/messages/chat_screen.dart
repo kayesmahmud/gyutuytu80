@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -115,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
       conversationId: widget.conversationId,
       content: text,
     );
-    print('DEBUG: ChatScreen sent message result: $success');
+    if (kDebugMode) developer.log('Sent message result: $success', name: 'ChatScreen');
 
     if (success) {
       _scrollToBottom();
@@ -349,7 +350,7 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context, chatProvider, child) {
         final messages = chatProvider.getMessages(widget.conversationId);
 
-        print('DEBUG: ChatScreen building list. Count: ${messages.length}');
+        if (kDebugMode) developer.log('Building list. Count: ${messages.length}', name: 'ChatScreen');
 
         if (messages.isEmpty) {
           return _buildEmptyState();
@@ -364,7 +365,7 @@ class _ChatScreenState extends State<ChatScreen> {
             final message = messages[index];
             final showDate = _shouldShowDate(messages, index);
             final isMe = message.senderId == _currentUserId;
-            print('DEBUG: Msg $index: sender=${message.senderId}, me=$_currentUserId, isMe=$isMe, content=${message.content}');
+            if (kDebugMode) developer.log('Msg $index: sender=${message.senderId}, me=$_currentUserId, isMe=$isMe, content=${message.content}', name: 'ChatScreen');
 
             return Column(
               children: [

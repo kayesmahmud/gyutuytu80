@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_theme.dart';
 import 'package:mobile/core/widgets/main_app_bar.dart';
 import 'package:mobile/core/widgets/main_drawer.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
 import 'package:mobile/core/api/ad_client.dart';
-import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/data/mock_filter_data.dart';
-import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
-import 'package:mobile/features/main_nav/main_nav_screen.dart';
 import 'package:mobile/core/widgets/ad_banner_widget.dart';
 import 'package:mobile/core/services/ad_service.dart';
 
@@ -33,6 +29,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<CategoryWithSubcategories> _categories = [];
   List<AdWithDetails> _featuredAds = [];
   List<AdWithDetails> _latestAds = [];
+  // Pre-sliced lists to avoid .take().toList() in build
+  List<AdWithDetails> _displayLatestAds = [];
+  List<AdWithDetails> _displayFeaturedAds = [];
   bool _isLoading = true;
 
   @override
@@ -70,6 +69,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _categories = results[0] as List<CategoryWithSubcategories>;
           _featuredAds = (results[1] as PaginatedResponse<AdWithDetails>).data;
           _latestAds = (results[2] as PaginatedResponse<AdWithDetails>).data;
+          _displayLatestAds = _latestAds.take(4).toList();
+          _displayFeaturedAds = _featuredAds.take(4).toList();
           _isLoading = false;
         });
       }
@@ -110,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 24),
                     _buildSectionHeader("Latest Ads", "View All Ads >"),
                     const SizedBox(height: 12),
-                    _buildAdsGrid(_latestAds.take(4).toList()),
+                    _buildAdsGrid(_displayLatestAds),
 
                     // Google Ad Banner (top)
                     AdBannerWidget(adUnitId: AdService.homeBannerTopId),
@@ -119,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 24),
                     _buildFeaturedHeader(),
                     const SizedBox(height: 12),
-                    _buildFeaturedAdsGrid(_featuredAds.take(4).toList()),
+                    _buildFeaturedAdsGrid(_displayFeaturedAds),
 
                     const SizedBox(height: 50), // Bottom padding
                   ],

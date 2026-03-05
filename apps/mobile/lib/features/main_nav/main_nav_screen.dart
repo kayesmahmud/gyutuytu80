@@ -25,18 +25,13 @@ class MainNavScreen extends StatefulWidget {
 class _MainNavScreenState extends State<MainNavScreen> {
   late int _selectedIndex;
   final GlobalKey<BrowseScreenState> _browseKey = GlobalKey();
-  late final List<Widget> _screens;
+  late final Set<int> _visitedTabs;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
-    _screens = [
-      HomeScreen(onSearch: _handleHomeSearch, onCategoryTap: _handleCategoryTap),
-      BrowseScreen(key: _browseKey),
-      const MessagesScreen(),
-      const ProfileScreen(),
-    ];
+    _visitedTabs = {widget.initialIndex};
 
     // Initialize chat if logged in
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -58,14 +53,20 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   void _handleHomeSearch(String query) {
     if (query.isEmpty) return;
-    setState(() => _selectedIndex = 1);
+    setState(() {
+      _visitedTabs.add(1);
+      _selectedIndex = 1;
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _browseKey.currentState?.searchFor(query);
     });
   }
 
   void _handleCategoryTap(int categoryId, String categoryName) {
-    setState(() => _selectedIndex = 1);
+    setState(() {
+      _visitedTabs.add(1);
+      _selectedIndex = 1;
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _browseKey.currentState?.filterByCategory(categoryId, categoryName);
     });
@@ -78,8 +79,10 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   void _onItemTapped(int index) {
     if (index == 2) return; // FAB spacer — ignore tap
+    final screenIndex = _navToScreen(index);
     setState(() {
-      _selectedIndex = _navToScreen(index);
+      _visitedTabs.add(screenIndex);
+      _selectedIndex = screenIndex;
     });
   }
 
@@ -205,7 +208,27 @@ class _MainNavScreenState extends State<MainNavScreen> {
         }
       },
       child: Scaffold(
-        body: _screens[_selectedIndex],
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            if (_visitedTabs.contains(0))
+              HomeScreen(onSearch: _handleHomeSearch, onCategoryTap: _handleCategoryTap)
+            else
+              const SizedBox.shrink(),
+            if (_visitedTabs.contains(1))
+              BrowseScreen(key: _browseKey)
+            else
+              const SizedBox.shrink(),
+            if (_visitedTabs.contains(2))
+              const MessagesScreen()
+            else
+              const SizedBox.shrink(),
+            if (_visitedTabs.contains(3))
+              const ProfileScreen()
+            else
+              const SizedBox.shrink(),
+          ],
+        ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             boxShadow: [

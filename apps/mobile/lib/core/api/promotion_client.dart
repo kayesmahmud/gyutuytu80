@@ -1,41 +1,13 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/models.dart';
 import '../models/promotion.dart';
-import 'api_config.dart';
+import 'dio_client.dart';
 
 /// Promotion API Client - handles promotion-related API calls
 class PromotionClient {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.baseUrl,
-    connectTimeout: ApiConfig.connectTimeout,
-    receiveTimeout: ApiConfig.receiveTimeout,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  ));
+  final Dio _dio;
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  PromotionClient() {
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (DioException e, handler) {
-        print("PromotionClient Error: ${e.message}");
-        if (e.response != null) {
-          print("Response Data: ${e.response?.data}");
-        }
-        return handler.next(e);
-      },
-    ));
-  }
+  PromotionClient({Dio? dio}) : _dio = dio ?? DioClient.instance.dio;
 
   // ==========================================
   // GET PRICING

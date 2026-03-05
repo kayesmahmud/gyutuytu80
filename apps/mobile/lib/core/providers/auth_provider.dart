@@ -1,4 +1,5 @@
 
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile/core/api/auth_client.dart';
@@ -68,7 +69,7 @@ class AuthProvider with ChangeNotifier {
         _user = response['data'];
       }
     } catch (e) {
-      print("Error refreshing profile: $e");
+      if (kDebugMode) developer.log('Error refreshing profile: $e', name: 'AuthProvider');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -81,15 +82,15 @@ class AuthProvider with ChangeNotifier {
     
     try {
       final response = await _authClient.getProfile(); 
-      print("DEBUG: API Response: $response"); // DEBUG LOG
+      if (kDebugMode) developer.log('API Response: $response', name: 'AuthProvider');
       if (response['success'] == true) {
         _user = response['data'];
-        print("DEBUG: Parsed User: $_user"); // DEBUG LOG
-        print("DEBUG: User Name: ${_user?['fullName']}"); // DEBUG LOG
+        if (kDebugMode) developer.log('Parsed User: $_user', name: 'AuthProvider');
+        if (kDebugMode) developer.log('User Name: ${_user?['fullName']}', name: 'AuthProvider');
       }
     } catch (e, stack) {
-      print("DEBUG: Error fetching profile: $e");
-      print(stack);
+      if (kDebugMode) developer.log('Error fetching profile: $e', name: 'AuthProvider');
+      if (kDebugMode) developer.log('$stack', name: 'AuthProvider');
     }
     
     notifyListeners();

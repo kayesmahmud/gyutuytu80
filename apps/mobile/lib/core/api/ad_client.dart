@@ -1,42 +1,16 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import 'package:mobile/features/post_ad/models/location_models.dart';
-import 'api_config.dart';
+import 'dio_client.dart';
 
 /// Ad API Client - handles all ad-related API calls
 class AdClient {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.baseUrl,
-    connectTimeout: ApiConfig.connectTimeout,
-    receiveTimeout: ApiConfig.receiveTimeout,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  ));
+  final Dio _dio;
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  AdClient() {
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (DioException e, handler) {
-        // Log errors for debugging (remove in production)
-        print("AdClient Error: ${e.message}");
-        if (e.response != null) {
-          print("Response Data: ${e.response?.data}");
-        }
-        return handler.next(e);
-      },
-    ));
-  }
+  AdClient({Dio? dio}) : _dio = dio ?? DioClient.instance.dio;
 
   // ==========================================
   // BROWSE/LIST ADS
@@ -175,7 +149,7 @@ class AdClient {
       await _dio.post('/ads/$adId/view');
     } catch (e) {
       // Silently fail - view count is not critical
-      print('Failed to increment view: $e');
+      if (kDebugMode) developer.log('Failed to increment view: $e', name: 'AdClient');
     }
   }
 
@@ -230,10 +204,9 @@ class AdClient {
   Future<ApiResponse<Ad>> createAd(FormData formData) async {
     try {
       final response = await _dio.post('/ads', data: formData);
-      print("🔵 createAd response: ${response.data}");
+      if (kDebugMode) developer.log('createAd response: ${response.data}', name: 'AdClient');
 
       if (response.data['success'] == true) {
-        print("🔵 Parsing Ad...");
         return ApiResponse.success(
           Ad.fromJson(response.data['data'] as Map<String, dynamic>),
         );
@@ -326,7 +299,7 @@ class AdClient {
       }
       return [];
     } on DioException catch (e) {
-      print('Error fetching categories: $e');
+      if (kDebugMode) developer.log('Error fetching categories: $e', name: 'AdClient');
       return [];
     }
   }
@@ -366,7 +339,7 @@ class AdClient {
       }
       return [];
     } on DioException catch (e) {
-      print('Error fetching location hierarchy: $e');
+      if (kDebugMode) developer.log('Error fetching location hierarchy: $e', name: 'AdClient');
       return [];
     }
   }
@@ -394,7 +367,7 @@ class AdClient {
       }
       return [];
     } catch (e) {
-      print('Error fetching related ads: $e');
+      if (kDebugMode) developer.log('Error fetching related ads: $e', name: 'AdClient');
       return [];
     }
   }

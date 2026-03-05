@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -155,7 +156,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
         });
       }
     } catch (e) {
-      print("Error checking favorite status: $e");
+      if (kDebugMode) developer.log('Error checking favorite status: $e', name: 'AdDetailScreen');
     }
   }
 

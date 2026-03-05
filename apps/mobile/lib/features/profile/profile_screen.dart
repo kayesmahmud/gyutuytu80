@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -282,9 +283,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildUserHeader() {
     final String? avatar = _user?['avatar'];
-    print("DEBUG: ProfileScreen User Data: $_user"); // DEBUG LOG
+    if (kDebugMode) developer.log('User Data: $_user', name: 'ProfileScreen');
     final String fullName = _user?['fullName'] ?? 'User';
-    print("DEBUG: Rendered Name: $fullName"); // DEBUG LOG
+    if (kDebugMode) developer.log('Rendered Name: $fullName', name: 'ProfileScreen');
     final String createdAt = _user?['createdAt'] != null 
         ? "Member since ${DateFormat('MMM yyyy').format(DateTime.parse(_user!['createdAt']))}" 
         : "Member since 2025";

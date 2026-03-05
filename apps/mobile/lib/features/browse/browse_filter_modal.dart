@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -100,7 +101,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
         });
       }
     } catch (e) {
-      print("Search error: $e");
+      if (kDebugMode) developer.log('Search error: $e', name: 'BrowseFilterModal');
     }
   }
 
@@ -257,7 +258,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
       }
 
     } catch (e) {
-      print("Error loading location hierarchy: $e");
+      if (kDebugMode) developer.log('Error loading location hierarchy: $e', name: 'BrowseFilterModal');
     }
   }
 

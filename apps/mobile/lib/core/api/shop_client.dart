@@ -1,40 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/models.dart';
-import 'api_config.dart';
+import 'dio_client.dart';
 
 /// Shop/Seller API Client - handles shop profile and seller ads
 class ShopClient {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.baseUrl,
-    connectTimeout: ApiConfig.connectTimeout,
-    receiveTimeout: ApiConfig.receiveTimeout,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  ));
+  final Dio _dio;
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  ShopClient() {
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (DioException e, handler) {
-        print("ShopClient Error: ${e.message}");
-        if (e.response != null) {
-          print("Response Data: ${e.response?.data}");
-        }
-        return handler.next(e);
-      },
-    ));
-  }
+  ShopClient({Dio? dio}) : _dio = dio ?? DioClient.instance.dio;
 
   /// Get shop profile by slug
   Future<ApiResponse<ShopProfile>> getShopBySlug(String shopSlug) async {
