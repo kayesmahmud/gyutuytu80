@@ -82,7 +82,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: _tickets.isEmpty ? null : FloatingActionButton.extended(
         onPressed: () async {
           final created = await Navigator.push<bool>(
             context,
