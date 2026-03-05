@@ -197,11 +197,11 @@ export async function POST(request: NextRequest) {
         min_duration_days: minDurationDays ? parseInt(minDurationDays, 10) : null,
         max_uses: maxUses ? parseInt(maxUses, 10) : null,
         current_uses: 0,
-        created_by: admin.userId,
+        created_by: admin,
       },
     });
 
-    console.log(`✅ Promotional campaign created: ${campaign.name} by admin ${admin.userId}`);
+    console.log(`✅ Promotional campaign created: ${campaign.name} by admin ${admin}`);
 
     return NextResponse.json({
       success: true,

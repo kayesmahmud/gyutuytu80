@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,10 @@ import '../../core/providers/chat_provider.dart';
 import '../../core/widgets/main_app_bar.dart';
 import '../../core/widgets/main_drawer.dart';
 import '../../core/widgets/login_required_widget.dart';
+import '../../core/utils/page_transitions.dart';
+import '../../core/utils/skeleton_data.dart';
+import '../../core/widgets/staggered_fade_in.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'chat_screen.dart';
 
 class MessagesScreen extends StatefulWidget {
@@ -49,16 +54,30 @@ class _MessagesScreenState extends State<MessagesScreen> {
         body: const LoginRequiredWidget(
           icon: LucideIcons.messageCircle,
           title: 'Login to View Messages',
-          subtitle: 'Sign in to see your conversations\nand chat with buyers and sellers',
+          subtitle:
+              'Sign in to see your conversations\nand chat with buyers and sellers',
         ),
       );
     }
 
     if (chatProvider.isLoading && chatProvider.conversations.isEmpty) {
+      final fakeConversations = SkeletonData.fakeConversations(5);
       return Scaffold(
         appBar: const MainAppBar(),
         drawer: const MainDrawer(),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Skeletonizer(
+          enabled: true,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: 5,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) => _buildConversationItem(
+              context,
+              fakeConversations[index],
+              false,
+            ),
+          ),
+        ),
       );
     }
 
@@ -72,7 +91,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
             unselectedLabelColor: Colors.grey[600],
             indicatorColor: const Color(0xFF2563EB),
             indicatorWeight: 3,
-            labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+            labelStyle: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
             tabs: [
               const Tab(text: "Chats"),
               Consumer<ChatProvider>(
@@ -86,14 +108,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         if (unread > 0) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFDC143C),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               '$unread',
-                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -112,10 +141,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
           child: const Icon(LucideIcons.pencil, color: Colors.white),
         ),
         body: TabBarView(
-          children: [
-            _buildChatsTab(),
-            _buildAnnouncementsTab(),
-          ],
+          children: [_buildChatsTab(), _buildAnnouncementsTab()],
         ),
       ),
     );
@@ -129,7 +155,20 @@ class _MessagesScreenState extends State<MessagesScreen> {
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
         if (chatProvider.isLoading && chatProvider.conversations.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          final fakeConversations = SkeletonData.fakeConversations(5);
+          return Skeletonizer(
+            enabled: true,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: 5,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) => _buildConversationItem(
+                context,
+                fakeConversations[index],
+                false,
+              ),
+            ),
+          );
         }
 
         if (chatProvider.error != null && chatProvider.conversations.isEmpty) {
@@ -141,21 +180,29 @@ class _MessagesScreenState extends State<MessagesScreen> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => chatProvider.loadConversations(),
+          onRefresh: () async {
+            await chatProvider.loadConversations();
+            HapticFeedback.mediumImpact();
+          },
           child: Column(
             children: [
               _buildConnectionStatus(chatProvider),
               Expanded(
                 child: ListView.separated(
+                  cacheExtent: 500,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: chatProvider.conversations.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final conversation = chatProvider.conversations[index];
-                    return _buildConversationItem(
-                      context,
-                      conversation,
-                      chatProvider.isUserOnline(conversation.otherUserId),
+                    return StaggeredFadeIn(
+                      index: index,
+                      beginOffset: const Offset(0.1, 0),
+                      child: _buildConversationItem(
+                        context,
+                        conversation,
+                        chatProvider.isUserOnline(conversation.otherUserId),
+                      ),
                     );
                   },
                 ),
@@ -193,7 +240,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildConversationItem(BuildContext context, Conversation conversation, bool isOnline) {
+  Widget _buildConversationItem(
+    BuildContext context,
+    Conversation conversation,
+    bool isOnline,
+  ) {
     final avatarUrl = conversation.otherUserAvatar != null
         ? ApiConfig.getAvatarUrl(conversation.otherUserAvatar)
         : null;
@@ -202,7 +253,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          FadeScaleRoute(
             builder: (_) => ChatScreen(
               conversationId: conversation.id,
               recipientName: conversation.otherUserName,
@@ -226,13 +277,19 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 CircleAvatar(
                   radius: 26,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage: avatarUrl != null ? CachedNetworkImageProvider(avatarUrl) : null,
+                  backgroundImage: avatarUrl != null
+                      ? CachedNetworkImageProvider(avatarUrl)
+                      : null,
                   child: avatarUrl == null
                       ? Text(
                           conversation.otherUserName.isNotEmpty
                               ? conversation.otherUserName[0].toUpperCase()
                               : '?',
-                          style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                          style: GoogleFonts.inter(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
                         )
                       : null,
                 ),
@@ -265,7 +322,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           conversation.otherUserName,
                           style: GoogleFonts.inter(
                             fontSize: 15,
-                            fontWeight: conversation.hasUnread ? FontWeight.w700 : FontWeight.w600,
+                            fontWeight: conversation.hasUnread
+                                ? FontWeight.w700
+                                : FontWeight.w600,
                             color: const Color(0xFF111827),
                           ),
                           maxLines: 1,
@@ -276,7 +335,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         _formatTime(conversation.lastMessageAt),
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          color: conversation.hasUnread ? const Color(0xFFDC143C) : Colors.grey[500],
+                          color: conversation.hasUnread
+                              ? const Color(0xFFDC143C)
+                              : Colors.grey[500],
                         ),
                       ),
                     ],
@@ -286,11 +347,17 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          conversation.lastMessage.isNotEmpty ? conversation.lastMessage : 'No messages yet',
+                          conversation.lastMessage.isNotEmpty
+                              ? conversation.lastMessage
+                              : 'No messages yet',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            fontWeight: conversation.hasUnread ? FontWeight.w600 : FontWeight.normal,
-                            color: conversation.hasUnread ? Colors.grey[800] : Colors.grey[600],
+                            fontWeight: conversation.hasUnread
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            color: conversation.hasUnread
+                                ? Colors.grey[800]
+                                : Colors.grey[600],
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -299,14 +366,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       if (conversation.hasUnread)
                         Container(
                           margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFDC143C),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${conversation.unreadCount}',
-                            style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                     ],
@@ -315,14 +389,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(LucideIcons.tag, size: 14, color: Colors.grey[400]),
+                        Icon(
+                          LucideIcons.tag,
+                          size: 14,
+                          color: Colors.grey[400],
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             conversation.adTitle!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                            ),
                           ),
                         ),
                       ],
@@ -353,14 +434,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => chatProvider.loadAnnouncements(),
+          onRefresh: () async {
+            await chatProvider.loadAnnouncements();
+            HapticFeedback.mediumImpact();
+          },
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: chatProvider.announcements.length,
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final announcement = chatProvider.announcements[index];
-              return _buildAnnouncementItem(context, announcement, chatProvider);
+              return _buildAnnouncementItem(
+                context,
+                announcement,
+                chatProvider,
+              );
             },
           ),
         );
@@ -368,7 +456,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildAnnouncementItem(BuildContext context, Announcement announcement, ChatProvider chatProvider) {
+  Widget _buildAnnouncementItem(
+    BuildContext context,
+    Announcement announcement,
+    ChatProvider chatProvider,
+  ) {
     return InkWell(
       onTap: () {
         if (!announcement.isRead) {
@@ -386,13 +478,17 @@ class _MessagesScreenState extends State<MessagesScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: announcement.isRead ? Colors.grey[100] : const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                color: announcement.isRead
+                    ? Colors.grey[100]
+                    : const Color(0xFF3B82F6).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 LucideIcons.megaphone,
                 size: 22,
-                color: announcement.isRead ? Colors.grey[400] : const Color(0xFF3B82F6),
+                color: announcement.isRead
+                    ? Colors.grey[400]
+                    : const Color(0xFF3B82F6),
               ),
             ),
             const SizedBox(width: 12),
@@ -408,7 +504,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           announcement.title,
                           style: GoogleFonts.inter(
                             fontSize: 15,
-                            fontWeight: announcement.isRead ? FontWeight.w500 : FontWeight.w700,
+                            fontWeight: announcement.isRead
+                                ? FontWeight.w500
+                                : FontWeight.w700,
                             color: const Color(0xFF111827),
                           ),
                           maxLines: 1,
@@ -417,14 +515,20 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       ),
                       Text(
                         _formatTime(announcement.createdAt),
-                        style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     announcement.content,
-                    style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -437,7 +541,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  void _showAnnouncementDetail(BuildContext context, Announcement announcement) {
+  void _showAnnouncementDetail(
+    BuildContext context,
+    Announcement announcement,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -473,7 +580,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.megaphone, color: Colors.white, size: 28),
+                    const Icon(
+                      LucideIcons.megaphone,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -490,19 +601,28 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                DateFormat('MMMM d, yyyy · h:mm a').format(announcement.createdAt),
+                DateFormat(
+                  'MMMM d, yyyy · h:mm a',
+                ).format(announcement.createdAt),
                 style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500]),
               ),
               const SizedBox(height: 16),
               Text(
                 announcement.content,
-                style: GoogleFonts.inter(fontSize: 15, color: Colors.grey[800], height: 1.6),
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  color: Colors.grey[800],
+                  height: 1.6,
+                ),
               ),
               if (announcement.readAt != null) ...[
                 const SizedBox(height: 24),
                 Text(
                   'Read on ${DateFormat('MMM d, yyyy · h:mm a').format(announcement.readAt!)}',
-                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400]),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: Colors.grey[400],
+                  ),
                 ),
               ],
             ],
@@ -533,9 +653,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
             builder: (_) => const Center(child: CircularProgressIndicator()),
           );
 
-          final conversation = await context.read<ChatProvider>().getOrCreateConversation(
-            participantId: user.id,
-          );
+          final conversation = await context
+              .read<ChatProvider>()
+              .getOrCreateConversation(participantId: user.id);
 
           if (!context.mounted) return;
           Navigator.pop(context); // Close loading
@@ -598,64 +718,91 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-              child: Icon(LucideIcons.messageCircle, size: 48, color: Colors.grey[400]),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Messages Yet',
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[800]),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Start a conversation by contacting\na seller from their ad listing',
-              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-          ],
+    return StaggeredFadeIn(
+      index: 0,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.messageCircle,
+                  size: 48,
+                  color: Colors.grey[400],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'No Messages Yet',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Start a conversation by contacting\na seller from their ad listing',
+                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildEmptyAnnouncementsState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-              child: Icon(LucideIcons.megaphone, size: 48, color: Colors.grey[400]),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Announcements',
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[800]),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Important updates will appear here',
-              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
-            ),
-          ],
+    return StaggeredFadeIn(
+      index: 0,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.megaphone,
+                  size: 48,
+                  color: Colors.grey[400],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'No Announcements',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Important updates will appear here',
+                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
@@ -724,9 +871,13 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -745,7 +896,10 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
             const SizedBox(height: 16),
             Text(
               'New Message',
-              style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700),
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -758,11 +912,20 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
                 suffixIcon: _isSearching
                     ? const Padding(
                         padding: EdgeInsets.all(14),
-                        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       )
                     : null,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -772,7 +935,10 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
                 child: Center(
                   child: Text(
                     'Type at least 2 characters to search',
-                    style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
                   ),
                 ),
               )
@@ -790,11 +956,18 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor: Colors.grey[200],
-                        backgroundImage: avatarUrl != null ? CachedNetworkImageProvider(avatarUrl) : null,
+                        backgroundImage: avatarUrl != null
+                            ? CachedNetworkImageProvider(avatarUrl)
+                            : null,
                         child: avatarUrl == null
                             ? Text(
-                                user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
-                                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                                user.fullName.isNotEmpty
+                                    ? user.fullName[0].toUpperCase()
+                                    : '?',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[600],
+                                ),
                               )
                             : null,
                       ),

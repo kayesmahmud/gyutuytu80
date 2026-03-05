@@ -22,6 +22,7 @@ import 'package:mobile/core/widgets/ad_banner_widget.dart';
 import 'package:mobile/core/services/ad_service.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
 import 'package:mobile/features/promotion/promote_ad_screen.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class AdDetailScreen extends StatefulWidget {
   final int? adId;
@@ -175,50 +176,31 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
       return;
     }
 
-    if (_ad == null || _isFavoriteLoading) return;
+    if (_ad == null) return;
 
-    setState(() {
-      _isFavoriteLoading = true;
-    });
+    final previousState = _isFavorite;
+    setState(() => _isFavorite = !_isFavorite); // Optimistic toggle
 
     try {
       ApiResult response;
-      if (_isFavorite) {
+      if (previousState) {
         response = await _favoritesClient.removeFromFavorites(_ad!.id);
       } else {
         response = await _favoritesClient.addToFavorites(_ad!.id);
       }
 
-      if (mounted) {
-        if (response.success) {
-          setState(() {
-            _isFavorite = !_isFavorite;
-          });
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(_isFavorite ? 'Added to favorites' : 'Removed from favorites'),
-              backgroundColor: _isFavorite ? Colors.green : Colors.grey[700],
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.error ?? 'Failed to update favorite')),
-          );
-        }
+      if (mounted && !response.success) {
+        setState(() => _isFavorite = previousState); // Rollback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.error ?? 'Failed to update favorite')),
+        );
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _isFavorite = previousState); // Rollback
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isFavoriteLoading = false;
-        });
       }
     }
   }
@@ -228,10 +210,109 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
+          ? _buildLoadingSkeleton()
           : _error != null
               ? _buildErrorState()
               : _buildContent(),
+    );
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return Skeletonizer(
+      enabled: true,
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 300,
+            pinned: true,
+            backgroundColor: Colors.white,
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: IconButton(
+                icon: const Icon(LucideIcons.arrowLeft, color: Colors.black87),
+                onPressed: () => Navigator.pop(context),
+                padding: EdgeInsets.zero,
+              ),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(color: Colors.grey[200]),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Loading ad title placeholder text here',
+                      style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Text('2 days ago • 123 views',
+                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                  const SizedBox(height: 12),
+                  Text('Rs. 99,999',
+                      style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Text('Description',
+                      style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This is a placeholder description that spans multiple lines to create a realistic skeleton shimmer effect for the ad detail screen loading state.',
+                    style: GoogleFonts.inter(fontSize: 14, height: 1.5),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Location',
+                      style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(LucideIcons.mapPin, size: 24),
+                        const SizedBox(width: 12),
+                        Text('Kathmandu, Nepal', style: GoogleFonts.inter(fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Fake seller card
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(radius: 24, backgroundColor: Colors.grey),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Seller Name', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text('Member since 2024', style: GoogleFonts.inter(fontSize: 12)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -25,13 +25,46 @@ class AdImageGallery extends StatefulWidget {
   State<AdImageGallery> createState() => _AdImageGalleryState();
 }
 
-class _AdImageGalleryState extends State<AdImageGallery> {
+class _AdImageGalleryState extends State<AdImageGallery>
+    with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
+  final TransformationController _transformController =
+      TransformationController();
   int _currentImageIndex = 0;
+  bool _isZoomed = false;
+
+  late final AnimationController _heartController;
+  late final Animation<double> _heartScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _heartController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _heartScale =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
+        ]).animate(
+          CurvedAnimation(parent: _heartController, curve: Curves.easeOutCubic),
+        );
+  }
+
+  @override
+  void didUpdateWidget(covariant AdImageGallery oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isFavorite != oldWidget.isFavorite) {
+      _heartController.forward(from: 0);
+    }
+  }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _transformController.dispose();
+    _heartController.dispose();
     super.dispose();
   }
 
@@ -60,8 +93,8 @@ class _AdImageGalleryState extends State<AdImageGallery> {
       return Container(
         color: Colors.grey[100],
         child: Center(
-            child: Icon(LucideIcons.image,
-                size: 60, color: Colors.grey[300])),
+          child: Icon(LucideIcons.image, size: 60, color: Colors.grey[300]),
+        ),
       );
     }
 
@@ -70,16 +103,43 @@ class _AdImageGalleryState extends State<AdImageGallery> {
         PageView.builder(
           controller: _pageController,
           itemCount: images.length,
-          onPageChanged: (idx) => setState(() => _currentImageIndex = idx),
+          physics: _isZoomed
+              ? const NeverScrollableScrollPhysics()
+              : const AlwaysScrollableScrollPhysics(),
+          onPageChanged: (idx) {
+            _transformController.value = Matrix4.identity();
+            setState(() {
+              _currentImageIndex = idx;
+              _isZoomed = false;
+            });
+          },
           itemBuilder: (context, index) {
-            return CachedNetworkImage(
+            final image = CachedNetworkImage(
               imageUrl: images[index],
               fit: BoxFit.cover,
-              placeholder: (context, url) =>
-                  Container(color: Colors.grey[200]),
+              memCacheWidth: 800,
+              fadeInDuration: const Duration(milliseconds: 200),
+              fadeOutDuration: const Duration(milliseconds: 200),
+              placeholder: (context, url) => Container(color: Colors.grey[200]),
               errorWidget: (context, url, err) =>
                   Container(color: Colors.grey[200]),
             );
+            final zoomable = InteractiveViewer(
+              transformationController: _transformController,
+              minScale: 1.0,
+              maxScale: 3.0,
+              onInteractionEnd: (_) {
+                final scale = _transformController.value.getMaxScaleOnAxis();
+                final zoomed = scale > 1.05;
+                if (zoomed != _isZoomed) setState(() => _isZoomed = zoomed);
+              },
+              child: image,
+            );
+            // Hero only on first image for card→detail transition
+            if (index == 0) {
+              return Hero(tag: 'ad-image-${widget.ad.id}', child: zoomable);
+            }
+            return zoomable;
           },
         ),
 
@@ -95,13 +155,17 @@ class _AdImageGalleryState extends State<AdImageGallery> {
                 radius: 16,
                 child: IconButton(
                   padding: EdgeInsets.zero,
-                  icon: const Icon(LucideIcons.chevronLeft,
-                      size: 20, color: Colors.black),
+                  icon: const Icon(
+                    LucideIcons.chevronLeft,
+                    size: 20,
+                    color: Colors.black,
+                  ),
                   onPressed: () {
                     if (_currentImageIndex > 0) {
                       _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut);
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
                     }
                   },
                 ),
@@ -118,13 +182,17 @@ class _AdImageGalleryState extends State<AdImageGallery> {
                 radius: 16,
                 child: IconButton(
                   padding: EdgeInsets.zero,
-                  icon: const Icon(LucideIcons.chevronRight,
-                      size: 20, color: Colors.black),
+                  icon: const Icon(
+                    LucideIcons.chevronRight,
+                    size: 20,
+                    color: Colors.black,
+                  ),
                   onPressed: () {
                     if (_currentImageIndex < images.length - 1) {
                       _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut);
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
                     }
                   },
                 ),
@@ -146,9 +214,10 @@ class _AdImageGalleryState extends State<AdImageGallery> {
             child: Text(
               "${_currentImageIndex + 1}/${images.length}",
               style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
@@ -160,22 +229,23 @@ class _AdImageGalleryState extends State<AdImageGallery> {
           child: Row(
             children: [
               _buildCircleButton(
-                child: widget.isFavoriteLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
-                      )
-                    : Icon(
-                        LucideIcons.heart,
-                        color: widget.isFavorite ? Colors.red : Colors.black87,
-                        size: 20,
-                      ),
+                child: ScaleTransition(
+                  scale: _heartScale,
+                  child: Icon(
+                    LucideIcons.heart,
+                    color: widget.isFavorite ? Colors.red : Colors.black87,
+                    size: 20,
+                  ),
+                ),
                 onTap: widget.onToggleFavorite,
               ),
               const SizedBox(width: 8),
               _buildCircleButton(
-                child: const Icon(LucideIcons.share2, color: Colors.black87, size: 20),
+                child: const Icon(
+                  LucideIcons.share2,
+                  color: Colors.black87,
+                  size: 20,
+                ),
                 onTap: widget.onShare,
               ),
             ],

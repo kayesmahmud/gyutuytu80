@@ -22,7 +22,7 @@ export function usePromotionPricing() {
         // Transform raw data to include pricing_tier
         const responseData = response.data as { raw?: unknown[] };
         const rawData = responseData.raw || responseData;
-        const transformedData = Array.isArray(rawData) ? rawData.map((p: Record<string, unknown>) => ({
+        const transformedData = Array.isArray(rawData) ? (rawData as Record<string, unknown>[]).map((p) => ({
           id: p.id as number,
           promotion_type: (p.promotionType || p.promotion_type) as string,
           duration_days: (p.durationDays || p.duration_days) as number,

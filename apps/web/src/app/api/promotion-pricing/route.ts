@@ -144,8 +144,8 @@ export async function GET(request: NextRequest) {
 
     // If adId was provided, include ad-specific pricing using its tier
     let adPricing: Record<string, Record<number, Record<string, unknown>>> | null = null;
-    if (adId && pricingByTier[adPricingTier]) {
-      adPricing = pricingByTier[adPricingTier];
+    if (adId) {
+      adPricing = pricingByTier[adPricingTier] ?? null;
     }
 
     return NextResponse.json(

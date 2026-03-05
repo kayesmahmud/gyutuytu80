@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../../core/api/payment_client.dart';
@@ -74,7 +75,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         } else {
           _transactions.addAll(response.data);
         }
-        _hasMorePages = response.pagination.page < response.pagination.totalPages;
+        _hasMorePages =
+            response.pagination.page < response.pagination.totalPages;
       } else {
         _error = response.errorMessage ?? 'Failed to load payment history';
       }
@@ -106,10 +108,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payment History'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Payment History'), centerTitle: true),
       body: Column(
         children: [
           _buildFilterBar(),
@@ -136,7 +135,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: _filterOptions.map((filter) {
-            final isSelected = (_statusFilter == null && filter == 'All') ||
+            final isSelected =
+                (_statusFilter == null && filter == 'All') ||
                 _statusFilter == filter.toLowerCase();
             return Padding(
               padding: const EdgeInsets.only(right: 8),
@@ -171,7 +171,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: () => _loadTransactions(refresh: true),
+      onRefresh: () async {
+        await _loadTransactions(refresh: true);
+        HapticFeedback.mediumImpact();
+      },
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
@@ -193,11 +196,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              LucideIcons.alertCircle,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(LucideIcons.alertCircle, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               _error!,
@@ -247,10 +246,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             const SizedBox(height: 8),
             Text(
               'Your payment history will appear here',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -326,14 +322,21 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 if (transaction.transactionId != null) ...[
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey[50],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        Icon(LucideIcons.tag, size: 14, color: Colors.grey[500]),
+                        Icon(
+                          LucideIcons.tag,
+                          size: 14,
+                          color: Colors.grey[500],
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -376,7 +379,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            fontStyle: gateway == PaymentGateway.esewa ? FontStyle.italic : FontStyle.normal,
+            fontStyle: gateway == PaymentGateway.esewa
+                ? FontStyle.italic
+                : FontStyle.normal,
             color: color,
           ),
         ),
@@ -498,11 +503,20 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   _buildDetailRow('Order', transaction.orderName),
                   _buildDetailRow('Type', transaction.type.displayName),
                   _buildDetailRow('Gateway', transaction.gateway.displayName),
-                  _buildDetailRow('Date', dateFormat.format(transaction.createdAt)),
+                  _buildDetailRow(
+                    'Date',
+                    dateFormat.format(transaction.createdAt),
+                  ),
                   if (transaction.transactionId != null)
-                    _buildDetailRow('Transaction ID', transaction.transactionId!),
+                    _buildDetailRow(
+                      'Transaction ID',
+                      transaction.transactionId!,
+                    ),
                   if (transaction.gatewayTransactionId != null)
-                    _buildDetailRow('Gateway Ref', transaction.gatewayTransactionId!),
+                    _buildDetailRow(
+                      'Gateway Ref',
+                      transaction.gatewayTransactionId!,
+                    ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -534,21 +548,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const Spacer(),
           Flexible(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               textAlign: TextAlign.right,
             ),
           ),

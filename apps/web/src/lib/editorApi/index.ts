@@ -25,6 +25,7 @@ export type {
   ApiResponse,
   PaginationInfo,
   // Dashboard & Stats
+  DashboardData,
   DashboardStats,
   MyWorkToday,
   NotificationsCount,
@@ -121,6 +122,7 @@ export {
 // Stats Functions
 // ============================================
 export {
+  getDashboardData,
   getEditorStats,
   getMyWorkToday,
   getNotificationsCount,

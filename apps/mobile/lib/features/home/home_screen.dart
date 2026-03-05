@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
@@ -10,6 +11,12 @@ import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/data/mock_filter_data.dart';
 import 'package:mobile/core/widgets/ad_banner_widget.dart';
 import 'package:mobile/core/services/ad_service.dart';
+import 'package:mobile/core/widgets/staggered_fade_in.dart';
+import 'package:mobile/core/widgets/tap_scale.dart';
+import 'package:mobile/core/widgets/search_suggestions_overlay.dart';
+import 'package:mobile/core/services/search_history_service.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:mobile/core/utils/skeleton_data.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(String query)? onSearch;
@@ -24,6 +31,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AdClient _adClient = AdClient();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final LayerLink _searchLayerLink = LayerLink();
+  final SearchSuggestionsController _suggestionsController =
+      SearchSuggestionsController();
 
   // State
   List<CategoryWithSubcategories> _categories = [];
@@ -38,17 +49,38 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchData();
+    _searchFocusNode.addListener(_onSearchFocusChanged);
   }
 
   @override
   void dispose() {
+    _searchFocusNode.removeListener(_onSearchFocusChanged);
+    _searchFocusNode.dispose();
+    _suggestionsController.hide();
     _searchController.dispose();
     super.dispose();
   }
 
+  void _onSearchFocusChanged() {
+    if (_searchFocusNode.hasFocus) {
+      _suggestionsController.show(
+        context: context,
+        layerLink: _searchLayerLink,
+        width: MediaQuery.of(context).size.width - 32,
+        textController: _searchController,
+        onSearch: _submitSearch,
+      );
+    } else {
+      _suggestionsController.hide();
+    }
+  }
+
   void _submitSearch() {
+    _suggestionsController.hide();
+    _searchFocusNode.unfocus();
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
+      SearchHistoryService.addSearch(query);
       widget.onSearch?.call(query);
     }
   }
@@ -89,44 +121,48 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       appBar: const MainAppBar(),
       drawer: const MainDrawer(),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
-          : RefreshIndicator(
-              onRefresh: _fetchData,
-              color: const Color(0xFF10B981),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // HERO SECTION with Gradient
-                    _buildHeroSection(context),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _fetchData();
+          HapticFeedback.mediumImpact();
+        },
+        color: const Color(0xFF10B981),
+        child: Skeletonizer(
+          enabled: _isLoading,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeroSection(context),
 
-                    // Browse Categories
-                    const SizedBox(height: 24),
-                    _buildSectionHeader("Browse Categories", ""),
-                    const SizedBox(height: 12),
-                    _buildCategoriesList(),
+                const SizedBox(height: 24),
+                _buildSectionHeader("Browse Categories", ""),
+                const SizedBox(height: 12),
+                _buildCategoriesList(),
 
-                    // Latest Ads
-                    const SizedBox(height: 24),
-                    _buildSectionHeader("Latest Ads", "View All Ads >"),
-                    const SizedBox(height: 12),
-                    _buildAdsGrid(_displayLatestAds),
-
-                    // Google Ad Banner (top)
-                    AdBannerWidget(adUnitId: AdService.homeBannerTopId),
-
-                    // Featured Ads Section
-                    const SizedBox(height: 24),
-                    _buildFeaturedHeader(),
-                    const SizedBox(height: 12),
-                    _buildFeaturedAdsGrid(_displayFeaturedAds),
-
-                    const SizedBox(height: 50), // Bottom padding
-                  ],
+                const SizedBox(height: 24),
+                _buildSectionHeader("Latest Ads", "View All Ads >"),
+                const SizedBox(height: 12),
+                _buildAdsGrid(
+                  _isLoading ? SkeletonData.fakeAds(4) : _displayLatestAds,
                 ),
-              ),
+
+                if (!_isLoading)
+                  AdBannerWidget(adUnitId: AdService.homeBannerTopId),
+
+                const SizedBox(height: 24),
+                _buildFeaturedHeader(),
+                const SizedBox(height: 12),
+                _buildFeaturedAdsGrid(
+                  _isLoading ? SkeletonData.fakeAds(4) : _displayFeaturedAds,
+                ),
+
+                const SizedBox(height: 50),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -136,11 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFF6366f1),
-            Color(0xFFA855F7),
-            Color(0xFFEC4899),
-          ],
+          colors: [Color(0xFF6366f1), Color(0xFFA855F7), Color(0xFFEC4899)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -167,29 +199,40 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
 
           // Search Bar
-          TextField(
-            controller: _searchController,
-            onSubmitted: (_) => _submitSearch(),
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white,
-              hintText: "Search for anything...",
-              hintStyle: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              suffixIcon: GestureDetector(
-                onTap: _submitSearch,
-                child: Container(
-                  margin: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981),
-                    borderRadius: BorderRadius.circular(6),
+          CompositedTransformTarget(
+            link: _searchLayerLink,
+            child: TextField(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              onSubmitted: (_) => _submitSearch(),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hintText: "Search for anything...",
+                hintStyle: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 0,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                suffixIcon: GestureDetector(
+                  onTap: _submitSearch,
+                  child: Container(
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(
+                      LucideIcons.search,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
-                  child: const Icon(LucideIcons.search, color: Colors.white, size: 20),
                 ),
               ),
             ),
@@ -236,13 +279,16 @@ class _HomeScreenState extends State<HomeScreen> {
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.only(left: 16),
       child: Row(
-        children: mergedCategories.map((cat) =>
-          _buildStaticEmojiCategoryItem(
-            cat['icon'] as String,
-            (cat['shortName'] ?? cat['name']) as String, // Use shortName for display
-            cat['slug'] as String,
-          )
-        ).toList(),
+        children: mergedCategories
+            .map(
+              (cat) => _buildStaticEmojiCategoryItem(
+                cat['icon'] as String,
+                (cat['shortName'] ?? cat['name'])
+                    as String, // Use shortName for display
+                cat['slug'] as String,
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -251,7 +297,9 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Returns hardcoded list + any new categories from API
   List<Map<String, dynamic>> _getMergedCategories() {
     // Start with hardcoded categories
-    final List<Map<String, dynamic>> merged = List.from(MockFilterData.categories);
+    final List<Map<String, dynamic>> merged = List.from(
+      MockFilterData.categories,
+    );
 
     // Get slugs from hardcoded categories for comparison
     final hardcodedSlugs = MockFilterData.categories
@@ -293,7 +341,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textDark)),
+          Text(
+            label,
+            style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textDark),
+          ),
         ],
       ),
     );
@@ -302,13 +353,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStaticEmojiCategoryItem(String emoji, String name, String slug) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
-      child: GestureDetector(
+      child: TapScale(
         onTap: () {
           // Find category ID from API categories by slug
-          final apiCat = _categories.cast<CategoryWithSubcategories?>().firstWhere(
-            (c) => c?.slug == slug,
-            orElse: () => null,
-          );
+          final apiCat = _categories
+              .cast<CategoryWithSubcategories?>()
+              .firstWhere((c) => c?.slug == slug, orElse: () => null);
           if (apiCat != null && widget.onCategoryTap != null) {
             widget.onCategoryTap!(apiCat.id, apiCat.name);
           }
@@ -322,17 +372,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 24),
-              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 24)),
             ),
             const SizedBox(height: 8),
             SizedBox(
               width: 70,
               child: Text(
                 name,
-                style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textDark),
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: AppTheme.textDark,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -370,7 +420,10 @@ class _HomeScreenState extends State<HomeScreen> {
               width: 60,
               child: Text(
                 category.name,
-                style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textDark),
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: AppTheme.textDark,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -384,12 +437,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAdsGrid(List<AdWithDetails> ads) {
     if (ads.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Center(
-          child: Text(
-            "No ads yet",
-            style: GoogleFonts.inter(color: Colors.grey[500]),
+      return StaggeredFadeIn(
+        index: 0,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: Text(
+              "No ads yet",
+              style: GoogleFonts.inter(color: Colors.grey[500]),
+            ),
           ),
         ),
       );
@@ -404,7 +460,16 @@ class _HomeScreenState extends State<HomeScreen> {
         childAspectRatio: 0.65, // Adjusted for more info content
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        children: ads.map((ad) => AdCard(ad: ad)).toList(),
+        children: ads
+            .asMap()
+            .entries
+            .map(
+              (entry) => StaggeredFadeIn(
+                index: entry.key,
+                child: RepaintBoundary(child: AdCard(ad: entry.value)),
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -441,12 +506,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFeaturedAdsGrid(List<AdWithDetails> ads) {
     if (ads.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Center(
-          child: Text(
-            "No featured ads yet",
-            style: GoogleFonts.inter(color: Colors.grey[500]),
+      return StaggeredFadeIn(
+        index: 0,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: Text(
+              "No featured ads yet",
+              style: GoogleFonts.inter(color: Colors.grey[500]),
+            ),
           ),
         ),
       );
@@ -461,17 +529,28 @@ class _HomeScreenState extends State<HomeScreen> {
         childAspectRatio: 0.65, // Unified aspect ratio
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        children: ads.map((ad) => AdCard(ad: ad)).toList(),
+        children: ads
+            .asMap()
+            .entries
+            .map(
+              (entry) => StaggeredFadeIn(
+                index: entry.key,
+                child: RepaintBoundary(child: AdCard(ad: entry.value)),
+              ),
+            )
+            .toList(),
       ),
     );
   }
 
   String _formatPrice(double? price) {
     if (price == null) return 'Contact for price';
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
+    final formatted = price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
     return 'Rs. $formatted';
   }
 }

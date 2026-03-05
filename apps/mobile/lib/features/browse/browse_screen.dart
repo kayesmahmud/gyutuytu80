@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/api/ad_client.dart';
@@ -7,6 +8,11 @@ import 'package:mobile/features/browse/browse_filter_modal.dart';
 import 'package:mobile/core/widgets/main_app_bar.dart';
 import 'package:mobile/core/widgets/main_drawer.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
+import 'package:mobile/core/widgets/staggered_fade_in.dart';
+import 'package:mobile/core/widgets/search_suggestions_overlay.dart';
+import 'package:mobile/core/services/search_history_service.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:mobile/core/utils/skeleton_data.dart';
 
 class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
@@ -19,6 +25,10 @@ class BrowseScreenState extends State<BrowseScreen> {
   final AdClient _adClient = AdClient();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final LayerLink _searchLayerLink = LayerLink();
+  final SearchSuggestionsController _suggestionsController =
+      SearchSuggestionsController();
 
   // State
   List<AdWithDetails> _ads = [];
@@ -28,6 +38,8 @@ class BrowseScreenState extends State<BrowseScreen> {
   int _currentPage = 1;
   int _totalPages = 1;
 
+  bool _showFab = false;
+
   // Filters
   SearchFilters _filters = SearchFilters();
 
@@ -36,17 +48,39 @@ class BrowseScreenState extends State<BrowseScreen> {
     super.initState();
     _fetchAds();
     _scrollController.addListener(_onScroll);
+    _searchFocusNode.addListener(_onSearchFocusChanged);
   }
 
   @override
   void dispose() {
+    _searchFocusNode.removeListener(_onSearchFocusChanged);
+    _searchFocusNode.dispose();
+    _suggestionsController.hide();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
+  void _onSearchFocusChanged() {
+    if (_searchFocusNode.hasFocus) {
+      _suggestionsController.show(
+        context: context,
+        layerLink: _searchLayerLink,
+        width: MediaQuery.of(context).size.width - 92,
+        textController: _searchController,
+        onSearch: _onSearch,
+      );
+    } else {
+      _suggestionsController.hide();
+    }
+  }
+
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    final show = _scrollController.offset > 200;
+    if (show != _showFab) setState(() => _showFab = show);
+
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       _loadMoreAds();
     }
   }
@@ -124,8 +158,14 @@ class BrowseScreenState extends State<BrowseScreen> {
   }
 
   void _onSearch() {
+    _suggestionsController.hide();
+    _searchFocusNode.unfocus();
+    final query = _searchController.text.trim();
+    if (query.isNotEmpty) {
+      SearchHistoryService.addSearch(query);
+    }
     setState(() {
-      _filters = _filters.copyWith(query: _searchController.text.trim());
+      _filters = _filters.copyWith(query: query);
     });
     _fetchAds(refresh: true);
   }
@@ -139,10 +179,9 @@ class BrowseScreenState extends State<BrowseScreen> {
   /// Called from HomeScreen category carousel to filter by category
   void filterByCategory(int categoryId, String categoryName) {
     _searchController.clear();
-    _applyFilters(SearchFilters(
-      categoryId: categoryId,
-      categoryName: categoryName,
-    ));
+    _applyFilters(
+      SearchFilters(categoryId: categoryId, categoryName: categoryName),
+    );
   }
 
   void _applyFilters(SearchFilters newFilters) {
@@ -173,28 +212,43 @@ class BrowseScreenState extends State<BrowseScreen> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: SizedBox(
-                            height: 48,
-                            child: TextField(
-                              controller: _searchController,
-                              onSubmitted: (_) => _onSearch(),
-                              decoration: InputDecoration(
-                                hintText: "Search for anything...",
-                                hintStyle: GoogleFonts.inter(color: Colors.grey[500]),
-                                filled: true,
-                                fillColor: Colors.grey[100],
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Color(0xFF10B981)),
+                          child: CompositedTransformTarget(
+                            link: _searchLayerLink,
+                            child: SizedBox(
+                              height: 48,
+                              child: TextField(
+                                controller: _searchController,
+                                focusNode: _searchFocusNode,
+                                onSubmitted: (_) => _onSearch(),
+                                decoration: InputDecoration(
+                                  hintText: "Search for anything...",
+                                  hintStyle: GoogleFonts.inter(
+                                    color: Colors.grey[500],
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey[100],
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 13,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF10B981),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -209,7 +263,10 @@ class BrowseScreenState extends State<BrowseScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: IconButton(
-                            icon: const Icon(LucideIcons.search, color: Colors.white),
+                            icon: const Icon(
+                              LucideIcons.search,
+                              color: Colors.white,
+                            ),
                             onPressed: _onSearch,
                           ),
                         ),
@@ -242,7 +299,9 @@ class BrowseScreenState extends State<BrowseScreen> {
                         _buildFilterChip(
                           context,
                           _filters.condition != null
-                              ? (_filters.condition == 'new' ? 'Brand New' : 'Used')
+                              ? (_filters.condition == 'new'
+                                    ? 'Brand New'
+                                    : 'Used')
                               : "Condition",
                           icon: LucideIcons.tag,
                           openSection: "Condition",
@@ -258,14 +317,18 @@ class BrowseScreenState extends State<BrowseScreen> {
                         InkWell(
                           onTap: () => _showFilterModal(context),
                           child: Container(
-                             width: 36,
-                             height: 36,
-                             margin: const EdgeInsets.only(left: 8),
-                             decoration: BoxDecoration(
-                               shape: BoxShape.circle,
-                               border: Border.all(color: Colors.grey[300]!),
-                             ),
-                             child: Icon(LucideIcons.slidersHorizontal, size: 18, color: Colors.grey[700]),
+                            width: 36,
+                            height: 36,
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: Icon(
+                              LucideIcons.slidersHorizontal,
+                              size: 18,
+                              color: Colors.grey[700],
+                            ),
                           ),
                         ),
                       ],
@@ -277,91 +340,120 @@ class BrowseScreenState extends State<BrowseScreen> {
             ),
 
             // Ad Grid or Loading/Error State
-            Expanded(
-              child: _buildBody(),
-            ),
+            Expanded(child: _buildBody()),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _scrollController.animateTo(
-            0,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        },
-        mini: true,
-        backgroundColor: Colors.red,
-        child: const Icon(LucideIcons.arrowUp, color: Colors.white),
+      floatingActionButton: IgnorePointer(
+        ignoring: !_showFab,
+        child: AnimatedSlide(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          offset: _showFab ? Offset.zero : const Offset(0, 2),
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 300),
+            opacity: _showFab ? 1.0 : 0.0,
+            child: FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Colors.red,
+              child: const Icon(LucideIcons.arrowUp, color: Colors.white),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF10B981)),
+      final fakeAds = SkeletonData.fakeAds(6);
+      return Skeletonizer(
+        enabled: true,
+        child: GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.65,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+          ),
+          itemCount: 6,
+          itemBuilder: (context, index) => AdCard(ad: fakeAds[index]),
+        ),
       );
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.alertCircle, size: 48, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: GoogleFonts.inter(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _fetchAds(refresh: true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
+      return StaggeredFadeIn(
+        index: 0,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(LucideIcons.alertCircle, size: 48, color: Colors.red[300]),
+              const SizedBox(height: 16),
+              Text(
+                _error!,
+                style: GoogleFonts.inter(color: Colors.grey[600]),
+                textAlign: TextAlign.center,
               ),
-              child: const Text('Retry', style: TextStyle(color: Colors.white)),
-            ),
-          ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => _fetchAds(refresh: true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                ),
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (_ads.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.inbox, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No ads found',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                color: Colors.grey[600],
+      return StaggeredFadeIn(
+        index: 0,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(LucideIcons.inbox, size: 48, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                'No ads found',
+                style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Try adjusting your filters',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey[500],
+              const SizedBox(height: 8),
+              Text(
+                'Try adjusting your filters',
+                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: () => _fetchAds(refresh: true),
+      onRefresh: () async {
+        await _fetchAds(refresh: true);
+        HapticFeedback.mediumImpact();
+      },
       color: const Color(0xFF10B981),
       child: GridView.builder(
         controller: _scrollController,
+        cacheExtent: 500,
         padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -382,7 +474,10 @@ class BrowseScreenState extends State<BrowseScreen> {
           }
 
           final ad = _ads[index];
-          return AdCard(ad: ad);
+          return StaggeredFadeIn(
+            index: index,
+            child: RepaintBoundary(child: AdCard(ad: ad)),
+          );
         },
       ),
     );
@@ -406,7 +501,13 @@ class BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  Widget _buildFilterChip(BuildContext context, String label, {IconData? icon, String? openSection, bool isActive = false}) {
+  Widget _buildFilterChip(
+    BuildContext context,
+    String label, {
+    IconData? icon,
+    String? openSection,
+    bool isActive = false,
+  }) {
     return InkWell(
       onTap: () => _showFilterModal(context, expandSection: openSection),
       child: Container(
@@ -423,7 +524,11 @@ class BrowseScreenState extends State<BrowseScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: isActive ? const Color(0xFF10B981) : Colors.grey[700]),
+              Icon(
+                icon,
+                size: 16,
+                color: isActive ? const Color(0xFF10B981) : Colors.grey[700],
+              ),
               const SizedBox(width: 6),
             ],
             Text(
@@ -435,11 +540,14 @@ class BrowseScreenState extends State<BrowseScreen> {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(LucideIcons.chevronDown, size: 16, color: isActive ? const Color(0xFF10B981) : Colors.grey[500]),
+            Icon(
+              LucideIcons.chevronDown,
+              size: 16,
+              color: isActive ? const Color(0xFF10B981) : Colors.grey[500],
+            ),
           ],
         ),
       ),
     );
   }
-
 }

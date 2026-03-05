@@ -12,17 +12,17 @@ const VALID_TIERS = ['default', 'electronics', 'vehicles', 'property'];
 export async function GET() {
   try {
     const mappings = await prisma.category_pricing_tiers.findMany({
-      where: { is_active: true },
       select: {
         id: true,
         category_id: true,
-        category_name: true,
         pricing_tier: true,
-        is_active: true,
         created_at: true,
         updated_at: true,
+        categories: {
+          select: { id: true, name: true },
+        },
       },
-      orderBy: { category_name: 'asc' },
+      orderBy: { category_id: 'asc' },
     });
 
     // Also get all root categories for the UI
@@ -40,9 +40,8 @@ export async function GET() {
     const transformedMappings = mappings.map((m) => ({
       id: m.id,
       categoryId: m.category_id,
-      categoryName: m.category_name,
+      categoryName: m.categories.name,
       pricingTier: m.pricing_tier,
-      isActive: m.is_active,
       createdAt: m.created_at,
       updatedAt: m.updated_at,
     }));
@@ -78,8 +77,7 @@ export async function GET() {
  * Requires: Editor or Super Admin role
  *
  * Body:
- * - category_name: string (required)
- * - category_id: number (optional)
+ * - category_id: number (required)
  * - pricing_tier: 'default' | 'electronics' | 'vehicles' | 'property' (required)
  */
 export async function POST(request: NextRequest) {
@@ -88,14 +86,14 @@ export async function POST(request: NextRequest) {
     const editor = await requireEditor(request);
 
     const body = await request.json();
-    const { category_name, category_id, pricing_tier } = body;
+    const { category_id, pricing_tier } = body;
 
     // Validate required fields
-    if (!category_name || !pricing_tier) {
+    if (!category_id || !pricing_tier) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Category name and pricing tier are required',
+          message: 'Category ID and pricing tier are required',
         },
         { status: 400 }
       );
@@ -112,50 +110,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if mapping already exists for this category
-    const existingMapping = await prisma.category_pricing_tiers.findFirst({
-      where: { category_name },
+    // Upsert: category_id is unique, so update if exists, create if not
+    const result = await prisma.category_pricing_tiers.upsert({
+      where: { category_id: parseInt(category_id, 10) },
+      update: {
+        pricing_tier,
+        updated_at: new Date(),
+      },
+      create: {
+        category_id: parseInt(category_id, 10),
+        pricing_tier,
+      },
+      include: {
+        categories: { select: { name: true } },
+      },
     });
 
-    let result;
-    if (existingMapping) {
-      // Update existing mapping
-      result = await prisma.category_pricing_tiers.update({
-        where: { id: existingMapping.id },
-        data: {
-          pricing_tier,
-          category_id: category_id || null,
-          is_active: true,
-          updated_at: new Date(),
-        },
-      });
-    } else {
-      // Create new mapping
-      result = await prisma.category_pricing_tiers.create({
-        data: {
-          category_name,
-          category_id: category_id || null,
-          pricing_tier,
-          is_active: true,
-        },
-      });
-    }
-
-    console.log(`✅ Category pricing tier ${existingMapping ? 'updated' : 'created'} by editor ${editor.userId}:`, result);
+    console.log(`✅ Category pricing tier upserted by editor ${editor.userId}:`, result);
 
     return NextResponse.json(
       {
         success: true,
-        message: `Category pricing tier ${existingMapping ? 'updated' : 'created'} successfully`,
+        message: 'Category pricing tier saved successfully',
         data: {
           id: result.id,
           categoryId: result.category_id,
-          categoryName: result.category_name,
+          categoryName: result.categories.name,
           pricingTier: result.pricing_tier,
-          isActive: result.is_active,
         },
       },
-      { status: existingMapping ? 200 : 201 }
+      { status: 200 }
     );
   } catch (error: unknown) {
     const err = error as Error;
@@ -192,7 +176,7 @@ export async function POST(request: NextRequest) {
  * Requires: Editor or Super Admin role
  *
  * Body:
- * - category_name: string (required)
+ * - category_id: number (required)
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -200,25 +184,21 @@ export async function DELETE(request: NextRequest) {
     const editor = await requireEditor(request);
 
     const body = await request.json();
-    const { category_name } = body;
+    const { category_id } = body;
 
-    if (!category_name) {
+    if (!category_id) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Category name is required',
+          message: 'Category ID is required',
         },
         { status: 400 }
       );
     }
 
-    // Soft delete by setting is_active to false
-    const result = await prisma.category_pricing_tiers.updateMany({
-      where: { category_name },
-      data: {
-        is_active: false,
-        updated_at: new Date(),
-      },
+    // Hard delete since there's no is_active column
+    const result = await prisma.category_pricing_tiers.deleteMany({
+      where: { category_id: parseInt(category_id, 10) },
     });
 
     if (result.count === 0) {
@@ -231,7 +211,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log(`✅ Category pricing tier deleted by editor ${editor.userId}: ${category_name}`);
+    console.log(`✅ Category pricing tier deleted by editor ${editor.userId}: category_id=${category_id}`);
 
     return NextResponse.json(
       {

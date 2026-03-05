@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
+import 'package:mobile/core/utils/page_transitions.dart';
 import 'package:mobile/features/shop/shop_screen.dart';
 
 class SellerCard extends StatelessWidget {
@@ -20,7 +22,7 @@ class SellerCard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
+          FadeScaleRoute(
             builder: (_) => ShopScreen(shopSlug: ad.effectiveShopSlug),
           ),
         );
@@ -45,7 +47,7 @@ class SellerCard extends StatelessWidget {
             CircleAvatar(
               radius: 28,
               backgroundImage: ad.userAvatar != null
-                  ? NetworkImage(ApiConfig.getAvatarUrl(ad.userAvatar))
+                  ? CachedNetworkImageProvider(ApiConfig.getAvatarUrl(ad.userAvatar))
                   : null,
               backgroundColor: Colors.grey[200],
               child: ad.userAvatar == null

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,6 +8,7 @@ import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/utils/page_transitions.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 
 class MyAdsScreen extends StatefulWidget {
@@ -15,7 +18,8 @@ class MyAdsScreen extends StatefulWidget {
   State<MyAdsScreen> createState() => _MyAdsScreenState();
 }
 
-class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStateMixin {
+class _MyAdsScreenState extends State<MyAdsScreen>
+    with SingleTickerProviderStateMixin {
   final AdClient _adClient = AdClient();
   late TabController _tabController;
 
@@ -24,7 +28,13 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
   String? _error;
 
   // Tab filters
-  static const List<String> _tabs = ['All', 'Active', 'Pending', 'Sold', 'Rejected'];
+  static const List<String> _tabs = [
+    'All',
+    'Active',
+    'Pending',
+    'Sold',
+    'Rejected',
+  ];
   static final Map<String, AdStatus?> _statusMap = {
     'All': null,
     'Active': AdStatus.active,
@@ -118,13 +128,19 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ad deleted successfully'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Ad deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.error ?? 'Failed to delete'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(response.error ?? 'Failed to delete'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -157,13 +173,19 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
         _fetchAds(); // Refresh to get updated status
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ad marked as sold!'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Ad marked as sold!'),
+              backgroundColor: Colors.green,
+            ),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.error ?? 'Failed to update'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(response.error ?? 'Failed to update'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -177,7 +199,10 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
       appBar: AppBar(
         title: Text(
           'My Ads',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.textDark),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textDark,
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -197,7 +222,10 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
               labelColor: AppTheme.primary,
               unselectedLabelColor: Colors.grey,
               indicatorColor: AppTheme.primary,
-              labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+              labelStyle: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
               tabs: _tabs.map((tab) {
                 final count = _statusCounts[tab] ?? 0;
                 return Tab(text: '$tab ($count)');
@@ -208,20 +236,27 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
           // Content
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  )
                 : _error != null
-                    ? _buildErrorState()
-                    : _filteredAds.isEmpty
-                        ? _buildEmptyState()
-                        : RefreshIndicator(
-                            onRefresh: _fetchAds,
-                            color: AppTheme.primary,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredAds.length,
-                              itemBuilder: (context, index) => _buildAdItem(_filteredAds[index]),
-                            ),
-                          ),
+                ? _buildErrorState()
+                : _filteredAds.isEmpty
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      await _fetchAds();
+                      HapticFeedback.mediumImpact();
+                    },
+                    color: AppTheme.primary,
+                    child: ListView.builder(
+                      cacheExtent: 500,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _filteredAds.length,
+                      itemBuilder: (context, index) =>
+                          _buildAdItem(_filteredAds[index]),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -284,22 +319,29 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            'No ads found',
-            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Start selling by posting your first ad!',
-            style: GoogleFonts.inter(color: Colors.grey[500]),
-          ),
-        ],
+    return StaggeredFadeIn(
+      index: 0,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No ads found',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Start selling by posting your first ad!',
+              style: GoogleFonts.inter(color: Colors.grey[500]),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -307,13 +349,17 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
   Widget _buildAdItem(AdWithDetails ad) {
     final imageUrl = ad.thumbnail != null
         ? ApiConfig.getAdImageUrl(ad.thumbnail)
-        : (ad.images.isNotEmpty ? ApiConfig.getAdImageUrl(ad.images.first) : null);
+        : (ad.images.isNotEmpty
+              ? ApiConfig.getAdImageUrl(ad.images.first)
+              : null);
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => AdDetailScreen(adId: ad.id, slug: ad.slug)),
+          FadeScaleRoute(
+            builder: (_) => AdDetailScreen(adId: ad.id, slug: ad.slug),
+          ),
         );
       },
       child: Container(
@@ -332,23 +378,35 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Image
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      color: Colors.grey[100],
-                      child: imageUrl != null
-                          ? CachedNetworkImage(
-                              imageUrl: imageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                              errorWidget: (context, url, error) =>
-                                  Icon(LucideIcons.image, color: Colors.grey[400]),
-                            )
-                          : Icon(LucideIcons.image, color: Colors.grey[400]),
+                  Hero(
+                    tag: 'ad-image-${ad.id}',
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        color: Colors.grey[100],
+                        child: imageUrl != null
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                fit: BoxFit.cover,
+                                memCacheWidth: 200,
+                                memCacheHeight: 200,
+                                fadeInDuration: const Duration(
+                                  milliseconds: 200,
+                                ),
+                                fadeOutDuration: const Duration(
+                                  milliseconds: 200,
+                                ),
+                                placeholder: (context, url) =>
+                                    Container(color: Colors.grey[100]),
+                                errorWidget: (context, url, error) => Icon(
+                                  LucideIcons.image,
+                                  color: Colors.grey[400],
+                                ),
+                              )
+                            : Icon(LucideIcons.image, color: Colors.grey[400]),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -360,7 +418,10 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
                       children: [
                         Text(
                           ad.title,
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -378,11 +439,18 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
                           children: [
                             _buildStatusBadge(ad.status.name),
                             const SizedBox(width: 8),
-                            Icon(LucideIcons.eye, size: 14, color: Colors.grey[500]),
+                            Icon(
+                              LucideIcons.eye,
+                              size: 14,
+                              color: Colors.grey[500],
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${ad.viewCount ?? 0}',
-                              style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                              ),
                             ),
                           ],
                         ),
@@ -392,19 +460,27 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
 
                   // Menu
                   PopupMenuButton<String>(
-                    icon: Icon(LucideIcons.moreVertical, color: Colors.grey[600]),
+                    icon: Icon(
+                      LucideIcons.moreVertical,
+                      color: Colors.grey[600],
+                    ),
                     onSelected: (value) {
                       switch (value) {
                         case 'view':
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => AdDetailScreen(adId: ad.id, slug: ad.slug)),
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  AdDetailScreen(adId: ad.id, slug: ad.slug),
+                            ),
                           );
                           break;
                         case 'edit':
                           // TODO: Navigate to edit screen
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Edit feature coming soon')),
+                            const SnackBar(
+                              content: Text('Edit feature coming soon'),
+                            ),
                           );
                           break;
                         case 'sold':
@@ -416,14 +492,23 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'view', child: Text('View Ad')),
+                      const PopupMenuItem(
+                        value: 'view',
+                        child: Text('View Ad'),
+                      ),
                       if (ad.status == AdStatus.active)
                         const PopupMenuItem(value: 'edit', child: Text('Edit')),
                       if (ad.status == AdStatus.active)
-                        const PopupMenuItem(value: 'sold', child: Text('Mark as Sold')),
+                        const PopupMenuItem(
+                          value: 'sold',
+                          child: Text('Mark as Sold'),
+                        ),
                       const PopupMenuItem(
                         value: 'delete',
-                        child: Text('Delete', style: TextStyle(color: Colors.red)),
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ],
                   ),
@@ -436,7 +521,9 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.grey[50],
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(12),
+                ),
               ),
               child: Row(
                 children: [
@@ -444,13 +531,19 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
                   const SizedBox(width: 4),
                   Text(
                     'Posted ${_formatDate(ad.createdAt)}',
-                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
                   ),
                   const Spacer(),
                   if (ad.categoryName != null)
                     Text(
                       ad.categoryName!,
-                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
                     ),
                 ],
               ),
@@ -512,10 +605,12 @@ class _MyAdsScreenState extends State<MyAdsScreen> with SingleTickerProviderStat
 
   String _formatPrice(double? price) {
     if (price == null) return 'Contact for price';
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
+    final formatted = price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
     return 'Rs. $formatted';
   }
 

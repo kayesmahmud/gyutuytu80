@@ -1,7 +1,9 @@
 export interface DashboardStats {
+  totalUsers?: number;
   totalAds: number;
   pendingAds: number;
-  activeAds: number;
+  activeAds?: number;
+  approvedAds?: number;
   rejectedAds: number;
   pendingVerifications: number;
   avgResponseTime?: string;

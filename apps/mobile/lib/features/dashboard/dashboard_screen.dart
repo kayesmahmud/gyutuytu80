@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -11,6 +12,7 @@ import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 import 'package:mobile/features/main_nav/main_nav_screen.dart';
 import 'package:mobile/features/promotion/promote_ad_screen.dart';
+import 'package:mobile/core/widgets/staggered_fade_in.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -109,13 +111,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ad deleted successfully'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Ad deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.error ?? 'Failed to delete'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(response.error ?? 'Failed to delete'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -148,13 +156,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _fetchAds();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ad marked as sold!'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Ad marked as sold!'),
+              backgroundColor: Colors.green,
+            ),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.error ?? 'Failed to update'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(response.error ?? 'Failed to update'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -164,7 +178,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final userName = authProvider.user?['fullName'] ?? authProvider.user?['businessName'] ?? 'User';
+    final userName =
+        authProvider.user?['fullName'] ??
+        authProvider.user?['businessName'] ??
+        'User';
     final counts = _statusCounts;
 
     return Scaffold(
@@ -176,94 +193,111 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _buildTopBar(),
                   _buildGradientHeader(userName, counts),
                   const Expanded(
-                    child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+                    child: Center(
+                      child: CircularProgressIndicator(color: AppTheme.primary),
+                    ),
                   ),
                 ],
               )
             : _error != null
-                ? Column(
-                    children: [
-                      _buildTopBar(),
-                      _buildGradientHeader(userName, counts),
-                      Expanded(child: _buildErrorState()),
-                    ],
-                  )
-                : RefreshIndicator(
-                    onRefresh: _fetchAds,
-                    color: AppTheme.primary,
-                    child: CustomScrollView(
-                      slivers: [
-                        // Top App Bar
-                        SliverToBoxAdapter(child: _buildTopBar()),
+            ? Column(
+                children: [
+                  _buildTopBar(),
+                  _buildGradientHeader(userName, counts),
+                  Expanded(child: _buildErrorState()),
+                ],
+              )
+            : RefreshIndicator(
+                onRefresh: () async {
+                  await _fetchAds();
+                  HapticFeedback.mediumImpact();
+                },
+                color: AppTheme.primary,
+                child: CustomScrollView(
+                  slivers: [
+                    // Top App Bar
+                    SliverToBoxAdapter(child: _buildTopBar()),
 
-                        // Gradient Header with Stats
-                        SliverToBoxAdapter(child: _buildGradientHeader(userName, counts)),
+                    // Gradient Header with Stats
+                    SliverToBoxAdapter(
+                      child: _buildGradientHeader(userName, counts),
+                    ),
 
-                        // White card section with rounded top
-                        SliverToBoxAdapter(
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // My Listings Header
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'My Listings',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.textDark,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Manage and track all your advertisements',
-                                        style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // Filter Chips (2x2 grid)
-                                _buildFilterChips(counts),
-
-                                const SizedBox(height: 8),
-                              ],
-                            ),
+                    // White card section with rounded top
+                    SliverToBoxAdapter(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(24),
                           ),
                         ),
-
-                        // Ads List (or empty state)
-                        if (_filteredAds.isEmpty)
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Container(
-                              color: Colors.white,
-                              child: _buildEmptyState(),
-                            ),
-                          )
-                        else
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) => Container(
-                                color: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: _buildAdItem(_filteredAds[index]),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // My Listings Header
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                24,
+                                20,
+                                16,
                               ),
-                              childCount: _filteredAds.length,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'My Listings',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.textDark,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Manage and track all your advertisements',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                      ],
+
+                            // Filter Chips (2x2 grid)
+                            _buildFilterChips(counts),
+
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+
+                    // Ads List (or empty state)
+                    if (_filteredAds.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Container(
+                          color: Colors.white,
+                          child: _buildEmptyState(),
+                        ),
+                      )
+                    else
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => Container(
+                            color: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _buildAdItem(_filteredAds[index]),
+                          ),
+                          childCount: _filteredAds.length,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
@@ -285,7 +319,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             height: 32,
             errorBuilder: (context, error, stackTrace) => Text(
               "THULO BAZAAR",
-              style: GoogleFonts.poppins(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
+              style: GoogleFonts.poppins(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           const Spacer(),
@@ -319,7 +357,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 4),
           Text(
             'Welcome back, $userName!',
-            style: GoogleFonts.inter(fontSize: 15, color: Colors.white.withOpacity(0.9)),
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              color: Colors.white.withOpacity(0.9),
+            ),
           ),
           const SizedBox(height: 20),
 
@@ -408,18 +449,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // First row: Active, Pending
           Row(
             children: [
-              Expanded(child: _buildFilterChip('Active', counts['Active'] ?? 0, LucideIcons.checkCircle, Colors.green)),
+              Expanded(
+                child: _buildFilterChip(
+                  'Active',
+                  counts['Active'] ?? 0,
+                  LucideIcons.checkCircle,
+                  Colors.green,
+                ),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: _buildFilterChip('Pending', counts['Pending'] ?? 0, LucideIcons.clock, Colors.orange)),
+              Expanded(
+                child: _buildFilterChip(
+                  'Pending',
+                  counts['Pending'] ?? 0,
+                  LucideIcons.clock,
+                  Colors.orange,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           // Second row: Rejected, Sold
           Row(
             children: [
-              Expanded(child: _buildFilterChip('Rejected', counts['Rejected'] ?? 0, LucideIcons.x, Colors.red)),
+              Expanded(
+                child: _buildFilterChip(
+                  'Rejected',
+                  counts['Rejected'] ?? 0,
+                  LucideIcons.x,
+                  Colors.red,
+                ),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: _buildFilterChip('Sold', counts['Sold'] ?? 0, LucideIcons.check, Colors.purple)),
+              Expanded(
+                child: _buildFilterChip(
+                  'Sold',
+                  counts['Sold'] ?? 0,
+                  LucideIcons.check,
+                  Colors.purple,
+                ),
+              ),
             ],
           ),
         ],
@@ -427,7 +496,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, int count, IconData icon, Color activeColor) {
+  Widget _buildFilterChip(
+    String label,
+    int count,
+    IconData icon,
+    Color activeColor,
+  ) {
     final isSelected = _selectedFilter == label;
 
     return GestureDetector(
@@ -485,22 +559,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            'No ads found',
-            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Start selling by posting your first ad!',
-            style: GoogleFonts.inter(color: Colors.grey[500]),
-          ),
-        ],
+    return StaggeredFadeIn(
+      index: 0,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No ads found',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Start selling by posting your first ad!',
+              style: GoogleFonts.inter(color: Colors.grey[500]),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -508,7 +589,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildAdItem(AdWithDetails ad) {
     final imageUrl = ad.thumbnail != null
         ? ApiConfig.getAdImageUrl(ad.thumbnail)
-        : (ad.images.isNotEmpty ? ApiConfig.getAdImageUrl(ad.images.first) : null);
+        : (ad.images.isNotEmpty
+              ? ApiConfig.getAdImageUrl(ad.images.first)
+              : null);
 
     final isActive = ad.status == AdStatus.active;
 
@@ -545,9 +628,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ? CachedNetworkImage(
                           imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
+                          memCacheWidth: 200,
+                          memCacheHeight: 200,
+                          fadeInDuration: const Duration(milliseconds: 200),
+                          fadeOutDuration: const Duration(milliseconds: 200),
+                          placeholder: (context, url) =>
+                              Container(color: Colors.grey[100]),
                           errorWidget: (context, url, error) =>
                               Icon(LucideIcons.image, color: Colors.grey[400]),
                         )
@@ -576,22 +662,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         _buildStatusBadge(ad.status.name),
                         const SizedBox(width: 10),
-                        Icon(LucideIcons.calendar, size: 13, color: Colors.grey[500]),
+                        Icon(
+                          LucideIcons.calendar,
+                          size: 13,
+                          color: Colors.grey[500],
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           _formatDate(ad.createdAt),
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(LucideIcons.eye, size: 14, color: Colors.grey[500]),
+                        Icon(
+                          LucideIcons.eye,
+                          size: 14,
+                          color: Colors.grey[500],
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           _formatCompactNumber(ad.viewCount ?? 0),
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
                         ),
                       ],
                     ),
@@ -683,7 +783,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => AdDetailScreen(adId: ad.id, slug: ad.slug)),
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            AdDetailScreen(adId: ad.id, slug: ad.slug),
+                      ),
                     );
                   },
                 ),
@@ -880,7 +983,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Navigate to post ad screen
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const MainNavScreen(initialIndex: 4)), // Post Ad
+          MaterialPageRoute(
+            builder: (_) => const MainNavScreen(initialIndex: 4),
+          ), // Post Ad
           (route) => false,
         );
       },
@@ -915,10 +1020,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String _formatPrice(double? price) {
     if (price == null) return 'Contact for price';
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
+    final formatted = price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
     return 'Rs. $formatted';
   }
 

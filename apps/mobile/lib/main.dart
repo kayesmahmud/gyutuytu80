@@ -9,6 +9,7 @@ import 'core/providers/auth_provider.dart';
 import 'core/providers/chat_provider.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/ad_service.dart';
+import 'core/widgets/connectivity_wrapper.dart';
 import 'features/main_nav/main_nav_screen.dart';
 
 /// Global navigator key for notification navigation
@@ -78,19 +79,19 @@ void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
     case '/chat':
       final conversationId = data?['conversationId'] as int?;
       if (conversationId != null) {
-        navigatorKey.currentState?.pushNamed('/chat', arguments: {
-          'conversationId': conversationId,
-          ...?data,
-        });
+        navigatorKey.currentState?.pushNamed(
+          '/chat',
+          arguments: {'conversationId': conversationId, ...?data},
+        );
       }
       break;
     case '/ad':
       final adId = data?['adId'] as int?;
       if (adId != null) {
-        navigatorKey.currentState?.pushNamed('/ad', arguments: {
-          'adId': adId,
-          ...?data,
-        });
+        navigatorKey.currentState?.pushNamed(
+          '/ad',
+          arguments: {'adId': adId, ...?data},
+        );
       }
       break;
     case '/verification':
@@ -150,7 +151,7 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
       theme: AppTheme.lightTheme,
       home: const MainNavScreen(),
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => ConnectivityWrapper(child: child!),
     );
   }
 }
-

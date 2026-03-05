@@ -5,17 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { useSupportSocket } from '@/hooks/useSupportSocket';
 import {
-  getEditorStats,
-  getPendingVerifications,
-  getMyWorkToday,
+  getDashboardData,
   getEditorProfile,
-  getReportedAdsCount,
-  getNotificationsCount,
-  getSystemAlerts,
-  getAvgResponseTime,
-  getTrends,
   getSupportChatCount,
-  getAvgResponseTimeTrend,
 } from '@/lib/editorApi';
 import { getEditorNavSections } from '@/lib/navigation';
 import type { DashboardStats, MyWorkToday, BadgeCounts, SystemAlert, QuickActionConfig } from './types';
@@ -62,98 +54,54 @@ export function useEditorDashboard(lang: string): UseEditorDashboardReturn {
   }, [logout, router, lang]);
 
   const loadDashboardData = useCallback(async () => {
-    // Helper to safely call an API and return null on failure
-    const safeCall = async <T,>(fn: () => Promise<T>, name: string): Promise<T | null> => {
-      try {
-        return await fn();
-      } catch (error) {
-        console.warn(`[Dashboard] ${name} failed:`, error);
-        return null;
+    try {
+      // 2 parallel requests instead of 11 sequential ones
+      const [dashboardResponse, profileResponse] = await Promise.all([
+        getDashboardData().catch(() => null),
+        getEditorProfile().catch(() => null),
+      ]);
+
+      // Process profile (avatar + last login)
+      if (profileResponse?.success) {
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        if (profileResponse.data.avatar) {
+          setAvatarUrl(`${apiBase}/uploads/avatars/${profileResponse.data.avatar}`);
+        }
+        const sessionLastLogin = (staff as any)?.lastLogin;
+        const profileLastLogin = profileResponse.data.lastLogin;
+        setLastLogin(sessionLastLogin || profileLastLogin || null);
+      } else if ((staff as any)?.lastLogin) {
+        setLastLogin((staff as any).lastLogin);
       }
-    };
 
-    // CRITICAL: Fetch profile first for avatar
-    const profileResponse = await safeCall(() => getEditorProfile(), 'getEditorProfile');
-    if (profileResponse?.success) {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      if (profileResponse.data.avatar) {
-        setAvatarUrl(`${apiBase}/uploads/avatars/${profileResponse.data.avatar}`);
+      // Process combined dashboard data
+      if (dashboardResponse?.success) {
+        const d = dashboardResponse.data;
+
+        setStats({
+          ...d.stats,
+          avgResponseTime: d.stats.avgResponseTime,
+          pendingChange: d.stats.pendingChange,
+          verificationsChange: d.stats.verificationsChange,
+        });
+
+        setBadgeCounts(d.badgeCounts);
+        setNotificationCount(d.notifications.count);
+        setMyWorkToday(d.myWorkToday);
+        setAvgResponseTimeTrendText(d.avgResponseTimeTrend.formattedText);
+
+        if (d.systemAlert) {
+          setSystemAlert({
+            message: d.systemAlert.message,
+            type: d.systemAlert.type === 'danger' ? 'error' : d.systemAlert.type as SystemAlert['type'],
+          });
+        }
+      } else {
+        setStats(DEFAULT_STATS);
       }
-      const sessionLastLogin = (staff as any)?.lastLogin;
-      const profileLastLogin = profileResponse.data.lastLogin;
-      setLastLogin(sessionLastLogin || profileLastLogin || null);
-    } else if ((staff as any)?.lastLogin) {
-      setLastLogin((staff as any).lastLogin);
-    }
-
-    // Fetch dashboard stats
-    const statsResponse = await safeCall(() => getEditorStats(), 'getEditorStats');
-    const avgResponseTimeResponse = await safeCall(() => getAvgResponseTime(), 'getAvgResponseTime');
-    const trendsResponse = await safeCall(() => getTrends(), 'getTrends');
-
-    if (statsResponse?.success) {
-      setStats({
-        ...statsResponse.data,
-        avgResponseTime: avgResponseTimeResponse?.success ? avgResponseTimeResponse.data.avgResponseTime : 'N/A',
-        pendingChange: trendsResponse?.success ? trendsResponse.data.pendingChange : '0%',
-        verificationsChange: trendsResponse?.success ? trendsResponse.data.verificationsChange : '0%',
-      });
-    } else {
+    } catch (error) {
+      console.warn('[Dashboard] Failed to load dashboard data:', error);
       setStats(DEFAULT_STATS);
-    }
-
-    // Fetch verification counts for badges
-    const verificationsResponse = await safeCall(() => getPendingVerifications(), 'getPendingVerifications');
-    const supportChatResponse = await safeCall(() => getSupportChatCount(), 'getSupportChatCount');
-
-    if (verificationsResponse?.success) {
-      const businessCount = verificationsResponse.data.filter((v: any) => v.type === 'business').length;
-      const individualCount = verificationsResponse.data.filter((v: any) => v.type === 'individual').length;
-
-      setBadgeCounts((prev) => ({
-        ...prev,
-        pendingAds: statsResponse?.data?.pendingAds || 0,
-        businessVerifications: businessCount,
-        individualVerifications: individualCount,
-        supportChat: supportChatResponse?.success ? supportChatResponse.data.count : 0,
-      }));
-    }
-
-    // Fetch reported ads count
-    const reportedAdsResponse = await safeCall(() => getReportedAdsCount(), 'getReportedAdsCount');
-    if (reportedAdsResponse?.success) {
-      setBadgeCounts((prev) => ({
-        ...prev,
-        reportedAds: reportedAdsResponse.data.count,
-      }));
-    }
-
-    // Fetch notifications count
-    const notificationsResponse = await safeCall(() => getNotificationsCount(), 'getNotificationsCount');
-    if (notificationsResponse?.success) {
-      setNotificationCount(notificationsResponse.data.count);
-    }
-
-    // Fetch system alerts
-    const systemAlertsResponse = await safeCall(() => getSystemAlerts(), 'getSystemAlerts');
-    if (systemAlertsResponse?.success && systemAlertsResponse.data) {
-      const alertData = systemAlertsResponse.data as any;
-      setSystemAlert({
-        message: alertData.message,
-        type: alertData.type === 'danger' ? 'error' : alertData.type,
-      });
-    }
-
-    // Fetch avg response time trend
-    const avgResponseTimeTrendResponse = await safeCall(() => getAvgResponseTimeTrend(), 'getAvgResponseTimeTrend');
-    if (avgResponseTimeTrendResponse?.success) {
-      setAvgResponseTimeTrendText(avgResponseTimeTrendResponse.data.formattedText);
-    }
-
-    // Fetch "My Work Today" stats
-    const myWorkResponse = await safeCall(() => getMyWorkToday(), 'getMyWorkToday');
-    if (myWorkResponse?.success) {
-      setMyWorkToday(myWorkResponse.data);
     }
 
     setLoading(false);

@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +21,7 @@ import '../../core/widgets/location_picker.dart';
 import '../auth/signin_screen.dart';
 import '../auth/signup_screen.dart';
 import 'package:mobile/core/widgets/login_required_widget.dart';
+import 'package:mobile/core/utils/page_transitions.dart';
 import '../ad_detail/ad_detail_screen.dart';
 import 'package:intl/intl.dart';
 import '../main_nav/main_nav_screen.dart'; // For restarting app on logout
@@ -30,7 +33,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
   final _authClient = AuthClient();
   final _favoritesClient = FavoritesClient();
   bool isLoggedIn = false;
@@ -87,22 +91,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Future<void> _removeFavorite(int adId) async {
+    final removedIndex = _favorites.indexWhere((f) => f.adId == adId);
+    if (removedIndex == -1) return;
+    final removedItem = _favorites[removedIndex];
+    setState(() => _favorites.removeAt(removedIndex)); // Optimistic
+
     final response = await _favoritesClient.removeFromFavorites(adId);
-    if (response.success) {
-      setState(() {
-        _favorites.removeWhere((f) => f.adId == adId);
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Removed from saved ads'), backgroundColor: Colors.green),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response.error ?? 'Failed to remove'), backgroundColor: Colors.red),
-        );
-      }
+    if (!response.success && mounted) {
+      setState(() => _favorites.insert(removedIndex, removedItem)); // Rollback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.error ?? 'Failed to remove'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -125,8 +127,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   void _handleLogout() async {
     await context.read<AuthProvider>().logout();
     if (mounted) {
-       // Navigate to Home or Stay on Guest Profile - reset to MainNav
-       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const MainNavScreen()), (route) => false);
+      // Navigate to Home or Stay on Guest Profile - reset to MainNav
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavScreen()),
+        (route) => false,
+      );
     }
   }
 
@@ -156,11 +162,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    
+
     if (authProvider.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (!authProvider.isLoggedIn) {
@@ -168,16 +172,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         body: LoginRequiredWidget(
           icon: LucideIcons.user,
           title: 'Login to View Profile',
-          subtitle: 'Sign in to manage your profile,\nads, and account settings',
+          subtitle:
+              'Sign in to manage your profile,\nads, and account settings',
         ),
       );
     }
-    
+
     // Ensure controllers are populated if not already (e.g. initial load)
     if (_nameController.text.isEmpty && authProvider.user != null) {
-       _nameController.text = authProvider.user!['fullName'] ?? '';
-       _emailController.text = authProvider.user!['email'] ?? '';
-       _phoneController.text = authProvider.user!['phone'] ?? '';
+      _nameController.text = authProvider.user!['fullName'] ?? '';
+      _emailController.text = authProvider.user!['email'] ?? '';
+      _phoneController.text = authProvider.user!['phone'] ?? '';
     }
 
     _user = authProvider.user; // Update local ref for build methods
@@ -195,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               constraints: const BoxConstraints(minHeight: 500),
               child: _buildTabContent(),
             ),
-             const SizedBox(height: 100), // Bottom padding
+            const SizedBox(height: 100), // Bottom padding
           ],
         ),
       ),
@@ -206,13 +211,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   AppBar _buildGuestAppBar() {
     return AppBar(
-      title: Text("Profile", style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+      title: Text(
+        "Profile",
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.bold,
+          color: AppTheme.textDark,
+        ),
+      ),
       centerTitle: false,
       backgroundColor: Colors.white,
       elevation: 0,
-       actions: [
-          IconButton(onPressed: () {}, icon: const Icon(LucideIcons.settings, color: Colors.black)),
-        ],
+      actions: [
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(LucideIcons.settings, color: Colors.black),
+        ),
+      ],
     );
   }
 
@@ -223,53 +237,99 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           _buildGuestHeaderCard(context),
           const SizedBox(height: 24),
           _buildSectionHeader("Account Settings"),
-          _buildMenuItem(context, icon: LucideIcons.settings, title: "Settings", onTap: () {}),
-          _buildMenuItem(context, icon: LucideIcons.helpCircle, title: "Help Center", onTap: () {}),
+          _buildMenuItem(
+            context,
+            icon: LucideIcons.settings,
+            title: "Settings",
+            onTap: () {},
+          ),
+          _buildMenuItem(
+            context,
+            icon: LucideIcons.helpCircle,
+            title: "Help Center",
+            onTap: () {},
+          ),
         ],
       ),
     );
   }
 
   Widget _buildGuestHeaderCard(BuildContext context) {
-     return Container(
+    return Container(
       color: Colors.white,
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ),
             child: const Icon(LucideIcons.user, size: 48, color: Colors.grey),
           ),
           const SizedBox(height: 16),
-          Text("Welcome to Thulo Bazaar", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+          Text(
+            "Welcome to Thulo Bazaar",
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textDark,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text("Log in to manage your ads and messages", textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600])),
+          Text(
+            "Log in to manage your ads and messages",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+          ),
           const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignInScreen())),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignInScreen()),
+                  ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppTheme.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: Text("Sign In", style: GoogleFonts.inter(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+                  child: Text(
+                    "Sign In",
+                    style: GoogleFonts.inter(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignUpScreen())),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
                   ),
-                  child: Text("Sign Up", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: Text(
+                    "Sign Up",
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -285,9 +345,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     final String? avatar = _user?['avatar'];
     if (kDebugMode) developer.log('User Data: $_user', name: 'ProfileScreen');
     final String fullName = _user?['fullName'] ?? 'User';
-    if (kDebugMode) developer.log('Rendered Name: $fullName', name: 'ProfileScreen');
-    final String createdAt = _user?['createdAt'] != null 
-        ? "Member since ${DateFormat('MMM yyyy').format(DateTime.parse(_user!['createdAt']))}" 
+    if (kDebugMode)
+      developer.log('Rendered Name: $fullName', name: 'ProfileScreen');
+    final String createdAt = _user?['createdAt'] != null
+        ? "Member since ${DateFormat('MMM yyyy').format(DateTime.parse(_user!['createdAt']))}"
         : "Member since 2025";
 
     return Container(
@@ -320,7 +381,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       // From bottom nav — go to home tab
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (_) => const MainNavScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const MainNavScreen(),
+                        ),
                         (route) => false,
                       );
                     }
@@ -330,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
             ),
           ),
-          
+
           // Profile Info Part (Overlapping)
           Transform.translate(
             offset: const Offset(0, -40), // Move up to overlap gradient
@@ -338,37 +401,58 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               children: [
                 // Avatar with White Border
                 Container(
-                   padding: const EdgeInsets.all(4), // White border thickness
-                   decoration: const BoxDecoration(
-                     color: Colors.white,
-                     shape: BoxShape.circle,
-                   ),
-                   child: Container(
-                     width: 80,
-                     height: 80,
-                     decoration: BoxDecoration(
-                       shape: BoxShape.circle,
-                       color: Colors.white,
-                       border: Border.all(color: Colors.grey[200]!),
-                       boxShadow: [
-                         BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                       ],
-                     ),
-                     child: ClipOval(
-                       child: avatar != null && ApiConfig.getAvatarUrl(avatar).isNotEmpty
+                  padding: const EdgeInsets.all(4), // White border thickness
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey[200]!),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child:
+                          avatar != null &&
+                              ApiConfig.getAvatarUrl(avatar).isNotEmpty
                           ? CachedNetworkImage(
                               imageUrl: ApiConfig.getAvatarUrl(avatar),
                               fit: BoxFit.cover,
                               width: 80,
                               height: 80,
-                              placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
-                              errorWidget: (context, url, error) => const Icon(LucideIcons.user, color: Colors.grey, size: 40),
+                              memCacheWidth: 200,
+                              memCacheHeight: 200,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              fadeOutDuration: const Duration(
+                                milliseconds: 200,
+                              ),
+                              placeholder: (context, url) =>
+                                  Container(color: Colors.grey[100]),
+                              errorWidget: (context, url, error) => const Icon(
+                                LucideIcons.user,
+                                color: Colors.grey,
+                                size: 40,
+                              ),
                             )
-                          : const Icon(LucideIcons.user, color: Colors.grey, size: 40),
-                     ),
-                   ),
+                          : const Icon(
+                              LucideIcons.user,
+                              color: Colors.grey,
+                              size: 40,
+                            ),
+                    ),
+                  ),
                 ),
-                
+
                 const SizedBox(height: 12),
                 Text(
                   fullName,
@@ -383,20 +467,30 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.purple[50],
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         "Business Account", // Dynamic?
-                        style: GoogleFonts.inter(color: Colors.purple, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.inter(
+                          color: Colors.purple,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       createdAt,
-                      style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 12),
+                      style: GoogleFonts.inter(
+                        color: Colors.grey[500],
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -456,14 +550,29 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Full Name
-          Text("Full Name", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey[700])),
+          Text(
+            "Full Name",
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -471,9 +580,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           // Email Address
           Row(
             children: [
-              Text("Email Address", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey[700])),
+              Text(
+                "Email Address",
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
               const SizedBox(width: 4),
-              Text("(Cannot be changed)", style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+              Text(
+                "(Cannot be changed)",
+                style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -483,15 +601,30 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.grey[50],
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[200]!)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
             ),
           ),
           const SizedBox(height: 20),
 
           // Phone Number
-          Text("Phone Number", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey[700])),
+          Text(
+            "Phone Number",
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -502,20 +635,50 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             ),
             child: Row(
               children: [
-                const Icon(LucideIcons.checkCircle, color: Color(0xFF10B981), size: 20),
+                const Icon(
+                  LucideIcons.checkCircle,
+                  color: Color(0xFF10B981),
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                Text(_phoneController.text, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+                Text(
+                  _phoneController.text,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textDark,
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Text("Verified", style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: const Color(0xFF10B981), fontSize: 13)),
+                Text(
+                  "Verified",
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF10B981),
+                    fontSize: 13,
+                  ),
+                ),
                 const Spacer(),
-                Text("Change", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.primary, fontSize: 13)),
+                Text(
+                  "Change",
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primary,
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 20),
 
           // Location
-          Text("Location", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey[700])),
+          Text(
+            "Location",
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
           const SizedBox(height: 8),
           GestureDetector(
             onTap: _openLocationPicker,
@@ -532,15 +695,31 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _selectedLocation?.shortDisplayName ?? _user?['locationName'] ?? "Select Location",
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: AppTheme.textDark),
+                      _selectedLocation?.shortDisplayName ??
+                          _user?['locationName'] ??
+                          "Select Location",
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textDark,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text("Change", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.primary, fontSize: 13)),
+                  Text(
+                    "Change",
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary,
+                      fontSize: 13,
+                    ),
+                  ),
                   const SizedBox(width: 4),
-                  Icon(LucideIcons.chevronRight, size: 12, color: AppTheme.primary),
+                  Icon(
+                    LucideIcons.chevronRight,
+                    size: 12,
+                    color: AppTheme.primary,
+                  ),
                 ],
               ),
             ),
@@ -556,9 +735,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     side: BorderSide(color: Colors.grey[300]!),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey[700], fontWeight: FontWeight.w600, fontSize: 16)),
+                  child: Text(
+                    "Cancel",
+                    style: GoogleFonts.inter(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -568,27 +756,37 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     final newName = _nameController.text.trim();
                     if (newName.isEmpty) return;
                     try {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saving changes...')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Saving changes...')),
+                      );
 
                       // Build update payload
                       final updateData = <String, dynamic>{'fullName': newName};
 
                       // Add location if selected
                       if (_selectedLocation?.finalLocationId != null) {
-                        updateData['locationId'] = _selectedLocation!.finalLocationId;
+                        updateData['locationId'] =
+                            _selectedLocation!.finalLocationId;
                       }
 
-                      await context.read<AuthProvider>().updateProfile(updateData);
+                      await context.read<AuthProvider>().updateProfile(
+                        updateData,
+                      );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: Colors.green),
+                          const SnackBar(
+                            content: Text('Profile updated successfully!'),
+                            backgroundColor: Colors.green,
+                          ),
                         );
                       }
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to update: $e')),
+                        );
                       }
                     }
                   },
@@ -596,9 +794,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     backgroundColor: const Color(0xFFF48FB1),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: Text("Save Changes", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
+                  child: Text(
+                    "Save Changes",
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -610,14 +817,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             width: double.infinity,
             child: TextButton(
               onPressed: _handleLogout,
-              child: Text("Log Out", style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.w600, fontSize: 15)),
+              child: Text(
+                "Log Out",
+                style: GoogleFonts.inter(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
 
   Widget _buildSecurityTab() {
     final bool isPhoneVerified = _user?['phoneVerified'] ?? false;
@@ -632,16 +845,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isPhoneVerified ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+              color: isPhoneVerified
+                  ? Colors.green.withOpacity(0.1)
+                  : Colors.orange.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isPhoneVerified ? Colors.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3),
+                color: isPhoneVerified
+                    ? Colors.green.withOpacity(0.3)
+                    : Colors.orange.withOpacity(0.3),
               ),
             ),
             child: Row(
               children: [
                 Icon(
-                  isPhoneVerified ? LucideIcons.shieldCheck : LucideIcons.alertTriangle,
+                  isPhoneVerified
+                      ? LucideIcons.shieldCheck
+                      : LucideIcons.alertTriangle,
                   color: isPhoneVerified ? Colors.green : Colors.orange,
                   size: 32,
                 ),
@@ -651,10 +870,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isPhoneVerified ? 'Phone Verified' : 'Verify Your Phone',
+                        isPhoneVerified
+                            ? 'Phone Verified'
+                            : 'Verify Your Phone',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: isPhoneVerified ? Colors.green[800] : Colors.orange[800],
+                          color: isPhoneVerified
+                              ? Colors.green[800]
+                              : Colors.orange[800],
                           fontSize: 16,
                         ),
                       ),
@@ -662,7 +885,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         Text(
                           phone,
                           style: TextStyle(
-                            color: isPhoneVerified ? Colors.green[800] : Colors.orange[800],
+                            color: isPhoneVerified
+                                ? Colors.green[800]
+                                : Colors.orange[800],
                           ),
                         ),
                     ],
@@ -671,34 +896,38 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 if (!isPhoneVerified)
                   ElevatedButton(
                     onPressed: () async {
-                       await Navigator.push(
+                      await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => PhoneVerificationScreen(
-                          onVerified: () => context.read<AuthProvider>().refreshProfile(),
-                        )),
+                        MaterialPageRoute(
+                          builder: (_) => PhoneVerificationScreen(
+                            onVerified: () =>
+                                context.read<AuthProvider>().refreshProfile(),
+                          ),
+                        ),
                       );
                       // Force refresh regardless of callback sometimes
-                      if (mounted) context.read<AuthProvider>().refreshProfile();
+                      if (mounted)
+                        context.read<AuthProvider>().refreshProfile();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                     child: const Text('Verify'),
                   ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 24),
           const Text(
             'Security Settings',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
 
@@ -712,27 +941,37 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(LucideIcons.shield, color: AppTheme.primary),
+                  leading: const Icon(
+                    LucideIcons.shield,
+                    color: AppTheme.primary,
+                  ),
                   title: const Text('Security Center'),
                   subtitle: const Text('Password, 2FA, Active Sessions'),
                   trailing: const Icon(LucideIcons.chevronRight),
                   onTap: () {
-                     Navigator.push(
+                    Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const SecuritySettingsScreen(),
+                      ),
                     );
                   },
                 ),
                 const Divider(),
                 ListTile(
-                  leading: const Icon(LucideIcons.badgeCheck, color: AppTheme.primary),
+                  leading: const Icon(
+                    LucideIcons.badgeCheck,
+                    color: AppTheme.primary,
+                  ),
                   title: const Text('Verification Center'),
                   subtitle: const Text('Identity, Business, Badges'),
                   trailing: const Icon(LucideIcons.chevronRight),
                   onTap: () {
-                     Navigator.push(
+                    Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const VerificationScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const VerificationScreen(),
+                      ),
                     );
                   },
                 ),
@@ -743,13 +982,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           const SizedBox(height: 24),
           const Text(
             'Account Management',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          
+
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -761,7 +997,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               title: const Text('Delete Account'),
               subtitle: const Text('Permanently delete your account and data'),
               onTap: () {
-                // TODO: Implement account deletion 
+                // TODO: Implement account deletion
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Account deletion coming soon')),
                 );
@@ -789,12 +1025,28 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: Icon(icon, color: AppTheme.primary, size: 22),
         ),
-        title: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-        subtitle: Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600])),
-        trailing: const Icon(LucideIcons.chevronRight, size: 16, color: Colors.grey),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textDark,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
+        ),
+        trailing: const Icon(
+          LucideIcons.chevronRight,
+          size: 16,
+          color: Colors.grey,
+        ),
         onTap: onTap,
       ),
     );
@@ -802,7 +1054,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildSavedAdsTab() {
     if (_favoritesLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+      return const Center(
+        child: CircularProgressIndicator(color: AppTheme.primary),
+      );
     }
 
     if (_favoritesError != null) {
@@ -812,11 +1066,16 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           children: [
             Icon(LucideIcons.alertCircle, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text(_favoritesError!, style: GoogleFonts.inter(color: Colors.grey[600])),
+            Text(
+              _favoritesError!,
+              style: GoogleFonts.inter(color: Colors.grey[600]),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadFavorites,
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+              ),
               child: const Text('Retry'),
             ),
           ],
@@ -825,40 +1084,68 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
 
     if (_favorites.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-              child: Icon(LucideIcons.heart, size: 48, color: Colors.grey[400]),
-            ),
-            const SizedBox(height: 16),
-            Text("No saved ads yet", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700])),
-            const SizedBox(height: 8),
-            Text("Save ads by clicking the bookmark icon", style: GoogleFonts.inter(color: Colors.grey[500])),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const MainNavScreen(initialIndex: 1)),
-                (route) => false,
+      return StaggeredFadeIn(
+        index: 0,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.heart,
+                  size: 48,
+                  color: Colors.grey[400],
+                ),
               ),
-              icon: const Icon(LucideIcons.search),
-              label: const Text("Browse Ads"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              const SizedBox(height: 16),
+              Text(
+                "No saved ads yet",
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                "Save ads by clicking the bookmark icon",
+                style: GoogleFonts.inter(color: Colors.grey[500]),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MainNavScreen(initialIndex: 1),
+                  ),
+                  (route) => false,
+                ),
+                icon: const Icon(LucideIcons.search),
+                label: const Text("Browse Ads"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: _loadFavorites,
+      onRefresh: () async {
+        await _loadFavorites();
+        HapticFeedback.mediumImpact();
+      },
       color: AppTheme.primary,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -870,7 +1157,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   Widget _buildSavedAdItem(FavoriteAd favorite) {
     final ad = favorite.ad;
-    final imageUrl = ad.primaryImage != null ? ApiConfig.getAdImageUrl(ad.primaryImage) : null;
+    final imageUrl = ad.primaryImage != null
+        ? ApiConfig.getAdImageUrl(ad.primaryImage)
+        : null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -878,7 +1167,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -889,20 +1184,33 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Image
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    width: 90,
-                    height: 90,
-                    color: Colors.grey[100],
-                    child: imageUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            errorWidget: (context, url, error) => Icon(LucideIcons.image, color: Colors.grey[400]),
-                          )
-                        : Icon(LucideIcons.image, color: Colors.grey[400]),
+                Hero(
+                  tag: 'ad-image-${ad.id}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 90,
+                      height: 90,
+                      color: Colors.grey[100],
+                      child: imageUrl != null
+                          ? CachedNetworkImage(
+                              imageUrl: imageUrl,
+                              fit: BoxFit.cover,
+                              memCacheWidth: 200,
+                              memCacheHeight: 200,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              fadeOutDuration: const Duration(
+                                milliseconds: 200,
+                              ),
+                              placeholder: (context, url) =>
+                                  Container(color: Colors.grey[100]),
+                              errorWidget: (context, url, error) => Icon(
+                                LucideIcons.image,
+                                color: Colors.grey[400],
+                              ),
+                            )
+                          : Icon(LucideIcons.image, color: Colors.grey[400]),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -914,7 +1222,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     children: [
                       Text(
                         ad.title,
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14, color: AppTheme.textDark),
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppTheme.textDark,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -923,22 +1235,47 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         children: [
                           if (ad.categoryName != null) ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(4)),
-                              child: Text(ad.categoryName!, style: GoogleFonts.inter(fontSize: 10, color: Colors.grey[600])),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                ad.categoryName!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 8),
                           ],
                           if (ad.locationName != null)
                             Expanded(
-                              child: Text(ad.locationName!, style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500]), overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                ad.locationName!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: Colors.grey[500],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        ad.price != null ? 'Rs. ${_formatNumber(ad.price!)}' : 'Price on request',
-                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF10B981)),
+                        ad.price != null
+                            ? 'Rs. ${_formatNumber(ad.price!)}'
+                            : 'Price on request',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF10B981),
+                        ),
                       ),
                     ],
                   ),
@@ -956,15 +1293,32 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               children: [
                 Expanded(
                   child: InkWell(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AdDetailScreen(adId: ad.id, slug: ad.slug))),
+                    onTap: () => Navigator.push(
+                      context,
+                      FadeScaleRoute(
+                        builder: (_) =>
+                            AdDetailScreen(adId: ad.id, slug: ad.slug),
+                      ),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(LucideIcons.eye, size: 16, color: AppTheme.primary),
+                          Icon(
+                            LucideIcons.eye,
+                            size: 16,
+                            color: AppTheme.primary,
+                          ),
                           const SizedBox(width: 6),
-                          Text("View", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.primary, fontSize: 13)),
+                          Text(
+                            "View",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primary,
+                              fontSize: 13,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -979,9 +1333,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(LucideIcons.trash2, size: 16, color: Colors.grey[600]),
+                          Icon(
+                            LucideIcons.trash2,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
                           const SizedBox(width: 6),
-                          Text("Remove", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey[600], fontSize: 13)),
+                          Text(
+                            "Remove",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -996,12 +1361,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   String _formatNumber(double number) {
-    return number.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
+    return number
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
   }
-
 
   Widget _buildSectionHeader(String title) {
     return Padding(
@@ -1021,14 +1387,26 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return Container(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 1), // Separator line effect
       child: ListTile(
         leading: Icon(icon, color: Colors.grey[700], size: 22),
-        title: Text(title, style: GoogleFonts.inter(fontSize: 15, color: Colors.grey[900])),
-        trailing: const Icon(LucideIcons.chevronRight, size: 14, color: Colors.grey),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(fontSize: 15, color: Colors.grey[900]),
+        ),
+        trailing: const Icon(
+          LucideIcons.chevronRight,
+          size: 14,
+          color: Colors.grey,
+        ),
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       ),

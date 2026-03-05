@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -37,7 +39,7 @@ class _ShopScreenState extends State<ShopScreen> {
   String? _error;
   int _currentPage = 1;
   int _totalPages = 1;
-  
+
   bool _isOwner = false;
   bool _uploadingImage = false;
 
@@ -55,7 +57,8 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       _loadMoreAds();
     }
   }
@@ -84,14 +87,14 @@ class _ShopScreenState extends State<ShopScreen> {
           if (token != null) {
             final profileData = await _authClient.getProfile();
             if (profileData['success'] == true) {
-               // Assuming profileData['data']['id'] matches shopResponse.data.id
-               // Note: 'data' might be user object or profile object.
-               // Check AuthClient.getProfile response structure.
-               // Usually it returns { succeed: true, data: { id: 1, ... } }
-               final userId = profileData['data']['id'];
-               if (userId == shopResponse.data!.id) {
-                 isOwner = true;
-               }
+              // Assuming profileData['data']['id'] matches shopResponse.data.id
+              // Note: 'data' might be user object or profile object.
+              // Check AuthClient.getProfile response structure.
+              // Usually it returns { succeed: true, data: { id: 1, ... } }
+              final userId = profileData['data']['id'];
+              if (userId == shopResponse.data!.id) {
+                isOwner = true;
+              }
             }
           }
         } catch (e) {
@@ -165,29 +168,36 @@ class _ShopScreenState extends State<ShopScreen> {
     if (_uploadingImage) return;
 
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+      );
       if (pickedFile != null) {
         _cropImage(pickedFile.path, isCover: isCover);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
     }
   }
 
   Future<void> _cropImage(String path, {required bool isCover}) async {
     CroppedFile? croppedFile = await ImageCropper().cropImage(
       sourcePath: path,
-      aspectRatio: isCover ? const CropAspectRatio(ratioX: 3, ratioY: 1) : const CropAspectRatio(ratioX: 1, ratioY: 1),
+      aspectRatio: isCover
+          ? const CropAspectRatio(ratioX: 3, ratioY: 1)
+          : const CropAspectRatio(ratioX: 1, ratioY: 1),
       uiSettings: [
         AndroidUiSettings(
-            toolbarTitle: isCover ? 'Crop Cover Photo' : 'Crop Avatar',
-            toolbarColor: const Color(0xFFF43F5E),
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: isCover ? CropAspectRatioPreset.ratio3x2 : CropAspectRatioPreset.square,
-            lockAspectRatio: true),
-        IOSUiSettings(
-          title: isCover ? 'Crop Cover Photo' : 'Crop Avatar',
+          toolbarTitle: isCover ? 'Crop Cover Photo' : 'Crop Avatar',
+          toolbarColor: const Color(0xFFF43F5E),
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: isCover
+              ? CropAspectRatioPreset.ratio3x2
+              : CropAspectRatioPreset.square,
+          lockAspectRatio: true,
         ),
+        IOSUiSettings(title: isCover ? 'Crop Cover Photo' : 'Crop Avatar'),
       ],
     );
 
@@ -198,14 +208,14 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _uploadImage(String path, {required bool isCover}) async {
     setState(() => _uploadingImage = true);
-    
+
     ApiResponse<String> response;
     if (isCover) {
       response = await _shopClient.uploadCover(path);
     } else {
       response = await _shopClient.uploadAvatar(path);
     } // Assuming single file upload?
-    
+
     // Actually the client methods I added take file path.
     // Wait, update: I added uploadAvatar(File file) in plan, but implemented uploadAvatar(String path) in execution.
     // Double check shop_client.dart implementation.
@@ -215,25 +225,27 @@ class _ShopScreenState extends State<ShopScreen> {
 
     if (response.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${isCover ? "Cover" : "Avatar"} updated successfully'))
+        SnackBar(
+          content: Text('${isCover ? "Cover" : "Avatar"} updated successfully'),
+        ),
       );
       // Refresh shop data to show new image
-      // Or just update local state if response returns URL. 
+      // Or just update local state if response returns URL.
       // The API returns message or data with URL?
       // My client implementation: return ApiResponse.success(response.data['data']['avatar_url']);
       // So I get the URL back.
       setState(() {
         if (response.data != null) {
-             // Create new shop object with updated image
-             // Need copyWith method on ShopProfile ideally.
-             // Or just re-fetch for simplicity/consistency.
-             _fetchShopData(); 
+          // Create new shop object with updated image
+          // Need copyWith method on ShopProfile ideally.
+          // Or just re-fetch for simplicity/consistency.
+          _fetchShopData();
         }
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.errorMessage))
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
   }
 
@@ -244,15 +256,17 @@ class _ShopScreenState extends State<ShopScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFF43F5E)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFF43F5E)),
+            )
           : _error != null
-              ? _buildErrorState()
-              : _buildContent(),
+          ? _buildErrorState()
+          : _buildContent(),
     );
   }
 
   Widget _buildErrorState() {
-     return Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -260,12 +274,9 @@ class _ShopScreenState extends State<ShopScreen> {
           const SizedBox(height: 16),
           Text(_error ?? 'An error occurred'),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _fetchShopData,
-            child: const Text('Retry'),
-          )
+          ElevatedButton(onPressed: _fetchShopData, child: const Text('Retry')),
         ],
-      )
+      ),
     );
   }
 
@@ -273,7 +284,10 @@ class _ShopScreenState extends State<ShopScreen> {
     if (_shop == null) return const SizedBox.shrink();
 
     return RefreshIndicator(
-      onRefresh: _fetchShopData,
+      onRefresh: () async {
+        await _fetchShopData();
+        HapticFeedback.mediumImpact();
+      },
       color: const Color(0xFFF43F5E),
       child: CustomScrollView(
         controller: _scrollController,
@@ -300,9 +314,7 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
 
           // Profile Header
-          SliverToBoxAdapter(
-            child: _buildProfileHeader(),
-          ),
+          SliverToBoxAdapter(child: _buildProfileHeader()),
 
           // Tabs & Content
           SliverToBoxAdapter(
@@ -381,8 +393,14 @@ class _ShopScreenState extends State<ShopScreen> {
                     ? CachedNetworkImage(
                         imageUrl: coverUrl,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(color: Colors.grey[200]),
-                        errorWidget: (context, url, error) => Container(color: Colors.grey[200]),
+                        memCacheWidth: 800,
+                        memCacheHeight: 400,
+                        fadeInDuration: const Duration(milliseconds: 200),
+                        fadeOutDuration: const Duration(milliseconds: 200),
+                        placeholder: (context, url) =>
+                            Container(color: Colors.grey[200]),
+                        errorWidget: (context, url, error) =>
+                            Container(color: Colors.grey[200]),
                       )
                     : null,
               ),
@@ -400,8 +418,19 @@ class _ShopScreenState extends State<ShopScreen> {
                         border: Border.all(color: Colors.white, width: 2),
                       ),
                       child: _uploadingImage
-                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                       : const Icon(LucideIcons.camera, color: Colors.white, size: 20),
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(
+                              LucideIcons.camera,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                     ),
                   ),
                 ),
@@ -428,10 +457,7 @@ class _ShopScreenState extends State<ShopScreen> {
                             height: 100,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 4,
-                              ),
+                              border: Border.all(color: Colors.white, width: 4),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -445,8 +471,18 @@ class _ShopScreenState extends State<ShopScreen> {
                                   ? CachedNetworkImage(
                                       imageUrl: avatarUrl,
                                       fit: BoxFit.cover,
-                                      placeholder: (context, url) => _buildAvatarPlaceholder(),
-                                      errorWidget: (context, url, error) => _buildAvatarPlaceholder(),
+                                      memCacheWidth: 200,
+                                      memCacheHeight: 200,
+                                      fadeInDuration: const Duration(
+                                        milliseconds: 200,
+                                      ),
+                                      fadeOutDuration: const Duration(
+                                        milliseconds: 200,
+                                      ),
+                                      placeholder: (context, url) =>
+                                          _buildAvatarPlaceholder(),
+                                      errorWidget: (context, url, error) =>
+                                          _buildAvatarPlaceholder(),
                                     )
                                   : _buildAvatarPlaceholder(),
                             ),
@@ -462,12 +498,21 @@ class _ShopScreenState extends State<ShopScreen> {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.grey[200]!),
+                                    border: Border.all(
+                                      color: Colors.grey[200]!,
+                                    ),
                                     boxShadow: [
-                                       BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4),
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 4,
+                                      ),
                                     ],
                                   ),
-                                  child: const Icon(LucideIcons.camera, color: Colors.black87, size: 16),
+                                  child: const Icon(
+                                    LucideIcons.camera,
+                                    color: Colors.black87,
+                                    size: 16,
+                                  ),
                                 ),
                               ),
                             ),
@@ -498,18 +543,29 @@ class _ShopScreenState extends State<ShopScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   if (_shop!.isBusinessVerified)
-                                    Image.asset('assets/images/golden-badge.png', width: 24, height: 24)
+                                    Image.asset(
+                                      'assets/images/golden-badge.png',
+                                      width: 24,
+                                      height: 24,
+                                    )
                                   else if (_shop!.individualVerified)
-                                    Image.asset('assets/images/blue-badge.png', width: 24, height: 24),
+                                    Image.asset(
+                                      'assets/images/blue-badge.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
                                 ],
                               ),
                               Text(
                                 _shop!.isBusinessVerified
                                     ? 'Verified Business'
                                     : _shop!.individualVerified
-                                        ? 'Verified Individual'
-                                        : 'Seller',
-                                style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600]),
+                                    ? 'Verified Individual'
+                                    : 'Seller',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
                               ),
                             ],
                           ),
@@ -545,7 +601,9 @@ class _ShopScreenState extends State<ShopScreen> {
       color: const Color(0xFFE5E7EB),
       child: Center(
         child: Text(
-          _shop!.displayName.isNotEmpty ? _shop!.displayName[0].toUpperCase() : '?',
+          _shop!.displayName.isNotEmpty
+              ? _shop!.displayName[0].toUpperCase()
+              : '?',
           style: GoogleFonts.inter(
             fontSize: 40,
             fontWeight: FontWeight.bold,
@@ -570,10 +628,7 @@ class _ShopScreenState extends State<ShopScreen> {
         ),
         Text(
           label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
         ),
       ],
     );
@@ -581,26 +636,26 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _buildEmptyAds() {
     return SliverToBoxAdapter(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.symmetric(vertical: 48),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
-        ),
-        child: Column(
-          children: [
-            const Text('📦', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 16),
-            Text(
-              'No active ads at the moment',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                color: Colors.grey[600],
+      child: StaggeredFadeIn(
+        index: 0,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 48),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Column(
+            children: [
+              const Text('📦', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 16),
+              Text(
+                'No active ads at the moment',
+                style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -617,7 +672,7 @@ class _ShopScreenState extends State<ShopScreen> {
           crossAxisSpacing: 12,
         ),
         delegate: SliverChildBuilderDelegate(
-          (context, index) => AdCard(ad: _ads[index]),
+          (context, index) => RepaintBoundary(child: AdCard(ad: _ads[index])),
           childCount: _ads.length,
         ),
       ),

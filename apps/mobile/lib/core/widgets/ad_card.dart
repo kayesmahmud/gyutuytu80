@@ -7,7 +7,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../api/api_config.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../utils/page_transitions.dart';
 import '../../features/ad_detail/ad_detail_screen.dart';
+import 'tap_scale.dart';
 
 /// Unified Ad Card Widget
 /// Used across Homepage Latest Ads, Browse Screen, and Shop Page
@@ -15,33 +17,33 @@ class AdCard extends StatelessWidget {
   final AdWithDetails ad;
   final VoidCallback? onTap;
 
-  const AdCard({
-    super.key,
-    required this.ad,
-    this.onTap,
-  });
+  const AdCard({super.key, required this.ad, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final imageUrl = ad.thumbnail != null
         ? ApiConfig.getAdImageUrl(ad.thumbnail)
-        : (ad.images.isNotEmpty ? ApiConfig.getAdImageUrl(ad.images.first) : null);
+        : (ad.images.isNotEmpty
+              ? ApiConfig.getAdImageUrl(ad.images.first)
+              : null);
 
     final isNew = ad.condition?.toLowerCase() == 'brand new';
-    
+
     // Explicit date format: "Dec 27, 2025 • 12:06 AM"
     final dateFormat = DateFormat("MMM d, yyyy • h:mm a");
     final formattedDate = dateFormat.format(ad.createdAt);
 
-    return GestureDetector(
-      onTap: onTap ?? () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AdDetailScreen(adId: ad.id, slug: ad.slug),
-          ),
-        );
-      },
+    return TapScale(
+      onTap:
+          onTap ??
+          () {
+            Navigator.push(
+              context,
+              FadeScaleRoute(
+                builder: (_) => AdDetailScreen(adId: ad.id, slug: ad.slug),
+              ),
+            );
+          },
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -61,36 +63,47 @@ class AdCard extends StatelessWidget {
             // Image Section
             Expanded(
               child: Stack(
-                fit: StackFit.expand, 
+                fit: StackFit.expand,
                 children: [
-                  // Image
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                    child: imageUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: imageUrl,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
+                  // Image with Hero animation
+                  Hero(
+                    tag: 'ad-image-${ad.id}',
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      child: imageUrl != null
+                          ? CachedNetworkImage(
+                              imageUrl: imageUrl,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              memCacheWidth: 400,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              fadeOutDuration: const Duration(
+                                milliseconds: 200,
+                              ),
+                              placeholder: (context, url) =>
+                                  Container(color: Colors.grey[100]),
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey[100],
+                                child: Icon(
+                                  LucideIcons.image,
+                                  size: 40,
+                                  color: Colors.grey[300],
+                                ),
+                              ),
+                            )
+                          : Container(
                               color: Colors.grey[100],
                               child: Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.grey[400],
+                                child: Icon(
+                                  LucideIcons.image,
+                                  size: 40,
+                                  color: Colors.grey[300],
                                 ),
                               ),
                             ),
-                            errorWidget: (context, url, error) => Container(
-                              color: Colors.grey[100],
-                              child: Icon(LucideIcons.image, size: 40, color: Colors.grey[300]),
-                            ),
-                          )
-                        : Container(
-                            color: Colors.grey[100],
-                            child: Center(
-                              child: Icon(LucideIcons.image, size: 40, color: Colors.grey[300]),
-                            ),
-                          ),
+                    ),
                   ),
 
                   // Image Count Badge (Top Left)
@@ -99,7 +112,10 @@ class AdCard extends StatelessWidget {
                       top: 8,
                       left: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(4),
@@ -107,24 +123,34 @@ class AdCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(LucideIcons.camera, color: Colors.white, size: 10),
+                            const Icon(
+                              LucideIcons.camera,
+                              color: Colors.white,
+                              size: 10,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${ad.images.length}',
-                              style: GoogleFonts.inter(color: Colors.white, fontSize: 10),
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 10,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  
+
                   // Featured Badge (Top Right) - Keep existing feature if needed
                   if (ad.isFeatured)
                     Positioned(
                       top: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.amber,
                           borderRadius: BorderRadius.circular(4),
@@ -132,7 +158,11 @@ class AdCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(LucideIcons.star, color: Colors.white, size: 10),
+                            const Icon(
+                              LucideIcons.star,
+                              color: Colors.white,
+                              size: 10,
+                            ),
                             const SizedBox(width: 2),
                             Text(
                               'FEATURED',
@@ -154,10 +184,17 @@ class AdCard extends StatelessWidget {
                       bottom: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: isNew ? const Color(0xFF10B981) : const Color(0xFF3B82F6), // Green or Blue
-                          borderRadius: BorderRadius.circular(12), // Pill shape from image? Or slight rounded rect. Image looks rounded.
+                          color: isNew
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFF3B82F6), // Green or Blue
+                          borderRadius: BorderRadius.circular(
+                            12,
+                          ), // Pill shape from image? Or slight rounded rect. Image looks rounded.
                         ),
                         child: Text(
                           ad.condition!.toUpperCase(),
@@ -176,7 +213,9 @@ class AdCard extends StatelessWidget {
 
             // Info Section
             Padding(
-              padding: const EdgeInsets.all(10), // Reduced padding slightly to fit more
+              padding: const EdgeInsets.all(
+                10,
+              ), // Reduced padding slightly to fit more
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -184,9 +223,9 @@ class AdCard extends StatelessWidget {
                   Text(
                     ad.title,
                     style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold, 
+                      fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: AppTheme.textDark, 
+                      color: AppTheme.textDark,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -196,12 +235,19 @@ class AdCard extends StatelessWidget {
                   // Category: Folder icon + Traditional Wear
                   Row(
                     children: [
-                      Icon(LucideIcons.folderOpen, size: 14, color: Colors.grey[500]),
+                      Icon(
+                        LucideIcons.folderOpen,
+                        size: 14,
+                        color: Colors.grey[500],
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           ad.categoryName ?? 'Uncategorized',
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -230,7 +276,7 @@ class AdCard extends StatelessWidget {
                         child: Text(
                           ad.userName ?? 'Seller',
                           style: GoogleFonts.inter(
-                            fontSize: 12, 
+                            fontSize: 12,
                             color: Colors.grey[800],
                             fontWeight: FontWeight.w500,
                           ),
@@ -238,14 +284,22 @@ class AdCard extends StatelessWidget {
                           maxLines: 1,
                         ),
                       ),
-                      
+
                       // Verification badge
                       if (_isBusinessVerified) ...[
                         const SizedBox(width: 4),
-                        Image.asset('assets/images/golden-badge.png', width: 14, height: 14),
+                        Image.asset(
+                          'assets/images/golden-badge.png',
+                          width: 14,
+                          height: 14,
+                        ),
                       ] else if (_isIndividualVerified) ...[
                         const SizedBox(width: 4),
-                        Image.asset('assets/images/blue-badge.png', width: 14, height: 14),
+                        Image.asset(
+                          'assets/images/blue-badge.png',
+                          width: 14,
+                          height: 14,
+                        ),
                       ],
                     ],
                   ),
@@ -255,16 +309,23 @@ class AdCard extends StatelessWidget {
                   // Date: Clock + Dec 27, 2025 • 12:06 AM
                   Row(
                     children: [
-                       Icon(LucideIcons.clock, size: 12, color: Colors.grey[400]),
-                       const SizedBox(width: 4),
-                       Expanded(
-                         child: Text(
-                           formattedDate,
-                           style: GoogleFonts.inter(fontSize: 10, color: Colors.grey[500]),
-                           maxLines: 1,
-                           overflow: TextOverflow.ellipsis,
-                         ),
-                       ),
+                      Icon(
+                        LucideIcons.clock,
+                        size: 12,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          formattedDate,
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            color: Colors.grey[500],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -290,10 +351,12 @@ class AdCard extends StatelessWidget {
   /// Format price with commas (Rs. 1,000,000)
   static String formatPrice(double? price) {
     if (price == null) return 'Contact for price';
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    );
+    final formatted = price
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
     return 'Rs. $formatted';
   }
 }

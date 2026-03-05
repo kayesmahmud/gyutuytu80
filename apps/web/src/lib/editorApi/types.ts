@@ -32,6 +32,38 @@ export interface DashboardStats {
   pendingVerifications: number;
 }
 
+/** Combined response from /api/editor/dashboard-data */
+export interface DashboardData {
+  stats: {
+    totalUsers: number;
+    totalAds: number;
+    pendingAds: number;
+    approvedAds: number;
+    rejectedAds: number;
+    pendingVerifications: number;
+    avgResponseTime: string;
+    pendingChange: string;
+    verificationsChange: string;
+  };
+  avgResponseTimeTrend: {
+    improvementPercent: number;
+    formattedText: string;
+    isImproved: boolean;
+  };
+  notifications: {
+    count: number;
+  };
+  systemAlert: { message: string; type: string; count: number } | null;
+  badgeCounts: {
+    pendingAds: number;
+    businessVerifications: number;
+    individualVerifications: number;
+    supportChat: number;
+    reportedAds: number;
+  };
+  myWorkToday: MyWorkToday;
+}
+
 export interface MyWorkToday {
   adsApprovedToday: number;
   adsRejectedToday: number;

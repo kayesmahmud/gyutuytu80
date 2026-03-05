@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@thulobazaar/database';
 
 interface ContactFormData {
   name: string;
@@ -36,35 +35,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store in database (contact_messages table)
-    // For now, we'll create a support ticket for contact messages
-    // This ensures they're tracked in the existing support system
-    const ticket = await prisma.support_tickets.create({
-      data: {
-        subject: `[Contact Form - ${body.reason}] ${body.subject}`,
-        description: `
-Name: ${body.name}
-Email: ${body.email}
-Phone: ${body.phone || 'Not provided'}
-Reason: ${body.reason}
-
-Message:
-${body.message}
-        `.trim(),
-        category: 'other',
-        priority: 'medium',
-        status: 'open',
-        // user_id is null for anonymous contact form submissions
-      },
-    });
-
+    // Log the contact form submission
+    // TODO: Create a dedicated contact_messages table for anonymous submissions
     // TODO: Send email notification to support team
     // TODO: Send confirmation email to user
+    console.log('📩 Contact form submission:', {
+      name: body.name,
+      email: body.email,
+      phone: body.phone || 'Not provided',
+      reason: body.reason,
+      subject: body.subject,
+      message: body.message,
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Your message has been received. We will get back to you soon.',
-      ticketId: ticket.id,
     });
   } catch (error) {
     console.error('Contact form error:', error);

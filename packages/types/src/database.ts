@@ -10,7 +10,7 @@
 
 export type DbUserRole = 'user' | 'editor' | 'super_admin';
 export type DbAccountType = 'individual' | 'business';
-export type DbVerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
+export type DbVerificationStatus = 'unverified' | 'pending' | 'verified' | 'approved' | 'rejected';
 
 export interface DbUser {
   id: number;

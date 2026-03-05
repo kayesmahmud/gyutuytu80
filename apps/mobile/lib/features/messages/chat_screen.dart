@@ -359,6 +359,7 @@ class _ChatScreenState extends State<ChatScreen> {
         return ListView.builder(
           controller: _scrollController,
           reverse: true,
+          cacheExtent: 500,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           itemCount: messages.length,
           itemBuilder: (context, index) {
@@ -485,11 +486,13 @@ class _ChatScreenState extends State<ChatScreen> {
                       imageUrl: _getFullImageUrl(message.attachmentUrl!),
                       width: 220,
                       fit: BoxFit.cover,
+                      memCacheWidth: 440,
+                      fadeInDuration: const Duration(milliseconds: 200),
+                      fadeOutDuration: const Duration(milliseconds: 200),
                       placeholder: (_, __) => Container(
                         width: 220,
                         height: 160,
                         color: Colors.grey[300],
-                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                       ),
                       errorWidget: (_, __, ___) => Container(
                         width: 220,

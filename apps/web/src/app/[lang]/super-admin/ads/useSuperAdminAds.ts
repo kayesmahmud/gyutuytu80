@@ -84,7 +84,7 @@ export function useSuperAdminAds(lang: string): UseSuperAdminAdsReturn {
       if (response.success) {
         // API returns { success, data: [...ads], pagination: {...} }
         const ads = Array.isArray(response.data) ? response.data : (response.data?.data || []);
-        const pagination = response.pagination || response.data?.pagination;
+        const pagination = (response as any).pagination || response.data?.pagination;
         console.log('📊 [SuperAdmin Ads] Parsed ads:', ads?.length, 'pagination:', pagination);
         setAds(ads);
         setTotalPages(pagination?.totalPages || Math.ceil((pagination?.total || 0) / 20) || 1);

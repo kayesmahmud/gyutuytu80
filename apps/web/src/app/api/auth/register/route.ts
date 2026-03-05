@@ -8,7 +8,7 @@ import { generateUniqueShopSlug } from '@/lib/urls';
 const registerSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
-  phoneVerificationToken: z.string({ required_error: 'Phone verification is required' }),
+  phoneVerificationToken: z.string({ error: 'Phone verification is required' }),
 });
 
 // Helper to validate phone verification token

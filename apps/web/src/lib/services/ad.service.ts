@@ -152,17 +152,17 @@ function buildWhereClause(filters: AdFilters) {
 function buildOrderBy(sort: string = 'newest') {
   switch (sort) {
     case 'price_low':
-      return { price: 'asc' };
+      return { price: 'asc' as const };
     case 'price_high':
-      return { price: 'desc' };
+      return { price: 'desc' as const };
     case 'popular':
-      return { view_count: 'desc' };
+      return { view_count: 'desc' as const };
     case 'newest':
     default:
       return [
-        { is_urgent: 'desc' },
-        { is_sticky: 'desc' },
-        { created_at: 'desc' },
+        { is_urgent: 'desc' as const },
+        { is_sticky: 'desc' as const },
+        { created_at: 'desc' as const },
       ];
   }
 }

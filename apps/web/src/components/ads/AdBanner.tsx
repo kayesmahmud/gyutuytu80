@@ -142,7 +142,7 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
 
   // Get ads for current size or use default
   const sizeKey = Object.keys(dummyAds).find(key => size.toLowerCase().includes(key.toLowerCase())) || 'mediumRectangle';
-  const ads = dummyAds[sizeKey] || dummyAds.mediumRectangle;
+  const ads = dummyAds[sizeKey] ?? dummyAds.mediumRectangle ?? [];
 
   // Use state for random ad index to avoid hydration mismatch
   // Initialize to 0 for consistent SSR, then randomize on client
@@ -156,8 +156,8 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
   }, [showPlaceholder, ads.length]);
 
   // Development: show realistic dummy ad banners
-  if (showPlaceholder) {
-    const selectedAd = ads[adIndex];
+  if (showPlaceholder && ads.length > 0) {
+    const selectedAd = ads[adIndex % ads.length]!;
 
     const isVertical = sizeConfig.height > sizeConfig.width;
     const isSmall = sizeConfig.height < 100;

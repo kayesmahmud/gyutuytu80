@@ -12,7 +12,7 @@ import type { CrossPlatformFile } from './upload';
 
 export type UserRole = 'user' | 'editor' | 'super_admin';
 export type AccountType = 'individual' | 'business';
-export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
+export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'approved' | 'rejected';
 
 export interface User {
   id: number;

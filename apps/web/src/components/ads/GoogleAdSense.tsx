@@ -36,15 +36,16 @@ export default function GoogleAdSense() {
     return null;
   }
 
-  return (
-    <Script
-      async
-      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsConfig.clientId}`}
-      crossOrigin="anonymous"
-      strategy="afterInteractive"
-      onError={(e) => {
-        console.error('AdSense script failed to load:', e);
-      }}
-    />
-  );
+  // Next.js Script types miss HTML attributes with React 19
+  const scriptProps = {
+    src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsConfig.clientId}`,
+    crossOrigin: 'anonymous',
+    strategy: 'afterInteractive' as const,
+    onError: (e: unknown) => {
+      console.error('AdSense script failed to load:', e);
+    },
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return <Script {...(scriptProps as any)} />;
 }

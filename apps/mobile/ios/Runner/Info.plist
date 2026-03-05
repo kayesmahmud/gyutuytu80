@@ -56,5 +56,17 @@
 		<!-- Google AdMob App ID (test ID - replace with real ID for production) -->
 		<key>GADApplicationIdentifier</key>
 		<string>ca-app-pub-3940256099942544~1458002511</string>
+		<!-- Google Sign-In URL scheme (reversed iOS client ID) -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.665688327385-lbpla4ui0ghmpq2k10mmmhj1s7cvgjfd</string>
+				</array>
+			</dict>
+		</array>
 	</dict>
 </plist>

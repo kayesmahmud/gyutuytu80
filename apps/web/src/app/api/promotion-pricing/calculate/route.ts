@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
               parent_id: true,
               categories: {
                 select: {
+                  id: true,
                   name: true,
                 },
               },
@@ -99,11 +100,11 @@ export async function GET(request: NextRequest) {
         // Get the parent category name (or current if it's a root category)
         const categoryName = ad.categories.categories?.name || ad.categories.name;
 
-        // Look up tier mapping
+        // Look up tier mapping by parent category ID
+        const parentCategoryId = ad.categories.categories?.id || ad.categories.id;
         const tierMapping = await prisma.category_pricing_tiers.findFirst({
           where: {
-            category_name: categoryName,
-            is_active: true,
+            category_id: parentCategoryId,
           },
           select: {
             pricing_tier: true,

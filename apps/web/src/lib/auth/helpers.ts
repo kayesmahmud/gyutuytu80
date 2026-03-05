@@ -4,6 +4,31 @@ import { SignJWT } from 'jose';
 import crypto from 'crypto';
 import { userSelectForAuth } from './queries';
 
+// Type matching the fields returned by userSelectForAuth
+interface AuthUser {
+  id: number;
+  email: string | null;
+  full_name: string;
+  phone: string | null;
+  role: string;
+  avatar: string | null;
+  is_active: boolean;
+  account_type: string | null;
+  shop_slug: string | null;
+  custom_shop_slug: string | null;
+  business_name: string | null;
+  business_verification_status: string | null;
+  individual_verified: boolean | null;
+  password_hash: string | null;
+  is_suspended: boolean | null;
+  last_login: Date | null;
+  two_factor_enabled: boolean | null;
+  two_factor_secret: string | null;
+  two_factor_backup_codes: string | null;
+  deleted_at: Date | null;
+  deletion_requested_at: Date | null;
+}
+
 // Constants for account deletion
 const RECOVERY_PERIOD_DAYS = 30;
 

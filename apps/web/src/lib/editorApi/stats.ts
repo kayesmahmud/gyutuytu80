@@ -5,6 +5,7 @@
 import { apiRequest } from './client';
 import type {
   ApiResponse,
+  DashboardData,
   DashboardStats,
   MyWorkToday,
   NotificationsCount,
@@ -14,6 +15,13 @@ import type {
   Trends,
   SupportChatCount,
 } from './types';
+
+/**
+ * Get all dashboard data in a single request (combined endpoint)
+ */
+export async function getDashboardData(token?: string): Promise<ApiResponse<DashboardData>> {
+  return apiRequest<ApiResponse<DashboardData>>('/api/editor/dashboard-data', { token });
+}
 
 /**
  * Get editor dashboard statistics
