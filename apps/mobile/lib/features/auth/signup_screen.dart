@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -29,7 +30,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _authClient = AuthClient();
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: Platform.isIOS
+        ? '665688327385-lbpla4ui0ghmpq2k10mmmhj1s7cvgjfd.apps.googleusercontent.com'
+        : null,
+    serverClientId: '665688327385-bc35e5a0jfis22p5d20k089l9ivm3fge.apps.googleusercontent.com',
+  );
 
   bool _isLoading = false;
   SignUpStep _currentStep = SignUpStep.phone;
@@ -349,7 +355,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           children: [
             const SizedBox(height: 10),
             Text(
-              'Thulobazaar',
+              'Thulo Bazaar',
               style: GoogleFonts.inter(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -369,7 +375,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             Text(
               _currentStep == SignUpStep.details
                   ? 'Fill in your details to finish signing up'
-                  : 'Join Thulobazaar to buy and sell easily',
+                  : 'Join Thulo Bazaar to buy and sell easily',
               style: GoogleFonts.inter(
                 fontSize: 16,
                 color: Colors.grey[600],

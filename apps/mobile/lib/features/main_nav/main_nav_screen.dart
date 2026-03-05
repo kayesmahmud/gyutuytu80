@@ -133,7 +133,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Please login to post an ad on Thulobazaar',
+              'Please login to post an ad on Thulo Bazaar',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: Colors.grey[600],

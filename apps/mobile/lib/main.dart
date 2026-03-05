@@ -146,7 +146,7 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'ThuloBazaar',
+      title: 'Thulo Bazaar',
       theme: AppTheme.lightTheme,
       home: const MainNavScreen(),
       debugShowCheckedModeBanner: false,

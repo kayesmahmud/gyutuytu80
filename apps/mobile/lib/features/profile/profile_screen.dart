@@ -241,7 +241,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: const Icon(LucideIcons.user, size: 48, color: Colors.grey),
           ),
           const SizedBox(height: 16),
-          Text("Welcome to Thulobazaar", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+          Text("Welcome to Thulo Bazaar", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
           const SizedBox(height: 8),
           Text("Log in to manage your ads and messages", textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600])),
           const SizedBox(height: 24),

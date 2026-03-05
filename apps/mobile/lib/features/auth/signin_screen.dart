@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -31,7 +32,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: Platform.isIOS
+        ? '665688327385-lbpla4ui0ghmpq2k10mmmhj1s7cvgjfd.apps.googleusercontent.com'
+        : null,
+    serverClientId: '665688327385-bc35e5a0jfis22p5d20k089l9ivm3fge.apps.googleusercontent.com',
+  );
 
   bool _rememberMe = false;
   bool _isLoading = false;
@@ -204,7 +210,7 @@ class _SignInScreenState extends State<SignInScreen> {
           children: [
             const SizedBox(height: 10),
             Text(
-              'Thulobazaar',
+              'Thulo Bazaar',
               style: GoogleFonts.inter(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
