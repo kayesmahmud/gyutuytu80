@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             "Buy, Sell, and Rent Across Nepal",
@@ -187,14 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Nepal's Leading Classifieds Marketplace",
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
 
@@ -270,55 +263,50 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoriesList() {
-    // Merge hardcoded categories with API categories
-    // - Hardcoded: always shown (works offline)
-    // - API: if new categories exist from backend, append them
-    final mergedCategories = _getMergedCategories();
+    // When API categories are loaded, use them as source of truth
+    // This guarantees every tap has a valid category ID
+    if (_categories.isNotEmpty) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(left: 16),
+        child: Row(
+          children: _categories.map((apiCat) {
+            final mockMatch = _findMockCategory(apiCat.slug, apiCat.name);
+            final icon = mockMatch?['icon'] as String? ?? apiCat.icon ?? '📁';
+            final shortName = mockMatch?['shortName'] as String? ?? apiCat.name;
+            return _buildApiCategoryItem(icon, shortName, apiCat.id, apiCat.name);
+          }).toList(),
+        ),
+      );
+    }
 
+    // Fallback: show hardcoded categories while loading (taps disabled)
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.only(left: 16),
       child: Row(
-        children: mergedCategories
-            .map(
-              (cat) => _buildStaticEmojiCategoryItem(
-                cat['icon'] as String,
-                (cat['shortName'] ?? cat['name'])
-                    as String, // Use shortName for display
-                cat['slug'] as String,
-              ),
-            )
+        children: MockFilterData.categories
+            .map((cat) => _buildStaticEmojiCategoryItem(
+                  cat['icon'] as String,
+                  (cat['shortName'] ?? cat['name']) as String,
+                ))
             .toList(),
       ),
     );
   }
 
-  /// Merges hardcoded categories with API categories
-  /// Returns hardcoded list + any new categories from API
-  List<Map<String, dynamic>> _getMergedCategories() {
-    // Start with hardcoded categories
-    final List<Map<String, dynamic>> merged = List.from(
-      MockFilterData.categories,
-    );
-
-    // Get slugs from hardcoded categories for comparison
-    final hardcodedSlugs = MockFilterData.categories
-        .map((c) => c['slug'] as String)
-        .toSet();
-
-    // Add any new categories from API that don't exist in hardcoded list
-    for (final apiCategory in _categories) {
-      if (!hardcodedSlugs.contains(apiCategory.slug)) {
-        merged.add({
-          'name': apiCategory.name,
-          'shortName': apiCategory.name, // API categories use name as shortName
-          'icon': apiCategory.icon ?? '📁', // Default icon if none
-          'slug': apiCategory.slug,
-        });
+  /// Find matching hardcoded category by slug or name for icon/shortName lookup
+  Map<String, dynamic>? _findMockCategory(String slug, String name) {
+    final normalizedSlug = slug.toLowerCase();
+    final normalizedName = name.toLowerCase();
+    for (final mock in MockFilterData.categories) {
+      final mockSlug = (mock['slug'] as String).toLowerCase();
+      final mockName = (mock['name'] as String).toLowerCase();
+      if (mockSlug == normalizedSlug || mockName == normalizedName) {
+        return mock;
       }
     }
-
-    return merged;
+    return null;
   }
 
   Widget _buildStaticCategoryItem(IconData icon, String label) {
@@ -350,18 +338,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStaticEmojiCategoryItem(String emoji, String name, String slug) {
+  /// Category item backed by API data — tap always works
+  Widget _buildApiCategoryItem(String emoji, String name, int categoryId, String categoryName) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
       child: TapScale(
         onTap: () {
-          // Find category ID from API categories by slug
-          final apiCat = _categories
-              .cast<CategoryWithSubcategories?>()
-              .firstWhere((c) => c?.slug == slug, orElse: () => null);
-          if (apiCat != null && widget.onCategoryTap != null) {
-            widget.onCategoryTap!(apiCat.id, apiCat.name);
-          }
+          widget.onCategoryTap?.call(categoryId, categoryName);
         },
         child: Column(
           children: [
@@ -390,6 +373,40 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Fallback category item shown while loading (no tap action)
+  Widget _buildStaticEmojiCategoryItem(String emoji, String name) {
+    return Container(
+      margin: const EdgeInsets.only(right: 16),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 24)),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: 70,
+            child: Text(
+              name,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: AppTheme.textDark,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
