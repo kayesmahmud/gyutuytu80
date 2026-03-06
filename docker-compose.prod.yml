@@ -37,6 +37,9 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - AAKASH_SMS_TOKEN=${AAKASH_SMS_TOKEN}
+      - ESEWA_ENV=${ESEWA_ENV:-sandbox}
+      - ESEWA_MERCHANT_CODE=${ESEWA_MERCHANT_CODE}
+      - ESEWA_SECRET_KEY=${ESEWA_SECRET_KEY}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3333"]
       interval: 30s
@@ -81,6 +84,9 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - EMAIL_FROM=${EMAIL_FROM}
       - AAKASH_SMS_TOKEN=${AAKASH_SMS_TOKEN}
+      - ESEWA_ENV=${ESEWA_ENV:-sandbox}
+      - ESEWA_MERCHANT_CODE=${ESEWA_MERCHANT_CODE}
+      - ESEWA_SECRET_KEY=${ESEWA_SECRET_KEY}
     volumes:
       - uploads-data:/app/uploads
     depends_on:
