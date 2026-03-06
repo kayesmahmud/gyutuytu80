@@ -36,6 +36,7 @@ export default function AdActions({
   const [isLoading, setIsLoading] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [justLiked, setJustLiked] = useState(false);
 
   // Get the ad URL for sharing
   const adUrl = typeof window !== 'undefined'
@@ -113,6 +114,8 @@ export default function AdActions({
         if (data.success) {
           setIsFavorited(true);
           setFavoritesCount((prev) => prev + 1);
+          setJustLiked(true);
+          setTimeout(() => setJustLiked(false), 600);
         }
       }
     } catch (error) {
@@ -256,20 +259,36 @@ export default function AdActions({
 
   const renderFavoriteButton = () => (
     <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white">
+      <style>{`
+        @keyframes heart-pop {
+          0% { transform: scale(1); }
+          25% { transform: scale(1.35); }
+          50% { transform: scale(0.9); }
+          75% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+        @keyframes heart-ring {
+          0% { box-shadow: 0 0 0 0 rgba(244,63,94,0.6); }
+          100% { box-shadow: 0 0 0 14px rgba(244,63,94,0); }
+        }
+        .heart-burst { animation: heart-pop 0.5s cubic-bezier(0.17,0.89,0.32,1.49), heart-ring 0.6s ease-out; }
+      `}</style>
       {/* Heart Icon Button */}
       <button
         onClick={toggleFavorite}
         disabled={isLoading}
-        className={`flex items-center justify-center px-3 py-2 transition-all duration-200 hover:bg-gray-50 ${
+        className={`flex items-center justify-center px-3 py-2 transition-all duration-200 hover:bg-gray-50 rounded-l-lg ${
           isLoading ? 'opacity-50 cursor-not-allowed' : ''
         }`}
         title={isFavorited ? 'Remove from favorites' : 'Save to favorites'}
       >
-        {isFavorited ? (
-          <HeartSolid className="w-5 h-5 text-rose-500" />
-        ) : (
-          <Heart className="w-5 h-5 text-gray-700 hover:text-rose-500" />
-        )}
+        <span className={justLiked ? 'heart-burst inline-flex' : 'inline-flex transition-transform duration-200 hover:scale-110'}>
+          {isFavorited ? (
+            <HeartSolid className="w-5 h-5 text-rose-500" />
+          ) : (
+            <Heart className="w-5 h-5 text-gray-700 hover:text-rose-500" />
+          )}
+        </span>
       </button>
       {/* Count Display */}
       <span className="px-3 py-2 text-base font-medium text-gray-700 border-l border-gray-200 bg-white">

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/core/api/ad_client.dart';
@@ -377,7 +378,12 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   isFavoriteLoading: _isFavoriteLoading,
                   onToggleFavorite: _toggleFavorite,
                   onShare: () {
-                    // Share action
+                    final url = 'https://thulobazaar.com.np/en/ads/${ad.slug}';
+                    SharePlus.instance.share(
+                      ShareParams(
+                        text: '${ad.title} - ${_formatPrice(ad.price)}\n$url',
+                      ),
+                    );
                   },
                 ),
                 collapseMode: CollapseMode.parallax,

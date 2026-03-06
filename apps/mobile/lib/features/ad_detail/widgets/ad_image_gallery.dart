@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:like_button/like_button.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 
@@ -25,46 +26,17 @@ class AdImageGallery extends StatefulWidget {
   State<AdImageGallery> createState() => _AdImageGalleryState();
 }
 
-class _AdImageGalleryState extends State<AdImageGallery>
-    with SingleTickerProviderStateMixin {
+class _AdImageGalleryState extends State<AdImageGallery> {
   final PageController _pageController = PageController();
   final TransformationController _transformController =
       TransformationController();
   int _currentImageIndex = 0;
   bool _isZoomed = false;
 
-  late final AnimationController _heartController;
-  late final Animation<double> _heartScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _heartController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _heartScale =
-        TweenSequence<double>([
-          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-          TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-        ]).animate(
-          CurvedAnimation(parent: _heartController, curve: Curves.easeOutCubic),
-        );
-  }
-
-  @override
-  void didUpdateWidget(covariant AdImageGallery oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isFavorite != oldWidget.isFavorite) {
-      _heartController.forward(from: 0);
-    }
-  }
-
   @override
   void dispose() {
     _pageController.dispose();
     _transformController.dispose();
-    _heartController.dispose();
     super.dispose();
   }
 
@@ -228,16 +200,38 @@ class _AdImageGalleryState extends State<AdImageGallery>
           right: 16,
           child: Row(
             children: [
-              _buildCircleButton(
-                child: ScaleTransition(
-                  scale: _heartScale,
-                  child: Icon(
-                    LucideIcons.heart,
-                    color: widget.isFavorite ? Colors.red : Colors.black87,
-                    size: 20,
-                  ),
+              LikeButton(
+                size: 36,
+                isLiked: widget.isFavorite,
+                circleColor: const CircleColor(
+                  start: Color(0xFFFF5252),
+                  end: Color(0xFFFF1744),
                 ),
-                onTap: widget.onToggleFavorite,
+                bubblesColor: const BubblesColor(
+                  dotPrimaryColor: Color(0xFFFF5252),
+                  dotSecondaryColor: Color(0xFFFFAB91),
+                ),
+                likeBuilder: (isLiked) {
+                  return Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        isLiked ? Icons.favorite : Icons.favorite_border,
+                        color: isLiked ? Colors.red : Colors.black87,
+                        size: 20,
+                      ),
+                    ),
+                  );
+                },
+                onTap: (isLiked) async {
+                  widget.onToggleFavorite?.call();
+                  return !isLiked;
+                },
               ),
               const SizedBox(width: 8),
               _buildCircleButton(

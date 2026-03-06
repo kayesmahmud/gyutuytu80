@@ -687,6 +687,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  like_button:
+    dependency: "direct main"
+    description:
+      name: like_button
+      sha256: "8b349521182ea6252b7fe1eaaad5932a9f55f94c3e87849376cfc25c78bac53a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
   lints:
     dependency: transitive
     description:
@@ -712,7 +720,7 @@ packages:
     source: hosted
     version: "0.257.0"
   marionette_flutter:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: marionette_flutter
       sha256: "0077073f62a8031879a91be41aa91629f741a7f1348b18feacd53443dae3819f"
@@ -895,6 +903,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.28.0"
+  share_plus:
+    dependency: "direct main"
+    description:
+      name: share_plus
+      sha256: fce43200aa03ea87b91ce4c3ac79f0cecd52e2a7a56c7a4185023c271fbfa6da
+      url: "https://pub.dev"
+    source: hosted
+    version: "10.1.4"
+  share_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: share_plus_platform_interface
+      sha256: cc012a23fc2d479854e6c80150696c4a5f5bb62cb89af4de1c505cf78d0a5d0b
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.2"
   shared_preferences:
     dependency: "direct main"
     description:
