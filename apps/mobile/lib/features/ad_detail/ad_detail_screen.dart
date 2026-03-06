@@ -379,10 +379,9 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   onToggleFavorite: _toggleFavorite,
                   onShare: () {
                     final url = 'https://thulobazaar.com.np/en/ads/${ad.slug}';
-                    SharePlus.instance.share(
-                      ShareParams(
-                        text: '${ad.title} - ${_formatPrice(ad.price)}\n$url',
-                      ),
+                    Share.share(
+                      '${ad.title} - ${_formatPrice(ad.price)}\n$url',
+                      subject: ad.title,
                     );
                   },
                 ),
