@@ -33,7 +33,7 @@ export default function NotFound() {
             href="/en/ads"
             className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors no-underline"
           >
-            Browse Ads
+            Search Ads
           </Link>
         </div>
       </div>

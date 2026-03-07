@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useShopSlug } from '@/hooks/useShopSlug';
 
 interface ShopTabProps {
@@ -21,6 +22,8 @@ export function ShopTab({
   lang,
   onSuccess,
 }: ShopTabProps) {
+  const t = useTranslations('profile');
+  const tc = useTranslations('common');
   const [successMessage, setSuccessMessage] = useState('');
   const activeShopSlug = customShopSlug || fallbackShopSlug;
 
@@ -40,7 +43,7 @@ export function ShopTab({
   } = useShopSlug({
     initialSlug: activeShopSlug,
     onSuccess: () => {
-      setSuccessMessage('Shop URL updated successfully!');
+      setSuccessMessage(t('shopUrlUpdated'));
       onSuccess?.();
       setTimeout(() => setSuccessMessage(''), 3000);
     },
@@ -56,7 +59,7 @@ export function ShopTab({
   const copyUrl = () => {
     const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/${lang}/shop/${activeShopSlug}`;
     navigator.clipboard.writeText(url);
-    setSuccessMessage('URL copied!');
+    setSuccessMessage(t('urlCopied'));
     setTimeout(() => setSuccessMessage(''), 2000);
   };
 
@@ -65,12 +68,12 @@ export function ShopTab({
     if (navigator.share) {
       navigator.share({
         title: `${displayName} - Shop`,
-        text: `Visit ${displayName} on ThuLoBazaar`,
+        text: t('visitShopShare', { name: displayName }),
         url: url,
       }).catch(() => {});
     } else {
       navigator.clipboard.writeText(url);
-      setSuccessMessage('Shop URL copied!');
+      setSuccessMessage(t('shopUrlCopied'));
       setTimeout(() => setSuccessMessage(''), 2000);
     }
   };
@@ -111,16 +114,16 @@ export function ShopTab({
               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              Verified
+              {tc('verifiedBusiness')}
             </span>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Your verified business shop page</p>
+          <p className="text-sm text-gray-600 mt-1">{t('yourVerifiedShop')}</p>
         </div>
       </div>
 
       {/* Shop URL Section */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Shop URL</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">{t('shopUrl')}</label>
         {!isEditing ? (
           <div className="space-y-3">
             {/* URL display - full width on mobile */}
@@ -137,13 +140,13 @@ export function ShopTab({
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                <span className="sm:hidden">Copy</span>
+                <span className="sm:hidden">{t('copy')}</span>
               </button>
               <button
                 onClick={() => startEditing(activeShopSlug)}
                 className="flex-1 sm:flex-none px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
               >
-                Edit URL
+                {t('editUrl')}
               </button>
             </div>
           </div>
@@ -169,7 +172,7 @@ export function ShopTab({
                 disabled={availability === 'checking'}
                 className="w-full sm:w-auto px-4 py-2.5 bg-secondary text-white rounded-lg hover:bg-secondary-hover transition-colors disabled:opacity-50"
               >
-                {availability === 'checking' ? 'Checking...' : 'Check Availability'}
+                {availability === 'checking' ? t('checking') : t('checkAvailability')}
               </button>
             </div>
 
@@ -178,7 +181,7 @@ export function ShopTab({
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                This URL is available!
+                {t('urlAvailable')}
               </div>
             )}
 
@@ -188,11 +191,11 @@ export function ShopTab({
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
-                  This URL is already taken
+                  {t('urlTaken')}
                 </div>
                 {suggestedSlugs.length > 0 && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Try these alternatives:</p>
+                    <p className="text-sm text-gray-600 mb-2">{t('tryAlternatives')}</p>
                     <div className="flex flex-wrap gap-2">
                       {suggestedSlugs.map((suggestion) => (
                         <button
@@ -215,13 +218,13 @@ export function ShopTab({
                 disabled={availability !== 'available' || isSaving}
                 className="flex-1 sm:flex-none px-5 py-2.5 bg-success text-white font-medium rounded-lg hover:bg-success-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving ? 'Saving...' : 'Save URL'}
+                {isSaving ? tc('saving') : t('saveUrl')}
               </button>
               <button
                 onClick={() => cancelEditing(activeShopSlug)}
                 className="flex-1 sm:flex-none px-5 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
               >
-                Cancel
+                {tc('cancel')}
               </button>
             </div>
           </div>
@@ -238,7 +241,7 @@ export function ShopTab({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
-          View Shop
+          {t('viewShop')}
         </Link>
         <button
           onClick={shareShop}
@@ -247,20 +250,20 @@ export function ShopTab({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
-          Share Shop
+          {t('shareShop')}
         </button>
       </div>
 
       {/* Shop Features */}
       <div className="bg-gray-50 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Shop Features</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">{t('shopFeatures')}</h4>
         <div className="grid grid-cols-2 gap-3">
-          {['Golden verified badge', 'Custom shop URL', 'All your listings', 'Business information'].map((feature) => (
-            <div key={feature} className="flex items-center gap-2 text-sm text-gray-600">
+          {(['featureVerifiedBadge', 'featureCustomUrl', 'featureAllListings', 'featureBusinessInfo'] as const).map((key) => (
+            <div key={key} className="flex items-center gap-2 text-sm text-gray-600">
               <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              {feature}
+              {t(key)}
             </div>
           ))}
         </div>

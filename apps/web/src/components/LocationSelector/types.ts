@@ -3,6 +3,7 @@ export type LocationType = 'province' | 'district' | 'municipality' | 'area';
 export interface Location {
   id: number;
   name: string;
+  nameNe?: string | null;
   type: LocationType;
   parent_id?: number | null;
 }

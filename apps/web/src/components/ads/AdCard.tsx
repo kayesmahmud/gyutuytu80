@@ -3,6 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { formatPrice, formatDateTime } from '@thulobazaar/utils';
 import { getImageUrl } from '@/lib/images/imageUrl';
 
@@ -35,6 +36,8 @@ interface AdCardProps {
 
 // Desktop Card Component
 function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang: string; adUrl: string; imageUrl: string | null }) {
+    const t = useTranslations('ads');
+    const tc = useTranslations('common');
     return (
         <Link
             href={`/${lang}/ad/${adUrl}`}
@@ -43,17 +46,17 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
             <div className="relative w-full h-48 bg-gray-100">
                 {ad.isFeatured && (
                     <div className="absolute top-2 left-2 bg-amber-500 text-white rounded font-semibold z-10 px-3 py-1 text-xs">
-                        ⭐ FEATURED
+                        ⭐ {t('featured').toUpperCase()}
                     </div>
                 )}
                 {ad.isUrgent && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white rounded font-semibold z-10 px-3 py-1 text-xs">
-                        🔥 URGENT
+                        🔥 {t('urgentSale').toUpperCase()}
                     </div>
                 )}
                 {ad.isSticky && !ad.isFeatured && !ad.isUrgent && (
                     <div className="absolute top-2 left-2 bg-blue-500 text-white rounded font-semibold z-10 px-3 py-1 text-xs">
-                        📌 STICKY
+                        📌 {tc('sticky').toUpperCase()}
                     </div>
                 )}
                 {imageUrl ? (
@@ -88,7 +91,7 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
                                 : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                             }`}>
-                            {ad.condition === 'Brand New' ? 'BRAND NEW' : 'USED'}
+                            {ad.condition === 'Brand New' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
                         </span>
                     )}
                 </div>
@@ -100,10 +103,10 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                     <div className="flex items-center gap-1">
                         <span className="font-medium text-gray-800">{ad.sellerName}</span>
                         {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                            <img src="/golden-badge.png" alt="Verified Business" className="w-4 h-4 flex-shrink-0" />
+                            <img src="/golden-badge.png" alt={tc('verifiedBusiness')} className="w-4 h-4 flex-shrink-0" />
                         )}
                         {(ad.accountType === 'individual' && ad.individualVerified) && (
-                            <img src="/blue-badge.png" alt="Verified Individual" className="w-4 h-4 flex-shrink-0" />
+                            <img src="/blue-badge.png" alt={tc('verifiedIndividual')} className="w-4 h-4 flex-shrink-0" />
                         )}
                     </div>
                 </div>
@@ -114,6 +117,8 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
 
 // Mobile Compact Card Component
 function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang: string; adUrl: string; imageUrl: string | null }) {
+    const t = useTranslations('ads');
+    const tc = useTranslations('common');
     return (
         <Link
             href={`/${lang}/ad/${adUrl}`}
@@ -134,7 +139,7 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
                             ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
                             : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                         }`}>
-                        {ad.condition === 'new' ? 'NEW' : 'USED'}
+                        {ad.condition === 'new' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
                     </div>
                 )}
                 {imageUrl ? (
@@ -170,10 +175,10 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
                 <div className="flex items-center gap-1 text-[10px] sm:text-[11px] mb-0.5">
                     <span className="font-medium text-gray-700 truncate max-w-[90px]">{ad.sellerName}</span>
                     {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                        <img src="/golden-badge.png" alt="Verified Business" className="w-3 h-3 flex-shrink-0" />
+                        <img src="/golden-badge.png" alt={tc('verifiedBusiness')} className="w-3 h-3 flex-shrink-0" />
                     )}
                     {(ad.accountType === 'individual' && ad.individualVerified) && (
-                        <img src="/blue-badge.png" alt="Verified Individual" className="w-3 h-3 flex-shrink-0" />
+                        <img src="/blue-badge.png" alt={tc('verifiedIndividual')} className="w-3 h-3 flex-shrink-0" />
                     )}
                 </div>
                 {/* Timestamp */}
@@ -187,6 +192,8 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
 }
 
 export default function AdCard({ ad, lang = 'en', variant = 'default' }: AdCardProps) {
+    const t = useTranslations('ads');
+    const tc = useTranslations('common');
     const adUrl = ad.seoSlug || ad.slug || `ad-${ad.id}`;
     const imageUrl = ad.primaryImage ? getImageUrl(ad.primaryImage, 'ads') : null;
 
@@ -228,7 +235,7 @@ export default function AdCard({ ad, lang = 'en', variant = 'default' }: AdCardP
                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
                                 : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                             }`}>
-                            {ad.condition === 'Brand New' ? 'BRAND NEW' : 'USED'}
+                            {ad.condition === 'Brand New' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
                         </div>
                     )}
                     {imageUrl ? (
@@ -244,10 +251,10 @@ export default function AdCard({ ad, lang = 'en', variant = 'default' }: AdCardP
                         <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
                             <span className="font-medium text-gray-800 truncate max-w-[80px]">{ad.sellerName}</span>
                             {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                                <img src="/golden-badge.png" alt="Verified Business" className="w-3 h-3" />
+                                <img src="/golden-badge.png" alt={tc('verifiedBusiness')} className="w-3 h-3" />
                             )}
                             {(ad.accountType === 'individual' && ad.individualVerified) && (
-                                <img src="/blue-badge.png" alt="Verified Individual" className="w-3 h-3" />
+                                <img src="/blue-badge.png" alt={tc('verifiedIndividual')} className="w-3 h-3" />
                             )}
                         </div>
                     </div>

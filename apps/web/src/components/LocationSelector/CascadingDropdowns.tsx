@@ -1,6 +1,7 @@
 'use client';
 
 import type { Province, District, Municipality } from './types';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 
 interface CascadingDropdownsProps {
   provinces: Province[];
@@ -41,6 +42,7 @@ export function CascadingDropdowns({
   onDistrictChange,
   onMunicipalityChange,
 }: CascadingDropdownsProps) {
+  const localName = useLocalizedName();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Province Dropdown */}
@@ -61,7 +63,7 @@ export function CascadingDropdowns({
           <option value="">{isLoading ? 'Loading...' : '-- Select Province --'}</option>
           {provinces.map((province) => (
             <option key={province.id} value={province.id}>
-              {province.name}
+              {localName(province.name, province.nameNe)}
             </option>
           ))}
         </select>
@@ -81,7 +83,7 @@ export function CascadingDropdowns({
             <option value="">-- Select District --</option>
             {selectedProvince.districts.map((district) => (
               <option key={district.id} value={district.id}>
-                {district.name}
+                {localName(district.name, district.nameNe)}
               </option>
             ))}
           </select>
@@ -102,7 +104,7 @@ export function CascadingDropdowns({
             <option value="">-- Select Municipality --</option>
             {selectedDistrict.municipalities.map((municipality) => (
               <option key={municipality.id} value={municipality.id}>
-                {municipality.name}
+                {localName(municipality.name, municipality.nameNe)}
               </option>
             ))}
           </select>

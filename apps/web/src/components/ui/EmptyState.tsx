@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface EmptyStateProps {
   icon: string;
@@ -62,87 +65,93 @@ export default function EmptyState({
 
 // Predefined empty states for common scenarios
 export function EmptyAds({ lang }: { lang: string }) {
+  const t = useTranslations('common');
   return (
     <EmptyState
       icon="📭"
-      title="No ads yet"
-      description="Start building your presence on ThuLoBazaar by posting your first ad. It's free and takes just a few minutes!"
-      actionLabel="+ Post Your First Ad"
+      title={t('noAdsYet')}
+      description={t('noAdsYetDesc')}
+      actionLabel={t('postYourFirstAd')}
       actionHref={`/${lang}/post-ad`}
-      secondaryActionLabel="Browse All Ads"
+      secondaryActionLabel={t('searchAllAds')}
       secondaryActionHref={`/${lang}/ads`}
     />
   );
 }
 
 export function EmptySearchResults({ lang }: { lang: string }) {
+  const t = useTranslations('common');
   return (
     <EmptyState
       icon="🔍"
-      title="No results found"
-      description="We couldn't find any ads matching your search. Try adjusting your filters or search terms."
-      actionLabel="Clear Filters"
+      title={t('noResultsFound')}
+      description={t('noResultsFoundDesc')}
+      actionLabel={t('clearFilters')}
       actionHref={`/${lang}/ads`}
-      secondaryActionLabel="Browse All Ads"
+      secondaryActionLabel={t('searchAllAds')}
       secondaryActionHref={`/${lang}/ads`}
     />
   );
 }
 
 export function EmptyFavorites({ lang }: { lang: string }) {
+  const t = useTranslations('common');
   return (
     <EmptyState
       icon="❤️"
-      title="No favorites yet"
-      description="Save ads you love by clicking the heart icon. Your favorites will appear here for easy access."
-      actionLabel="Browse Ads"
+      title={t('noFavoritesYet')}
+      description={t('noFavoritesYetDesc')}
+      actionLabel={t('searchAllAds')}
       actionHref={`/${lang}/ads`}
     />
   );
 }
 
 export function EmptyMessages() {
+  const t = useTranslations('common');
   return (
     <EmptyState
       icon="💬"
-      title="No messages"
-      description="When buyers contact you about your ads or you reach out to sellers, your conversations will appear here."
+      title={t('noMessages')}
+      description={t('noMessagesDesc')}
     />
   );
 }
 
 export function EmptyNotifications() {
+  const t = useTranslations('common');
   return (
     <EmptyState
       icon="🔔"
-      title="No notifications"
-      description="Stay updated! You'll receive notifications about your ads, messages, and account activity here."
+      title={t('noNotifications')}
+      description={t('noNotificationsDesc')}
     />
   );
 }
 
 export function ErrorState({
-  message = "Something went wrong",
+  message,
   retry
 }: {
   message?: string;
   retry?: () => void;
 }) {
+  const t = useTranslations('common');
   return (
     <div className="text-center py-16 px-4">
       <div className="text-8xl mb-6">😕</div>
       <h3 className="text-2xl font-bold text-gray-900 mb-3">
-        Oops!
+        {t('oops')}
       </h3>
       <p className="text-gray-500 mb-8 max-w-md mx-auto">
-        {message}
+        {message || t('somethingWentWrong')}
       </p>
       {retry && (
         <button
           onClick={retry}
           className="inline-flex items-center gap-2 bg-rose-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-rose-600 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
         >
-          🔄 Try Again
+          {t('tryAgain')}
         </button>
       )}
     </div>

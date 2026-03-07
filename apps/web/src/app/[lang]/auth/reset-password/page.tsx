@@ -2,6 +2,7 @@
 
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useResetPassword } from './useResetPassword';
 import {
   OtpVerificationStep,
@@ -15,6 +16,7 @@ export default function ResetPasswordPage() {
   const lang = params?.lang || 'en';
   const searchParams = useSearchParams();
 
+  const t = useTranslations('auth');
   const method = searchParams.get('method') || 'phone';
   const identifier = searchParams.get('identifier') || '';
 
@@ -46,12 +48,12 @@ export default function ResetPasswordPage() {
           <span className="text-3xl font-bold text-primary">ThuLoBazaar</span>
         </Link>
         <h2 className="mt-6 text-center text-2xl font-bold text-gray-900">
-          {step === 'otp' ? 'Enter verification code' : 'Create new password'}
+          {step === 'otp' ? t('enterVerificationCode') : t('createNewPassword')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           {step === 'otp'
-            ? `We sent a 6-digit code to ${maskedIdentifier}`
-            : 'Enter your new password below'}
+            ? t('weSentCodeTo', { identifier: maskedIdentifier })
+            : t('enterNewPasswordBelow')}
         </p>
       </div>
 
@@ -87,7 +89,7 @@ export default function ResetPasswordPage() {
 
           <div className="mt-6 text-center">
             <Link href={`/${lang}/auth/signin`} className="text-sm text-gray-600 hover:text-primary">
-              Back to Sign In
+              {t('backToSignIn')}
             </Link>
           </div>
         </div>

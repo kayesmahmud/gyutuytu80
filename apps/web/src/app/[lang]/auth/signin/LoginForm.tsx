@@ -4,26 +4,27 @@ import { useState, useEffect } from 'react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface LoginFormProps {
   lang: string;
 }
 
-// OAuth error messages
-const oauthErrorMessages: Record<string, string> = {
-  OAuthCallback: 'OAuth login failed. Please clear your browser cookies and try again. If the issue persists, the session may have expired.',
-  OAuthSignin: 'Error starting OAuth sign-in. Please try again.',
-  OAuthCreateAccount: 'Could not create account with OAuth provider.',
-  AccessDenied: 'Access denied. Your Google account may not be authorized. Please contact support or try a different account.',
-  Callback: 'Error in OAuth callback. Please try again.',
-  google: 'Google login failed. Please try again or use phone login.',
-  Default: 'Authentication failed. Please try again.',
+const OAUTH_ERROR_KEYS: Record<string, string> = {
+  OAuthCallback: 'oauthCallbackError',
+  OAuthSignin: 'oauthSigninError',
+  OAuthCreateAccount: 'oauthCreateAccountError',
+  AccessDenied: 'oauthAccessDenied',
+  Callback: 'oauthCallbackGenericError',
+  google: 'oauthGoogleError',
+  Default: 'oauthDefaultError',
 };
 
 export default function LoginForm({ lang }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
+  const t = useTranslations('auth');
   // Extract pathname from callbackUrl to work with both localhost and IP addresses
   const rawCallbackUrl = searchParams.get('callbackUrl');
   const callbackUrl = rawCallbackUrl?.startsWith('/') ? rawCallbackUrl : (() => {
@@ -45,7 +46,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
   useEffect(() => {
     const urlError = searchParams.get('error');
     if (urlError) {
-      setError(oauthErrorMessages[urlError] || oauthErrorMessages.Default || 'Authentication failed. Please try again.');
+      setError(t(OAUTH_ERROR_KEYS[urlError] ?? 'oauthDefaultError'));
     }
   }, [searchParams]);
 
@@ -98,7 +99,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="w-8 h-8 border-3 border-rose-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-        <span className="text-gray-500 text-sm">Checking session...</span>
+        <span className="text-gray-500 text-sm">{t('checkingSession')}</span>
       </div>
     );
   }
@@ -112,8 +113,8 @@ export default function LoginForm({ lang }: LoginFormProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">You&apos;re already logged in!</h3>
-        <p className="text-gray-500 text-sm mb-4">Redirecting you to the homepage...</p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('alreadyLoggedIn')}</h3>
+        <p className="text-gray-500 text-sm mb-4">{t('redirecting')}</p>
         <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -140,7 +141,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
         router.refresh();
       }
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError(t('loginFailed'));
       console.error('Phone login error:', err);
     } finally {
       setIsLoading(false);
@@ -154,7 +155,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
       // Use backend Passport.js OAuth
       window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
     } catch (err) {
-      setError('Failed to connect. Please try again.');
+      setError(t('failedToConnect'));
       setSocialLoading(null);
     }
   };
@@ -178,7 +179,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
         )}
-        <span>{socialLoading === 'google' ? 'Connecting...' : 'Continue with Google'}</span>
+        <span>{socialLoading === 'google' ? t('connecting') : t('continueWithGoogle')}</span>
       </button>
 
       {/* Divider */}
@@ -187,7 +188,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
           <div className="w-full border-t border-gray-200"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-gray-500">or sign in with phone</span>
+          <span className="px-4 bg-white text-gray-500">{t('orSignInWithPhone')}</span>
         </div>
       </div>
 
@@ -203,7 +204,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
         {/* Phone Number */}
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number
+            {t('phone')}
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -229,7 +230,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
         {/* Password */}
         <div>
           <label htmlFor="phone-password" className="block text-sm font-medium text-gray-700 mb-2">
-            Password
+            {t('password')}
           </label>
           <div className="relative">
             <input
@@ -237,7 +238,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
               type={showPassword ? 'text' : 'password'}
               required
               className="block w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-shadow"
-              placeholder="Enter your password"
+              placeholder={t('enterPassword')}
               value={phoneFormData.password}
               onChange={(e) => setPhoneFormData({ ...phoneFormData, password: e.target.value })}
               disabled={isLoading}
@@ -271,11 +272,11 @@ export default function LoginForm({ lang }: LoginFormProps) {
               className="h-4 w-4 text-rose-500 border-gray-300 rounded focus:ring-rose-500"
             />
             <label htmlFor="remember-phone" className="ml-2 block text-sm text-gray-700">
-              Remember me
+              {t('rememberMe')}
             </label>
           </div>
           <Link href={`/${lang}/auth/forgot-password`} className="text-sm text-rose-500 hover:text-rose-600 transition-colors">
-            Forgot password?
+            {t('forgotPassword')}
           </Link>
         </div>
 
@@ -286,7 +287,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
           className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white font-semibold rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
         >
           {isLoading && <Spinner className="h-5 w-5" />}
-          {isLoading ? 'Signing in...' : 'Sign In'}
+          {isLoading ? t('signingIn') : t('signIn')}
         </button>
       </form>
     </div>

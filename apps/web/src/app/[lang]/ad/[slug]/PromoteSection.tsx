@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { PromoteAdModal, PromotionBadge } from '@/components/promotion';
 
 interface PromoteSectionProps {
@@ -22,6 +23,7 @@ interface PromoteSectionProps {
 export default function PromoteSection({ ad }: PromoteSectionProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const t = useTranslations('ads');
   const [showModal, setShowModal] = useState(false);
 
   // Get user ID directly from session (works for both email and phone users)
@@ -41,10 +43,10 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
     (ad.is_urgent && ad.urgent_until && new Date(ad.urgent_until) > now) ||
     (ad.is_sticky && ad.sticky_until && new Date(ad.sticky_until) > now);
 
-  const headerText = isOwner ? 'Promote Your Ad' : 'Boost this Ad';
+  const headerText = isOwner ? t('promoteYourAd') : t('boostThisAd');
   const descriptionText = isOwner
-    ? 'Boost your ad visibility with our promotion packages!'
-    : 'Help this ad get more visibility with a promotion!';
+    ? t('boostAdVisibility')
+    : t('helpAdVisibility');
 
   return (
     <>
@@ -77,7 +79,7 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
               marginBottom: '0.75rem'
             }}>
               <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem', opacity: 0.9 }}>
-                Active Promotion:
+                {t('activePromotion')}
               </div>
               <PromotionBadge ad={{
                 isFeatured: ad.is_featured,
@@ -91,13 +93,13 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
               {/* Show expiry date */}
               <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.8 }}>
                 {ad.is_featured && ad.featured_until && new Date(ad.featured_until) > now && (
-                  <div>Expires: {new Date(ad.featured_until).toLocaleDateString()}</div>
+                  <div>{t('expires')} {new Date(ad.featured_until).toLocaleDateString()}</div>
                 )}
                 {ad.is_urgent && ad.urgent_until && new Date(ad.urgent_until) > now && (
-                  <div>Expires: {new Date(ad.urgent_until).toLocaleDateString()}</div>
+                  <div>{t('expires')} {new Date(ad.urgent_until).toLocaleDateString()}</div>
                 )}
                 {ad.is_sticky && ad.sticky_until && new Date(ad.sticky_until) > now && (
-                  <div>Expires: {new Date(ad.sticky_until).toLocaleDateString()}</div>
+                  <div>{t('expires')} {new Date(ad.sticky_until).toLocaleDateString()}</div>
                 )}
               </div>
             </div>
@@ -145,12 +147,12 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
           }}
         >
           {!isAuthenticated
-            ? '🔐 Sign in to Boost'
+            ? `🔐 ${t('signInToBoost')}`
             : hasActivePromotion
-              ? '✨ Extend or Change Promotion'
+              ? `✨ ${t('extendOrChangePromotion')}`
               : isOwner
-                ? '🚀 Promote Now'
-                : '⚡ Boost this Ad'}
+                ? `🚀 ${t('promoteNow')}`
+                : `⚡ ${t('boostThisAd')}`}
         </button>
 
         {/* Benefits */}
@@ -160,7 +162,7 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
           borderTop: '1px solid rgba(255,255,255,0.2)'
         }}>
           <div style={{ fontSize: '0.75rem', marginBottom: '0.5rem', opacity: 0.9 }}>
-            Benefits:
+            {t('benefits')}
           </div>
           <ul style={{
             fontSize: '0.75rem',
@@ -168,9 +170,9 @@ export default function PromoteSection({ ad }: PromoteSectionProps) {
             paddingLeft: '1.25rem',
             opacity: 0.9
           }}>
-            <li>⭐ Featured - Maximum visibility</li>
-            <li>🔥 Urgent - Priority placement</li>
-            <li>📌 Sticky - Stay on top</li>
+            <li>⭐ {t('benefitFeatured')}</li>
+            <li>🔥 {t('benefitUrgent')}</li>
+            <li>📌 {t('benefitSticky')}</li>
           </ul>
         </div>
       </div>

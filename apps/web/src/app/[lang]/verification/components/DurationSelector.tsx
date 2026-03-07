@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { PricingOption, VerificationPricing, VerificationType } from './types';
 
 interface DurationSelectorProps {
@@ -21,13 +22,14 @@ export function DurationSelector({
   onProceed,
   onClear,
 }: DurationSelectorProps) {
+  const t = useTranslations('verification');
   const options = selectedType === 'individual' ? pricing.individual : pricing.business;
 
   return (
     <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl mb-8 sm:mb-12">
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-          Select Verification Duration
+          {t('selectDuration')}
         </h2>
         <button
           onClick={onClear}
@@ -45,9 +47,9 @@ export function DurationSelector({
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-2xl sm:text-3xl">🎉</span>
             <div>
-              <div className="font-bold text-green-800 text-sm sm:text-base">You&apos;re Eligible for FREE Verification!</div>
+              <div className="font-bold text-green-800 text-sm sm:text-base">{t('freeEligible')}</div>
               <div className="text-green-700 text-xs sm:text-sm">
-                Get {pricing.freeVerification.durationDays / 30} months free as a new user.
+                {t('freeMonths', { months: pricing.freeVerification.durationDays / 30 })}
               </div>
             </div>
           </div>
@@ -72,19 +74,19 @@ export function DurationSelector({
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 sm:p-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
             <div className="text-center md:text-left w-full md:w-auto">
-              <div className="text-gray-600 text-sm mb-1">Selected Plan:</div>
+              <div className="text-gray-600 text-sm mb-1">{t('selectedPlan')}</div>
               <div className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
-                {selectedType === 'individual' ? 'Individual' : 'Business'} - {selectedDuration.durationLabel}
+                {selectedType === 'individual' ? t('individual') : t('business')} - {selectedDuration.durationLabel}
               </div>
               <div className="text-xl sm:text-2xl font-bold text-indigo-600">
-                {isFreeVerification ? 'FREE' : `NPR ${selectedDuration.finalPrice}`}
+                {isFreeVerification ? t('free') : `NPR ${selectedDuration.finalPrice}`}
               </div>
             </div>
             <button
               onClick={onProceed}
               className="w-full md:w-auto bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 hover:shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <span>Proceed</span>
+              <span>{t('proceed')}</span>
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -104,6 +106,7 @@ interface DurationOptionProps {
 }
 
 function DurationOption({ option, isSelected, isFreeTier, onSelect }: DurationOptionProps) {
+  const t = useTranslations('verification');
   const hasCampaignDiscount = option.hasCampaignDiscount && option.discountPercentage > 0;
 
   return (
@@ -121,7 +124,7 @@ function DurationOption({ option, isSelected, isFreeTier, onSelect }: DurationOp
       {hasCampaignDiscount && !isFreeTier && (
         <div className="absolute -top-2 sm:-top-3 left-1/2 transform -translate-x-1/2">
           <span className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-lg flex items-center gap-1">
-            <span className="hidden sm:inline">🎉</span> PROMO
+            <span className="hidden sm:inline">🎉</span> {t('promo')}
           </span>
         </div>
       )}
@@ -130,7 +133,7 @@ function DurationOption({ option, isSelected, isFreeTier, onSelect }: DurationOp
       {option.durationDays === 180 && !hasCampaignDiscount && (
         <div className="absolute -top-2 sm:-top-3 left-1/2 transform -translate-x-1/2">
           <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-lg">
-            POPULAR
+            {t('popular')}
           </span>
         </div>
       )}
@@ -139,7 +142,7 @@ function DurationOption({ option, isSelected, isFreeTier, onSelect }: DurationOp
       {isFreeTier && (
         <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
           <span className="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-lg">
-            FREE
+            {t('free')}
           </span>
         </div>
       )}
@@ -151,7 +154,7 @@ function DurationOption({ option, isSelected, isFreeTier, onSelect }: DurationOp
 
         {isFreeTier ? (
           <div className="mb-1 sm:mb-2">
-            <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-500">FREE</span>
+            <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-500">{t('free')}</span>
             <div className={`text-xs sm:text-sm line-through ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
               NPR {option.price}
             </div>
@@ -179,7 +182,7 @@ function DurationOption({ option, isSelected, isFreeTier, onSelect }: DurationOp
           <div className={`inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${
             isSelected ? 'bg-white/20 text-white' : hasCampaignDiscount ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
           }`}>
-            Save {option.discountPercentage}%
+            {t('savePercent', { percent: option.discountPercentage })}
           </div>
         )}
       </div>

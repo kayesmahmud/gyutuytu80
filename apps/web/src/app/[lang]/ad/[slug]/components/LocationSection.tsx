@@ -1,7 +1,10 @@
 import { MapPin } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import type { LocationSectionProps } from './types';
 
-export function LocationSection({ fullLocation, locationType }: LocationSectionProps) {
+export async function LocationSection({ fullLocation, locationType }: LocationSectionProps) {
+  const t = await getTranslations('ads');
+
   if (!fullLocation) {
     return null;
   }
@@ -14,7 +17,7 @@ export function LocationSection({ fullLocation, locationType }: LocationSectionP
         marginBottom: '1rem',
         color: '#1f2937'
       }}>
-        Location
+        {t('location')}
       </h2>
       <div style={{
         padding: '1rem',

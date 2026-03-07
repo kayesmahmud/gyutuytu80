@@ -5,9 +5,10 @@ import ReportAdButton from '../ReportAdButton';
 import SendMessageButton from '@/components/messages/SendMessageButton';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { MaskedPhoneButton } from './MaskedPhoneButton';
+import { getTranslations } from 'next-intl/server';
 import type { SellerCardProps } from './types';
 
-export function SellerCard({
+export async function SellerCard({
   seller,
   adId,
   userId,
@@ -16,13 +17,15 @@ export function SellerCard({
   lang,
   favoritesCount = 0,
 }: SellerCardProps) {
+  const t = await getTranslations('ads');
+
   const isVerifiedBusiness = seller?.account_type === 'business' && seller?.business_verification_status === 'approved';
   const isVerifiedIndividual = seller?.account_type === 'individual' &&
     (seller?.individual_verified || seller?.business_verification_status === 'verified');
 
   const displayName = isVerifiedBusiness && seller?.business_name
     ? seller.business_name
-    : seller?.full_name || 'Seller';
+    : seller?.full_name || t('seller');
 
   return (
     <div style={{
@@ -40,7 +43,7 @@ export function SellerCard({
         marginBottom: '1rem',
         color: '#1f2937'
       }}>
-        Seller Information
+        {t('sellerInformation')}
       </h3>
 
       <div style={{
@@ -74,8 +77,8 @@ export function SellerCard({
               {isVerifiedBusiness && (
                 <Image
                   src="/golden-badge.png"
-                  alt="Verified Business"
-                  title="Verified Business"
+                  alt={t('verifiedBusiness')}
+                  title={t('verifiedBusiness')}
                   width={20}
                   height={20}
                 />
@@ -83,8 +86,8 @@ export function SellerCard({
               {isVerifiedIndividual && (
                 <Image
                   src="/blue-badge.png"
-                  alt="Verified Individual Seller"
-                  title="Verified Individual Seller"
+                  alt={t('verifiedIndividualSeller')}
+                  title={t('verifiedIndividualSeller')}
                   width={20}
                   height={20}
                 />
@@ -99,18 +102,18 @@ export function SellerCard({
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              {seller?.full_name || 'Seller'}
+              {seller?.full_name || t('seller')}
             </div>
           )}
           {/* Verification Status Text */}
           {isVerifiedBusiness && (
             <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              Verified Business Account
+              {t('verifiedBusinessAccount')}
             </div>
           )}
           {isVerifiedIndividual && (
             <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              Verified Individual Seller
+              {t('verifiedIndividualSeller')}
             </div>
           )}
         </div>

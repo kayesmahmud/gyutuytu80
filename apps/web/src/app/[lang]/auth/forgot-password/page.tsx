@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function ForgotPasswordPage() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang || 'en';
   const router = useRouter();
+  const t = useTranslations('auth');
 
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,10 +36,10 @@ export default function ForgotPasswordPage() {
         // Navigate to reset password page with the phone number
         router.push(`/${lang}/auth/reset-password?method=phone&identifier=${encodeURIComponent(phone)}`);
       } else {
-        setError(data.message || 'Failed to send OTP. Please try again.');
+        setError(data.message || t('failedToSendOtp'));
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      setError(t('somethingWentWrong'));
       console.error('Forgot password error:', err);
     } finally {
       setIsLoading(false);
@@ -51,10 +53,10 @@ export default function ForgotPasswordPage() {
           <span className="text-3xl font-bold text-primary">ThuLoBazaar</span>
         </Link>
         <h2 className="mt-6 text-center text-2xl font-bold text-gray-900">
-          Forgot your password?
+          {t('forgotPasswordTitle')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          No worries! Enter your phone number and we&apos;ll send you a verification code.
+          {t('forgotPasswordSubtitle')}
         </p>
       </div>
 
@@ -67,9 +69,9 @@ export default function ForgotPasswordPage() {
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
               <div className="text-sm text-blue-700">
-                <p className="font-medium">Password reset via phone only</p>
+                <p className="font-medium">{t('passwordResetViaPhone')}</p>
                 <p className="mt-1 text-blue-600">
-                  If you signed up with Google or Facebook, you can continue using those to sign in.
+                  {t('socialLoginNote')}
                 </p>
               </div>
             </div>
@@ -85,7 +87,7 @@ export default function ForgotPasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
+                {t('phone')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -107,7 +109,7 @@ export default function ForgotPasswordPage() {
                 />
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                Enter the phone number associated with your account
+                {t('enterPhoneAssociated')}
               </p>
             </div>
 
@@ -122,10 +124,10 @@ export default function ForgotPasswordPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Sending OTP...
+                  {t('sendingOtp')}
                 </>
               ) : (
-                'Send Verification Code'
+                t('sendVerificationCode')
               )}
             </button>
           </form>
@@ -135,7 +137,7 @@ export default function ForgotPasswordPage() {
               href={`/${lang}/auth/signin`}
               className="text-sm text-primary hover:text-primary-hover font-medium"
             >
-              Back to Sign In
+              {t('backToSignIn')}
             </Link>
           </div>
         </div>

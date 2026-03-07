@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { messagingApi } from '@/lib/messaging';
+import { useTranslations } from 'next-intl';
 
 interface SendMessageButtonProps {
   sellerId: number;
@@ -19,6 +20,7 @@ interface SendMessageButtonProps {
 export default function SendMessageButton({ sellerId, adId, adTitle, lang }: SendMessageButtonProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const t = useTranslations('ads');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,14 +42,14 @@ export default function SendMessageButton({ sellerId, adId, adTitle, lang }: Sen
 
     if (!token) {
       console.error('❌ No token found in session. Available keys:', Object.keys(session));
-      setError('Authentication token not found. Please login again.');
+      setError(t('authTokenNotFound'));
       setTimeout(() => setError(null), 3000);
       return;
     }
 
     // Check if trying to message yourself
     if (String(currentUserId) === String(sellerId)) {
-      setError('You cannot send a message to yourself');
+      setError(t('cannotMessageYourself'));
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -67,7 +69,7 @@ export default function SendMessageButton({ sellerId, adId, adTitle, lang }: Sen
       router.push(`/${lang}/messages?conversation=${response.data.id}`);
     } catch (err: any) {
       console.error('Failed to create conversation:', err);
-      setError(err.message || 'Failed to start conversation');
+      setError(err.message || t('failedToStartConversation'));
       setTimeout(() => setError(null), 3000);
     } finally {
       setLoading(false);
@@ -102,7 +104,7 @@ export default function SendMessageButton({ sellerId, adId, adTitle, lang }: Sen
           }
         }}
       >
-        {loading ? '⏳ Creating conversation...' : '✉️ Send Message'}
+        {loading ? t('creatingConversation') : t('sendMessage')}
       </button>
 
       {error && (

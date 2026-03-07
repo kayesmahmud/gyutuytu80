@@ -2,6 +2,7 @@
 
 import type { Location } from './types';
 import { getLocationTypeLabel } from './types';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 
 interface SelectedLocationDisplayProps {
   location: Location;
@@ -9,6 +10,7 @@ interface SelectedLocationDisplayProps {
 }
 
 export function SelectedLocationDisplay({ location, onClear }: SelectedLocationDisplayProps) {
+  const localName = useLocalizedName();
   return (
     <div style={{
       padding: '0.75rem',
@@ -22,7 +24,7 @@ export function SelectedLocationDisplay({ location, onClear }: SelectedLocationD
       justifyContent: 'space-between',
       alignItems: 'center'
     }}>
-      <span>{location.name} ({getLocationTypeLabel(location.type)})</span>
+      <span>{localName(location.name, location.nameNe)} ({getLocationTypeLabel(location.type)})</span>
       <button
         type="button"
         onClick={onClear}

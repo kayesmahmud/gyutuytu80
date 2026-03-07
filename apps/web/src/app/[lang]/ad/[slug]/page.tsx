@@ -18,6 +18,7 @@ import {
   AdContactBar,
 } from './components';
 import { getImageUrl } from '@/lib/images/imageUrl';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 interface AdDetailPageProps {
   params: Promise<{ lang: string; slug: string }>;
@@ -89,12 +90,14 @@ const getAdBySlug = cache(async (slug: string) => {
         select: {
           id: true,
           name: true,
+          name_ne: true,
           slug: true,
           icon: true,
           categories: {
             select: {
               id: true,
               name: true,
+              name_ne: true,
               slug: true,
               icon: true,
             },
@@ -105,21 +108,25 @@ const getAdBySlug = cache(async (slug: string) => {
         select: {
           id: true,
           name: true,
+          name_ne: true,
           type: true,
           locations: {
             select: {
               id: true,
               name: true,
+              name_ne: true,
               type: true,
               locations: {
                 select: {
                   id: true,
                   name: true,
+                  name_ne: true,
                   type: true,
                   locations: {
                     select: {
                       id: true,
                       name: true,
+                      name_ne: true,
                       type: true,
                     },
                   },
@@ -162,8 +169,9 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
         ? getImageUrl(imagePath, 'ads') || `${baseUrl}/placeholder-ad.png`
         : `${baseUrl}/placeholder-ad.png`;
 
-      const description = ad.description?.substring(0, 160) || `View details for ${ad.title}`;
-      const priceText = ad.price ? `Rs. ${parseFloat(ad.price.toString()).toLocaleString()}` : 'Price on request';
+      const t = await getTranslations({ locale: lang, namespace: 'metadata' });
+      const description = ad.description?.substring(0, 160) || t('viewDetailsFor', { title: ad.title });
+      const priceText = ad.price ? `Rs. ${parseFloat(ad.price.toString()).toLocaleString()}` : t('priceOnRequest');
 
       return {
         title: `${ad.title} | ${priceText} - Thulobazaar`,
@@ -189,32 +197,40 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
     console.error('Error fetching ad metadata:', error);
   }
 
+  const t = await getTranslations({ locale: lang, namespace: 'metadata' });
   const title = slug.replace(/-/g, ' ');
   return {
     title: `${title} - Thulobazaar`,
-    description: `View details for ${title}. Contact seller, check price, and more.`,
+    description: t('adFallbackDescription', { title }),
   };
 }
 
 // Helper functions for building location and category strings
-function buildFullLocation(locations: any): string {
+function buildFullLocation(locations: any, lang: string): string {
+  const getName = (loc: any) =>
+    lang === 'ne' && loc?.name_ne ? loc.name_ne : loc?.name;
   const locationParts: string[] = [];
-  if (locations?.name) locationParts.push(locations.name);
-  if (locations?.locations?.name) locationParts.push(locations.locations.name);
-  if (locations?.locations?.locations?.name) locationParts.push(locations.locations.locations.name);
-  if (locations?.locations?.locations?.locations?.name) locationParts.push(locations.locations.locations.locations.name);
+  if (locations?.name) locationParts.push(getName(locations));
+  if (locations?.locations?.name) locationParts.push(getName(locations.locations));
+  if (locations?.locations?.locations?.name) locationParts.push(getName(locations.locations.locations));
+  if (locations?.locations?.locations?.locations?.name) locationParts.push(getName(locations.locations.locations.locations));
   return locationParts.join(', ');
 }
 
-function buildFullCategory(categories: any): string {
+function buildFullCategory(categories: any, lang: string): string {
+  const getName = (cat: any) =>
+    lang === 'ne' && cat?.name_ne ? cat.name_ne : cat?.name;
   const categoryParts: string[] = [];
-  if (categories?.categories?.name) categoryParts.push(categories.categories.name);
-  if (categories?.name) categoryParts.push(categories.name);
+  if (categories?.categories?.name) categoryParts.push(getName(categories.categories));
+  if (categories?.name) categoryParts.push(getName(categories));
   return categoryParts.join(' > ');
 }
 
 export default async function AdDetailPage({ params, searchParams }: AdDetailPageProps) {
   const { lang, slug } = await params;
+  setRequestLocale(lang);
+  const t = await getTranslations('ads');
+  const tc = await getTranslations('common');
   const search = (await searchParams) || {};
 
   const ad = await getAdBySlug(slug);
@@ -243,7 +259,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
     categoryName: relAd.categories?.name || null,
     categoryIcon: relAd.categories?.icon || null,
     publishedAt: relAd.reviewed_at || relAd.created_at || new Date(),
-    sellerName: relAd.users_ads_user_idTousers?.business_name || relAd.users_ads_user_idTousers?.full_name || 'Unknown',
+    sellerName: relAd.users_ads_user_idTousers?.business_name || relAd.users_ads_user_idTousers?.full_name || tc('unknownSeller'),
     isFeatured: relAd.is_featured || false,
     isUrgent: relAd.is_urgent || false,
     isSticky: relAd.is_sticky || false,
@@ -254,8 +270,8 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
     individualVerified: relAd.users_ads_user_idTousers?.individual_verified || false,
   }));
 
-  const fullLocation = buildFullLocation(ad.locations);
-  const fullCategory = buildFullCategory(ad.categories);
+  const fullLocation = buildFullLocation(ad.locations, lang);
+  const fullCategory = buildFullCategory(ad.categories, lang);
   const images = ad.ad_images.map(img =>
     getImageUrl(img.file_path, 'ads') || ''
   );
@@ -263,12 +279,15 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
 
   // Build breadcrumb items
   const breadcrumbItems = [
-    { label: 'Home', path: `/${lang}` },
-    { label: 'All Ads', path: `/${lang}/ads` },
+    { label: tc('home'), path: `/${lang}` },
+    { label: t('allAds'), path: `/${lang}/ads` },
   ];
   if (ad.categories?.name && ad.categories?.slug) {
+    const categoryLabel = lang === 'ne' && (ad.categories as any).name_ne
+      ? (ad.categories as any).name_ne
+      : ad.categories.name;
     breadcrumbItems.push({
-      label: ad.categories.name,
+      label: categoryLabel,
       path: `/${lang}/ads/${ad.categories.slug}`
     });
   }
@@ -313,13 +332,13 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                     {/* Show when ad was approved (reviewed_at), not when submitted */}
                     <span>{formatRelativeTime(ad.reviewed_at || ad.created_at || new Date())}</span>
                     <span>•</span>
-                    <span>{ad.view_count || 0} views</span>
+                    <span>{ad.view_count || 0} {t('views')}</span>
                   </div>
                 </div>
               </div>
 
               <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-4">
-                {ad.price ? formatPrice(parseFloat(ad.price.toString())) : 'Price on request'}
+                {ad.price ? formatPrice(parseFloat(ad.price.toString())) : t('priceOnRequest')}
               </div>
 
               <AdBadges
@@ -335,7 +354,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
               />
 
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">Description</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-800">{t('description')}</h2>
                 <p className="text-gray-600 leading-relaxed whitespace-pre-line">{ad.description}</p>
               </div>
 

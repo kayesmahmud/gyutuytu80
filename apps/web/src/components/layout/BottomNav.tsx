@@ -7,12 +7,14 @@ import { Home, Search, PlusCircle, MessageCircle, User } from 'lucide-react';
 import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { apiClient } from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 interface BottomNavProps {
     lang: string;
 }
 
 export default function BottomNav({ lang }: BottomNavProps) {
+    const t = useTranslations('nav');
     const pathname = usePathname();
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
@@ -69,33 +71,33 @@ export default function BottomNav({ lang }: BottomNavProps) {
 
     const navItems = [
         {
-            name: 'Home',
+            name: t('home'),
             href: `/${lang}`,
             icon: Home,
             active: pathname === `/${lang}`,
         },
         {
-            name: 'Browse',
+            name: t('search'),
             href: `/${lang}/ads`,
             icon: Search,
             active: pathname?.includes('/ads') && !pathname?.includes('/post-ad'),
         },
         {
-            name: 'Post',
+            name: t('post'),
             href: `/${lang}/post-ad`,
             icon: PlusCircle,
             active: pathname?.includes('/post-ad'),
             isPrimary: true, // Center FAB
         },
         {
-            name: 'Messages',
+            name: t('messages'),
             href: `/${lang}/messages`,
             icon: MessageCircle,
             active: pathname?.includes('/messages'),
             badge: unreadCount,
         },
         {
-            name: 'Profile',
+            name: t('profile'),
             href: `/${lang}/profile`,
             icon: User,
             active: pathname?.includes('/profile'),

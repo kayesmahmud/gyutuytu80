@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   IndividualVerificationForm,
   BusinessVerificationForm,
@@ -11,6 +12,8 @@ import { DashboardStats, AdsList, useDashboardData } from '@/components/dashboar
 export default function DashboardPage() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang || 'en';
+  const t = useTranslations('dashboard');
+  const tc = useTranslations('common');
 
   const {
     session,
@@ -65,8 +68,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Loading Your Dashboard</h2>
-          <p className="text-white/80">Please wait while we fetch your data...</p>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('loadingDashboard')}</h2>
+          <p className="text-white/80">{t('pleaseWait')}</p>
         </div>
       </div>
     );
@@ -87,9 +90,9 @@ export default function DashboardPage() {
           <nav aria-label="Breadcrumb" className="sr-only">
             <ol>
               <li>
-                <Link href={`/${lang}`}>Home</Link>
+                <Link href={`/${lang}`}>{tc('home')}</Link>
               </li>
-              <li aria-current="page">Dashboard</li>
+              <li aria-current="page">{t('title')}</li>
             </ol>
           </nav>
 
@@ -97,10 +100,10 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="md:flex-shrink-0">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-white to-white/90">
-                My Dashboard
+                {t('myDashboard')}
               </h1>
               <p className="text-sm md:text-base text-white/80">
-                Welcome back, <span className="font-semibold">{session?.user?.name}</span>!
+                {tc('welcomeBack')}, <span className="font-semibold">{session?.user?.name}</span>!
               </p>
             </div>
 

@@ -1,6 +1,9 @@
+import { getTranslations } from 'next-intl/server';
 import type { SpecificationsSectionProps } from './types';
 
-export function SpecificationsSection({ customFields }: SpecificationsSectionProps) {
+export async function SpecificationsSection({ customFields }: SpecificationsSectionProps) {
+  const t = await getTranslations('ads');
+
   if (!customFields || Object.keys(customFields).length === 0) {
     return null;
   }
@@ -44,7 +47,7 @@ export function SpecificationsSection({ customFields }: SpecificationsSectionPro
   return (
     <div className="mb-6">
       <h2 className="text-xl font-semibold mb-4 text-gray-800">
-        Specifications
+        {t('specifications')}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {entries.map(([key, value]) => (
@@ -63,7 +66,7 @@ export function SpecificationsSection({ customFields }: SpecificationsSectionPro
       {amenitiesList.length > 0 && (
         <div className="mt-6 pt-6 border-t border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-800">
-            Amenities
+            {t('amenities')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {amenitiesList.map((amenity, index) => (

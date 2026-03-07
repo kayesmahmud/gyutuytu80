@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import Link from 'next/link';
 
@@ -9,6 +10,7 @@ interface ShopEmptyStateProps {
 }
 
 export default function ShopEmptyState({ shopId, lang }: ShopEmptyStateProps) {
+  const t = useTranslations('shop');
   const { user, isAuthenticated } = useUserAuth();
 
   // Only show the button if the logged-in user owns this shop
@@ -33,7 +35,7 @@ export default function ShopEmptyState({ shopId, lang }: ShopEmptyStateProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
           </svg>
         </div>
-        <span className="tracking-wide">POST FREE AD</span>
+        <span className="tracking-wide">{t('postFreeAd')}</span>
         <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
       </div>
     </Link>

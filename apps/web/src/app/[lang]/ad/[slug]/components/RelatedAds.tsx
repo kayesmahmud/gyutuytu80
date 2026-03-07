@@ -1,4 +1,5 @@
 import { AdCard } from '@/components/ads';
+import { getTranslations } from 'next-intl/server';
 
 export interface RelatedAd {
   id: number;
@@ -24,13 +25,15 @@ interface RelatedAdsProps {
   lang: string;
 }
 
-export function RelatedAds({ ads, lang }: RelatedAdsProps) {
+export async function RelatedAds({ ads, lang }: RelatedAdsProps) {
   if (ads.length === 0) return null;
+
+  const t = await getTranslations('ads');
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <h2 className="text-xl font-semibold mb-6 text-gray-800">
-        Related Ads
+        {t('relatedAds')}
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
         {ads.map((ad) => (

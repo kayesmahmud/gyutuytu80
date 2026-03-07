@@ -1,6 +1,10 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 export function BenefitsGrid() {
+  const t = useTranslations('verification');
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-8 sm:mb-12 -mt-4 sm:-mt-8">
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
@@ -9,8 +13,8 @@ export function BenefitsGrid() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Build Trust</h3>
-        <p className="text-gray-600 leading-relaxed text-sm sm:text-base">Verified badge increases buyer confidence by up to 3x</p>
+        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">{t('buildTrust')}</h3>
+        <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{t('buildTrustDesc')}</p>
       </div>
 
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
@@ -19,8 +23,8 @@ export function BenefitsGrid() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
         </div>
-        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Better Rankings</h3>
-        <p className="text-gray-600 leading-relaxed text-sm sm:text-base">Verified ads appear higher in search results</p>
+        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">{t('betterRankings')}</h3>
+        <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{t('betterRankingsDesc')}</p>
       </div>
 
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
@@ -29,8 +33,8 @@ export function BenefitsGrid() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
           </svg>
         </div>
-        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">Premium Features</h3>
-        <p className="text-gray-600 leading-relaxed text-sm sm:text-base">Access exclusive tools and seller benefits</p>
+        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">{t('premiumFeatures')}</h3>
+        <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{t('premiumFeaturesDesc')}</p>
       </div>
     </div>
   );

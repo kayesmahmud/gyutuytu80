@@ -4,19 +4,30 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { apiClient } from '@/lib/api';
 import { User, LayoutDashboard, Store, LogOut } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface HeaderProps {
   lang: string;
 }
 
 export default function Header({ lang }: HeaderProps) {
+  const t = useTranslations('nav');
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Language switcher
+  const otherLang = lang === 'en' ? 'ne' : 'en';
+  const otherLangLabel = lang === 'en' ? 'नेपाली' : 'English';
+  const switchLanguage = () => {
+    const newPath = pathname?.replace(`/${lang}`, `/${otherLang}`) || `/${otherLang}`;
+    router.push(newPath);
+  };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -123,15 +134,16 @@ export default function Header({ lang }: HeaderProps) {
     }
   };
 
+  const tRoles = useTranslations('roles');
   const getRoleLabel = () => {
     if (!currentUser) return '';
     switch (currentUser.role) {
       case 'super_admin':
-        return 'Super Admin';
+        return tRoles('superAdmin');
       case 'editor':
-        return 'Editor';
+        return tRoles('editor');
       default:
-        return 'User';
+        return tRoles('user');
     }
   };
 
@@ -180,9 +192,14 @@ export default function Header({ lang }: HeaderProps) {
             </Link>
           </div>
 
-          {/* Right - Empty for balance (or can add cart/notification icon later) */}
+          {/* Right - Language Switcher */}
           <div className="flex justify-end">
-            {/* Placeholder for future icon */}
+            <button
+              onClick={switchLanguage}
+              className="px-2 py-1 text-xs font-semibold rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              {otherLangLabel}
+            </button>
           </div>
         </div>
 
@@ -213,7 +230,7 @@ export default function Header({ lang }: HeaderProps) {
                   className={`no-underline font-medium text-sm ${pathname?.includes('/ads') && !pathname?.includes('/post-ad') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
                     } transition-colors`}
                 >
-                  Browse Ads
+                  {t('searchAds')}
                 </Link>
 
                 <Link
@@ -221,7 +238,7 @@ export default function Header({ lang }: HeaderProps) {
                   className={`no-underline font-medium text-sm ${pathname?.includes('/verification') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
                     } transition-colors`}
                 >
-                  {isUserVerified ? 'Verification' : 'Get Verified'}
+                  {isUserVerified ? t('verification') : t('getVerified')}
                 </Link>
 
                 {isAuthenticated && (
@@ -230,7 +247,7 @@ export default function Header({ lang }: HeaderProps) {
                     className={`relative no-underline font-medium text-sm ${pathname?.includes('/messages') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
                       } transition-colors`}
                   >
-                    Inbox
+                    {t('inbox')}
                     {unreadCount > 0 && (
                       <span className="absolute -top-2 -right-3 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
                         {unreadCount > 99 ? '99+' : unreadCount}
@@ -241,19 +258,27 @@ export default function Header({ lang }: HeaderProps) {
               </>
             )}
 
+            {/* Language Switcher */}
+            <button
+              onClick={switchLanguage}
+              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+            >
+              {otherLangLabel}
+            </button>
+
             {!isAuthenticated ? (
               <>
                 <Link
                   href={`/${lang}/auth/signin`}
                   className="px-4 py-2 rounded-lg font-semibold border-2 border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors text-sm"
                 >
-                  Sign In
+                  {t('signIn')}
                 </Link>
                 <Link
                   href={`/${lang}/auth/signup`}
                   className="px-4 py-2 rounded-lg font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors text-sm"
                 >
-                  Sign Up
+                  {t('signUp')}
                 </Link>
                 <Link
                   href={`/${lang}/post-ad`}
@@ -268,7 +293,7 @@ export default function Header({ lang }: HeaderProps) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                       </svg>
                     </div>
-                    <span>POST FREE AD</span>
+                    <span>{t('postFreeAd')}</span>
                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
                   </div>
                 </Link>
@@ -285,14 +310,14 @@ export default function Header({ lang }: HeaderProps) {
                         className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold text-sm hover:from-blue-600 hover:to-purple-700 transition-all"
                       >
                         <span>🛡️</span>
-                        Super Admin Panel
+                        {t('superAdminPanel')}
                       </Link>
                     ) : (
                       <Link
                         href={`/${lang}/editor/dashboard`}
                         className="px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg transition-all duration-200 text-center"
                       >
-                        Editor Dashboard
+                        {t('editorDashboard')}
                       </Link>
                     )}
                   </>
@@ -312,7 +337,7 @@ export default function Header({ lang }: HeaderProps) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
-                        <span>POST FREE AD</span>
+                        <span>{t('postFreeAd')}</span>
                         <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
                       </div>
                     </Link>
@@ -356,7 +381,7 @@ export default function Header({ lang }: HeaderProps) {
                               className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 no-underline transition-colors"
                             >
                               <User className="w-4 h-4 text-gray-500" />
-                              My Profile
+                              {t('myProfile')}
                             </Link>
 
                             <Link
@@ -365,7 +390,7 @@ export default function Header({ lang }: HeaderProps) {
                               className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 no-underline transition-colors"
                             >
                               <LayoutDashboard className="w-4 h-4 text-gray-500" />
-                              Dashboard
+                              {t('dashboard')}
                             </Link>
 
                             {/* View My Shop - for all users with shop slug */}
@@ -382,7 +407,7 @@ export default function Header({ lang }: HeaderProps) {
                               >
                                 <div className="flex items-center gap-2">
                                   <Store className="w-4 h-4 flex-shrink-0" />
-                                  <span>My Shop</span>
+                                  <span>{t('myShop')}</span>
                                   {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
                                     <img src="/golden-badge.png" alt="Verified Business" title="Verified Business" className="ml-auto w-5 h-5 flex-shrink-0" />
                                   )}
@@ -401,7 +426,7 @@ export default function Header({ lang }: HeaderProps) {
                               className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
                             >
                               <LogOut className="w-4 h-4" />
-                              Sign Out
+                              {t('signOut')}
                             </button>
                           </div>
                         </div>
@@ -453,10 +478,10 @@ export default function Header({ lang }: HeaderProps) {
             {!isStaff && (
               <>
                 <Link href={`/${lang}/ads`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
-                  Browse Ads
+                  {t('searchAds')}
                 </Link>
                 <Link href={`/${lang}/verification`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
-                  {isUserVerified ? 'Verification' : 'Get Verified'}
+                  {isUserVerified ? t('verification') : t('getVerified')}
                 </Link>
               </>
             )}
@@ -467,31 +492,31 @@ export default function Header({ lang }: HeaderProps) {
             {!isAuthenticated ? (
               <div className="flex flex-col gap-3 mt-2">
                 <Link href={`/${lang}/auth/signin`} onClick={() => setMobileMenuOpen(false)} className="px-4 py-2.5 rounded-lg font-semibold border-2 border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors text-center">
-                  Sign In
+                  {t('signIn')}
                 </Link>
                 <Link href={`/${lang}/auth/signup`} onClick={() => setMobileMenuOpen(false)} className="px-4 py-2.5 rounded-lg font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors text-center">
-                  Sign Up
+                  {t('signUp')}
                 </Link>
               </div>
             ) : (
               <>
                 {currentUser?.role === 'super_admin' ? (
                   <Link href={`/${lang}/super-admin/dashboard`} onClick={() => setMobileMenuOpen(false)} className="px-4 py-2.5 rounded-lg font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors text-center">
-                    🛡️ Super Admin Panel
+                    🛡️ {t('superAdminPanel')}
                   </Link>
                 ) : currentUser?.role === 'editor' ? (
                   <Link href={`/${lang}/editor/dashboard`} onClick={() => setMobileMenuOpen(false)} className="px-4 py-2.5 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-lg transition-all text-center">
-                    Editor Dashboard
+                    {t('editorDashboard')}
                   </Link>
                 ) : (
                   <>
                     <Link href={`/${lang}/profile`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
                       <User className="w-5 h-5 text-gray-500" />
-                      My Profile
+                      {t('myProfile')}
                     </Link>
                     <Link href={`/${lang}/dashboard`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
                       <LayoutDashboard className="w-5 h-5 text-gray-500" />
-                      Dashboard
+                      {t('dashboard')}
                     </Link>
 
                     {/* My Shop - for all users with shop slug */}
@@ -507,7 +532,7 @@ export default function Header({ lang }: HeaderProps) {
                           }`}
                       >
                         <Store className="w-5 h-5 flex-shrink-0" />
-                        <span>My Shop</span>
+                        <span>{t('myShop')}</span>
                         {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
                           <img src="/golden-badge.png" alt="Verified Business" title="Verified Business" className="ml-auto w-5 h-5 flex-shrink-0" />
                         )}
@@ -524,7 +549,7 @@ export default function Header({ lang }: HeaderProps) {
                   <>
                     <div className="border-t border-gray-200 my-2" />
                     <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="px-4 py-2.5 rounded-lg font-semibold cursor-pointer bg-transparent text-red-600 border-2 border-red-600 transition-all hover:bg-red-600 hover:text-white w-full">
-                      Sign Out
+                      {t('signOut')}
                     </button>
                   </>
                 )}
@@ -537,25 +562,25 @@ export default function Header({ lang }: HeaderProps) {
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Help Center
+              {t('helpCenter')}
             </Link>
             <Link href={`/${lang}/faq`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              FAQ
+              {t('faq')}
             </Link>
             <Link href={`/${lang}/support/tickets`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
               </svg>
-              Support Tickets
+              {t('supportTickets')}
             </Link>
             <Link href={`/${lang}/contact`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              Contact Us
+              {t('contactUs')}
             </Link>
           </div>
         </div>

@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useRouter } from 'next/navigation';
 import NextImage from 'next/image';
@@ -47,6 +48,7 @@ export default function ShopProfileClient({
   accountType,
   stats,
 }: ShopProfileClientProps) {
+  const t = useTranslations('shop');
   const { user, isAuthenticated, refreshUser } = useUserAuth();
   const router = useRouter();
   const [isOwner, setIsOwner] = useState(false);
@@ -85,7 +87,7 @@ export default function ShopProfileClient({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image must be less than 5MB. Please upload a smaller file.');
+        alert(t('imageTooLarge'));
         return;
       }
       const reader = new FileReader();
@@ -102,7 +104,7 @@ export default function ShopProfileClient({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image must be less than 5MB. Please upload a smaller file.');
+        alert(t('imageTooLarge'));
         return;
       }
       const reader = new FileReader();
@@ -165,7 +167,7 @@ export default function ShopProfileClient({
       const token = user?.backendToken;
 
       if (!token) {
-        alert('You must be logged in to upload images. Please refresh and try again.');
+        alert(t('loginToUpload'));
         setUploading(false);
         return;
       }
@@ -187,16 +189,16 @@ export default function ShopProfileClient({
       const data = await response.json();
 
       if (data.success) {
-        alert(`${type === 'avatar' ? 'Avatar' : 'Cover photo'} uploaded successfully!`);
+        alert(type === 'avatar' ? t('avatarUploaded') : t('coverUploaded'));
         // Refresh NextAuth session to update header avatar
         await refreshUser();
         router.refresh(); // Refresh server component data
       } else {
-        alert(data.message || 'Upload failed');
+        alert(data.message || t('uploadFailed'));
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      alert(t('failedToUpload'));
     } finally {
       setUploading(false);
     }
@@ -213,18 +215,18 @@ export default function ShopProfileClient({
       setCropperModal({ isOpen: false, type: null, imageSrc: null });
     } catch (error) {
       console.error('Error cropping image:', error);
-      alert('Failed to crop image. Please try again.');
+      alert(t('failedToCrop'));
     }
   };
 
   const handleRemoveAvatar = async () => {
-    if (!window.confirm('Are you sure you want to remove your avatar?')) return;
+    if (!window.confirm(t('confirmRemoveAvatar'))) return;
 
     try {
       const token = user?.backendToken;
 
       if (!token) {
-        alert('You must be logged in to remove avatar. Please refresh and try again.');
+        alert(t('loginToRemove'));
         return;
       }
 
@@ -241,27 +243,27 @@ export default function ShopProfileClient({
       const data = await response.json();
 
       if (data.success) {
-        alert('Avatar removed successfully!');
+        alert(t('avatarRemoved'));
         // Refresh NextAuth session to update header avatar
         await refreshUser();
         router.refresh();
       } else {
-        alert(data.message || 'Failed to remove avatar');
+        alert(data.message || t('failedToRemoveAvatar'));
       }
     } catch (error) {
       console.error('Error removing avatar:', error);
-      alert('Failed to remove avatar. Please try again.');
+      alert(t('failedToRemoveAvatar'));
     }
   };
 
   const handleRemoveCover = async () => {
-    if (!window.confirm('Are you sure you want to remove your cover photo?')) return;
+    if (!window.confirm(t('confirmRemoveCover'))) return;
 
     try {
       const token = user?.backendToken;
 
       if (!token) {
-        alert('You must be logged in to remove cover photo. Please refresh and try again.');
+        alert(t('loginToRemove'));
         return;
       }
 
@@ -278,16 +280,16 @@ export default function ShopProfileClient({
       const data = await response.json();
 
       if (data.success) {
-        alert('Cover photo removed successfully!');
+        alert(t('coverRemoved'));
         // Refresh NextAuth session to update header (cover doesn't show in header, but refresh for consistency)
         await refreshUser();
         router.refresh();
       } else {
-        alert(data.message || 'Failed to remove cover photo');
+        alert(data.message || t('failedToRemoveCover'));
       }
     } catch (error) {
       console.error('Error removing cover photo:', error);
-      alert('Failed to remove cover photo. Please try again.');
+      alert(t('failedToRemoveCover'));
     }
   };
 
@@ -321,7 +323,7 @@ export default function ShopProfileClient({
                   icon={uploading ? '⏳' : '📷'}
                   className="shadow-lg"
                 >
-                  <span className="hidden sm:inline">{coverPhotoUrl ? 'Change Cover' : 'Add Cover'}</span>
+                  <span className="hidden sm:inline">{coverPhotoUrl ? t('changeCover') : t('addCover')}</span>
                 </Button>
                 {coverPhotoUrl && (
                   <Button
@@ -331,14 +333,14 @@ export default function ShopProfileClient({
                     icon="🗑️"
                     className="shadow-lg"
                   >
-                    <span className="hidden sm:inline">Remove</span>
+                    <span className="hidden sm:inline">{t('remove')}</span>
                   </Button>
                 )}
               </div>
 
               {/* Recommended Cover Dimensions - hide on mobile */}
               <div className="hidden md:block absolute bottom-4 right-4 text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">
-                Recommended: 1600 x 400 (4:1 ratio)
+                {t('recommended')}
               </div>
             </>
           )}
@@ -369,7 +371,7 @@ export default function ShopProfileClient({
                   <button
                     onClick={handleRemoveAvatar}
                     className="absolute bottom-[5px] right-[5px] sm:bottom-[8px] sm:right-[8px] md:bottom-[10px] md:right-[10px] w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-red-600 border-[2px] sm:border-[3px] border-white text-white hover:bg-red-700 transition-colors shadow-lg flex items-center justify-center"
-                    title="Remove avatar"
+                    title={t('removeAvatar')}
                   >
                     <svg width="14" height="14" className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6"></polyline>
@@ -383,7 +385,7 @@ export default function ShopProfileClient({
                     onClick={() => avatarInputRef.current?.click()}
                     disabled={uploading}
                     className="absolute bottom-[5px] right-[5px] sm:bottom-[8px] sm:right-[8px] md:bottom-[10px] md:right-[10px] w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-gray-200 border-[2px] sm:border-[3px] border-white text-gray-600 hover:bg-gray-300 transition-colors shadow-lg flex items-center justify-center disabled:opacity-60"
-                    title={uploading ? 'Uploading...' : 'Add avatar'}
+                    title={uploading ? t('uploading') : t('addAvatar')}
                   >
                     <svg width="14" height="14" className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -404,8 +406,8 @@ export default function ShopProfileClient({
               {(businessVerificationStatus === 'verified' || businessVerificationStatus === 'approved') && (
                 <NextImage
                   src="/golden-badge.png"
-                  alt="Verified Business"
-                  title="Verified Business Account"
+                  alt={t('verifiedBusiness')}
+                  title={t('verifiedBusinessAccount')}
                   width={32}
                   height={32}
                   className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex-shrink-0"
@@ -415,8 +417,8 @@ export default function ShopProfileClient({
               {individualVerified && businessVerificationStatus !== 'verified' && businessVerificationStatus !== 'approved' && (
                 <NextImage
                   src="/blue-badge.png"
-                  alt="Verified Seller"
-                  title="Verified Individual Seller"
+                  alt={t('verifiedIndividualSeller')}
+                  title={t('verifiedIndividualSeller')}
                   width={32}
                   height={32}
                   className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex-shrink-0"
@@ -436,34 +438,34 @@ export default function ShopProfileClient({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  <span>Get Verified</span>
+                  <span>{t('getVerified')}</span>
                 </Link>
               )}
             </div>
 
             <p className="text-gray-600 text-sm sm:text-base md:text-lg mb-3 sm:mb-4">
               {businessVerificationStatus === 'verified' || businessVerificationStatus === 'approved'
-                ? 'Verified Business Account'
+                ? t('verifiedBusinessAccount')
                 : individualVerified
-                ? 'Verified Individual Seller'
+                ? t('verifiedIndividualSeller')
                 : accountType === 'business'
-                ? 'Business Account'
-                : 'Individual Seller'}
+                ? t('businessAccount')
+                : t('individualSeller')}
             </p>
 
             {/* Stats */}
             <div className="flex flex-wrap gap-4 sm:gap-6 md:gap-8">
               <div>
                 <div className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">{stats.total_ads}</div>
-                <div className="text-xs sm:text-sm text-gray-600">Active Ads</div>
+                <div className="text-xs sm:text-sm text-gray-600">{t('activeAds')}</div>
               </div>
               <div>
                 <div className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">{stats.total_views.toLocaleString()}</div>
-                <div className="text-xs sm:text-sm text-gray-600">Total Views</div>
+                <div className="text-xs sm:text-sm text-gray-600">{t('totalViews')}</div>
               </div>
               <div>
                 <div className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">{stats.member_since}</div>
-                <div className="text-xs sm:text-sm text-gray-600">Member Since</div>
+                <div className="text-xs sm:text-sm text-gray-600">{t('memberSince')}</div>
               </div>
             </div>
           </div>
@@ -493,7 +495,7 @@ export default function ShopProfileClient({
             {/* Modal Header */}
             <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-lg sm:text-xl md:text-2xl font-semibold">
-                {cropperModal.type === 'avatar' ? 'Crop Profile Picture' : 'Crop Cover Photo'}
+                {cropperModal.type === 'avatar' ? t('cropProfilePicture') : t('cropCoverPhoto')}
               </h2>
             </div>
 
@@ -513,7 +515,7 @@ export default function ShopProfileClient({
 
             {/* Zoom Control */}
             <div className="p-4 sm:p-6 border-t border-b border-gray-200">
-              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Zoom</label>
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">{t('zoom')}</label>
               <input
                 type="range"
                 min={1}
@@ -533,7 +535,7 @@ export default function ShopProfileClient({
                 variant="secondary"
                 className="text-sm sm:text-base"
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 onClick={handleCropSave}
@@ -542,7 +544,7 @@ export default function ShopProfileClient({
                 loading={uploading}
                 className="text-sm sm:text-base"
               >
-                {uploading ? 'Uploading...' : 'Save & Upload'}
+                {uploading ? t('uploading') : t('saveAndUpload')}
               </Button>
             </div>
           </div>

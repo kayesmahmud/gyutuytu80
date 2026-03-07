@@ -1,11 +1,16 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import LoginForm from './LoginForm';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Login - Thulobazaar',
-  description: 'Login to your Thulobazaar account',
-};
+export async function generateMetadata({ params }: LoginPageProps): Promise<Metadata> {
+  const { lang } = await params;
+  const t = await getTranslations({ locale: lang, namespace: 'metadata' });
+  return {
+    title: t('signinTitle'),
+    description: t('signinDescription'),
+  };
+}
 
 interface LoginPageProps {
   params: Promise<{ lang: string }>;
@@ -14,6 +19,8 @@ interface LoginPageProps {
 
 export default async function LoginPage({ params, searchParams }: LoginPageProps) {
   const { lang } = await params;
+  setRequestLocale(lang);
+  const t = await getTranslations('auth');
   const resolvedSearchParams = await searchParams;
   const callbackUrl = typeof resolvedSearchParams.callbackUrl === 'string' ? resolvedSearchParams.callbackUrl : undefined;
 
@@ -25,8 +32,8 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
           <Link href={`/${lang}`} className="inline-block mb-4 sm:mb-6">
             <span className="text-3xl sm:text-4xl font-bold text-rose-500">Thulobazaar</span>
           </Link>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
-          <p className="text-gray-500 text-sm sm:text-base">Login to your account to continue</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('welcomeBack')}</h2>
+          <p className="text-gray-500 text-sm sm:text-base">{t('loginSubtitle')}</p>
         </div>
 
         {/* Login Form Card */}
@@ -39,7 +46,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-white text-gray-500">Don&apos;t have an account?</span>
+              <span className="px-3 bg-white text-gray-500">{t('dontHaveAccount')}</span>
             </div>
           </div>
 
@@ -48,14 +55,14 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
             href={`/${lang}/auth/signup${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`}
             className="block w-full py-3 px-4 text-center rounded-lg font-semibold border-2 border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors duration-200"
           >
-            Create an account
+            {t('createAccount')}
           </Link>
         </div>
 
         {/* Footer Links */}
         <div className="mt-6 text-center text-sm text-gray-500">
           <Link href={`/${lang}`} className="text-rose-500 hover:text-rose-600 transition-colors">
-            Back to Home
+            {t('backToHome')}
           </Link>
         </div>
       </div>

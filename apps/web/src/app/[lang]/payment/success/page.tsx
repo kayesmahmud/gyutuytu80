@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface PaymentDetails {
   orderId: string;
@@ -15,6 +16,7 @@ interface PaymentDetails {
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const t = useTranslations('payment');
   const [details, setDetails] = useState<PaymentDetails | null>(null);
   const [countdown, setCountdown] = useState(10);
 
@@ -64,13 +66,13 @@ export default function PaymentSuccessPage() {
   const getPaymentTypeLabel = (type: string) => {
     switch (type) {
       case 'ad_promotion':
-        return 'Ad Promotion';
+        return t('adPromotion');
       case 'individual_verification':
-        return 'Individual Verification';
+        return t('individualVerification');
       case 'business_verification':
-        return 'Business Verification';
+        return t('businessVerification');
       default:
-        return 'Payment';
+        return t('payment');
     }
   };
 
@@ -92,11 +94,11 @@ export default function PaymentSuccessPage() {
 
   const getNextStepLabel = () => {
     if (details?.type === 'ad_promotion') {
-      return 'View Your Ad';
+      return t('viewYourAd');
     } else if (details?.type === 'individual_verification' || details?.type === 'business_verification') {
-      return 'View Verification Status';
+      return t('viewVerificationStatus');
     }
-    return 'Go to Dashboard';
+    return t('goToDashboard');
   };
 
   return (
@@ -130,10 +132,10 @@ export default function PaymentSuccessPage() {
                 </svg>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white mt-4">
-                Payment Successful!
+                {t('successTitle')}
               </h1>
               <p className="text-green-100 mt-2 text-sm sm:text-base">
-                Your transaction has been completed
+                {t('successSubtitle')}
               </p>
             </div>
           </div>
@@ -144,7 +146,7 @@ export default function PaymentSuccessPage() {
               <div className="space-y-3">
                 {/* Transaction ID */}
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-500 text-sm">Transaction ID</span>
+                  <span className="text-gray-500 text-sm">{t('transactionId')}</span>
                   <span className="font-mono text-xs sm:text-sm text-gray-800 bg-gray-100 px-2 py-1 rounded">
                     {details.orderId.slice(0, 20)}...
                   </span>
@@ -152,7 +154,7 @@ export default function PaymentSuccessPage() {
 
                 {/* Payment Type */}
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-500 text-sm">Payment For</span>
+                  <span className="text-gray-500 text-sm">{t('paymentFor')}</span>
                   <span className="font-semibold text-gray-800">
                     {getPaymentTypeLabel(details.type)}
                   </span>
@@ -160,7 +162,7 @@ export default function PaymentSuccessPage() {
 
                 {/* Payment Gateway */}
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-500 text-sm">Paid Via</span>
+                  <span className="text-gray-500 text-sm">{t('paidVia')}</span>
                   <span className={`font-semibold flex items-center gap-2 ${
                     details.gateway === 'khalti' ? 'text-purple-600' : 'text-green-600'
                   }`}>
@@ -175,10 +177,10 @@ export default function PaymentSuccessPage() {
 
                 {/* Status */}
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-500 text-sm">Status</span>
+                  <span className="text-gray-500 text-sm">{t('status')}</span>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    Verified
+                    {t('verified')}
                   </span>
                 </div>
               </div>
@@ -190,21 +192,13 @@ export default function PaymentSuccessPage() {
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                What&apos;s Next?
+                {t('whatsNext')}
               </h3>
               <p className="text-gray-600 text-sm mt-2">
-                {details?.type === 'ad_promotion' && (
-                  <>Your ad is now promoted and will get more visibility. The promotion is active immediately.</>
-                )}
-                {details?.type === 'individual_verification' && (
-                  <>Your individual verification payment is complete. Your documents will be reviewed within 24-48 hours.</>
-                )}
-                {details?.type === 'business_verification' && (
-                  <>Your business verification payment is complete. Our team will review your documents within 2-3 business days.</>
-                )}
-                {!details?.type && (
-                  <>Your payment has been processed successfully.</>
-                )}
+                {details?.type === 'ad_promotion' && t('adPromotionNext')}
+                {details?.type === 'individual_verification' && t('individualVerificationNext')}
+                {details?.type === 'business_verification' && t('businessVerificationNext')}
+                {!details?.type && t('defaultNext')}
               </p>
             </div>
 
@@ -221,20 +215,20 @@ export default function PaymentSuccessPage() {
                 href="/en/dashboard"
                 className="block w-full py-3 px-4 bg-gray-100 text-gray-700 text-center font-medium rounded-xl hover:bg-gray-200 transition-all"
               >
-                Go to Dashboard
+                {t('goToDashboard')}
               </Link>
             </div>
 
             {/* Auto-redirect notice */}
             <p className="text-center text-gray-400 text-xs mt-4">
-              Auto-redirecting in {countdown} seconds...
+              {t('autoRedirecting', { countdown })}
             </p>
           </div>
         </div>
 
         {/* Support Note */}
         <p className="text-center text-gray-500 text-sm mt-4 px-4">
-          Having issues? Contact{' '}
+          {t('havingIssues')}{' '}
           <a href="mailto:support@thulobazaar.com" className="text-blue-600 hover:underline">
             support@thulobazaar.com
           </a>

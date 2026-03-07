@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import FilterCarousel from './FilterCarousel';
 import MobileFilterDrawer from './MobileFilterDrawer';
 import type { FilterSection } from './MobileFilterDrawer';
@@ -50,6 +51,7 @@ export default function AdsFilterWrapper({
   searchQuery = '',
 }: AdsFilterWrapperProps) {
   const router = useRouter();
+  const t = useTranslations('ads');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<FilterSection | undefined>(undefined);
   const [query, setQuery] = useState(searchQuery);
@@ -93,7 +95,7 @@ export default function AdsFilterWrapper({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for anything..."
+            placeholder={t('searchPlaceholder')}
             className="flex-1 min-w-0 px-3 py-2 border-0 focus:outline-none text-gray-800 text-sm rounded-lg bg-transparent placeholder:text-gray-400"
           />
           <button

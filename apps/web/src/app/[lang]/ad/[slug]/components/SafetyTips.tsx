@@ -1,4 +1,8 @@
-export function SafetyTips() {
+import { getTranslations } from 'next-intl/server';
+
+export async function SafetyTips() {
+  const t = await getTranslations('ads');
+
   return (
     <div style={{
       background: '#fff7ed',
@@ -12,7 +16,7 @@ export function SafetyTips() {
         marginBottom: '1rem',
         color: '#9a3412'
       }}>
-        Safety Tips
+        {t('safetyTips')}
       </h4>
       <ul style={{
         fontSize: '0.875rem',
@@ -20,10 +24,10 @@ export function SafetyTips() {
         lineHeight: '1.7',
         paddingLeft: '1.25rem'
       }}>
-        <li>Meet in a safe public place</li>
-        <li>Check the item before payment</li>
-        <li>Never pay in advance</li>
-        <li>Beware of unrealistic offers</li>
+        <li>{t('safetyTip1')}</li>
+        <li>{t('safetyTip2')}</li>
+        <li>{t('safetyTip3')}</li>
+        <li>{t('safetyTip4')}</li>
       </ul>
     </div>
   );

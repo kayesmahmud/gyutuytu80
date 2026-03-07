@@ -13,6 +13,7 @@ export type Area = LocationHierarchyArea;
 export interface SearchResult {
   id: number;
   name: string;
+  nameNe?: string | null;
   slug: string;
   type: 'province' | 'district' | 'municipality' | 'area';
   parent_id?: number | null;

@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   ProfileHeader,
   ProfileTabs,
@@ -16,6 +17,9 @@ export default function ProfilePage() {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang || 'en';
   const router = useRouter();
+  const t = useTranslations('profile');
+  const tc = useTranslations('common');
+  const td = useTranslations('dashboard');
 
   const {
     profile,
@@ -49,7 +53,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your profile...</p>
+          <p className="text-gray-600">{t('loadingProfile')}</p>
         </div>
       </div>
     );
@@ -64,13 +68,13 @@ export default function ProfilePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load profile</h2>
-          <p className="text-gray-600 mb-6">{profileError || error || 'Something went wrong. Please try again.'}</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('failedToLoadProfile')}</h2>
+          <p className="text-gray-600 mb-6">{profileError || error || t('somethingWentWrong')}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium"
           >
-            Try Again
+            {tc('tryAgain')}
           </button>
         </div>
       </div>
@@ -84,18 +88,18 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           <nav className="flex items-center gap-2 text-sm">
             <Link href={`/${lang}`} className="text-gray-500 hover:text-primary transition-colors">
-              Home
+              {tc('home')}
             </Link>
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             <Link href={`/${lang}/dashboard`} className="text-gray-500 hover:text-primary transition-colors">
-              Dashboard
+              {td('title')}
             </Link>
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            <span className="text-gray-900 font-medium">Profile</span>
+            <span className="text-gray-900 font-medium">{t('title')}</span>
           </nav>
         </div>
       </div>

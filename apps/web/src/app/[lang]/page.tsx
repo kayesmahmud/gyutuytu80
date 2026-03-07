@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { prisma } from '@thulobazaar/database';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AdCard, AdBanner } from '@/components/ads';
 import HeroSearch from './HeroSearch';
 import FeaturedAdsCarousel from './FeaturedAdsCarousel';
@@ -13,14 +14,15 @@ interface HomePageProps {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
   const { lang } = await params;
+  const t = await getTranslations({ locale: lang, namespace: 'metadata' });
 
   return {
-    title: 'Thulobazaar - Buy, Sell, and Rent Across Nepal',
-    description: "Nepal's leading classifieds marketplace. Buy and sell electronics, vehicles, real estate, and more. Post free ads and connect with buyers across Nepal.",
+    title: t('homeTitle'),
+    description: t('homeDescription'),
     keywords: 'Nepal classifieds, buy sell Nepal, online marketplace Nepal, free ads Nepal, Thulobazaar',
     openGraph: {
-      title: 'Thulobazaar - Buy, Sell, and Rent Across Nepal',
-      description: "Nepal's leading classifieds marketplace",
+      title: t('homeTitle'),
+      description: t('siteDescription'),
       type: 'website',
       siteName: 'Thulobazaar',
     },
@@ -48,6 +50,9 @@ const CATEGORY_DISPLAY_ORDER = [
 
 export default async function HomePage({ params }: HomePageProps) {
   const { lang } = await params;
+  setRequestLocale(lang);
+  const t = await getTranslations('home');
+  const tc = await getTranslations('common');
 
   // ✅ Fetch real data from database using Prisma (parallel queries for performance)
   const [categories, featuredAds, latestAds] = await Promise.all([
@@ -193,7 +198,7 @@ export default async function HomePage({ params }: HomePageProps) {
     slug: ad.slug || undefined,
     condition: ad.condition || null,
     publishedAt: ad.reviewed_at || ad.created_at || new Date(),
-    sellerName: ad.users_ads_user_idTousers?.business_name || ad.users_ads_user_idTousers?.full_name || 'Unknown',
+    sellerName: ad.users_ads_user_idTousers?.business_name || ad.users_ads_user_idTousers?.full_name || tc('unknownSeller'),
     accountType: ad.users_ads_user_idTousers?.account_type || undefined,
     businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status || undefined,
     individualVerified: ad.users_ads_user_idTousers?.individual_verified || false,
@@ -209,7 +214,7 @@ export default async function HomePage({ params }: HomePageProps) {
     // publishedAt = when editor approved (use this for "time ago" display)
     publishedAt: ad.reviewed_at || ad.created_at || new Date(),
     createdAt: ad.created_at || new Date(),
-    sellerName: ad.users_ads_user_idTousers?.full_name || 'Unknown',
+    sellerName: ad.users_ads_user_idTousers?.full_name || tc('unknownSeller'),
     isFeatured: ad.is_featured || false,
     isUrgent: ad.is_urgent || false,
     isSticky: ad.is_sticky || false,
@@ -233,10 +238,10 @@ export default async function HomePage({ params }: HomePageProps) {
         {/* Content */}
         <div className="relative max-w-7xl mx-auto px-4 py-6 sm:py-8 md:py-12 lg:py-20 text-center text-white">
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 sm:mb-3 md:mb-4 animate-fade-in-up">
-            Buy, Sell, and Rent Across Nepal
+            {t('hero')}
           </h1>
           <p className="text-sm sm:text-base md:text-lg opacity-90 mb-4 sm:mb-6 md:mb-8">
-            Nepal&apos;s Leading Classifieds Marketplace
+            {t('subtitle')}
           </p>
 
           {/* Enhanced Search Bar */}
@@ -256,11 +261,11 @@ export default async function HomePage({ params }: HomePageProps) {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                 </svg>
-                <span>POST FREE AD</span>
+                <span>{t('postFreeAd')}</span>
                 <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
               </div>
             </Link>
-            {/* Browse All Ads - Orange gradient to match design */}
+            {/* Search All Ads - Orange gradient to match design */}
             <Link
               href={`/${lang}/ads`}
               className="group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-500 text-white w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold hover:from-orange-500 hover:via-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-orange-500/50 hover:scale-105 no-underline"
@@ -269,7 +274,7 @@ export default async function HomePage({ params }: HomePageProps) {
               <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300 hidden sm:block"></div>
               {/* Button Content */}
               <div className="relative flex items-center gap-2">
-                <span>Browse All Ads</span>
+                <span>{t('searchAllAds')}</span>
                 <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -307,17 +312,17 @@ export default async function HomePage({ params }: HomePageProps) {
               <div className="flex justify-between items-end mb-4 sm:mb-6 md:mb-8">
                 <div>
                   <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1 md:mb-2">
-                    Browse Categories
+                    {t('browseCategories')}
                   </h2>
                   <p className="text-xs sm:text-sm md:text-base text-gray-500">
-                    Find what you&apos;re looking for
+                    {t('findWhatYoureLooking')}
                   </p>
                 </div>
                 <Link
                   href={`/${lang}/ads`}
                   className="text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 no-underline transition-colors text-sm sm:text-base"
                 >
-                  View All
+                  {tc('viewAll')}
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -336,7 +341,7 @@ export default async function HomePage({ params }: HomePageProps) {
                       <div className="w-[72px] flex flex-col items-center justify-center p-3 bg-white border border-gray-200 rounded-xl hover:border-rose-300 hover:shadow-sm transition-all">
                         <span className="text-2xl mb-1">{category.icon || '📁'}</span>
                         <span className="font-medium text-gray-800 text-[10px] text-center leading-tight line-clamp-2">
-                          {category.name}
+                          {lang === 'ne' && category.name_ne ? category.name_ne : category.name}
                         </span>
                       </div>
                     </Link>
@@ -356,7 +361,7 @@ export default async function HomePage({ params }: HomePageProps) {
                       {category.icon || '📁'}
                     </div>
                     <div className="font-semibold text-gray-900 group-hover:text-rose-500 transition-colors">
-                      {category.name}
+                      {lang === 'ne' && category.name_ne ? category.name_ne : category.name}
                     </div>
                   </Link>
                 ))}
@@ -367,13 +372,13 @@ export default async function HomePage({ params }: HomePageProps) {
             <div className="py-6 sm:py-8 md:py-12 mb-6 sm:mb-8 md:mb-12">
               <div className="flex justify-between items-center mb-4 sm:mb-6 md:mb-8">
                 <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900">
-                  Latest Ads
+                  {t('latestAds')}
                 </h2>
                 <Link
                   href={`/${lang}/ads`}
                   className="text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 no-underline transition-colors text-sm sm:text-base"
                 >
-                  View All Ads
+                  {tc('viewAllAds')}
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -384,16 +389,16 @@ export default async function HomePage({ params }: HomePageProps) {
                 <div className="text-center py-16 bg-white rounded-xl">
                   <div className="text-6xl mb-4">📦</div>
                   <h3 className="text-2xl font-semibold mb-2 text-gray-900">
-                    No ads yet
+                    {t('noAdsYet')}
                   </h3>
                   <p className="text-gray-500 mb-6">
-                    Be the first to post an ad!
+                    {t('beFirstToPost')}
                   </p>
                   <Link
                     href={`/${lang}/post-ad`}
                     className="inline-block px-6 py-3 bg-rose-500 text-white rounded-lg font-semibold hover:bg-rose-600 transition-colors no-underline"
                   >
-                    Post Free Ad
+                    {t('postFreeAdButton')}
                   </Link>
                 </div>
               ) : (
@@ -429,11 +434,11 @@ export default async function HomePage({ params }: HomePageProps) {
                     <div className="flex items-center gap-2 mb-1 md:mb-2">
                       <span className="text-xl md:text-2xl">⭐</span>
                       <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
-                        Featured Ads
+                        {t('featuredAds')}
                       </h2>
                     </div>
                     <p className="text-gray-500">
-                      Premium listings from verified sellers
+                      {t('featuredAdsSubtitle')}
                     </p>
                   </div>
                 </div>

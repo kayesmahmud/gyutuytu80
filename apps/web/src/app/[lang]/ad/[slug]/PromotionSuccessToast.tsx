@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui';
 
 interface PromotionSuccessToastProps {
@@ -10,16 +11,17 @@ interface PromotionSuccessToastProps {
 
 export default function PromotionSuccessToast({ promoted, txnId }: PromotionSuccessToastProps) {
   const { success } = useToast();
+  const t = useTranslations('ads');
 
   useEffect(() => {
     if (promoted) {
       success(
         txnId
-          ? `Promotion Activated Successfully! Transaction ID: ${txnId}`
-          : 'Promotion Activated Successfully!'
+          ? t('promotionActivatedWithTxn', { txnId })
+          : t('promotionActivated')
       );
     }
-  }, [promoted, txnId, success]);
+  }, [promoted, txnId, success, t]);
 
   return null;
 }

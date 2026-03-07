@@ -8,13 +8,14 @@ import ShopEmptyState from './ShopEmptyState';
 import ReportShopButton from './ReportShopButton';
 import ShopAdCard from './ShopAdCard';
 import { getShopProfile, buildShopMetadata } from '@/lib/shops';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 interface ShopProfilePageProps {
   params: Promise<{ lang: string; shopSlug: string }>;
 }
 
 export async function generateMetadata({ params }: ShopProfilePageProps): Promise<Metadata> {
-  const { shopSlug } = await params;
+  const { lang, shopSlug } = await params;
 
   try {
     const shop = await getShopProfile(shopSlug);
@@ -25,14 +26,18 @@ export async function generateMetadata({ params }: ShopProfilePageProps): Promis
     console.error('Error fetching shop metadata:', error);
   }
 
+  const t = await getTranslations({ locale: lang, namespace: 'metadata' });
   return {
-    title: 'Shop Profile - Thulobazaar',
-    description: 'Browse products from shops on Thulobazaar.',
+    title: t('shopFallbackTitle'),
+    description: t('shopFallbackDescription'),
   };
 }
 
 export default async function ShopProfilePage({ params }: ShopProfilePageProps) {
   const { lang, shopSlug } = await params;
+  setRequestLocale(lang);
+  const tc = await getTranslations('common');
+  const ts = await getTranslations('shop');
 
   const shop = await getShopProfile(shopSlug);
   if (!shop) {
@@ -88,7 +93,7 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
         <ol itemScope itemType="https://schema.org/BreadcrumbList">
           <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
             <Link href={`/${lang}`} itemProp="item">
-              <span itemProp="name">Home</span>
+              <span itemProp="name">{tc('home')}</span>
             </Link>
             <meta itemProp="position" content="1" />
           </li>
@@ -155,13 +160,13 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
           {/* Right Side - Ads Grid */}
           <div>
             <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-4 sm:mb-5 md:mb-6">
-              Ads from {shop.businessName || shop.fullName} ({stats.totalAds})
+              {ts('adsFrom', { shopName: shop.businessName || shop.fullName, count: stats.totalAds })}
             </h2>
 
             {ads.length === 0 ? (
               <div className="card text-center py-16">
                 <div className="text-6xl mb-4">📦</div>
-                <p className="text-gray-600 mb-6">No active ads at the moment</p>
+                <p className="text-gray-600 mb-6">{ts('noActiveAds')}</p>
                 {/* POST FREE AD button - ShopEmptyState handles owner check on client side */}
                 <ShopEmptyState shopId={shop.id} lang={lang} />
               </div>

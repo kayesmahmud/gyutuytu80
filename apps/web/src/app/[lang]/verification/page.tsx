@@ -1,6 +1,7 @@
 'use client';
 
-import { use, useMemo } from 'react';
+import { use } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   IndividualVerificationForm,
   BusinessVerificationForm,
@@ -102,6 +103,7 @@ function VerificationStatusBanner({ verificationStatus, lang, onResubmit }: Veri
 
 export default function VerificationPage({ params }: VerificationPageProps) {
   const { lang } = use(params);
+  const t = useTranslations('verification');
   const {
     status,
     loading,
@@ -136,7 +138,7 @@ export default function VerificationPage({ params }: VerificationPageProps) {
               </svg>
             </div>
           </div>
-          <p className="text-lg font-semibold text-gray-700">Loading verification status...</p>
+          <p className="text-lg font-semibold text-gray-700">{t('loadingStatus')}</p>
         </div>
       </div>
     );

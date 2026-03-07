@@ -1,19 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
 import FilterSection from '@/components/shared/FilterSection';
 import RadioOption from '@/components/shared/RadioOption';
 import { useAdsFilters } from '@/hooks/useAdsFilters';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 import { CONDITION_OPTIONS } from '@/lib/filters';
 import type { LocationHierarchyProvince } from '@/lib/location/types';
 
 interface Category {
   id: number;
   name: string;
+  nameNe?: string | null;
   slug: string;
   icon: string | null;
-  subcategories: { id: number; name: string; slug: string }[];
+  subcategories: { id: number; name: string; nameNe?: string | null; slug: string }[];
 }
 
 interface AdsFilterProps {
@@ -62,6 +65,9 @@ export default function AdsFilter({
     sortBy,
     searchQuery,
   });
+
+  const t = useTranslations('ads');
+  const localName = useLocalizedName();
 
   // Track expanded sections
   const [expandedSections, setExpandedSections] = useState({
@@ -118,7 +124,7 @@ export default function AdsFilter({
       {/* Header */}
       <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
         <h3 className="text-lg font-semibold flex items-center gap-2">
-          Filters
+          {t('filters')}
           {activeFiltersCount > 0 && (
             <span className="bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
               {activeFiltersCount}
@@ -130,21 +136,21 @@ export default function AdsFilter({
             onClick={clearAllFilters}
             className="text-rose-500 hover:text-rose-600 transition-colors text-sm font-semibold"
           >
-            Clear All
+            {t('clearAll')}
           </button>
         )}
       </div>
 
       {/* Category Filter */}
       <FilterSection
-        title="Category"
+        title={t('category')}
         count={categoryCount}
         isExpanded={expandedSections.category}
         onToggle={() => toggleSection('category')}
       >
         <div className="space-y-1">
           <RadioOption
-            label="All Categories"
+            label={t('allCategories')}
             checked={!selectedCategorySlug}
             onChange={() => updateFilters({ category: null })}
           />
@@ -173,7 +179,7 @@ export default function AdsFilter({
                   )}
                   {!hasSubcategories && <span className="w-6" />}
                   <RadioOption
-                    label={`${cat.icon} ${cat.name}`}
+                    label={`${cat.icon} ${localName(cat.name, cat.nameNe)}`}
                     checked={isSelected}
                     onChange={() => updateFilters({ category: cat.slug })}
                   />
@@ -185,7 +191,7 @@ export default function AdsFilter({
                     {cat.subcategories.map((subcat) => (
                       <RadioOption
                         key={subcat.id}
-                        label={subcat.name}
+                        label={localName(subcat.name, subcat.nameNe)}
                         checked={selectedCategorySlug === subcat.slug}
                         onChange={() => updateFilters({ category: subcat.slug })}
                       />
@@ -200,7 +206,7 @@ export default function AdsFilter({
 
       {/* Location Filter */}
       <FilterSection
-        title="Location"
+        title={t('location')}
         count={locationCount}
         isExpanded={expandedSections.location}
         onToggle={() => toggleSection('location')}
@@ -217,7 +223,7 @@ export default function AdsFilter({
 
       {/* Price Range */}
       <FilterSection
-        title="Price Range"
+        title={t('priceRange')}
         count={priceCount}
         isExpanded={expandedSections.price}
         onToggle={() => toggleSection('price')}
@@ -247,14 +253,14 @@ export default function AdsFilter({
             disabled={localMinPrice === minPrice && localMaxPrice === maxPrice}
             className="w-full py-2 px-4 bg-rose-500 text-white text-sm font-medium rounded-md hover:bg-rose-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            Apply Price
+            {t('applyPriceFilter')}
           </button>
         </div>
       </FilterSection>
 
       {/* Condition Filter */}
       <FilterSection
-        title="Condition"
+        title={t('condition')}
         count={conditionCount}
         isExpanded={expandedSections.condition}
         onToggle={() => toggleSection('condition')}

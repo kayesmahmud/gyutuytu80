@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 type ContactReason = 'general' | 'support' | 'advertising' | 'partnership' | 'feedback' | 'report';
 
@@ -14,16 +15,20 @@ interface ContactForm {
   message: string;
 }
 
-const CONTACT_REASONS: { value: ContactReason; label: string }[] = [
-  { value: 'general', label: 'General Inquiry' },
-  { value: 'support', label: 'Technical Support' },
-  { value: 'advertising', label: 'Advertising & Promotions' },
-  { value: 'partnership', label: 'Business Partnership' },
-  { value: 'feedback', label: 'Feedback & Suggestions' },
-  { value: 'report', label: 'Report a Problem' },
-];
+const REASON_VALUES: ContactReason[] = ['general', 'support', 'advertising', 'partnership', 'feedback', 'report'] as const;
+
+const REASON_KEYS: Record<ContactReason, string> = {
+  general: 'reasonGeneral',
+  support: 'reasonSupport',
+  advertising: 'reasonAdvertising',
+  partnership: 'reasonPartnership',
+  feedback: 'reasonFeedback',
+  report: 'reasonReport',
+};
 
 export default function ContactClient() {
+  const t = useTranslations('contact');
+
   const [form, setForm] = useState<ContactForm>({
     name: '',
     email: '',
@@ -62,7 +67,7 @@ export default function ContactClient() {
         message: '',
       });
     } catch {
-      setError('Failed to send message. Please try again later.');
+      setError(t('sendFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -73,9 +78,9 @@ export default function ContactClient() {
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white">
         <div className="max-w-7xl mx-auto px-4 py-10 md:py-16 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4">Contact Us</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4">{t('title')}</h1>
           <p className="text-base sm:text-lg md:text-xl opacity-90 max-w-2xl mx-auto">
-            Have questions or need assistance? We&apos;re here to help!
+            {t('subtitle')}
           </p>
         </div>
       </div>
@@ -86,7 +91,7 @@ export default function ContactClient() {
           <div className="md:col-span-1 space-y-4 md:space-y-6">
             {/* Quick Contact Cards */}
             <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Get in Touch</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">{t('getInTouch')}</h2>
 
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
@@ -96,7 +101,7 @@ export default function ContactClient() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Email</h3>
+                    <h3 className="font-semibold text-gray-900">{t('email')}</h3>
                     <a href="mailto:support@thulobazaar.com" className="text-blue-600 hover:underline">
                       support@thulobazaar.com
                     </a>
@@ -110,7 +115,7 @@ export default function ContactClient() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Phone</h3>
+                    <h3 className="font-semibold text-gray-900">{t('phone')}</h3>
                     <a href="tel:+9771234567890" className="text-green-600 hover:underline">
                       +977-1-234567890
                     </a>
@@ -125,7 +130,7 @@ export default function ContactClient() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Address</h3>
+                    <h3 className="font-semibold text-gray-900">{t('address')}</h3>
                     <p className="text-gray-600">
                       Kathmandu, Nepal
                     </p>
@@ -136,41 +141,41 @@ export default function ContactClient() {
 
             {/* Business Hours */}
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Business Hours</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('businessHours')}</h2>
               <div className="space-y-2 text-gray-600">
                 <div className="flex justify-between">
-                  <span>Sunday - Friday</span>
+                  <span>{t('sundayToFriday')}</span>
                   <span className="font-medium text-gray-900">10:00 AM - 6:00 PM</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Saturday</span>
-                  <span className="font-medium text-gray-900">Closed</span>
+                  <span>{t('saturday')}</span>
+                  <span className="font-medium text-gray-900">{t('closed')}</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Links */}
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Links</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('quickLinks')}</h2>
               <div className="space-y-3">
                 <Link href="/help" className="flex items-center gap-2 text-blue-600 hover:underline">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Help Center / FAQ
+                  {t('helpCenterFaq')}
                 </Link>
                 <Link href="/support" className="flex items-center gap-2 text-blue-600 hover:underline">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
-                  Support Tickets
+                  {t('supportTickets')}
                 </Link>
               </div>
             </div>
 
             {/* Social Media */}
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Follow Us</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('followUs')}</h2>
               <div className="flex gap-3">
                 <a href="https://facebook.com/thulobazaar" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -194,7 +199,7 @@ export default function ContactClient() {
           {/* Contact Form */}
           <div className="md:col-span-2">
             <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 md:p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('sendMessage')}</h2>
 
               {submitted ? (
                 <div className="text-center py-12">
@@ -203,15 +208,15 @@ export default function ContactClient() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Message Sent!</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{t('messageSent')}</h3>
                   <p className="text-gray-600 mb-6">
-                    Thank you for reaching out. We&apos;ll get back to you within 24-48 hours.
+                    {t('thankYouMessage')}
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
                     className="text-blue-600 hover:underline"
                   >
-                    Send another message
+                    {t('sendAnother')}
                   </button>
                 </div>
               ) : (
@@ -225,7 +230,7 @@ export default function ContactClient() {
                   <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                        Full Name <span className="text-red-500">*</span>
+                        {t('fullName')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -234,13 +239,13 @@ export default function ContactClient() {
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Your name"
+                        placeholder={t('yourName')}
                       />
                     </div>
 
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address <span className="text-red-500">*</span>
+                        {t('emailAddress')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
@@ -257,7 +262,7 @@ export default function ContactClient() {
                   <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number
+                        {t('phoneNumber')}
                       </label>
                       <input
                         type="tel"
@@ -271,7 +276,7 @@ export default function ContactClient() {
 
                     <div>
                       <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
-                        Reason for Contact <span className="text-red-500">*</span>
+                        {t('reasonForContact')} <span className="text-red-500">*</span>
                       </label>
                       <select
                         id="reason"
@@ -280,9 +285,9 @@ export default function ContactClient() {
                         onChange={(e) => setForm({ ...form, reason: e.target.value as ContactReason })}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        {CONTACT_REASONS.map((reason) => (
-                          <option key={reason.value} value={reason.value}>
-                            {reason.label}
+                        {REASON_VALUES.map((value) => (
+                          <option key={value} value={value}>
+                            {t(REASON_KEYS[value])}
                           </option>
                         ))}
                       </select>
@@ -291,7 +296,7 @@ export default function ContactClient() {
 
                   <div>
                     <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                      Subject <span className="text-red-500">*</span>
+                      {t('subject')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -300,13 +305,13 @@ export default function ContactClient() {
                       value={form.subject}
                       onChange={(e) => setForm({ ...form, subject: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Brief subject of your message"
+                      placeholder={t('subjectPlaceholder')}
                     />
                   </div>
 
                   <div>
                     <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                      Message <span className="text-red-500">*</span>
+                      {t('message')} <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       id="message"
@@ -315,7 +320,7 @@ export default function ContactClient() {
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      placeholder="Please describe your inquiry in detail..."
+                      placeholder={t('messagePlaceholder')}
                     />
                   </div>
 
@@ -327,14 +332,14 @@ export default function ContactClient() {
                     {submitting ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        Sending...
+                        {t('sending')}
                       </>
                     ) : (
                       <>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
-                        Send Message
+                        {t('sendMessage')}
                       </>
                     )}
                   </button>

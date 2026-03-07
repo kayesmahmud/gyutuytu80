@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import ReportShopModal from './ReportShopModal';
 
 interface ReportShopButtonProps {
@@ -10,6 +11,7 @@ interface ReportShopButtonProps {
 }
 
 export default function ReportShopButton({ shopId, shopName, lang }: ReportShopButtonProps) {
+  const t = useTranslations('shop');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -20,7 +22,7 @@ export default function ReportShopButton({ shopId, shopName, lang }: ReportShopB
           w-12 h-12 lg:w-auto lg:h-auto rounded-full lg:rounded-none bg-white lg:bg-transparent shadow-lg lg:shadow-none border border-gray-200 lg:border-0"
       >
         <span className="group-hover:scale-110 transition-transform text-xl lg:text-sm">🚩</span>
-        <span className="hidden lg:inline group-hover:underline">Report this shop</span>
+        <span className="hidden lg:inline group-hover:underline">{t('reportThisShop')}</span>
       </button>
 
       <ReportShopModal

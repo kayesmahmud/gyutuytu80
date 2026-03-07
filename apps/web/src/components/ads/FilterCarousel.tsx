@@ -1,6 +1,7 @@
 'use client';
 
 import { SlidersHorizontal } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import FilterPill from './FilterPill';
 import { SORT_OPTIONS, CONDITION_OPTIONS, DEFAULT_SORT } from '@/lib/filters';
 
@@ -30,18 +31,20 @@ export default function FilterCarousel({
   sortBy,
   onOpenDrawer,
 }: FilterCarouselProps) {
+  const t = useTranslations('ads');
+
   // Get sort label from constants
   const getSortLabel = () => {
-    if (!sortBy || sortBy === DEFAULT_SORT) return 'Sort by';
+    if (!sortBy || sortBy === DEFAULT_SORT) return t('sortBy');
     const option = SORT_OPTIONS.find((opt) => opt.value === sortBy);
-    return option?.label || 'Sort by';
+    return option?.label || t('sortBy');
   };
 
   // Get condition label from constants
   const getConditionLabel = () => {
-    if (!condition) return 'Condition';
+    if (!condition) return t('condition');
     const option = CONDITION_OPTIONS.find((opt) => opt.value === condition);
-    return option?.label || 'Condition';
+    return option?.label || t('condition');
   };
 
   return (
@@ -51,14 +54,14 @@ export default function FilterCarousel({
         <div className="flex-1 flex items-center gap-2 px-3 py-2.5 overflow-x-auto scrollbar-hide pr-14">
           {/* Location Pill */}
           <FilterPill
-            label={selectedLocationName || 'All Nepal'}
+            label={selectedLocationName || t('allNepal')}
             onClick={() => onOpenDrawer('locations')}
             isActive={!!selectedLocationSlug}
           />
 
           {/* Category Pill */}
           <FilterPill
-            label={selectedCategoryName || 'Category'}
+            label={selectedCategoryName || t('category')}
             onClick={() => onOpenDrawer('categories')}
             isActive={!!selectedCategorySlug}
           />
@@ -83,7 +86,7 @@ export default function FilterCarousel({
           <button
             onClick={() => onOpenDrawer()}
             className="p-2 bg-white border border-gray-300 rounded-full shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
-            aria-label="Open all filters"
+            aria-label={t('filters')}
           >
             <SlidersHorizontal className="w-5 h-5 text-gray-700" />
           </button>

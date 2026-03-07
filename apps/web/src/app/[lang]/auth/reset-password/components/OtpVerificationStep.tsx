@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { LoadingSpinner } from './LoadingSpinner';
 
 interface OtpVerificationStepProps {
@@ -25,11 +26,12 @@ export function OtpVerificationStep({
   onSubmit,
   onResendOtp,
 }: OtpVerificationStepProps) {
+  const t = useTranslations('auth');
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-          Enter 6-digit code
+          {t('enter6DigitCode')}
         </label>
         <div className="flex justify-center gap-2">
           {otp.map((digit, index) => (
@@ -59,18 +61,18 @@ export function OtpVerificationStep({
         {isLoading ? (
           <>
             <LoadingSpinner />
-            Verifying...
+            {t('verifying')}
           </>
         ) : (
-          'Verify Code'
+          t('verifyCode')
         )}
       </button>
 
       <div className="text-center">
         <p className="text-sm text-gray-600">
-          Didn&apos;t receive the code?{' '}
+          {t('didntReceiveCode')}{' '}
           {cooldown > 0 ? (
-            <span className="text-gray-500">Resend in {cooldown}s</span>
+            <span className="text-gray-500">{t('resendIn', { seconds: cooldown })}</span>
           ) : (
             <button
               type="button"
@@ -78,7 +80,7 @@ export function OtpVerificationStep({
               disabled={isResending}
               className="text-primary hover:text-primary-hover font-medium disabled:opacity-50"
             >
-              {isResending ? 'Sending...' : 'Resend OTP'}
+              {isResending ? t('sending') : t('resendOtp')}
             </button>
           )}
         </p>

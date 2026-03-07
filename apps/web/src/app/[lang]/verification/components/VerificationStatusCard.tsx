@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { StatusBadge } from '@/components/ui';
 import {
   User,
@@ -29,6 +30,7 @@ export function VerificationStatusCard({
   showForm,
   onClick,
 }: VerificationStatusCardProps) {
+  const t = useTranslations('verification');
   const isIndividual = type === 'individual';
   const status = data?.status || 'unverified';
   const canSelect = !data || ['unverified', 'rejected'].includes(status);
@@ -97,7 +99,7 @@ export function VerificationStatusCard({
           </div>
           {isSelected && !showForm && (
             <span className={`${isIndividual ? 'bg-blue-500' : 'bg-yellow-400'} text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider shadow-md animate-fade-in`}>
-              Selected
+              {t('selected')}
             </span>
           )}
         </div>
@@ -105,15 +107,13 @@ export function VerificationStatusCard({
         <div className="mb-3 sm:mb-4">
           <div className="flex items-center justify-between mb-1 sm:mb-2">
             <h3 className="text-base sm:text-xl font-bold text-gray-900">
-              {isIndividual ? 'Individual' : 'Business'}
+              {isIndividual ? t('individual') : t('business')}
             </h3>
             <StatusBadge status={status} size="sm" showIcon />
           </div>
 
           <p className="text-gray-600 leading-relaxed text-xs sm:text-sm">
-            {isIndividual
-              ? 'Verify identity with government ID for trust & features.'
-              : 'Verify business with official docs for premium access.'}
+            {isIndividual ? t('individualDesc') : t('businessDesc')}
           </p>
         </div>
 
@@ -123,7 +123,7 @@ export function VerificationStatusCard({
             <div className="bg-amber-50 border border-amber-100 rounded-lg p-2 sm:p-3 mb-2 sm:mb-3 flex items-center gap-2">
               <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600 flex-shrink-0" />
               <span className="text-amber-800 text-[10px] sm:text-xs font-medium">
-                Expires in {data.daysRemaining} days
+                {t('expiresInDays', { days: data.daysRemaining ?? 0 })}
               </span>
             </div>
           )}
@@ -134,7 +134,7 @@ export function VerificationStatusCard({
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <div className="font-bold text-red-900 text-[10px] sm:text-xs">Rejected</div>
+                  <div className="font-bold text-red-900 text-[10px] sm:text-xs">{t('rejected')}</div>
                   <div className="text-red-700 text-[10px] sm:text-xs">{data.rejectionReason}</div>
                 </div>
               </div>
@@ -146,10 +146,10 @@ export function VerificationStatusCard({
               }`}>
               <span>
                 {!phoneVerified
-                  ? 'Verify phone first'
+                  ? t('verifyPhoneFirst')
                   : status === 'rejected'
-                    ? 'Resubmit (Free)'
-                    : 'Start Verification'}
+                    ? t('resubmitFree')
+                    : t('startVerification')}
               </span>
               {phoneVerified && (
                 <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1" />
@@ -160,7 +160,7 @@ export function VerificationStatusCard({
           {status === 'pending' && (
             <div className="flex items-center gap-2 text-amber-600 text-xs sm:text-sm font-medium">
               <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Under review</span>
+              <span>{t('underReview')}</span>
             </div>
           )}
 
@@ -168,7 +168,7 @@ export function VerificationStatusCard({
             <div className="flex items-center gap-2 text-green-600 text-xs sm:text-sm font-medium">
               <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>
-                Valid until {data?.expiresAt ? new Date(data.expiresAt).toLocaleDateString() : 'N/A'}
+                {t('validUntil', { date: data?.expiresAt ? new Date(data.expiresAt).toLocaleDateString() : 'N/A' })}
               </span>
             </div>
           )}

@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface HeroSearchProps {
   lang: string;
 }
 
 export default function HeroSearch({ lang }: HeroSearchProps) {
+  const t = useTranslations('ads');
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
@@ -34,7 +36,7 @@ export default function HeroSearch({ lang }: HeroSearchProps) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for anything..."
+          placeholder={t('searchPlaceholder')}
           aria-label="Search for products"
           className="flex-1 min-w-0 px-3 sm:px-4 py-2 sm:py-3 border-0 focus:outline-none text-gray-800 text-sm sm:text-base rounded-lg bg-transparent placeholder:text-gray-400"
         />
@@ -64,7 +66,7 @@ export default function HeroSearch({ lang }: HeroSearchProps) {
             </svg>
           </div>
           {/* Text only on desktop */}
-          <span className="hidden sm:inline">{isSearching ? '...' : 'Search'}</span>
+          <span className="hidden sm:inline">{isSearching ? '...' : t('search')}</span>
         </button>
       </div>
 

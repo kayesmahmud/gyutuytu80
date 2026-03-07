@@ -266,7 +266,7 @@ export async function getShopProfile(shopSlug: string): Promise<ShopProfile | nu
 export function buildShopMetadata(shop: ShopProfile) {
   const displayName = shop.businessName || shop.fullName;
   const description =
-    shop.businessDescription || shop.bio || `Shop profile for ${displayName}. Browse products and contact the seller.`;
+    shop.businessDescription || shop.bio || `Shop profile for ${displayName}. Search products and contact the seller.`;
 
   return {
     title: `${displayName} - Shop | Thulobazaar`,

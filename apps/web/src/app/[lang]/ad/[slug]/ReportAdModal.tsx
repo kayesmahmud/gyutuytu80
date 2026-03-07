@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 
 interface ReportAdModalProps {
@@ -12,16 +13,17 @@ interface ReportAdModalProps {
 }
 
 const REPORT_REASONS = [
-  { value: 'spam', label: 'Spam', icon: '📧', description: 'Repetitive or unwanted ads' },
-  { value: 'fraud', label: 'Fraud/Scam', icon: '⚠️', description: 'Suspicious or fraudulent listing' },
-  { value: 'inappropriate', label: 'Inappropriate', icon: '🚫', description: 'Offensive or inappropriate content' },
-  { value: 'duplicate', label: 'Duplicate', icon: '📋', description: 'Same ad posted multiple times' },
-  { value: 'misleading', label: 'Misleading', icon: '🔍', description: 'False or misleading information' },
-  { value: 'other', label: 'Other', icon: '📝', description: 'Other reason not listed above' },
-];
+  { value: 'spam', labelKey: 'reportSpam', icon: '📧', descKey: 'reportSpamDesc' },
+  { value: 'fraud', labelKey: 'reportFraud', icon: '⚠️', descKey: 'reportFraudDesc' },
+  { value: 'inappropriate', labelKey: 'reportInappropriate', icon: '🚫', descKey: 'reportInappropriateDesc' },
+  { value: 'duplicate', labelKey: 'reportDuplicate', icon: '📋', descKey: 'reportDuplicateDesc' },
+  { value: 'misleading', labelKey: 'reportMisleading', icon: '🔍', descKey: 'reportMisleadingDesc' },
+  { value: 'other', labelKey: 'reportOther', icon: '📝', descKey: 'reportOtherDesc' },
+] as const;
 
 export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: ReportAdModalProps) {
   const { isAuthenticated } = useUserAuth();
+  const t = useTranslations('ads');
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,12 +34,12 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
 
   const handleSubmit = async () => {
     if (!selectedReason) {
-      setError('Please select a reason for reporting');
+      setError(t('selectReportReason'));
       return;
     }
 
     if (!isAuthenticated) {
-      setError('Please login to report this ad');
+      setError(t('loginToReport'));
       return;
     }
 
@@ -71,10 +73,10 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
           setSuccess(false);
         }, 2000);
       } else {
-        setError(data.message || 'Failed to submit report');
+        setError(data.message || t('failedToSubmitReport'));
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      setError(t('failedToSubmitReport'));
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +110,7 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
                 <span className="text-xl">🚩</span>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">Report Ad</h2>
+                <h2 className="text-lg font-semibold text-white">{t('reportAdTitle')}</h2>
                 <p className="text-sm text-white/80 line-clamp-1">{adTitle}</p>
               </div>
             </div>
@@ -134,8 +136,8 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Report Submitted</h3>
-              <p className="text-gray-600">Thank you for helping keep our platform safe. Our team will review this report shortly.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('reportSubmitted')}</h3>
+              <p className="text-gray-600">{t('reportSubmittedDesc')}</p>
             </div>
           ) : !isAuthenticated ? (
             /* Not Authenticated State */
@@ -145,13 +147,13 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-6V4m0 0l-3 3m3-3l3 3" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Login Required</h3>
-              <p className="text-gray-600 mb-4">Please login to report this ad</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('loginRequired')}</h3>
+              <p className="text-gray-600 mb-4">{t('loginToReport')}</p>
               <a
                 href={`/${lang}/auth/login`}
                 className="inline-block px-6 py-2 bg-rose-500 text-white rounded-lg font-medium hover:bg-rose-600 transition-colors"
               >
-                Login to Continue
+                {t('loginToContinue')}
               </a>
             </div>
           ) : (
@@ -170,7 +172,7 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
               {/* Reason Selection */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Why are you reporting this ad? <span className="text-red-500">*</span>
+                  {t('whyReporting')} <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-2">
                   {REPORT_REASONS.map((reason) => (
@@ -187,9 +189,9 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
                       <span className="text-xl">{reason.icon}</span>
                       <div className="text-left flex-1">
                         <div className={`font-medium ${selectedReason === reason.value ? 'text-rose-700' : 'text-gray-900'}`}>
-                          {reason.label}
+                          {t(reason.labelKey)}
                         </div>
-                        <div className="text-xs text-gray-500">{reason.description}</div>
+                        <div className="text-xs text-gray-500">{t(reason.descKey)}</div>
                       </div>
                       {selectedReason === reason.value && (
                         <svg className="w-5 h-5 text-rose-500" fill="currentColor" viewBox="0 0 20 20">
@@ -204,12 +206,12 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
               {/* Additional Details */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Additional details (optional)
+                  {t('additionalDetails')}
                 </label>
                 <textarea
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
-                  placeholder="Provide any additional information that might help us investigate..."
+                  placeholder={t('additionalDetailsPlaceholder')}
                   rows={3}
                   maxLength={500}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none"
@@ -231,19 +233,19 @@ export default function ReportAdModal({ adId, adTitle, isOpen, onClose, lang }: 
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Submitting...
+                    {t('submitting')}
                   </>
                 ) : (
                   <>
                     <span>🚩</span>
-                    Submit Report
+                    {t('submitReport')}
                   </>
                 )}
               </button>
 
               {/* Disclaimer */}
               <p className="mt-4 text-xs text-gray-500 text-center">
-                False reports may result in action against your account. Only report genuine issues.
+                {t('falseReportsWarning')}
               </p>
             </>
           )}

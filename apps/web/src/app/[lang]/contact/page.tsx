@@ -5,11 +5,20 @@
 
 import { Metadata } from 'next';
 import ContactClient from './ContactClient';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Contact Us | Thulo Bazaar',
-  description: 'Get in touch with Thulo Bazaar. Contact us for support, partnerships, advertising, or general inquiries.',
-};
+interface ContactPageProps {
+  params: Promise<{ lang: string }>;
+}
+
+export async function generateMetadata({ params }: ContactPageProps): Promise<Metadata> {
+  const { lang } = await params;
+  const t = await getTranslations({ locale: lang, namespace: 'metadata' });
+  return {
+    title: t('contactTitle'),
+    description: t('contactDescription'),
+  };
+}
 
 export default function ContactPage() {
   return <ContactClient />;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { ResetStep, UseResetPasswordReturn } from './types';
 import { maskIdentifier } from './types';
 
@@ -11,6 +12,7 @@ export function useResetPassword(
   identifier: string
 ): UseResetPasswordReturn {
   const router = useRouter();
+  const t = useTranslations('auth');
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
@@ -85,7 +87,7 @@ export function useResetPassword(
 
       const otpCode = otp.join('');
       if (otpCode.length !== 6) {
-        setError('Please enter the complete 6-digit code');
+        setError(t('enterComplete6DigitCode'));
         return;
       }
 
@@ -108,10 +110,10 @@ export function useResetPassword(
         if (data.success) {
           setStep('password');
         } else {
-          setError(data.message || 'Invalid OTP. Please try again.');
+          setError(data.message || t('invalidOtp'));
         }
       } catch (err) {
-        setError('Verification failed. Please try again.');
+        setError(t('verificationFailed'));
         console.error('OTP verification error:', err);
       } finally {
         setIsLoading(false);
@@ -126,12 +128,12 @@ export function useResetPassword(
       setError('');
 
       if (newPassword.length < 8) {
-        setError('Password must be at least 8 characters long');
+        setError(t('passwordMinLength'));
         return;
       }
 
       if (newPassword !== confirmPassword) {
-        setError('Passwords do not match');
+        setError(t('passwordsDoNotMatch'));
         return;
       }
 
@@ -152,15 +154,15 @@ export function useResetPassword(
         const data = await response.json();
 
         if (data.success) {
-          setSuccess('Password reset successfully! Redirecting to login...');
+          setSuccess(t('passwordResetSuccess'));
           setTimeout(() => {
             router.push(`/${lang}/auth/signin`);
           }, 2000);
         } else {
-          setError(data.message || 'Failed to reset password. Please try again.');
+          setError(data.message || t('failedToResetPassword'));
         }
       } catch (err) {
-        setError('Something went wrong. Please try again.');
+        setError(t('somethingWentWrong'));
         console.error('Password reset error:', err);
       } finally {
         setIsLoading(false);
@@ -193,11 +195,11 @@ export function useResetPassword(
       } else if (data.cooldownRemaining) {
         setCooldown(data.cooldownRemaining);
       } else {
-        setError(data.message || 'Failed to resend OTP');
+        setError(data.message || t('failedToResendOtp'));
       }
     } catch (err) {
       console.error('Resend OTP error:', err);
-      setError('Failed to resend OTP. Please try again.');
+      setError(t('failedToResendOtp'));
     } finally {
       setIsResending(false);
     }

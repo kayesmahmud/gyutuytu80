@@ -1,6 +1,7 @@
 'use client';
 
 import { Tag01 } from '@untitledui-pro/icons/line';
+import { useTranslations } from 'next-intl';
 import { useShopCategory } from '@/hooks/useShopCategory';
 
 interface CategorySectionProps {
@@ -22,6 +23,8 @@ export function CategorySection({
   subcategoryIcon,
   isOwner,
 }: CategorySectionProps) {
+  const t = useTranslations('shop');
+  const tc = useTranslations('common');
   const {
     isEditing,
     setIsEditing,
@@ -41,13 +44,13 @@ export function CategorySection({
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-3 sm:mb-4">
-        <h2 className="text-lg sm:text-xl font-semibold">Category</h2>
+        <h2 className="text-lg sm:text-xl font-semibold">{t('categories')}</h2>
         {!isEditing && isOwner && (
           <button
             onClick={() => setIsEditing(true)}
             className="text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Edit
+            {tc('edit')}
           </button>
         )}
       </div>
@@ -56,10 +59,10 @@ export function CategorySection({
         <div className="space-y-3 sm:space-y-4">
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-              Select Your Default Category
+              {t('selectDefaultCategory')}
             </label>
             <p className="text-xs text-gray-500 mb-3">
-              This will be pre-selected when you post new ads.
+              {t('preSelectedNote')}
             </p>
 
             <select
@@ -69,7 +72,7 @@ export function CategorySection({
               className="w-full p-2.5 sm:p-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
             >
               <option value="">
-                {loadingCategories ? 'Loading categories...' : '-- Select Main Category --'}
+                {loadingCategories ? t('loadingCategories') : t('selectMainCategoryOption')}
               </option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
@@ -87,7 +90,7 @@ export function CategorySection({
                   className="w-full p-2.5 sm:p-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                 >
                   <option value="">
-                    {loadingSubcategories ? 'Loading subcategories...' : '-- Select Subcategory (Optional) --'}
+                    {loadingSubcategories ? t('loadingCategories') : t('selectSubcategoryOptional')}
                   </option>
                   {subcategories.map((sub) => (
                     <option key={sub.id} value={sub.id}>
@@ -105,14 +108,14 @@ export function CategorySection({
               disabled={saving || !selectedCategoryId}
               className="flex-1 bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 sm:px-4 text-sm sm:text-base rounded-lg font-semibold transition-colors disabled:opacity-60"
             >
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? tc('saving') : tc('save')}
             </button>
             <button
               onClick={handleCancel}
               disabled={saving}
               className="flex-1 border border-gray-300 px-3 py-2 sm:px-4 text-sm sm:text-base rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              {tc('cancel')}
             </button>
           </div>
         </div>
@@ -122,7 +125,7 @@ export function CategorySection({
             <div className="flex items-start gap-2 sm:gap-3">
               <Tag01 className="w-5 h-5 sm:w-[30px] sm:h-[30px] text-indigo-500 flex-shrink-0 mt-0.5" />
               <div className="min-w-0">
-                <div className="text-xs sm:text-sm text-gray-600">Your Default Category</div>
+                <div className="text-xs sm:text-sm text-gray-600">{t('yourDefaultCategory')}</div>
                 <div className="font-semibold text-sm sm:text-base">
                   {subcategoryName ? (
                     <>
@@ -138,7 +141,7 @@ export function CategorySection({
             </div>
           ) : (
             <p className="text-sm sm:text-base text-gray-500 italic">
-              No default category set. {isOwner && 'Click Edit to set your category for easier ad posting.'}
+              {t('noDefaultCategory')}
             </p>
           )}
         </div>

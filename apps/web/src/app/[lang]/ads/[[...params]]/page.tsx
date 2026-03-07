@@ -8,6 +8,7 @@ import { getLocationHierarchy } from '@/lib/location';
 import { getRootCategoriesWithChildren } from '@/lib/location';
 import { buildAdsWhereClause, buildAdsOrderBy, standardAdInclude } from '@/lib/ads';
 import { SearchX } from 'lucide-react';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 interface AdsPageProps {
   params: Promise<{ lang: string; params?: string[] }>;
@@ -42,6 +43,9 @@ export async function generateMetadata({ params, searchParams }: AdsPageProps): 
 
 export default async function AdsPage({ params, searchParams }: AdsPageProps) {
   const { lang, params: urlParams } = await params;
+  setRequestLocale(lang);
+  const t = await getTranslations('ads');
+  const tc = await getTranslations('common');
   const search = await searchParams;
 
   // Parse URL parameters using helper function
@@ -113,32 +117,39 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
     parsed.categoryId || parsed.locationId || minPrice || maxPrice || condition || searchQuery
   );
 
+  // Helper to get localized name
+  const localName = (name: string | null, nameNe: string | null) =>
+    lang === 'ne' && nameNe ? nameNe : name;
+
+  const displayLocationName = localName(parsed.locationName, parsed.locationNameNe);
+  const displayCategoryName = localName(parsed.categoryName, parsed.categoryNameNe);
+
   // Build breadcrumb using parsed data
-  const breadcrumbs = [{ label: 'Home', href: `/${lang}` }];
-  if (parsed.locationName && parsed.categoryName) {
-    breadcrumbs.push({ label: parsed.locationName, href: `/${lang}/ads/${parsed.locationSlug}` });
-    breadcrumbs.push({ label: parsed.categoryName, href: `/${lang}/ads/${parsed.locationSlug}/${parsed.categorySlug}` });
-  } else if (parsed.locationName) {
-    breadcrumbs.push({ label: parsed.locationName, href: `/${lang}/ads/${parsed.locationSlug}` });
-  } else if (parsed.categoryName) {
-    breadcrumbs.push({ label: parsed.categoryName, href: `/${lang}/ads/${parsed.categorySlug}` });
+  const breadcrumbs = [{ label: tc('home'), href: `/${lang}` }];
+  if (displayLocationName && displayCategoryName) {
+    breadcrumbs.push({ label: displayLocationName, href: `/${lang}/ads/${parsed.locationSlug}` });
+    breadcrumbs.push({ label: displayCategoryName, href: `/${lang}/ads/${parsed.locationSlug}/${parsed.categorySlug}` });
+  } else if (displayLocationName) {
+    breadcrumbs.push({ label: displayLocationName, href: `/${lang}/ads/${parsed.locationSlug}` });
+  } else if (displayCategoryName) {
+    breadcrumbs.push({ label: displayCategoryName, href: `/${lang}/ads/${parsed.categorySlug}` });
   } else {
-    breadcrumbs.push({ label: 'All Ads', href: `/${lang}/ads` });
+    breadcrumbs.push({ label: t('allAds'), href: `/${lang}/ads` });
   }
 
   // Page title using parsed data
-  let pageTitle = 'All Ads';
+  let pageTitle = t('allAds');
   if (searchQuery) {
-    pageTitle = `Search: "${searchQuery}"`;
-    if (parsed.categoryName) pageTitle += ` in ${parsed.categoryName}`;
-    if (parsed.locationName) pageTitle += ` - ${parsed.locationName}`;
+    pageTitle = `${t('searchLabel')} "${searchQuery}"`;
+    if (displayCategoryName) pageTitle += ` ${t('in')} ${displayCategoryName}`;
+    if (displayLocationName) pageTitle += ` - ${displayLocationName}`;
   } else {
-    if (parsed.locationName && parsed.categoryName) {
-      pageTitle = `${parsed.categoryName} in ${parsed.locationName}`;
-    } else if (parsed.locationName) {
-      pageTitle = `Ads in ${parsed.locationName}`;
-    } else if (parsed.categoryName) {
-      pageTitle = parsed.categoryName;
+    if (displayLocationName && displayCategoryName) {
+      pageTitle = `${displayCategoryName} ${t('in')} ${displayLocationName}`;
+    } else if (displayLocationName) {
+      pageTitle = `${t('adsIn')} ${displayLocationName}`;
+    } else if (displayCategoryName) {
+      pageTitle = displayCategoryName;
     }
   }
 
@@ -150,9 +161,9 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
         categories={categories}
         locationHierarchy={locationHierarchy}
         selectedCategorySlug={parsed.categorySlug || undefined}
-        selectedCategoryName={parsed.categoryName || undefined}
+        selectedCategoryName={displayCategoryName || undefined}
         selectedLocationSlug={parsed.locationSlug || undefined}
-        selectedLocationName={parsed.locationName || undefined}
+        selectedLocationName={displayLocationName || undefined}
         minPrice={minPrice?.toString() || ''}
         maxPrice={maxPrice?.toString() || ''}
         condition={condition}
@@ -185,8 +196,8 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
           <div className="hidden lg:block">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>
             <p className="text-gray-500">
-              Found <span className="font-semibold text-gray-900">{totalAds.toLocaleString()}</span> ads
-              {hasActiveFilters && ' matching your filters'}
+              {tc('found')} <span className="font-semibold text-gray-900">{totalAds.toLocaleString()}</span> ads
+              {hasActiveFilters && ` ${tc('matchingFilters')}`}
             </p>
           </div>
           {/* Hidden H1 for mobile SEO - screen reader only */}
@@ -211,7 +222,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
               locationHierarchy={locationHierarchy}
               selectedCategorySlug={parsed.categorySlug || undefined}
               selectedLocationSlug={parsed.locationSlug || undefined}
-              selectedLocationName={parsed.locationName || undefined}
+              selectedLocationName={displayLocationName || undefined}
               minPrice={minPrice?.toString() || ''}
               maxPrice={maxPrice?.toString() || ''}
               condition={condition}
@@ -240,7 +251,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
               <div className="text-sm text-gray-500">
                 {totalAds > 0 && (
                   <>
-                    Showing {offset + 1}-{Math.min(offset + adsPerPage, totalAds)} of {totalAds} ads
+                    {tc('showing')} {offset + 1}-{Math.min(offset + adsPerPage, totalAds)} {tc('of')} {totalAds} ads
                   </>
                 )}
               </div>
@@ -259,13 +270,13 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
                 <div className="mb-4 flex justify-center">
                   <SearchX size={64} className="text-gray-400" strokeWidth={1.5} />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">No ads found</h3>
+                <h3 className="text-xl font-semibold mb-2">{t('noAdsFound')}</h3>
                 <p className="text-gray-500 mb-4">
-                  Try adjusting your filters or browse other categories
+                  {t('tryAdjustingFilters')}
                 </p>
                 {hasActiveFilters && (
                   <Link href={`/${lang}/ads`} className="px-6 py-3 rounded-lg font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors inline-block">
-                    View All Ads
+                    {tc('viewAllAds')}
                   </Link>
                 )}
               </div>
@@ -291,7 +302,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
                           // publishedAt = when editor approved (use this for "time ago" display)
                           publishedAt: ad.reviewed_at || ad.created_at || new Date(),
                           createdAt: ad.created_at || new Date(),
-                          sellerName: ad.users_ads_user_idTousers?.full_name || 'Unknown',
+                          sellerName: ad.users_ads_user_idTousers?.full_name || tc('unknownSeller'),
                           isFeatured: ad.is_featured || false,
                           isUrgent: ad.is_urgent || false,
                           isSticky: ad.is_sticky || false,
@@ -320,7 +331,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
                         href={`/${lang}/ads${urlParams ? `/${urlParams.join('/')}` : ''}?page=${page - 1}`}
                         className="px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
                       >
-                        Previous
+                        {tc('previous')}
                       </Link>
                     )}
                     <span className="px-4 py-2 bg-rose-500 text-white rounded-lg">
@@ -331,7 +342,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
                         href={`/${lang}/ads${urlParams ? `/${urlParams.join('/')}` : ''}?page=${page + 1}`}
                         className="px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
                       >
-                        Next
+                        {tc('next')}
                       </Link>
                     )}
                   </div>

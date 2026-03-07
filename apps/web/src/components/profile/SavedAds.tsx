@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 import { formatPrice } from '@thulobazaar/utils';
 import { Heart as HeartSolid } from '@untitledui-pro/icons/solid';
 
@@ -25,11 +27,13 @@ interface SavedAd {
     category: {
       id: number;
       name: string;
+      nameNe?: string | null;
       slug: string;
     } | null;
     location: {
       id: number;
       name: string;
+      nameNe?: string | null;
       type: string;
     } | null;
     primaryImage: string | null;
@@ -41,6 +45,9 @@ interface SavedAdsProps {
 }
 
 export default function SavedAds({ lang }: SavedAdsProps) {
+  const tp = useTranslations('profile');
+  const tc = useTranslations('common');
+  const localName = useLocalizedName();
   const { user, isAuthenticated } = useUserAuth();
   const [savedAds, setSavedAds] = useState<SavedAd[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +129,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
     return (
       <div className="py-12 flex flex-col items-center justify-center">
         <div className="w-8 h-8 border-3 border-rose-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-        <span className="text-gray-500 text-sm">Loading saved ads...</span>
+        <span className="text-gray-500 text-sm">{tp('loadingSavedAds')}</span>
       </div>
     );
   }
@@ -136,7 +143,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
           onClick={fetchSavedAds}
           className="px-4 py-2 bg-rose-500 text-white text-sm font-semibold rounded-lg hover:bg-rose-600 transition-colors"
         >
-          Try Again
+          {tc('tryAgain')}
         </button>
       </div>
     );
@@ -148,9 +155,9 @@ export default function SavedAds({ lang }: SavedAdsProps) {
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-50 flex items-center justify-center">
           <HeartSolid className="w-8 h-8 text-rose-300" />
         </div>
-        <h3 className="text-base font-semibold text-gray-800 mb-2">No saved ads yet</h3>
+        <h3 className="text-base font-semibold text-gray-800 mb-2">{tp('noSavedAdsYet')}</h3>
         <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
-          Browse listings and click the heart icon to save ads you're interested in
+          {tp('saveAdsHeart')}
         </p>
         <Link
           href={`/${lang}/ads`}
@@ -159,7 +166,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          Browse Ads
+          {tc('searchAllAds')}
         </Link>
       </div>
     );
@@ -170,7 +177,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
       {/* Count Badge */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">
-          <span className="font-semibold text-gray-900">{savedAds.length}</span> saved ad{savedAds.length !== 1 ? 's' : ''}
+          {tp('savedAdsCount', { count: savedAds.length })}
         </p>
       </div>
 
@@ -222,7 +229,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
 
                   {ad.category && (
                     <p className="text-xs text-gray-500 mt-1 truncate">
-                      {ad.category.name}
+                      {localName(ad.category.name, ad.category.nameNe)}
                     </p>
                   )}
 
@@ -244,7 +251,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
                   {ad.location && (
                     <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                       <span>📍</span>
-                      <span className="truncate">{ad.location.name}</span>
+                      <span className="truncate">{localName(ad.location.name, ad.location.nameNe)}</span>
                     </p>
                   )}
                 </div>

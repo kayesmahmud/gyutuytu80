@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
 import { useAdsFilters } from '@/hooks/useAdsFilters';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 import { SORT_OPTIONS, CONDITION_OPTIONS, DEFAULT_SORT } from '@/lib/filters';
 import type { LocationHierarchyProvince } from '@/lib/location/types';
 
@@ -12,9 +14,10 @@ export type FilterSection = 'categories' | 'locations' | 'price' | 'condition' |
 interface Category {
   id: number;
   name: string;
+  nameNe?: string | null;
   slug: string;
   icon: string | null;
-  subcategories: { id: number; name: string; slug: string }[];
+  subcategories: { id: number; name: string; nameNe?: string | null; slug: string }[];
 }
 
 interface MobileFilterDrawerProps {
@@ -51,6 +54,8 @@ export default function MobileFilterDrawer({
   onExternalClose,
   initialSection,
 }: MobileFilterDrawerProps) {
+  const t = useTranslations('ads');
+  const localName = useLocalizedName();
   const [internalOpen, setInternalOpen] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -180,7 +185,7 @@ export default function MobileFilterDrawer({
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Filters</h2>
+          <h2 className="text-xl font-bold text-gray-900">{t('filters')}</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -202,7 +207,7 @@ export default function MobileFilterDrawer({
               onClick={() => toggleSection('categories')}
               className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
             >
-              <span className="font-semibold text-gray-900">Categories</span>
+              <span className="font-semibold text-gray-900">{t('categories')}</span>
               {expandedSections.categories ? (
                 <ChevronUp className="w-5 h-5 text-gray-500" />
               ) : (
@@ -221,7 +226,7 @@ export default function MobileFilterDrawer({
                   }`}
                 >
                   <span className="text-xl">📁</span>
-                  <span className="text-sm font-medium">All Categories</span>
+                  <span className="text-sm font-medium">{t('allCategories')}</span>
                 </button>
 
                 {/* Categories with Subcategory Expansion */}
@@ -263,7 +268,7 @@ export default function MobileFilterDrawer({
                           }`}
                         >
                           <span className="text-xl">{category.icon || '📁'}</span>
-                          <span className="text-sm font-medium">{category.name}</span>
+                          <span className="text-sm font-medium">{localName(category.name, category.nameNe)}</span>
                         </button>
                       </div>
 
@@ -280,7 +285,7 @@ export default function MobileFilterDrawer({
                                   : 'hover:bg-gray-100 text-gray-700'
                               }`}
                             >
-                              <span className="text-sm font-medium">{subcat.name}</span>
+                              <span className="text-sm font-medium">{localName(subcat.name, subcat.nameNe)}</span>
                             </button>
                           ))}
                         </div>
@@ -303,7 +308,7 @@ export default function MobileFilterDrawer({
               onClick={() => toggleSection('locations')}
               className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
             >
-              <span className="font-semibold text-gray-900">Locations</span>
+              <span className="font-semibold text-gray-900">{t('locations')}</span>
               {expandedSections.locations ? (
                 <ChevronUp className="w-5 h-5 text-gray-500" />
               ) : (
@@ -335,7 +340,7 @@ export default function MobileFilterDrawer({
               onClick={() => toggleSection('price')}
               className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
             >
-              <span className="font-semibold text-gray-900">Price Range</span>
+              <span className="font-semibold text-gray-900">{t('priceRange')}</span>
               {expandedSections.price ? (
                 <ChevronUp className="w-5 h-5 text-gray-500" />
               ) : (
@@ -346,7 +351,7 @@ export default function MobileFilterDrawer({
               <div className="px-6 pb-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Min Price (NPR)
+                    {t('minPriceNpr')}
                   </label>
                   <input
                     type="number"
@@ -358,7 +363,7 @@ export default function MobileFilterDrawer({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Price (NPR)
+                    {t('maxPriceNpr')}
                   </label>
                   <input
                     type="number"
@@ -372,7 +377,7 @@ export default function MobileFilterDrawer({
                   onClick={applyPriceFilter}
                   className="w-full px-4 py-3 bg-rose-500 text-white rounded-lg font-semibold hover:bg-rose-600 transition-colors"
                 >
-                  Apply Price Filter
+                  {t('applyPriceFilter')}
                 </button>
               </div>
             )}
@@ -389,7 +394,7 @@ export default function MobileFilterDrawer({
               onClick={() => toggleSection('condition')}
               className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
             >
-              <span className="font-semibold text-gray-900">Condition</span>
+              <span className="font-semibold text-gray-900">{t('condition')}</span>
               {expandedSections.condition ? (
                 <ChevronUp className="w-5 h-5 text-gray-500" />
               ) : (
@@ -432,7 +437,7 @@ export default function MobileFilterDrawer({
               onClick={() => toggleSection('sort')}
               className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
             >
-              <span className="font-semibold text-gray-900">Sort By</span>
+              <span className="font-semibold text-gray-900">{t('sortBy')}</span>
               {expandedSections.sort ? (
                 <ChevronUp className="w-5 h-5 text-gray-500" />
               ) : (
@@ -468,13 +473,13 @@ export default function MobileFilterDrawer({
             onClick={clearAllFilters}
             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors text-center"
           >
-            Reset
+            {t('reset')}
           </button>
           <button
             onClick={handleClose}
             className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-lg font-semibold hover:bg-rose-600 transition-colors"
           >
-            Show Results
+            {t('showResults')}
           </button>
         </div>
       </div>

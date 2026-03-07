@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquareWhatsapp, faFacebook, faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { Heart } from '@untitledui-pro/icons/line';
 import { Heart as HeartSolid } from '@untitledui-pro/icons/solid';
+import { useTranslations } from 'next-intl';
 
 interface AdActionsProps {
   adId: number;
@@ -31,6 +32,7 @@ export default function AdActions({
   initialFavoritesCount = 0,
 }: AdActionsProps) {
   const { user, isAuthenticated } = useUserAuth();
+  const t = useTranslations('ads');
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoritesCount, setFavoritesCount] = useState(initialFavoritesCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +77,7 @@ export default function AdActions({
 
   const toggleFavorite = async () => {
     if (!isAuthenticated) {
-      alert('Please login to save ads to favorites');
+      alert(t('loginToSaveFavorites'));
       return;
     }
 
@@ -223,7 +225,7 @@ export default function AdActions({
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
         </svg>
-        <span>Share</span>
+        <span>{t('share')}</span>
       </button>
 
       {/* Share Dropdown Menu */}
@@ -236,7 +238,7 @@ export default function AdActions({
             <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            <span className="text-sm text-gray-700">{copied ? 'Copied!' : 'Copy Link'}</span>
+            <span className="text-sm text-gray-700">{copied ? t('copied') : t('copyLink')}</span>
           </button>
           <button
             onClick={handleShareFacebook}
@@ -280,7 +282,7 @@ export default function AdActions({
         className={`flex items-center justify-center px-3 py-2 transition-all duration-200 hover:bg-gray-50 rounded-l-lg ${
           isLoading ? 'opacity-50 cursor-not-allowed' : ''
         }`}
-        title={isFavorited ? 'Remove from favorites' : 'Save to favorites'}
+        title={isFavorited ? t('removeFromFavorites') : t('saveToFavorites')}
       >
         <span className={justLiked ? 'heart-burst inline-flex' : 'inline-flex transition-transform duration-200 hover:scale-110'}>
           {isFavorited ? (

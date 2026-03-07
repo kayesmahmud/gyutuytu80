@@ -3,6 +3,7 @@
 
 import { use } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ImageUpload } from '@/components/forms';
 import DynamicFormFields from '@/components/post-ad/DynamicFormFields';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
@@ -15,6 +16,8 @@ interface PostAdPageProps {
 
 export default function PostAdPage({ params }: PostAdPageProps) {
   const { lang } = use(params);
+  const t = useTranslations('ads');
+  const tc = useTranslations('common');
 
   const {
     status,
@@ -59,7 +62,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-5xl mb-4">⏳</div>
-          <p className="text-gray-500">Loading...</p>
+          <p className="text-gray-500">{tc('loading')}</p>
         </div>
       </div>
     );
@@ -72,10 +75,10 @@ export default function PostAdPage({ params }: PostAdPageProps) {
         <div className="max-w-[1000px] mx-auto px-4">
           <div className="flex gap-2 text-sm text-gray-500">
             <Link href={`/${lang}`} className="text-indigo-500 no-underline">
-              Home
+              {tc('home')}
             </Link>
             <span>/</span>
-            <span>Post an Ad</span>
+            <span>{t('postAnAd')}</span>
           </div>
         </div>
       </div>
@@ -84,7 +87,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <h1 className="text-3xl font-bold text-gray-900 m-0">Post a Free Ad</h1>
+            <h1 className="text-3xl font-bold text-gray-900 m-0">{t('postFreeAd')}</h1>
             {/* Auto-save indicator */}
             {(isSaving || lastSaved) && (
               <span
@@ -93,11 +96,11 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                 <span
                   className={`inline-block w-2 h-2 rounded-full ${isSaving ? 'bg-gray-500 animate-pulse' : 'bg-green-500'}`}
                 />
-                {isSaving ? 'Saving...' : 'Draft saved'}
+                {isSaving ? tc('saving') : tc('draftSaved')}
               </span>
             )}
           </div>
-          <p className="text-gray-500 m-0">Fill in the details below to create your listing</p>
+          <p className="text-gray-500 m-0">{t('fillDetails')}</p>
         </div>
 
         {/* Saved Drafts List */}
@@ -135,11 +138,11 @@ export default function PostAdPage({ params }: PostAdPageProps) {
             <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm">
               {/* Ad Details */}
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">Ad Details</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('adDetails')}</h2>
 
                 <div className="flex flex-col gap-4">
                   <div>
-                    <label className="block mb-2 font-medium text-gray-700">Ad Title *</label>
+                    <label className="block mb-2 font-medium text-gray-700">{t('adTitle')} *</label>
                     <input
                       type="text"
                       value={formData.title}
@@ -153,11 +156,11 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                   </div>
 
                   <div>
-                    <label className="block mb-2 font-medium text-gray-700">Description *</label>
+                    <label className="block mb-2 font-medium text-gray-700">{t('description')} *</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Describe your item in detail..."
+                      placeholder={t('describeItem')}
                       required
                       rows={6}
                       maxLength={5000}
@@ -168,7 +171,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block mb-2 font-medium text-gray-700">Price (NPR) *</label>
+                      <label className="block mb-2 font-medium text-gray-700">{t('priceNpr')} *</label>
                       <input
                         type="number"
                         value={formData.price}
@@ -192,7 +195,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                         }
                         className="w-[18px] h-[18px] cursor-pointer"
                       />
-                      <span className="font-medium text-gray-700">Price is negotiable</span>
+                      <span className="font-medium text-gray-700">{t('priceIsNegotiable')}</span>
                     </label>
                   </div>
                 </div>
@@ -200,17 +203,17 @@ export default function PostAdPage({ params }: PostAdPageProps) {
 
               {/* Category Selection */}
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">Category *</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('category')} *</h2>
 
                 <div className="mb-4">
-                  <label className="block mb-2 font-medium text-gray-700">Select Category *</label>
+                  <label className="block mb-2 font-medium text-gray-700">{t('selectCategory')} *</label>
                   <select
                     value={formData.categoryId}
                     onChange={(e) => handleCategoryChange(e.target.value)}
                     required
                     className="w-full p-3 rounded-lg border border-gray-300 text-base"
                   >
-                    <option value="">-- Select Main Category --</option>
+                    <option value="">{t('selectMainCategory')}</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.icon || '📦'} {cat.name}
@@ -222,7 +225,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                 {formData.categoryId && (
                   <div className="mt-4">
                     <label className="block mb-2 font-medium text-gray-700">
-                      Select Subcategory *
+                      {t('selectSubcategory')} *
                     </label>
                     <select
                       value={formData.subcategoryId}
@@ -235,8 +238,8 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                     >
                       <option value="">
                         {loadingSubcategories
-                          ? 'Loading subcategories...'
-                          : '-- Select Subcategory --'}
+                          ? t('loadingSubcategories')
+                          : t('selectSubcategoryOption')}
                       </option>
                       {!loadingSubcategories &&
                         subcategories.map((sub) => (
@@ -263,9 +266,9 @@ export default function PostAdPage({ params }: PostAdPageProps) {
               {/* Images */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900 m-0">Photos *</h2>
+                  <h2 className="text-xl font-semibold text-gray-900 m-0">{t('photos')} *</h2>
                   <span className="text-sm text-gray-500">
-                    Max {maxImages} images
+                    {t('maxImages', { count: maxImages })}
                   </span>
                 </div>
 
@@ -276,16 +279,16 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                       <span className="text-xl">✨</span>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-indigo-900 m-0">
-                          Want to upload up to {MAX_IMAGES_VERIFIED} images?
+                          {t('wantMoreImages', { count: MAX_IMAGES_VERIFIED })}
                         </p>
                         <p className="text-xs text-indigo-700 mt-1 mb-2">
-                          Get verified to unlock more images and build buyer trust
+                          {t('getVerifiedForImages')}
                         </p>
                         <Link
                           href={`/${lang}/verification`}
                           className="inline-flex items-center gap-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md no-underline transition-colors"
                         >
-                          Get Verified
+                          {t('getVerified')}
                           <span>→</span>
                         </Link>
                       </div>
@@ -305,7 +308,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
               <div className="mb-8">
                 <div className="border-2 border-gray-200 rounded-lg p-4">
                   <h3 className="m-0 mb-3 text-base font-semibold text-gray-900">
-                    Location (Area/Place) *
+                    {t('locationAreaPlace')} *
                   </h3>
                   <CascadingLocationFilter
                     onLocationSelect={(locationSlug, locationName) => {
@@ -319,7 +322,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                     selectedLocationName={formData.locationName || null}
                   />
                   <small className="block mt-3 text-gray-500 text-xs">
-                    Select the most specific location for your ad (area/place preferred)
+                    {t('selectLocation')}
                   </small>
                 </div>
               </div>
@@ -330,10 +333,10 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                   href={`/${lang}`}
                   className="px-8 py-3 rounded-lg border border-gray-300 bg-white no-underline text-gray-700 font-medium"
                 >
-                  Cancel
+                  {tc('cancel')}
                 </Link>
                 <Button type="submit" variant="success" loading={submitting} disabled={submitting}>
-                  {submitting ? 'Posting...' : 'Post Ad'}
+                  {submitting ? t('posting') : t('postAd')}
                 </Button>
               </div>
             </form>

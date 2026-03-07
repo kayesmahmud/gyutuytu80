@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   useRegisterForm,
   SocialLoginButtons,
@@ -11,6 +12,7 @@ interface RegisterFormProps {
 }
 
 export default function RegisterForm({ lang }: RegisterFormProps) {
+  const t = useTranslations('auth');
   const {
     phoneStep,
     setPhoneStep,
@@ -40,7 +42,7 @@ export default function RegisterForm({ lang }: RegisterFormProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="w-8 h-8 border-3 border-rose-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-        <span className="text-gray-500 text-sm">Checking session...</span>
+        <span className="text-gray-500 text-sm">{t('checkingSession')}</span>
       </div>
     );
   }
@@ -54,8 +56,8 @@ export default function RegisterForm({ lang }: RegisterFormProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">You&apos;re already logged in!</h3>
-        <p className="text-gray-500 text-sm mb-4">Redirecting you to the homepage...</p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('alreadyLoggedIn')}</h3>
+        <p className="text-gray-500 text-sm mb-4">{t('redirecting')}</p>
         <div className="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -76,7 +78,7 @@ export default function RegisterForm({ lang }: RegisterFormProps) {
           <div className="w-full border-t border-gray-200"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-gray-500">or register with phone</span>
+          <span className="px-4 bg-white text-gray-500">{t('orRegisterWithPhone')}</span>
         </div>
       </div>
 

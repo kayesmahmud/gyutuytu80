@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface FailureDetails {
   orderId: string;
@@ -12,6 +13,7 @@ interface FailureDetails {
 
 export default function PaymentFailurePage() {
   const searchParams = useSearchParams();
+  const t = useTranslations('payment');
   const [details, setDetails] = useState<FailureDetails | null>(null);
 
   useEffect(() => {
@@ -24,27 +26,27 @@ export default function PaymentFailurePage() {
 
   const getErrorMessage = (error: string, status: string) => {
     if (error === 'canceled' || status === 'canceled') {
-      return 'You canceled the payment. No amount has been deducted from your account.';
+      return t('errorCanceled');
     }
     if (error === 'missing_order') {
-      return 'The payment order could not be found. Please try again.';
+      return t('errorMissingOrder');
     }
     if (error === 'transaction_not_found') {
-      return 'We could not find your transaction. If money was deducted, it will be refunded within 3-5 business days.';
+      return t('errorTransactionNotFound');
     }
     if (error === 'invalid_gateway') {
-      return 'Invalid payment gateway. Please try again with a different payment method.';
+      return t('errorInvalidGateway');
     }
     if (error === 'internal_error') {
-      return 'Something went wrong on our end. Please try again later.';
+      return t('errorInternalError');
     }
     if (status === 'pending') {
-      return 'Your payment is still being processed. Please wait a few minutes and check your dashboard.';
+      return t('errorPending');
     }
     if (status === 'expired') {
-      return 'The payment session has expired. Please initiate a new payment.';
+      return t('errorExpired');
     }
-    return error || 'Your payment could not be completed. Please try again.';
+    return error || t('errorDefault');
   };
 
   const getStatusColor = (status: string) => {
@@ -76,9 +78,9 @@ export default function PaymentFailurePage() {
   };
 
   const getStatusTitle = (status: string) => {
-    if (status === 'pending') return 'Payment Pending';
-    if (status === 'canceled') return 'Payment Canceled';
-    return 'Payment Failed';
+    if (status === 'pending') return t('pendingTitle');
+    if (status === 'canceled') return t('canceledTitle');
+    return t('failedTitle');
   };
 
   return (
@@ -148,13 +150,13 @@ export default function PaymentFailurePage() {
             {details?.orderId && (
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-500 text-sm">Reference ID</span>
+                  <span className="text-gray-500 text-sm">{t('referenceId')}</span>
                   <span className="font-mono text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
                     {details.orderId.slice(0, 24)}...
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-500 text-sm">Status</span>
+                  <span className="text-gray-500 text-sm">{t('status')}</span>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
                     details.status === 'pending'
                       ? 'bg-yellow-100 text-yellow-700'
@@ -166,8 +168,8 @@ export default function PaymentFailurePage() {
                       details.status === 'pending' ? 'bg-yellow-500 animate-pulse' :
                       details.status === 'canceled' ? 'bg-gray-500' : 'bg-red-500'
                     }`} />
-                    {details.status === 'pending' ? 'Processing' :
-                     details.status === 'canceled' ? 'Canceled' : 'Failed'}
+                    {details.status === 'pending' ? t('processing') :
+                     details.status === 'canceled' ? t('canceled') : t('failed')}
                   </span>
                 </div>
               </div>
@@ -179,20 +181,20 @@ export default function PaymentFailurePage() {
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Need Help?
+                {t('needHelp')}
               </h3>
               <ul className="mt-2 text-sm text-gray-600 space-y-1">
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  Check your internet connection and try again
+                  {t('helpTip1')}
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  Ensure sufficient balance in your wallet
+                  {t('helpTip2')}
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-500 mt-1">•</span>
-                  Try a different payment method
+                  {t('helpTip3')}
                 </li>
               </ul>
             </div>
@@ -203,14 +205,14 @@ export default function PaymentFailurePage() {
                 href="/en/dashboard"
                 className="block w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-center font-semibold rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/25"
               >
-                Try Again
+                {t('tryAgain')}
               </Link>
 
               <Link
                 href="/en/dashboard"
                 className="block w-full py-3 px-4 bg-gray-100 text-gray-700 text-center font-medium rounded-xl hover:bg-gray-200 transition-all"
               >
-                Go to Dashboard
+                {t('goToDashboard')}
               </Link>
             </div>
           </div>
@@ -219,10 +221,10 @@ export default function PaymentFailurePage() {
         {/* Support Contact */}
         <div className="mt-4 p-4 bg-white/80 backdrop-blur rounded-xl text-center">
           <p className="text-gray-600 text-sm">
-            If money was deducted but payment failed, don&apos;t worry!
+            {t('moneyDeductedNotice')}
           </p>
           <p className="text-gray-500 text-xs mt-1">
-            Refunds are processed automatically within 3-5 business days.
+            {t('refundNotice')}
           </p>
           <a
             href="mailto:support@thulobazaar.com"
@@ -231,7 +233,7 @@ export default function PaymentFailurePage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            Contact Support
+            {t('contactSupport')}
           </a>
         </div>
       </div>

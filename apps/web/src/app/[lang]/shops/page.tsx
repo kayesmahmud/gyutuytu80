@@ -6,6 +6,7 @@ import ShopCard from './ShopCard';
 import ShopsPagination from './ShopsPagination';
 import { Breadcrumb } from '@/components/ui';
 import { getRootCategoriesWithChildren, getLocationHierarchy } from '@/lib/location';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 interface ShopsPageProps {
   params: Promise<{ lang: string }>;
@@ -18,15 +19,17 @@ interface ShopsPageProps {
 
 export async function generateMetadata({ params }: ShopsPageProps): Promise<Metadata> {
   const { lang } = await params;
-
+  const t = await getTranslations({ locale: lang, namespace: 'metadata' });
   return {
-    title: 'All Shops - Thulobazaar',
-    description: 'Browse all verified shops and sellers on Thulobazaar. Find trusted businesses and individual sellers in Nepal.',
+    title: t('shopsTitle'),
+    description: t('shopsDescription'),
   };
 }
 
 export default async function ShopsPage({ params, searchParams }: ShopsPageProps) {
   const { lang } = await params;
+  setRequestLocale(lang);
+  const tc = await getTranslations('common');
   const filters = await searchParams;
 
   const page = filters.page ? parseInt(filters.page) : 1;
@@ -203,8 +206,8 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
   }));
 
   const breadcrumbItems = [
-    { label: 'Home', path: `/${lang}` },
-    { label: 'All Shops', current: true },
+    { label: tc('home'), path: `/${lang}` },
+    { label: tc('allShops'), current: true },
   ];
 
   return (
@@ -230,10 +233,10 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
           {/* Header */}
           <div className="mb-4 md:mb-6 lg:mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
-              All Shops
+              {tc('allShops')}
             </h1>
             <p className="text-gray-500">
-              Found <span className="font-semibold text-gray-800">{totalShops.toLocaleString()}</span> shops
+              {tc('found')} <span className="font-semibold text-gray-800">{totalShops.toLocaleString()}</span> {tc('shops')}
             </p>
           </div>
 
@@ -242,10 +245,10 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
             <div className="text-center py-16 bg-white rounded-xl">
               <div className="text-6xl mb-4">🏪</div>
               <h3 className="text-2xl font-semibold mb-2">
-                No shops found
+                {tc('noShopsFound')}
               </h3>
               <p className="text-gray-500">
-                Try adjusting your filters or check back later
+                {tc('tryAdjustingFilters')}
               </p>
             </div>
           ) : (

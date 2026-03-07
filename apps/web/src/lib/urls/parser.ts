@@ -15,10 +15,12 @@ export interface ParsedAdUrlParams {
   locationId: number | null;
   locationSlug: string | null;
   locationName: string | null;
+  locationNameNe: string | null;
   locationType: string | null;
   categoryId: number | null;
   categorySlug: string | null;
   categoryName: string | null;
+  categoryNameNe: string | null;
   isParentCategory: boolean;
 }
 
@@ -39,10 +41,12 @@ export async function parseAdUrlParams(params: string[] | undefined): Promise<Pa
     locationId: null,
     locationSlug: null,
     locationName: null,
+    locationNameNe: null,
     locationType: null,
     categoryId: null,
     categorySlug: null,
     categoryName: null,
+    categoryNameNe: null,
     isParentCategory: false,
   };
 
@@ -59,13 +63,14 @@ export async function parseAdUrlParams(params: string[] | undefined): Promise<Pa
     const [location, category] = await Promise.all([
       prisma.locations.findFirst({
         where: { slug: firstParam },
-        select: { id: true, name: true, slug: true, type: true },
+        select: { id: true, name: true, name_ne: true, slug: true, type: true },
       }),
       prisma.categories.findFirst({
         where: { slug: firstParam },
         select: {
           id: true,
           name: true,
+          name_ne: true,
           slug: true,
           parent_id: true,
           other_categories: {
@@ -80,12 +85,14 @@ export async function parseAdUrlParams(params: string[] | undefined): Promise<Pa
       result.locationId = location.id;
       result.locationSlug = location.slug;
       result.locationName = location.name;
+      result.locationNameNe = location.name_ne;
       result.locationType = location.type;
     } else if (category) {
       // It's a category
       result.categoryId = category.id;
       result.categorySlug = category.slug;
       result.categoryName = category.name;
+      result.categoryNameNe = category.name_ne;
       result.isParentCategory = category.parent_id === null && (category.other_categories?.length || 0) > 0;
     }
   } else if (params.length === 2) {
@@ -93,13 +100,14 @@ export async function parseAdUrlParams(params: string[] | undefined): Promise<Pa
     const [location, category] = await Promise.all([
       prisma.locations.findFirst({
         where: { slug: firstParam },
-        select: { id: true, name: true, slug: true, type: true },
+        select: { id: true, name: true, name_ne: true, slug: true, type: true },
       }),
       prisma.categories.findFirst({
         where: { slug: secondParam },
         select: {
           id: true,
           name: true,
+          name_ne: true,
           slug: true,
           parent_id: true,
           other_categories: {
@@ -113,6 +121,7 @@ export async function parseAdUrlParams(params: string[] | undefined): Promise<Pa
       result.locationId = location.id;
       result.locationSlug = location.slug;
       result.locationName = location.name;
+      result.locationNameNe = location.name_ne;
       result.locationType = location.type;
     }
 
@@ -120,6 +129,7 @@ export async function parseAdUrlParams(params: string[] | undefined): Promise<Pa
       result.categoryId = category.id;
       result.categorySlug = category.slug;
       result.categoryName = category.name;
+      result.categoryNameNe = category.name_ne;
       result.isParentCategory = category.parent_id === null && (category.other_categories?.length || 0) > 0;
     }
   }
