@@ -175,8 +175,8 @@ export function GoogleAdsSettingsTab({ settings, updateSettings }: GoogleAdsSett
           </div>
         </CollapsibleSection>
 
-        {/* Browse/Listing Slots */}
-        <CollapsibleSection title="Browse / Listing Page Slots (5)">
+        {/* Search/Listing Slots */}
+        <CollapsibleSection title="Search / Listing Page Slots (5)">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SlotInput
               label="Top Banner (Desktop)"

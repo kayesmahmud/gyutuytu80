@@ -1,6 +1,7 @@
 export interface Location {
   id: number;
   name: string;
+  name_ne: string | null;
   slug: string | null;
   type: LocationType;
   parent_id: number | null;
@@ -17,6 +18,7 @@ export type LocationType = 'province' | 'district' | 'municipality' | 'area';
 
 export interface LocationFormData {
   name: string;
+  name_ne: string;
   slug: string;
   type: LocationType;
   parent_id: string;
@@ -26,6 +28,7 @@ export interface LocationFormData {
 
 export const DEFAULT_FORM_DATA: LocationFormData = {
   name: '',
+  name_ne: '',
   slug: '',
   type: 'municipality',
   parent_id: '',

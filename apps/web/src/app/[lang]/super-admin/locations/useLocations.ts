@@ -66,6 +66,7 @@ export function useLocations() {
 
       const data = {
         name: formData.name,
+        name_ne: formData.name_ne || undefined,
         slug: formData.slug || undefined,
         type: formData.type,
         parent_id: formData.parent_id ? parseInt(formData.parent_id) : undefined,

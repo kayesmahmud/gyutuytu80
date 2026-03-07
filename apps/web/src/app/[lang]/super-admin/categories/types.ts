@@ -1,6 +1,7 @@
 export interface Category {
   id: number;
   name: string;
+  name_ne: string | null;
   slug: string;
   icon: string | null;
   parent_id: number | null;
@@ -13,6 +14,7 @@ export interface Category {
 
 export interface CategoryFormData {
   name: string;
+  name_ne: string;
   slug: string;
   icon: string;
   parent_id: string;
@@ -21,6 +23,7 @@ export interface CategoryFormData {
 
 export const DEFAULT_FORM_DATA: CategoryFormData = {
   name: '',
+  name_ne: '',
   slug: '',
   icon: '',
   parent_id: '',

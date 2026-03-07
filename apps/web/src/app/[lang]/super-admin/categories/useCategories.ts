@@ -103,6 +103,7 @@ export function useCategories(lang: string): UseCategoriesReturn {
       setEditingCategory(category);
       setFormData({
         name: category.name,
+        name_ne: category.name_ne || '',
         slug: category.slug,
         icon: category.icon || '',
         parent_id: category.parent_id?.toString() || '',
@@ -147,6 +148,7 @@ export function useCategories(lang: string): UseCategoriesReturn {
 
       const data = {
         name: formData.name,
+        name_ne: formData.name_ne || undefined,
         slug: formData.slug,
         icon: formData.icon || undefined,
         parent_id: formData.parent_id ? parseInt(formData.parent_id) : undefined,

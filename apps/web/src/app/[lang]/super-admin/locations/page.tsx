@@ -59,6 +59,7 @@ export default function LocationsManagementPage({ params: paramsPromise }: { par
       setEditingLocation(location);
       setFormData({
         name: location.name,
+        name_ne: location.name_ne || '',
         slug: location.slug || '',
         type: location.type,
         parent_id: location.parent_id?.toString() || '',
