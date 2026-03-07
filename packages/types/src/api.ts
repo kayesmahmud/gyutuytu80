@@ -99,6 +99,7 @@ export interface AdWithDetails extends Ad {
 export interface Category {
   id: number;
   name: string;
+  nameNe?: string;
   slug: string;
   icon?: string;
   parentId?: number;
@@ -119,6 +120,7 @@ export type LocationType = 'province' | 'district' | 'municipality' | 'area';
 export interface Location {
   id: number;
   name: string;
+  nameNe?: string;
   slug: string;
   type: LocationType;
   parentId?: number;
@@ -136,6 +138,7 @@ export interface LocationHierarchy extends Location {
 export interface Municipality {
   id: number;
   name: string;
+  nameNe?: string;
   type: string;
   area_count: number;
   areas?: Area[];
@@ -144,6 +147,7 @@ export interface Municipality {
 export interface District {
   id: number;
   name: string;
+  nameNe?: string;
   area_count: number;
   municipalities: Municipality[];
 }
@@ -151,12 +155,14 @@ export interface District {
 export interface Province {
   id: number;
   name: string;
+  nameNe?: string;
   districts?: District[];
 }
 
 export interface Area {
   id: number;
   name: string;
+  nameNe?: string;
   listing_count?: number;
   is_popular?: boolean;
 }

@@ -98,6 +98,7 @@ export interface DbAd {
 export interface DbCategory {
   id: number;
   name: string;
+  name_ne: string | null;
   slug: string;
   icon: string | null;
   parent_id: number | null;
@@ -116,6 +117,7 @@ export type DbLocationType = 'province' | 'district' | 'municipality' | 'area';
 export interface DbLocation {
   id: number;
   name: string;
+  name_ne: string | null;
   slug: string;
   type: DbLocationType;
   parent_id: number | null;

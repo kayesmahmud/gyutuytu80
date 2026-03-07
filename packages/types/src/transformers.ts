@@ -143,6 +143,7 @@ export function transformDbCategoryToApi(dbCategory: DbCategory): Category {
   return {
     id: dbCategory.id,
     name: dbCategory.name,
+    nameNe: dbCategory.name_ne || undefined,
     slug: dbCategory.slug,
     icon: dbCategory.icon || undefined,
     parentId: dbCategory.parent_id || undefined,
@@ -163,6 +164,7 @@ export function transformDbLocationToApi(dbLocation: DbLocation): Location {
   return {
     id: dbLocation.id,
     name: dbLocation.name,
+    nameNe: dbLocation.name_ne || undefined,
     slug: dbLocation.slug,
     type: dbLocation.type,
     parentId: dbLocation.parent_id || undefined,
