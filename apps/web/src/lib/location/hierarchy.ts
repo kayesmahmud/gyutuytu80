@@ -5,6 +5,7 @@ export type LocationType = 'province' | 'district' | 'municipality' | 'area';
 interface RawLocationRow {
   id: number;
   name: string;
+  name_ne: string | null;
   slug: string | null;
   type: string;
   parent_id: number | null;
@@ -13,11 +14,13 @@ interface RawLocationRow {
 const normalizeSlug = (row: RawLocationRow) => ({
   ...row,
   slug: row.slug || row.id.toString(),
-}) as RawLocationRow & { slug: string };
+  nameNe: row.name_ne,
+}) as RawLocationRow & { slug: string; nameNe: string | null };
 
 export interface LocationHierarchyBase {
   id: number;
   name: string;
+  nameNe: string | null;
   slug: string;
   type: LocationType;
   parent_id: number | null;
@@ -53,6 +56,7 @@ export async function getLocationHierarchy(): Promise<LocationHierarchyProvince[
     select: {
       id: true,
       name: true,
+      name_ne: true,
       slug: true,
       type: true,
       parent_id: true,
@@ -85,6 +89,7 @@ export async function getLocationHierarchy(): Promise<LocationHierarchyProvince[
     select: {
       id: true,
       name: true,
+      name_ne: true,
       slug: true,
       type: true,
       parent_id: true,
@@ -115,6 +120,7 @@ export async function getLocationHierarchy(): Promise<LocationHierarchyProvince[
           select: {
             id: true,
             name: true,
+            name_ne: true,
             slug: true,
             type: true,
             parent_id: true,
@@ -146,6 +152,7 @@ export async function getLocationHierarchy(): Promise<LocationHierarchyProvince[
           select: {
             id: true,
             name: true,
+            name_ne: true,
             slug: true,
             type: true,
             parent_id: true,

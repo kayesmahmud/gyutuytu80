@@ -18,7 +18,7 @@ export async function PUT(
     const { id } = await params;
     const locationId = parseInt(id, 10);
     const body = await request.json();
-    const { name, type, parent_id, slug } = body;
+    const { name, name_ne, type, parent_id, slug } = body;
 
     if (isNaN(locationId)) {
       return NextResponse.json(
@@ -47,6 +47,7 @@ export async function PUT(
     if (parent_id !== undefined) {
       updateData.parent_id = parent_id ? parseInt(parent_id, 10) : null;
     }
+    if (name_ne !== undefined) updateData.name_ne = name_ne || null;
 
     // Update location
     const location = await prisma.locations.update({
@@ -60,6 +61,7 @@ export async function PUT(
         data: {
           id: location.id,
           name: location.name,
+          name_ne: location.name_ne,
           type: location.type,
           slug: location.slug,
           parentId: location.parent_id,

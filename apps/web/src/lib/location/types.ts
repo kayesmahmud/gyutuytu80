@@ -8,6 +8,7 @@ export type LocationType = 'province' | 'district' | 'municipality' | 'area';
 export interface LocationHierarchyBase {
   id: number;
   name: string;
+  nameNe?: string | null;
   slug: string;
   type: LocationType;
   parent_id: number | null;
@@ -35,11 +36,13 @@ export interface LocationHierarchyProvince extends LocationHierarchyBase {
 export interface CategoryWithSubcategories {
   id: number;
   name: string;
+  nameNe?: string | null;
   slug: string;
   icon: string | null;
   subcategories: {
     id: number;
     name: string;
+    nameNe?: string | null;
     slug: string;
     icon: string | null;
   }[];

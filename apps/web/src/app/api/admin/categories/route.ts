@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         name: true,
+        name_ne: true,
         slug: true,
         icon: true,
         parent_id: true,
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
     const data = categories.map((cat) => ({
       id: cat.id,
       name: cat.name,
+      name_ne: cat.name_ne,
       slug: cat.slug,
       icon: cat.icon,
       parent_id: cat.parent_id,
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
     await requireEditor(request);
 
     const body = await request.json();
-    const { name, parent_id, slug, icon, form_template } = body;
+    const { name, name_ne, parent_id, slug, icon, form_template } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -137,6 +139,7 @@ export async function POST(request: NextRequest) {
     const category = await prisma.categories.create({
       data: {
         name,
+        name_ne: name_ne || null,
         slug: categorySlug,
         parent_id: parent_id ? parseInt(parent_id, 10) : null,
         icon: icon || null,
@@ -152,6 +155,7 @@ export async function POST(request: NextRequest) {
         data: {
           id: category.id,
           name: category.name,
+          name_ne: category.name_ne,
           slug: category.slug,
           icon: category.icon,
           parent_id: category.parent_id,

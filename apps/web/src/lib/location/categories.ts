@@ -6,11 +6,13 @@ import { prisma } from '@thulobazaar/database';
 export interface CategoryWithSubcategories {
   id: number;
   name: string;
+  nameNe: string | null;
   slug: string;
   icon: string | null;
   subcategories: {
     id: number;
     name: string;
+    nameNe: string | null;
     slug: string;
   }[];
 }
@@ -28,6 +30,7 @@ export async function getRootCategoriesWithChildren(): Promise<CategoryWithSubca
     select: {
       id: true,
       name: true,
+      name_ne: true,
       slug: true,
       icon: true,
       other_categories: {
@@ -35,6 +38,7 @@ export async function getRootCategoriesWithChildren(): Promise<CategoryWithSubca
         select: {
           id: true,
           name: true,
+          name_ne: true,
           slug: true,
         },
       },
@@ -44,9 +48,15 @@ export async function getRootCategoriesWithChildren(): Promise<CategoryWithSubca
   return categories.map((cat) => ({
     id: cat.id,
     name: cat.name,
+    nameNe: cat.name_ne,
     slug: cat.slug,
     icon: cat.icon || '📁',
-    subcategories: cat.other_categories || [],
+    subcategories: (cat.other_categories || []).map((sub) => ({
+      id: sub.id,
+      name: sub.name,
+      nameNe: sub.name_ne,
+      slug: sub.slug,
+    })),
   }));
 }
 
@@ -62,6 +72,7 @@ export async function getCategoryBySlug(slug: string) {
     select: {
       id: true,
       name: true,
+      name_ne: true,
       slug: true,
       icon: true,
       parent_id: true,

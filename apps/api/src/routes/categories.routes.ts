@@ -100,7 +100,7 @@ router.post(
   authenticateToken,
   requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
-    const { name, icon, parent_id, form_template } = req.body;
+    const { name, name_ne, icon, parent_id, form_template } = req.body;
 
     const slug = name
       .toLowerCase()
@@ -110,6 +110,7 @@ router.post(
     const category = await prisma.categories.create({
       data: {
         name,
+        name_ne: name_ne || null,
         slug,
         icon: icon || null,
         parent_id: parent_id || null,
@@ -137,7 +138,7 @@ router.put(
   requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, icon, form_template } = req.body;
+    const { name, name_ne, icon, form_template } = req.body;
 
     const existingCategory = await prisma.categories.findUnique({
       where: { id: parseInt(id) },
@@ -159,6 +160,7 @@ router.put(
       where: { id: parseInt(id) },
       data: {
         name: name || existingCategory.name,
+        name_ne: name_ne !== undefined ? name_ne : existingCategory.name_ne,
         slug,
         icon: icon !== undefined ? icon : existingCategory.icon,
         form_template: form_template !== undefined ? form_template : existingCategory.form_template,

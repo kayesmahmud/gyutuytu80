@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         name: true,
+        name_ne: true,
         slug: true,
         type: true,
         parent_id: true,
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
     const data = locations.map((loc) => ({
       id: loc.id,
       name: loc.name,
+      name_ne: loc.name_ne,
       slug: loc.slug,
       type: loc.type,
       parent_id: loc.parent_id,
@@ -112,7 +114,7 @@ export async function POST(request: NextRequest) {
     await requireEditor(request);
 
     const body = await request.json();
-    const { name, type, parent_id, slug } = body;
+    const { name, name_ne, type, parent_id, slug } = body;
 
     if (!name || !type) {
       return NextResponse.json(
@@ -153,6 +155,7 @@ export async function POST(request: NextRequest) {
     const location = await prisma.locations.create({
       data: {
         name,
+        name_ne: name_ne || null,
         type,
         slug: locationSlug,
         parent_id: parent_id ? parseInt(parent_id, 10) : null,
@@ -167,6 +170,7 @@ export async function POST(request: NextRequest) {
         data: {
           id: location.id,
           name: location.name,
+          name_ne: location.name_ne,
           type: location.type,
           slug: location.slug,
           parentId: location.parent_id,

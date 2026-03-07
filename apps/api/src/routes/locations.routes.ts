@@ -8,6 +8,7 @@ const router = Router();
 interface LocationWithCount {
   id: number;
   name: string;
+  name_ne: string | null;
   slug: string | null;
   type: string | null;
   parent_id: number | null;
@@ -183,7 +184,7 @@ router.get(
     const limitNum = parseInt(limit as string);
 
     const results = await prisma.$queryRaw`
-      SELECT id, name, slug, type, parent_id
+      SELECT id, name, name_ne, slug, type, parent_id
       FROM locations
       WHERE name ILIKE ${searchTerm}
       ORDER BY name ASC
@@ -216,7 +217,7 @@ router.get(
     const limitNum = parseInt(limit as string);
 
     const results = await prisma.$queryRaw`
-      SELECT id, name, slug, type, parent_id
+      SELECT id, name, name_ne, slug, type, parent_id
       FROM locations
       WHERE name ILIKE ${searchTerm}
       ORDER BY
@@ -304,7 +305,7 @@ router.post(
   authenticateToken,
   requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
-    const { name, latitude, longitude, type, parent_id } = req.body;
+    const { name, name_ne, latitude, longitude, type, parent_id } = req.body;
 
     const slug = name
       .toLowerCase()
@@ -314,6 +315,7 @@ router.post(
     const location = await prisma.locations.create({
       data: {
         name,
+        name_ne: name_ne || null,
         slug,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
@@ -342,7 +344,7 @@ router.put(
   requireAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, latitude, longitude } = req.body;
+    const { name, name_ne, latitude, longitude } = req.body;
 
     const existingLocation = await prisma.locations.findUnique({
       where: { id: parseInt(id) },
@@ -364,6 +366,7 @@ router.put(
       where: { id: parseInt(id) },
       data: {
         name: name || existingLocation.name,
+        name_ne: name_ne !== undefined ? name_ne : existingLocation.name_ne,
         slug,
         latitude: latitude !== undefined ? parseFloat(latitude) : existingLocation.latitude,
         longitude: longitude !== undefined ? parseFloat(longitude) : existingLocation.longitude,
