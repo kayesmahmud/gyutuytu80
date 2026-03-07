@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata, Viewport } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Header, Footer, BottomNav } from '@/components/layout';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
@@ -65,8 +67,12 @@ export default async function LanguageLayout({
     notFound();
   }
 
+  // Enable next-intl for this locale
+  setRequestLocale(lang);
+  const messages = await getMessages();
+
   return (
-    <>
+    <NextIntlClientProvider messages={messages}>
       <ServiceWorkerRegister />
       <InstallPrompt />      {/* Desktop PWA install */}
       <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
@@ -77,6 +83,6 @@ export default async function LanguageLayout({
       </div>
       <Footer lang={lang} />
       <BottomNav lang={lang} />
-    </>
+    </NextIntlClientProvider>
   );
 }
