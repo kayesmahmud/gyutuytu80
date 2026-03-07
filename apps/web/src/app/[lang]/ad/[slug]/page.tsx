@@ -251,7 +251,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
 
   // Fetch related ads from same category
   const relatedAdsRaw = await getRelatedAds(ad.category_id, ad.id);
-  const relatedAds = relatedAdsRaw.map((relAd) => ({
+  const relatedAds = relatedAdsRaw.map((relAd: any) => ({
     id: relAd.id,
     title: relAd.title,
     price: relAd.price ? parseFloat(relAd.price.toString()) : 0,
@@ -272,7 +272,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
 
   const fullLocation = buildFullLocation(ad.locations, lang);
   const fullCategory = buildFullCategory(ad.categories, lang);
-  const images = ad.ad_images.map(img =>
+  const images = ad.ad_images.map((img: any) =>
     getImageUrl(img.file_path, 'ads') || ''
   );
   const customFields = ad.custom_fields as Record<string, any> | null;

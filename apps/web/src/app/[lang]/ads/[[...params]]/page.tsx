@@ -286,7 +286,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
             {ads.length > 0 && (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6 mb-4 md:mb-6">
-                  {ads.map((ad, index) => (
+                  {ads.map((ad: any, index: number) => (
                     <React.Fragment key={ad.id}>
                       <AdCard
                         lang={lang}

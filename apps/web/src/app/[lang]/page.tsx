@@ -187,7 +187,7 @@ export default async function HomePage({ params }: HomePageProps) {
   }));
 
   // Transform featured ads for carousel
-  const featuredAdCards = featuredAds.map((ad) => ({
+  const featuredAdCards = featuredAds.map((ad: any) => ({
     id: ad.id,
     title: ad.title,
     price: ad.price ? parseFloat(ad.price.toString()) : 0,
@@ -204,7 +204,7 @@ export default async function HomePage({ params }: HomePageProps) {
     individualVerified: ad.users_ads_user_idTousers?.individual_verified || false,
   }));
 
-  const latestAdCards = latestAds.map((ad) => ({
+  const latestAdCards = latestAds.map((ad: any) => ({
     id: ad.id,
     title: ad.title,
     price: ad.price ? parseFloat(ad.price.toString()) : 0,
