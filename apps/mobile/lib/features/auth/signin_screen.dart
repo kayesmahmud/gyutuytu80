@@ -389,9 +389,13 @@ class _SignInScreenState extends State<SignInScreen> {
                       hintText: 'Enter your password',
                       hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
-                          color: Colors.grey
+                        icon: AnimatedRotation(
+                          turns: _obscurePassword ? 0 : 0.5,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
+                            color: Colors.grey,
+                          ),
                         ),
                         onPressed: () {
                           setState(() {

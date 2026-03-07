@@ -15,13 +15,13 @@ void main() {
       await binding.takeScreenshot('01_home_screen');
       print('✓ Captured: Home Screen');
 
-      // Navigate to Browse tab
-      final browseTab = find.text('Browse');
-      if (browseTab.evaluate().isNotEmpty) {
-        await tester.tap(browseTab);
+      // Navigate to Search tab
+      final searchTab = find.text('Search');
+      if (searchTab.evaluate().isNotEmpty) {
+        await tester.tap(searchTab);
         await tester.pumpAndSettle(const Duration(seconds: 2));
-        await binding.takeScreenshot('02_browse_screen');
-        print('✓ Captured: Browse Screen');
+        await binding.takeScreenshot('02_search_screen');
+        print('✓ Captured: Search Screen');
       }
 
       // Navigate to Messages tab

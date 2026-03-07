@@ -624,7 +624,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff, color: Colors.grey),
+                          icon: AnimatedRotation(
+                            turns: _obscurePassword ? 0 : 0.5,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(_obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff, color: Colors.grey),
+                          ),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
@@ -641,7 +645,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscureConfirmPassword ? LucideIcons.eye : LucideIcons.eyeOff, color: Colors.grey),
+                          icon: AnimatedRotation(
+                            turns: _obscureConfirmPassword ? 0 : 0.5,
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(_obscureConfirmPassword ? LucideIcons.eye : LucideIcons.eyeOff, color: Colors.grey),
+                          ),
                           onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                         ),
                       ),

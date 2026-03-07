@@ -4,7 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/models/models.dart';
-import 'package:mobile/features/browse/browse_filter_modal.dart';
+import 'package:mobile/features/search/search_filter_modal.dart';
 import 'package:mobile/core/widgets/main_app_bar.dart';
 import 'package:mobile/core/widgets/main_drawer.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
@@ -14,14 +14,14 @@ import 'package:mobile/core/services/search_history_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:mobile/core/utils/skeleton_data.dart';
 
-class BrowseScreen extends StatefulWidget {
-  const BrowseScreen({super.key});
+class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
 
   @override
-  State<BrowseScreen> createState() => BrowseScreenState();
+  State<SearchScreen> createState() => SearchScreenState();
 }
 
-class BrowseScreenState extends State<BrowseScreen> {
+class SearchScreenState extends State<SearchScreen> {
   final AdClient _adClient = AdClient();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -492,7 +492,7 @@ class BrowseScreenState extends State<BrowseScreen> {
         initialChildSize: 0.9,
         minChildSize: 0.5,
         maxChildSize: 0.95,
-        builder: (_, controller) => BrowseFilterModal(
+        builder: (_, controller) => SearchFilterModal(
           initialExpandedSection: expandSection,
           currentFilters: _filters,
           onApplyFilters: _applyFilters,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
+import 'package:mobile/core/widgets/floating_widget.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -325,7 +326,9 @@ class _MyAdsScreenState extends State<MyAdsScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
+            FloatingWidget(
+              child: Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
+            ),
             const SizedBox(height: 16),
             Text(
               'No ads found',

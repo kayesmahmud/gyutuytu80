@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:mobile/core/api/support_client.dart';
 import 'package:mobile/core/models/support_ticket.dart';
@@ -43,13 +44,11 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     setState(() => _isSubmitting = false);
 
     if (response.hasData) {
-      // Navigate to ticket detail, replacing this screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
             builder: (_) => TicketDetailScreen(ticketId: response.data!.id)),
       );
-      // Also tell the previous screen a ticket was created
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -65,7 +64,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('New Support Ticket',
+        title: Text('New Ticket',
             style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
@@ -79,19 +78,44 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Category dropdown
-              Text('Category',
-                  style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF374151))),
-              const SizedBox(height: 6),
+              // Info banner
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDBEAFE),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.lightbulb,
+                        size: 20, color: Color(0xFF2563EB)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Describe your issue clearly so we can help you faster.',
+                        style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: const Color(0xFF1E40AF),
+                            height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Category
+              _buildLabel('Category', LucideIcons.tag),
+              const SizedBox(height: 8),
               DropdownButtonFormField<SupportTicketCategory>(
                 initialValue: _category,
                 decoration: _inputDecoration('Select a category'),
                 items: SupportTicketCategory.values
                     .map((c) => DropdownMenuItem(
-                        value: c, child: Text(c.label)))
+                        value: c,
+                        child: Text(c.label,
+                            style: GoogleFonts.inter(fontSize: 15))))
                     .toList(),
                 onChanged: (v) {
                   if (v != null) setState(() => _category = v);
@@ -101,12 +125,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               const SizedBox(height: 20),
 
               // Subject
-              Text('Subject',
-                  style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF374151))),
-              const SizedBox(height: 6),
+              _buildLabel('Subject', LucideIcons.type),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _subjectController,
                 decoration: _inputDecoration('Brief summary of your issue'),
@@ -118,25 +138,22 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
               const SizedBox(height: 20),
 
-              // Message
-              Text('Description',
-                  style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF374151))),
-              const SizedBox(height: 6),
+              // Description
+              _buildLabel('Description', LucideIcons.alignLeft),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _messageController,
                 decoration: _inputDecoration('Describe your issue in detail...'),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Description is required' : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Description is required'
+                    : null,
                 maxLines: 6,
                 style: GoogleFonts.inter(fontSize: 15),
               ),
 
               const SizedBox(height: 32),
 
-              // Submit button
+              // Submit
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -144,10 +161,11 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE11D48),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(12)),
                     disabledBackgroundColor: Colors.grey[300],
+                    elevation: 0,
                   ),
                   child: _isSubmitting
                       ? const SizedBox(
@@ -155,15 +173,36 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
-                      : Text('Submit Ticket',
-                          style: GoogleFonts.inter(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(LucideIcons.send, size: 18),
+                            const SizedBox(width: 8),
+                            Text('Submit Ticket',
+                                style: GoogleFonts.inter(
+                                    fontSize: 16, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLabel(String text, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[500]),
+        const SizedBox(width: 6),
+        Text(text,
+            style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151))),
+      ],
     );
   }
 
@@ -183,9 +222,13 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE11D48)),
+        borderSide: const BorderSide(color: Color(0xFFE11D48), width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Colors.red[300]!),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
   }
 }

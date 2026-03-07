@@ -41,16 +41,18 @@ class _AdImageGalleryState extends State<AdImageGallery> {
   }
 
   Widget _buildCircleButton({required Widget child, VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.9),
+    return Material(
+      color: Colors.white.withValues(alpha: 0.9),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: Center(child: child),
         ),
-        child: Center(child: child),
       ),
     );
   }

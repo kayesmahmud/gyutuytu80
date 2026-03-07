@@ -1,5 +1,5 @@
-# Browse Screen Flow
-# Run: maestro test maestro/browse_flow.yaml
+# Search Screen Flow
+# Run: maestro test maestro/search_flow.yaml
 
 appId: com.thulobazaar.mobile
 ---
@@ -8,17 +8,17 @@ appId: com.thulobazaar.mobile
 - assertVisible: "THULO.*BAZAAR"
 - takeScreenshot: 01_home
 
-- tapOn: "Browse"
+- tapOn: "Search"
 - assertVisible: "Search for anything"
-- takeScreenshot: 02_browse
+- takeScreenshot: 02_search
 
 - scroll:
     direction: DOWN
-- takeScreenshot: 03_browse_scrolled
+- takeScreenshot: 03_search_scrolled
 
 - scroll:
     direction: DOWN
-- takeScreenshot: 04_browse_more
+- takeScreenshot: 04_search_more
 
 - tapOn:
     text: ".*Rs\\..*"

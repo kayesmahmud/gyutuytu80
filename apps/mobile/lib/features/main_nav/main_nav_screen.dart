@@ -7,7 +7,7 @@ import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/core/providers/chat_provider.dart';
 import 'package:mobile/features/home/home_screen.dart';
-import 'package:mobile/features/browse/browse_screen.dart';
+import 'package:mobile/features/search/search_screen.dart';
 import 'package:mobile/features/post_ad/post_ad_screen.dart';
 import 'package:mobile/features/messages/messages_screen.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
@@ -24,7 +24,7 @@ class MainNavScreen extends StatefulWidget {
 
 class _MainNavScreenState extends State<MainNavScreen> {
   late int _selectedIndex;
-  final GlobalKey<BrowseScreenState> _browseKey = GlobalKey();
+  final GlobalKey<SearchScreenState> _searchKey = GlobalKey();
   late final Set<int> _visitedTabs;
 
   @override
@@ -58,7 +58,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
       _selectedIndex = 1;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _browseKey.currentState?.searchFor(query);
+      _searchKey.currentState?.searchFor(query);
     });
   }
 
@@ -68,7 +68,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
       _selectedIndex = 1;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _browseKey.currentState?.filterByCategory(categoryId, categoryName);
+      _searchKey.currentState?.filterByCategory(categoryId, categoryName);
     });
   }
 
@@ -116,14 +116,22 @@ class _MainNavScreenState extends State<MainNavScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.3, end: 1.0),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.elasticOut,
+              builder: (context, scale, child) {
+                return Transform.scale(scale: scale, child: child);
+              },
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(LucideIcons.lock, size: 32, color: Colors.grey[600]),
               ),
-              child: Icon(LucideIcons.lock, size: 32, color: Colors.grey[600]),
             ),
             const SizedBox(height: 16),
             Text(
@@ -216,7 +224,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             else
               const SizedBox.shrink(),
             if (_visitedTabs.contains(1))
-              BrowseScreen(key: _browseKey)
+              SearchScreen(key: _searchKey)
             else
               const SizedBox.shrink(),
             if (_visitedTabs.contains(2))
@@ -257,9 +265,9 @@ class _MainNavScreenState extends State<MainNavScreen> {
                     label: 'Home',
                   ),
                   const BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.layoutGrid),
-                    activeIcon: Icon(LucideIcons.layoutGrid),
-                    label: 'Browse',
+                    icon: Icon(LucideIcons.search),
+                    activeIcon: Icon(LucideIcons.search),
+                    label: 'Search',
                   ),
                   // Spacer for FAB — invisible, FAB covers this slot
                   const BottomNavigationBarItem(
@@ -274,24 +282,33 @@ class _MainNavScreenState extends State<MainNavScreen> {
                           Positioned(
                             right: 0,
                             top: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 14,
-                                minHeight: 14,
-                              ),
-                              child: Text(
-                                '${chatProvider.unreadCount}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
+                            child: TweenAnimationBuilder<double>(
+                              key: ValueKey(chatProvider.unreadCount),
+                              tween: Tween(begin: 1.4, end: 1.0),
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.elasticOut,
+                              builder: (context, scale, child) {
+                                return Transform.scale(scale: scale, child: child);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
                                 ),
-                                textAlign: TextAlign.center,
+                                constraints: const BoxConstraints(
+                                  minWidth: 14,
+                                  minHeight: 14,
+                                ),
+                                child: Text(
+                                  '${chatProvider.unreadCount}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ),
                           ),

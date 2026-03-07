@@ -6,6 +6,7 @@ enum LocationType { province, district, municipality, area }
 class Location {
   final int id;
   final String name;
+  final String? nameNe;
   final String slug;
   final LocationType type;
   final int? parentId;
@@ -16,6 +17,7 @@ class Location {
   Location({
     required this.id,
     required this.name,
+    this.nameNe,
     required this.slug,
     required this.type,
     this.parentId,
@@ -24,10 +26,15 @@ class Location {
     required this.isActive,
   });
 
+  /// Returns the localized name based on locale
+  String localizedName(String locale) =>
+      locale == 'ne' && nameNe != null && nameNe!.isNotEmpty ? nameNe! : name;
+
   factory Location.fromJson(Map<String, dynamic> json) {
     return Location(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       slug: json['slug'] as String? ?? '',
       type: _parseLocationType(json['type']),
       parentId: json['parentId'] as int? ?? json['parent_id'] as int?,
@@ -41,6 +48,7 @@ class Location {
     return {
       'id': id,
       'name': name,
+      'nameNe': nameNe,
       'slug': slug,
       'type': type.name,
       'parentId': parentId,
@@ -59,6 +67,7 @@ class LocationHierarchy extends Location {
   LocationHierarchy({
     required super.id,
     required super.name,
+    super.nameNe,
     required super.slug,
     required super.type,
     super.parentId,
@@ -83,6 +92,7 @@ class LocationHierarchy extends Location {
     return LocationHierarchy(
       id: location.id,
       name: location.name,
+      nameNe: location.nameNe,
       slug: location.slug,
       type: location.type,
       parentId: location.parentId,
@@ -101,20 +111,27 @@ class LocationHierarchy extends Location {
 class Area {
   final int id;
   final String name;
+  final String? nameNe;
   final int? listingCount;
   final bool isPopular;
 
   Area({
     required this.id,
     required this.name,
+    this.nameNe,
     this.listingCount,
     this.isPopular = false,
   });
+
+  /// Returns the localized name based on locale
+  String localizedName(String locale) =>
+      locale == 'ne' && nameNe != null && nameNe!.isNotEmpty ? nameNe! : name;
 
   factory Area.fromJson(Map<String, dynamic> json) {
     return Area(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       listingCount: json['listing_count'] as int? ?? json['listingCount'] as int?,
       isPopular: json['is_popular'] as bool? ?? json['isPopular'] as bool? ?? false,
     );
@@ -124,6 +141,7 @@ class Area {
     return {
       'id': id,
       'name': name,
+      'nameNe': nameNe,
       'listing_count': listingCount,
       'is_popular': isPopular,
     };
@@ -142,6 +160,7 @@ class Area {
 class Municipality {
   final int id;
   final String name;
+  final String? nameNe;
   final String type;
   final int areaCount;
   final List<Area>? areas;
@@ -149,10 +168,15 @@ class Municipality {
   Municipality({
     required this.id,
     required this.name,
+    this.nameNe,
     required this.type,
     required this.areaCount,
     this.areas,
   });
+
+  /// Returns the localized name based on locale
+  String localizedName(String locale) =>
+      locale == 'ne' && nameNe != null && nameNe!.isNotEmpty ? nameNe! : name;
 
   factory Municipality.fromJson(Map<String, dynamic> json) {
     List<Area>? areasList;
@@ -164,6 +188,7 @@ class Municipality {
     return Municipality(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       type: json['type'] as String? ?? 'municipality',
       areaCount: json['area_count'] as int? ?? json['areaCount'] as int? ?? 0,
       areas: areasList,
@@ -174,6 +199,7 @@ class Municipality {
     return {
       'id': id,
       'name': name,
+      'nameNe': nameNe,
       'type': type,
       'area_count': areaCount,
       'areas': areas?.map((e) => e.toJson()).toList(),
@@ -193,15 +219,21 @@ class Municipality {
 class District {
   final int id;
   final String name;
+  final String? nameNe;
   final int areaCount;
   final List<Municipality> municipalities;
 
   District({
     required this.id,
     required this.name,
+    this.nameNe,
     required this.areaCount,
     required this.municipalities,
   });
+
+  /// Returns the localized name based on locale
+  String localizedName(String locale) =>
+      locale == 'ne' && nameNe != null && nameNe!.isNotEmpty ? nameNe! : name;
 
   factory District.fromJson(Map<String, dynamic> json) {
     List<Municipality> muns = [];
@@ -213,6 +245,7 @@ class District {
     return District(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       areaCount: json['area_count'] as int? ?? json['areaCount'] as int? ?? 0,
       municipalities: muns,
     );
@@ -222,6 +255,7 @@ class District {
     return {
       'id': id,
       'name': name,
+      'nameNe': nameNe,
       'area_count': areaCount,
       'municipalities': municipalities.map((e) => e.toJson()).toList(),
     };
@@ -240,13 +274,19 @@ class District {
 class Province {
   final int id;
   final String name;
+  final String? nameNe;
   final List<District>? districts;
 
   Province({
     required this.id,
     required this.name,
+    this.nameNe,
     this.districts,
   });
+
+  /// Returns the localized name based on locale
+  String localizedName(String locale) =>
+      locale == 'ne' && nameNe != null && nameNe!.isNotEmpty ? nameNe! : name;
 
   factory Province.fromJson(Map<String, dynamic> json) {
     List<District>? districtsList;
@@ -258,6 +298,7 @@ class Province {
     return Province(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       districts: districtsList,
     );
   }
@@ -266,6 +307,7 @@ class Province {
     return {
       'id': id,
       'name': name,
+      'nameNe': nameNe,
       'districts': districts?.map((e) => e.toJson()).toList(),
     };
   }

@@ -9,7 +9,10 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../core/widgets/staggered_fade_in.dart';
+import '../../core/widgets/floating_widget.dart';
 import '../../core/api/api_config.dart';
 import '../../core/api/message_client.dart';
 import '../../core/models/message.dart';
@@ -49,6 +52,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Timer? _typingDebounce;
   File? _pendingImage;
   bool _isUploading = false;
+  int _initialMessageCount = 0;
+  bool _initialLoadDone = false;
 
   @override
   void initState() {
@@ -70,6 +75,8 @@ class _ChatScreenState extends State<ChatScreen> {
       chatProvider.markAsRead(widget.conversationId);
 
       if (mounted) {
+        _initialMessageCount = chatProvider.getMessages(widget.conversationId).length;
+        _initialLoadDone = true;
         setState(() {});
         _scrollToBottom();
       }
@@ -214,7 +221,43 @@ class _ChatScreenState extends State<ChatScreen> {
         appBar: AppBar(
           title: Text(widget.recipientName),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Skeletonizer(
+          enabled: true,
+          child: ListView.builder(
+            reverse: true,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            itemCount: 6,
+            itemBuilder: (context, index) {
+              final isMe = index % 3 == 0;
+              return Align(
+                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: isMe ? 120 : 180,
+                        height: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 6),
+                      Container(width: 50, height: 10, color: Colors.white),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       );
     }
 
@@ -369,11 +412,21 @@ class _ChatScreenState extends State<ChatScreen> {
             final isMe = message.senderId == _currentUserId;
             if (kDebugMode) developer.log('Msg $index: sender=${message.senderId}, me=$_currentUserId, isMe=$isMe, content=${message.content}', name: 'ChatScreen');
 
-            return Column(
+            final isNewMessage = _initialLoadDone && index < (messages.length - _initialMessageCount);
+            final bubble = Column(
               children: [
                 if (showDate) _buildDateHeader(message.createdAt),
                 _buildMessageBubble(message, isMe),
               ],
+            );
+
+            if (!isNewMessage) return bubble;
+
+            return StaggeredFadeIn(
+              index: 0,
+              duration: const Duration(milliseconds: 200),
+              beginOffset: Offset(isMe ? 0.1 : -0.1, 0),
+              child: bubble,
             );
           },
         );
@@ -737,17 +790,19 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.messageCircle,
-              size: 36,
-              color: Colors.grey[400],
+          FloatingWidget(
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                LucideIcons.messageCircle,
+                size: 36,
+                color: Colors.grey[400],
+              ),
             ),
           ),
           const SizedBox(height: 16),

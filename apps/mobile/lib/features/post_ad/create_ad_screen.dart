@@ -9,6 +9,7 @@ import 'package:mobile/core/models/models.dart';
 import 'package:mobile/features/post_ad/services/form_template_service.dart';
 import 'package:mobile/features/post_ad/widgets/dynamic_form_fields.dart';
 import 'package:mobile/features/post_ad/models/location_models.dart';
+import 'package:mobile/core/widgets/success_checkmark.dart';
 import 'dart:convert';
 
 class CreateAdScreen extends StatefulWidget {
@@ -211,10 +212,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
       if (result.success) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ad posted successfully!')),
-          );
-          Navigator.pop(context);
+          await showSuccessDialog(context, message: 'Ad posted successfully!');
+          if (mounted) Navigator.pop(context);
         }
       } else {
         if (mounted) {

@@ -10,21 +10,21 @@ appId: com.thulobazaar.mobile
 # ============ HOME ============
 - takeScreenshot: screens/01_home
 
-# ============ BROWSE ============
-- tapOn: "Browse"
+# ============ SEARCH ============
+- tapOn: "Search"
 - waitForAnimationToEnd
-- takeScreenshot: screens/02_browse
+- takeScreenshot: screens/02_search
 
 - inputText:
     id: "search.*"
     text: "phone"
-- takeScreenshot: screens/03_browse_search
+- takeScreenshot: screens/03_search_results
 
 - clearState
 
 # ============ AD DETAIL ============
 - launchApp
-- tapOn: "Browse"
+- tapOn: "Search"
 - waitForAnimationToEnd
 - tapOn:
     text: ".*Rs\\..*"

@@ -47,9 +47,14 @@ class _ProfileScreenState extends State<ProfileScreen>
   List<FavoriteAd> _favorites = [];
   bool _favoritesLoading = true;
   String? _favoritesError;
+  final Set<int> _removingAdIds = {};
 
   // Location state
   SelectedLocation? _selectedLocation;
+
+  // Form dirty tracking
+  bool _hasChanges = false;
+  String _originalName = '';
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -60,6 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
+    _nameController.addListener(_checkForChanges);
     // User data is already loaded by AuthProvider
     _populateControllers();
   }
@@ -95,7 +101,18 @@ class _ProfileScreenState extends State<ProfileScreen>
     final removedIndex = _favorites.indexWhere((f) => f.adId == adId);
     if (removedIndex == -1) return;
     final removedItem = _favorites[removedIndex];
-    setState(() => _favorites.removeAt(removedIndex)); // Optimistic
+
+    // Trigger fade-out animation
+    setState(() => _removingAdIds.add(adId));
+
+    // Wait for animation to finish
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (!mounted) return;
+    setState(() {
+      _removingAdIds.remove(adId);
+      _favorites.removeAt(removedIndex);
+    });
 
     final response = await _favoritesClient.removeFromFavorites(adId);
     if (!response.success && mounted) {
@@ -109,13 +126,22 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
+  void _checkForChanges() {
+    final hasChanges = _nameController.text.trim() != _originalName ||
+        _selectedLocation != null;
+    if (hasChanges != _hasChanges) {
+      setState(() => _hasChanges = hasChanges);
+    }
+  }
+
   void _populateControllers() {
     // We defer this slightly to ensure build is done if accessing provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = context.read<AuthProvider>().user;
       if (user != null) {
+        _originalName = user['fullName'] ?? '';
         setState(() {
-          _nameController.text = user['fullName'] ?? '';
+          _nameController.text = _originalName;
           _emailController.text = user['email'] ?? '';
           _phoneController.text = user['phone'] ?? '';
         });
@@ -147,6 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       setState(() {
         _selectedLocation = result;
       });
+      _checkForChanges();
     }
   }
 
@@ -154,6 +181,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   void dispose() {
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
+    _nameController.removeListener(_checkForChanges);
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -774,6 +802,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         updateData,
                       );
                       if (context.mounted) {
+                        _originalName = newName;
+                        _selectedLocation = null;
+                        setState(() => _hasChanges = false);
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -792,9 +823,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF48FB1),
+                    backgroundColor: _hasChanges
+                        ? const Color(0xFFE91E63)
+                        : const Color(0xFFF48FB1),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
+                    elevation: _hasChanges ? 2 : 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1127,7 +1160,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   (route) => false,
                 ),
                 icon: const Icon(LucideIcons.search),
-                label: const Text("Browse Ads"),
+                label: const Text("Search Ads"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(
@@ -1151,7 +1184,22 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _favorites.length,
-        itemBuilder: (context, index) => _buildSavedAdItem(_favorites[index]),
+        itemBuilder: (context, index) {
+          final favorite = _favorites[index];
+          final isRemoving = _removingAdIds.contains(favorite.adId);
+          return AnimatedOpacity(
+            opacity: isRemoving ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              child: isRemoving
+                  ? const SizedBox(width: double.infinity)
+                  : _buildSavedAdItem(favorite),
+            ),
+          );
+        },
       ),
     );
   }

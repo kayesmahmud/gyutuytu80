@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/api/payment_client.dart';
 import '../../core/models/models.dart';
 import '../../core/models/payment.dart';
+import '../../core/widgets/floating_widget.dart';
 
 /// Payment History Screen - shows user's payment transactions
 class PaymentHistoryScreen extends StatefulWidget {
@@ -221,17 +222,19 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                LucideIcons.receipt,
-                size: 48,
-                color: Colors.grey[400],
+            FloatingWidget(
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.receipt,
+                  size: 48,
+                  color: Colors.grey[400],
+                ),
               ),
             ),
             const SizedBox(height: 24),

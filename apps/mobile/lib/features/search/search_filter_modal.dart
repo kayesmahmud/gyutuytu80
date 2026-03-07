@@ -8,12 +8,12 @@ import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/location_client.dart';
 
-class BrowseFilterModal extends StatefulWidget {
+class SearchFilterModal extends StatefulWidget {
   final String? initialExpandedSection;
   final SearchFilters? currentFilters;
   final Function(SearchFilters)? onApplyFilters;
 
-  const BrowseFilterModal({
+  const SearchFilterModal({
     super.key,
     this.initialExpandedSection,
     this.currentFilters,
@@ -21,10 +21,10 @@ class BrowseFilterModal extends StatefulWidget {
   });
 
   @override
-  State<BrowseFilterModal> createState() => _BrowseFilterModalState();
+  State<SearchFilterModal> createState() => _SearchFilterModalState();
 }
 
-class _BrowseFilterModalState extends State<BrowseFilterModal> {
+class _SearchFilterModalState extends State<SearchFilterModal> {
   final AdClient _adClient = AdClient();
   final LocationClient _locationClient = LocationClient();
 
@@ -102,7 +102,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
         });
       }
     } catch (e) {
-      if (kDebugMode) developer.log('Search error: $e', name: 'BrowseFilterModal');
+      if (kDebugMode) developer.log('Search error: $e', name: 'SearchFilterModal');
     }
   }
 
@@ -259,7 +259,7 @@ class _BrowseFilterModalState extends State<BrowseFilterModal> {
       }
 
     } catch (e) {
-      if (kDebugMode) developer.log('Error loading location hierarchy: $e', name: 'BrowseFilterModal');
+      if (kDebugMode) developer.log('Error loading location hierarchy: $e', name: 'SearchFilterModal');
     }
   }
 

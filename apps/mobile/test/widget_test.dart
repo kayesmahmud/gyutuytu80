@@ -17,6 +17,6 @@ void main() {
     // Verify Bottom Navigation Bar exists
     expect(find.byType(BottomNavigationBar), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Browse'), findsOneWidget);
+    expect(find.text('Search'), findsOneWidget);
   });
 }

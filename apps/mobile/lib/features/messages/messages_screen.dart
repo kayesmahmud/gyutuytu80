@@ -18,6 +18,7 @@ import '../../core/widgets/login_required_widget.dart';
 import '../../core/utils/page_transitions.dart';
 import '../../core/utils/skeleton_data.dart';
 import '../../core/widgets/staggered_fade_in.dart';
+import '../../core/widgets/floating_widget.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'chat_screen.dart';
 
@@ -726,17 +727,19 @@ class _MessagesScreenState extends State<MessagesScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  LucideIcons.messageCircle,
-                  size: 48,
-                  color: Colors.grey[400],
+              FloatingWidget(
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    LucideIcons.messageCircle,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -770,17 +773,19 @@ class _MessagesScreenState extends State<MessagesScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  LucideIcons.megaphone,
-                  size: 48,
-                  color: Colors.grey[400],
+              FloatingWidget(
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    LucideIcons.megaphone,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
                 ),
               ),
               const SizedBox(height: 24),

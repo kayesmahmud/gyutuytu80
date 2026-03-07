@@ -3,6 +3,7 @@
 class Category {
   final int id;
   final String name;
+  final String? nameNe;
   final String slug;
   final String? icon;
   final int? parentId;
@@ -12,6 +13,7 @@ class Category {
   Category({
     required this.id,
     required this.name,
+    this.nameNe,
     required this.slug,
     this.icon,
     this.parentId,
@@ -19,10 +21,15 @@ class Category {
     required this.sortOrder,
   });
 
+  /// Returns the localized name based on locale
+  String localizedName(String locale) =>
+      locale == 'ne' && nameNe != null && nameNe!.isNotEmpty ? nameNe! : name;
+
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       slug: json['slug'] as String? ?? '',
       icon: json['icon'] as String?,
       parentId: json['parentId'] as int? ?? json['parent_id'] as int?,
@@ -35,6 +42,7 @@ class Category {
     return {
       'id': id,
       'name': name,
+      'nameNe': nameNe,
       'slug': slug,
       'icon': icon,
       'parentId': parentId,
@@ -49,6 +57,7 @@ class Category {
   Category copyWith({
     int? id,
     String? name,
+    String? nameNe,
     String? slug,
     String? icon,
     int? parentId,
@@ -58,6 +67,7 @@ class Category {
     return Category(
       id: id ?? this.id,
       name: name ?? this.name,
+      nameNe: nameNe ?? this.nameNe,
       slug: slug ?? this.slug,
       icon: icon ?? this.icon,
       parentId: parentId ?? this.parentId,
@@ -74,6 +84,7 @@ class CategoryWithSubcategories extends Category {
   CategoryWithSubcategories({
     required super.id,
     required super.name,
+    super.nameNe,
     required super.slug,
     super.icon,
     super.parentId,
@@ -95,6 +106,7 @@ class CategoryWithSubcategories extends Category {
     return CategoryWithSubcategories(
       id: category.id,
       name: category.name,
+      nameNe: category.nameNe,
       slug: category.slug,
       icon: category.icon,
       parentId: category.parentId,

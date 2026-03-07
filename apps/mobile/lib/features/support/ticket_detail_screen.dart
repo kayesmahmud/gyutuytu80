@@ -83,10 +83,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     setState(() => _isSending = false);
 
     if (response.hasData) {
-      // Reload ticket to get updated messages
       await _loadTicket();
     } else {
-      _messageController.text = content; // Restore text on failure
+      _messageController.text = content;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(response.errorMessage),
@@ -99,7 +98,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +110,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 overflow: TextOverflow.ellipsis),
             if (_ticket != null)
               Text(_ticket!.ticketNumber,
-                  style: GoogleFonts.robotoMono(fontSize: 12, color: Colors.grey[500])),
+                  style: GoogleFonts.robotoMono(
+                      fontSize: 11, color: Colors.grey[500])),
           ],
         ),
         backgroundColor: Colors.white,
@@ -130,15 +130,37 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
     if (_error != null && _ticket == null) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.alertCircle, size: 48, color: Colors.grey[300]),
-            const SizedBox(height: 12),
-            Text(_error!, style: GoogleFonts.inter(color: Colors.grey[500])),
-            const SizedBox(height: 16),
-            TextButton(onPressed: _loadTicket, child: const Text('Retry')),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(LucideIcons.alertCircle,
+                    size: 28, color: Colors.red[300]),
+              ),
+              const SizedBox(height: 16),
+              Text(_error!,
+                  style: GoogleFonts.inter(color: Colors.grey[500]),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: _loadTicket,
+                icon: const Icon(LucideIcons.refreshCw, size: 16),
+                label: const Text('Retry'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFE11D48),
+                  side: const BorderSide(color: Color(0xFFE11D48)),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -149,21 +171,28 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
     return Column(
       children: [
-        // Status bar
         _buildStatusBar(ticket),
-
-        // Messages
         Expanded(
           child: RefreshIndicator(
             onRefresh: _loadTicket,
+            color: const Color(0xFFE11D48),
             child: ticket.messages.isEmpty
                 ? ListView(
                     children: [
                       SizedBox(
                         height: 200,
                         child: Center(
-                          child: Text('No messages yet',
-                              style: GoogleFonts.inter(color: Colors.grey[400])),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.messageSquare,
+                                  size: 32, color: Colors.grey[300]),
+                              const SizedBox(height: 8),
+                              Text('No messages yet',
+                                  style: GoogleFonts.inter(
+                                      color: Colors.grey[400])),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -176,8 +205,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                     itemBuilder: (context, index) {
                       final msg = ticket.messages[index];
                       final showDate = index == 0 ||
-                          !_isSameDay(
-                              ticket.messages[index - 1].createdAt, msg.createdAt);
+                          !_isSameDay(ticket.messages[index - 1].createdAt,
+                              msg.createdAt);
                       return Column(
                         children: [
                           if (showDate) _buildDateSeparator(msg.createdAt),
@@ -188,8 +217,6 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                   ),
           ),
         ),
-
-        // Input bar
         if (!isClosed) _buildInputBar(),
         if (isClosed) _buildClosedBar(ticket.status),
       ],
@@ -197,12 +224,12 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   }
 
   Widget _buildStatusBar(SupportTicketDetail ticket) {
-    final (Color bg, Color fg) = switch (ticket.status) {
-      SupportTicketStatus.open => (const Color(0xFFDCFCE7), const Color(0xFF16A34A)),
-      SupportTicketStatus.inProgress => (const Color(0xFFDBEAFE), const Color(0xFF2563EB)),
-      SupportTicketStatus.waitingOnUser => (const Color(0xFFFEF3C7), const Color(0xFFD97706)),
-      SupportTicketStatus.resolved => (const Color(0xFFE0E7FF), const Color(0xFF4F46E5)),
-      SupportTicketStatus.closed => (const Color(0xFFF3F4F6), const Color(0xFF6B7280)),
+    final (Color bg, Color fg, IconData icon) = switch (ticket.status) {
+      SupportTicketStatus.open => (const Color(0xFFDCFCE7), const Color(0xFF16A34A), Icons.circle),
+      SupportTicketStatus.inProgress => (const Color(0xFFDBEAFE), const Color(0xFF2563EB), Icons.loop),
+      SupportTicketStatus.waitingOnUser => (const Color(0xFFFEF3C7), const Color(0xFFD97706), Icons.error_outline),
+      SupportTicketStatus.resolved => (const Color(0xFFE0E7FF), const Color(0xFF4F46E5), Icons.check_circle_outline),
+      SupportTicketStatus.closed => (const Color(0xFFF3F4F6), const Color(0xFF6B7280), Icons.cancel_outlined),
     };
 
     return Container(
@@ -211,14 +238,22 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       color: bg,
       child: Row(
         children: [
-          Icon(LucideIcons.info, size: 16, color: fg),
+          Icon(icon, size: 15, color: fg),
           const SizedBox(width: 8),
-          Text('Status: ${ticket.status.label}',
+          Text(ticket.status.label,
               style: GoogleFonts.inter(
-                  fontSize: 13, fontWeight: FontWeight.w500, color: fg)),
+                  fontSize: 13, fontWeight: FontWeight.w600, color: fg)),
           const Spacer(),
-          Text(ticket.category.label,
-              style: GoogleFonts.inter(fontSize: 12, color: fg)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: fg.withAlpha(20),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(ticket.category.label,
+                style: GoogleFonts.inter(
+                    fontSize: 11, fontWeight: FontWeight.w500, color: fg)),
+          ),
         ],
       ),
     );
@@ -227,7 +262,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   Widget _buildDateSeparator(DateTime date) {
     final now = DateTime.now();
     final isToday = _isSameDay(date, now);
-    final isYesterday = _isSameDay(date, now.subtract(const Duration(days: 1)));
+    final isYesterday =
+        _isSameDay(date, now.subtract(const Duration(days: 1)));
     final label = isToday
         ? 'Today'
         : isYesterday
@@ -239,10 +275,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       child: Row(
         children: [
           Expanded(child: Divider(color: Colors.grey[300])),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Text(label,
-                style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400])),
+                style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[500])),
           ),
           Expanded(child: Divider(color: Colors.grey[300])),
         ],
@@ -271,6 +315,13 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             bottomRight: Radius.circular(isOwn ? 4 : 16),
           ),
           border: isOwn ? null : Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(8),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment:
@@ -282,10 +333,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.headphones,
-                        size: 12, color: Color(0xFFE11D48)),
-                    const SizedBox(width: 4),
-                    Text('Support',
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE11D48).withAlpha(25),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Icon(LucideIcons.headphones,
+                          size: 11, color: Color(0xFFE11D48)),
+                    ),
+                    const SizedBox(width: 5),
+                    Text('Support Team',
                         style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -314,10 +373,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey[200]!)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       padding: EdgeInsets.fromLTRB(
-          12, 8, 8, 8 + MediaQuery.of(context).padding.bottom),
+          12, 10, 8, 10 + MediaQuery.of(context).padding.bottom),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
             child: TextField(
@@ -343,9 +410,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           ),
           const SizedBox(width: 8),
           Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFFE11D48),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE11D48), Color(0xFFBE123C)],
+              ),
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFE11D48).withAlpha(60),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: IconButton(
               onPressed: _isSending ? null : _sendMessage,
@@ -355,7 +431,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                       height: 20,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
-                  : const Icon(LucideIcons.send, size: 20, color: Colors.white),
+                  : const Icon(LucideIcons.send,
+                      size: 20, color: Colors.white),
             ),
           ),
         ],
@@ -370,17 +447,28 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         border: Border(top: BorderSide(color: Colors.grey[200]!)),
       ),
       padding: EdgeInsets.fromLTRB(
-          16, 12, 16, 12 + MediaQuery.of(context).padding.bottom),
+          16, 14, 16, 14 + MediaQuery.of(context).padding.bottom),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.lock, size: 16, color: Colors.grey[500]),
-          const SizedBox(width: 8),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(LucideIcons.lock, size: 14, color: Colors.grey[500]),
+          ),
+          const SizedBox(width: 10),
           Text(
             status == SupportTicketStatus.resolved
                 ? 'This ticket has been resolved'
                 : 'This ticket is closed',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
+            style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[500]),
           ),
         ],
       ),

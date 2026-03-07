@@ -10,9 +10,10 @@ import '../theme/app_theme.dart';
 import '../utils/page_transitions.dart';
 import '../../features/ad_detail/ad_detail_screen.dart';
 import 'tap_scale.dart';
+import 'shimmer_badge.dart';
 
 /// Unified Ad Card Widget
-/// Used across Homepage Latest Ads, Browse Screen, and Shop Page
+/// Used across Homepage Latest Ads, Search Screen, and Shop Page
 class AdCard extends StatelessWidget {
   final AdWithDetails ad;
   final VoidCallback? onTap;
@@ -146,33 +147,35 @@ class AdCard extends StatelessWidget {
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              LucideIcons.star,
-                              color: Colors.white,
-                              size: 10,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              'FEATURED',
-                              style: GoogleFonts.inter(
+                      child: ShimmerBadge(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                LucideIcons.star,
                                 color: Colors.white,
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
+                                size: 10,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 2),
+                              Text(
+                                'FEATURED',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

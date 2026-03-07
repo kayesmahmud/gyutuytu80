@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -13,6 +14,8 @@ import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 import 'package:mobile/features/main_nav/main_nav_screen.dart';
 import 'package:mobile/features/promotion/promote_ad_screen.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
+import 'package:mobile/core/widgets/count_up_text.dart';
+import 'package:mobile/core/widgets/floating_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -192,9 +195,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   _buildTopBar(),
                   _buildGradientHeader(userName, counts),
-                  const Expanded(
-                    child: Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
+                  Expanded(
+                    child: Skeletonizer(
+                      enabled: true,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: 4,
+                        itemBuilder: (context, index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Container(
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Container(width: 68, height: 68, color: Colors.white),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(width: 150, height: 14, color: Colors.white),
+                                      const SizedBox(height: 8),
+                                      Container(width: 80, height: 12, color: Colors.white),
+                                      const SizedBox(height: 8),
+                                      Container(width: 60, height: 12, color: Colors.white),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -421,8 +458,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 8),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                _formatCompactNumber(value),
+              child: CountUpText(
+                value: value,
+                formatter: _formatCompactNumber,
                 style: GoogleFonts.inter(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -565,7 +603,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
+            FloatingWidget(
+              child: Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
+            ),
             const SizedBox(height: 16),
             Text(
               'No ads found',
@@ -942,7 +982,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(LucideIcons.home, 'Home', 0),
-              _buildNavItem(LucideIcons.layoutGrid, 'Browse', 1),
+              _buildNavItem(LucideIcons.search, 'Search', 1),
               _buildFabButton(),
               _buildNavItem(LucideIcons.messageSquare, 'Messages', 2),
               _buildNavItem(LucideIcons.user, 'Profile', 3),
