@@ -5,11 +5,20 @@
 
 import { Metadata } from 'next';
 import FAQClient from './FAQClient';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'FAQ | Thulo Bazaar',
-  description: 'Frequently asked questions about Thulo Bazaar - buying, selling, payments, and more.',
-};
+interface FAQPageProps {
+  params: Promise<{ lang: string }>;
+}
+
+export async function generateMetadata({ params }: FAQPageProps): Promise<Metadata> {
+  const { lang } = await params;
+  const t = await getTranslations({ locale: lang, namespace: 'metadata' });
+  return {
+    title: t('faqTitle'),
+    description: t('faqDescription'),
+  };
+}
 
 export default function FAQPage() {
   return <FAQClient />;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   useSupportClient,
   TicketsList,
@@ -10,6 +11,7 @@ import {
 
 export default function SupportClient() {
   const router = useRouter();
+  const t = useTranslations('support');
   const {
     sessionStatus,
     tokenLoading,
@@ -56,13 +58,13 @@ export default function SupportClient() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please Sign In</h1>
-          <p className="text-gray-600 mb-6">You need to be signed in to access support.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('pleaseSignIn')}</h1>
+          <p className="text-gray-600 mb-6">{t('signInRequired')}</p>
           <button
             onClick={() => router.push('/auth/signin')}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
           >
-            Sign In
+            {t('signIn')}
           </button>
         </div>
       </div>
@@ -74,8 +76,8 @@ export default function SupportClient() {
       <div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Support Center</h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">Get help with your questions and issues</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('supportCenter')}</h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">{t('supportSubtitle')}</p>
           </div>
           <button
             onClick={() => setShowNewTicketForm(true)}
@@ -84,7 +86,7 @@ export default function SupportClient() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            New Support Request
+            {t('newSupportRequest')}
           </button>
         </div>
 

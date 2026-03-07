@@ -2,137 +2,37 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
-interface FAQItem {
-  question: string;
-  answer: string;
-}
-
-interface FAQSection {
-  title: string;
+interface FAQSectionDef {
+  titleKey: string;
   icon: string;
-  faqs: FAQItem[];
+  qKeys: string[];
 }
 
-// TODO: Replace with real content
-const FAQ_SECTIONS: FAQSection[] = [
-  {
-    title: 'General',
-    icon: '📋',
-    faqs: [
-      {
-        question: 'What is Thulo Bazaar?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.',
-      },
-      {
-        question: 'How do I create an account?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-      {
-        question: 'Is Thulo Bazaar free to use?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.',
-      },
-    ],
-  },
-  {
-    title: 'Buying',
-    icon: '🛒',
-    faqs: [
-      {
-        question: 'How do I contact a seller?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-      {
-        question: 'Is it safe to buy on Thulo Bazaar?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.',
-      },
-      {
-        question: 'Can I negotiate prices?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-    ],
-  },
-  {
-    title: 'Selling',
-    icon: '💰',
-    faqs: [
-      {
-        question: 'How do I post an ad?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-      {
-        question: 'How many photos can I upload?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.',
-      },
-      {
-        question: 'How long do ads stay active?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-      {
-        question: 'Why was my ad rejected?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud.',
-      },
-    ],
-  },
-  {
-    title: 'Payments',
-    icon: '💳',
-    faqs: [
-      {
-        question: 'What payment methods are accepted?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-      {
-        question: 'How do Featured Ads work?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.',
-      },
-      {
-        question: 'Can I get a refund?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-    ],
-  },
-  {
-    title: 'Account',
-    icon: '👤',
-    faqs: [
-      {
-        question: 'How do I verify my account?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-      {
-        question: 'How do I reset my password?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.',
-      },
-      {
-        question: 'How do I delete my account?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-    ],
-  },
-  {
-    title: 'Safety',
-    icon: '🔒',
-    faqs: [
-      {
-        question: 'How can I stay safe when meeting buyers/sellers?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.',
-      },
-      {
-        question: 'How do I report a suspicious user?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      },
-      {
-        question: 'What should I do if I encounter fraud?',
-        answer: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.',
-      },
-    ],
-  },
+const FAQ_SECTION_DEFS: FAQSectionDef[] = [
+  { titleKey: 'generalTitle', icon: '📋', qKeys: ['generalQ1', 'generalQ2', 'generalQ3'] },
+  { titleKey: 'buyingTitle', icon: '🛒', qKeys: ['buyingQ1', 'buyingQ2', 'buyingQ3'] },
+  { titleKey: 'sellingTitle', icon: '💰', qKeys: ['sellingQ1', 'sellingQ2', 'sellingQ3', 'sellingQ4'] },
+  { titleKey: 'paymentsTitle', icon: '💳', qKeys: ['paymentsQ1', 'paymentsQ2', 'paymentsQ3'] },
+  { titleKey: 'accountTitle', icon: '👤', qKeys: ['accountQ1', 'accountQ2', 'accountQ3'] },
+  { titleKey: 'safetyTitle', icon: '🔒', qKeys: ['safetyQ1', 'safetyQ2', 'safetyQ3'] },
 ];
 
 export default function FAQClient() {
+  const t = useTranslations('faq');
   const [expandedSection, setExpandedSection] = useState<number>(0);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
+
+  // Build translated FAQ sections from definition keys
+  const FAQ_SECTIONS = FAQ_SECTION_DEFS.map((def) => ({
+    title: t(def.titleKey),
+    icon: def.icon,
+    faqs: def.qKeys.map((qKey) => ({
+      question: t(qKey),
+      answer: t(qKey.replace(/Q(\d+)$/, 'A$1')),
+    })),
+  }));
 
   const toggleFaq = (sectionIndex: number, faqIndex: number) => {
     const faqId = `${sectionIndex}-${faqIndex}`;
@@ -144,9 +44,9 @@ export default function FAQClient() {
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white">
         <div className="max-w-7xl mx-auto px-4 py-10 md:py-16 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4">Frequently Asked Questions</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4">{t('title')}</h1>
           <p className="text-base sm:text-lg md:text-xl opacity-90 max-w-2xl mx-auto">
-            Find quick answers to common questions about Thulo Bazaar
+            {t('subtitle')}
           </p>
         </div>
       </div>
@@ -210,22 +110,22 @@ export default function FAQClient() {
 
         {/* Still Need Help Section */}
         <div className="mt-8 md:mt-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl md:rounded-2xl p-6 sm:p-8 text-white text-center">
-          <h2 className="text-xl sm:text-2xl font-bold mb-3 md:mb-4">Still have questions?</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-3 md:mb-4">{t('stillHaveQuestions')}</h2>
           <p className="opacity-90 mb-4 sm:mb-6 text-sm sm:text-base">
-            Can&apos;t find the answer you&apos;re looking for? We&apos;re here to help.
+            {t('cantFindAnswer')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/help"
               className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
-              Visit Help Center
+              {t('visitHelpCenter')}
             </Link>
             <Link
               href="/contact"
               className="px-6 py-3 bg-white/20 text-white rounded-lg font-semibold hover:bg-white/30 transition-colors"
             >
-              Contact Us
+              {t('contactUs')}
             </Link>
           </div>
         </div>
