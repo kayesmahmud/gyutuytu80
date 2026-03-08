@@ -34,13 +34,24 @@ function createMockRequest(body: Record<string, unknown>) {
   });
 }
 
+// Helper to create a valid phone verification token
+function createPhoneToken(overrides: Record<string, unknown> = {}) {
+  const tokenData = {
+    phone: '9800000000',
+    purpose: 'registration',
+    expiresAt: Date.now() + 600000, // 10 minutes from now
+    ...overrides,
+  };
+  return Buffer.from(JSON.stringify(tokenData)).toString('base64');
+}
+
 // Sample user for successful registration
 const mockCreatedUser = {
   id: 1,
-  email: 'test@example.com',
+  email: null,
   full_name: 'Test User',
-  phone: null,
-  phone_verified: false,
+  phone: '9800000000',
+  phone_verified: true,
   role: 'user',
   shop_slug: 'test-user-123',
   created_at: new Date('2024-01-01'),
@@ -57,8 +68,8 @@ describe('POST /api/auth/register', () => {
   describe('Validation', () => {
     it('should return 400 when fullName is missing', async () => {
       const request = createMockRequest({
-        email: 'test@example.com',
-        password: 'test123',
+        password: 'test123456',
+        phoneVerificationToken: createPhoneToken(),
       });
       const response = await POST(request);
       const data = await response.json();
@@ -70,9 +81,9 @@ describe('POST /api/auth/register', () => {
 
     it('should return 400 when password is too short', async () => {
       const request = createMockRequest({
-        email: 'test@example.com',
         password: '123',
         fullName: 'Test User',
+        phoneVerificationToken: createPhoneToken(),
       });
       const response = await POST(request);
       const data = await response.json();
@@ -84,9 +95,9 @@ describe('POST /api/auth/register', () => {
 
     it('should return 400 when fullName is too short', async () => {
       const request = createMockRequest({
-        email: 'test@example.com',
         password: 'test123456',
         fullName: 'T',
+        phoneVerificationToken: createPhoneToken(),
       });
       const response = await POST(request);
       const data = await response.json();
@@ -95,7 +106,7 @@ describe('POST /api/auth/register', () => {
       expect(data.success).toBe(false);
     });
 
-    it('should return 400 when neither email nor verified phone provided', async () => {
+    it('should return 400 when phoneVerificationToken is missing', async () => {
       const request = createMockRequest({
         password: 'test123456',
         fullName: 'Test User',
@@ -105,20 +116,7 @@ describe('POST /api/auth/register', () => {
 
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
-      expect(data.message).toContain('Email or verified phone number is required');
-    });
-
-    it('should return 400 for invalid email format', async () => {
-      const request = createMockRequest({
-        email: 'invalid-email',
-        password: 'test123456',
-        fullName: 'Test User',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
+      expect(data.message).toBe('Validation failed');
     });
   });
 
@@ -126,51 +124,19 @@ describe('POST /api/auth/register', () => {
   // Duplicate Check Tests
   // ==========================================
   describe('Duplicate Checks', () => {
-    it('should return 400 when email already exists', async () => {
-      const { prisma } = await import('@thulobazaar/database');
-
-      vi.mocked(prisma.users.findUnique).mockResolvedValue({
-        id: 1,
-        email: 'existing@example.com',
-      } as any);
-
-      const request = createMockRequest({
-        email: 'existing@example.com',
-        password: 'test123456',
-        fullName: 'Test User',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('Email already registered');
-    });
-
     it('should return 400 when phone already registered', async () => {
       const { prisma } = await import('@thulobazaar/database');
 
-      // No email duplicate
-      vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
-      // Phone exists
       vi.mocked(prisma.users.findFirst).mockResolvedValue({
         id: 1,
         phone: '9800000000',
         phone_verified: true,
       } as any);
 
-      // Create a valid phone verification token
-      const tokenData = {
-        phone: '9800000000',
-        purpose: 'registration',
-        expiresAt: Date.now() + 600000, // 10 minutes from now
-      };
-      const phoneVerificationToken = Buffer.from(JSON.stringify(tokenData)).toString('base64');
-
       const request = createMockRequest({
         password: 'test123456',
         fullName: 'Test User',
-        phoneVerificationToken,
+        phoneVerificationToken: createPhoneToken(),
       });
       const response = await POST(request);
       const data = await response.json();
@@ -186,23 +152,10 @@ describe('POST /api/auth/register', () => {
   // ==========================================
   describe('Phone Token Validation', () => {
     it('should return 400 for expired phone verification token', async () => {
-      const { prisma } = await import('@thulobazaar/database');
-
-      vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.users.findFirst).mockResolvedValue(null);
-
-      // Create an expired token
-      const tokenData = {
-        phone: '9800000000',
-        purpose: 'registration',
-        expiresAt: Date.now() - 1000, // Expired 1 second ago
-      };
-      const expiredToken = Buffer.from(JSON.stringify(tokenData)).toString('base64');
-
       const request = createMockRequest({
         password: 'test123456',
         fullName: 'Test User',
-        phoneVerificationToken: expiredToken,
+        phoneVerificationToken: createPhoneToken({ expiresAt: Date.now() - 1000 }),
       });
       const response = await POST(request);
       const data = await response.json();
@@ -213,10 +166,6 @@ describe('POST /api/auth/register', () => {
     });
 
     it('should return 400 for invalid token format', async () => {
-      const { prisma } = await import('@thulobazaar/database');
-
-      vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
-
       const request = createMockRequest({
         password: 'test123456',
         fullName: 'Test User',
@@ -234,16 +183,16 @@ describe('POST /api/auth/register', () => {
   // Successful Registration Tests
   // ==========================================
   describe('Successful Registration', () => {
-    it('should create user with email registration', async () => {
+    it('should create user with verified phone', async () => {
       const { prisma } = await import('@thulobazaar/database');
 
-      vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.users.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.users.create).mockResolvedValue(mockCreatedUser as any);
 
       const request = createMockRequest({
-        email: 'test@example.com',
         password: 'test123456',
         fullName: 'Test User',
+        phoneVerificationToken: createPhoneToken(),
       });
       const response = await POST(request);
       const data = await response.json();
@@ -251,53 +200,20 @@ describe('POST /api/auth/register', () => {
       expect(response.status).toBe(201);
       expect(data.success).toBe(true);
       expect(data.message).toBe('User registered successfully');
-      expect(data.user.email).toBe('test@example.com');
-      expect(data.user.fullName).toBe('Test User');
-    });
-
-    it('should create user with verified phone registration', async () => {
-      const { prisma } = await import('@thulobazaar/database');
-
-      vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
-      vi.mocked(prisma.users.findFirst).mockResolvedValue(null);
-      vi.mocked(prisma.users.create).mockResolvedValue({
-        ...mockCreatedUser,
-        email: null,
-        phone: '9800000000',
-        phone_verified: true,
-      } as any);
-
-      // Create a valid phone verification token
-      const tokenData = {
-        phone: '9800000000',
-        purpose: 'registration',
-        expiresAt: Date.now() + 600000,
-      };
-      const phoneVerificationToken = Buffer.from(JSON.stringify(tokenData)).toString('base64');
-
-      const request = createMockRequest({
-        password: 'test123456',
-        fullName: 'Test User',
-        phoneVerificationToken,
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(201);
-      expect(data.success).toBe(true);
+      expect(data.user.phone).toBe('9800000000');
       expect(data.user.phoneVerified).toBe(true);
     });
 
     it('should return user data in camelCase format', async () => {
       const { prisma } = await import('@thulobazaar/database');
 
-      vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.users.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.users.create).mockResolvedValue(mockCreatedUser as any);
 
       const request = createMockRequest({
-        email: 'test@example.com',
         password: 'test123456',
         fullName: 'Test User',
+        phoneVerificationToken: createPhoneToken(),
       });
       const response = await POST(request);
       const data = await response.json();
@@ -316,13 +232,13 @@ describe('POST /api/auth/register', () => {
       const { prisma } = await import('@thulobazaar/database');
       const bcrypt = await import('bcryptjs');
 
-      vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.users.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.users.create).mockResolvedValue(mockCreatedUser as any);
 
       const request = createMockRequest({
-        email: 'test@example.com',
         password: 'plaintext-password',
         fullName: 'Test User',
+        phoneVerificationToken: createPhoneToken(),
       });
       await POST(request);
 
@@ -340,13 +256,13 @@ describe('POST /api/auth/register', () => {
       const { prisma } = await import('@thulobazaar/database');
       const { generateUniqueShopSlug } = await import('@/lib/urls');
 
-      vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.users.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.users.create).mockResolvedValue(mockCreatedUser as any);
 
       const request = createMockRequest({
-        email: 'test@example.com',
         password: 'test123456',
         fullName: 'Test User',
+        phoneVerificationToken: createPhoneToken(),
       });
       await POST(request);
 
@@ -361,12 +277,12 @@ describe('POST /api/auth/register', () => {
     it('should return 500 on database error', async () => {
       const { prisma } = await import('@thulobazaar/database');
 
-      vi.mocked(prisma.users.findUnique).mockRejectedValue(new Error('Database connection failed'));
+      vi.mocked(prisma.users.findFirst).mockRejectedValue(new Error('Database connection failed'));
 
       const request = createMockRequest({
-        email: 'test@example.com',
         password: 'test123456',
         fullName: 'Test User',
+        phoneVerificationToken: createPhoneToken(),
       });
       const response = await POST(request);
       const data = await response.json();

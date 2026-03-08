@@ -211,7 +211,7 @@ describe('Transformers', () => {
       expect(result.latitude).toBe(27.7172);
       expect(result.longitude).toBe(85.324);
       expect(result.viewCount).toBe(150);
-      expect(result.isNegotiable).toBe(true);
+      expect(result.isNegotiable).toBe(false); // isNegotiable is always false — condition field is "Brand New"/"Used" only
       expect(result.isFeatured).toBe(true);
       expect(result.isUrgent).toBe(false);
       expect(result.isSticky).toBe(true);
@@ -244,9 +244,9 @@ describe('Transformers', () => {
       );
     });
 
-    it('should handle isNegotiable based on condition field', () => {
+    it('should always set isNegotiable to false (condition field is Brand New/Used only)', () => {
       const negotiableAd: DbAd = { ...mockDbAd, condition: 'negotiable' };
-      expect(transformDbAdToApi(negotiableAd).isNegotiable).toBe(true);
+      expect(transformDbAdToApi(negotiableAd).isNegotiable).toBe(false);
 
       const fixedAd: DbAd = { ...mockDbAd, condition: 'fixed' };
       expect(transformDbAdToApi(fixedAd).isNegotiable).toBe(false);
