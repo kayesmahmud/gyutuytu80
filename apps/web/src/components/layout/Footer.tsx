@@ -331,9 +331,6 @@ export default function Footer({ lang }: FooterProps) {
             {/* Copyright */}
             <div className="text-gray-400 text-sm text-center md:text-left">
               <p>&copy; {currentYear} {tc('appName')}. {tc('allRightsReserved')}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {tc('builtWith')}
-              </p>
             </div>
 
             {/* Legal Links */}
