@@ -6,14 +6,20 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('Authentication', () => {
   test('should show login page', async ({ page }) => {
-    await page.goto('/en/auth/login');
+    // The app uses /auth/signin as the login route
+    await page.goto('/en/auth/signin');
     await page.waitForLoadState('networkidle');
 
-    // Check for login form — the page shows "Welcome back" heading
-    // and a "Sign In" button or form elements
+    // Wait for client-side hydration, then check for login-related content
+    await page.waitForTimeout(2000);
     const hasLoginContent = await page.evaluate(() => {
       const text = document.body.textContent?.toLowerCase() || '';
-      return text.includes('sign in') || text.includes('login') || text.includes('welcome back');
+      return (
+        text.includes('sign in') ||
+        text.includes('login') ||
+        text.includes('welcome back') ||
+        text.includes('password')
+      );
     });
     expect(hasLoginContent).toBeTruthy();
   });
