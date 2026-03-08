@@ -88,13 +88,13 @@ interface LocationRowProps {
 
 function LocationRow({ location, parentName, isChild, onEdit, onDelete }: LocationRowProps) {
   return (
-    <tr className={`hover:bg-gray-50 ${isChild ? 'bg-gray-25' : ''}`}>
+    <tr className={`hover:bg-gray-50 ${isChild ? 'bg-gray-50/50' : ''}`}>
       <td className="px-6 py-4">
-        <div className={`font-medium text-gray-900 ${isChild ? 'ml-8' : ''}`}>
-          {isChild ? '└ ' : ''}{location.name}
+        <div className={`font-medium text-gray-900 ${isChild ? 'ml-6 pl-4 border-l-2 border-indigo-300' : ''}`}>
+          {location.name}
         </div>
         {location.latitude && location.longitude && (
-          <div className={`text-xs text-gray-500 font-mono ${isChild ? 'ml-8' : ''}`}>
+          <div className={`text-xs text-gray-500 font-mono ${isChild ? 'ml-6 pl-4 border-l-2 border-indigo-300' : ''}`}>
             {location.latitude}, {location.longitude}
           </div>
         )}

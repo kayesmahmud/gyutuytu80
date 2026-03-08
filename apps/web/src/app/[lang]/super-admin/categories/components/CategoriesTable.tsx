@@ -60,11 +60,11 @@ export default function CategoriesTable({
                   </td>
                 </tr>
                 {getSubcategories(category.id).map((sub) => (
-                  <tr key={sub.id} className="hover:bg-gray-50 bg-gray-25">
+                  <tr key={sub.id} className="hover:bg-gray-50 bg-gray-50/50">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 ml-8">
+                      <div className="flex items-center gap-2 ml-6 pl-4 border-l-2 border-indigo-300">
                         {sub.icon && <span className="text-lg">{sub.icon}</span>}
-                        <span className="text-gray-700">└ {sub.name}</span>
+                        <span className="text-gray-700">{sub.name}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 font-mono">{sub.slug}</td>
