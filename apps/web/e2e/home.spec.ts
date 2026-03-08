@@ -14,10 +14,11 @@ test.describe('Homepage', () => {
 
   test('should have navigation links', async ({ page }) => {
     await page.goto('/en');
+    await page.waitForLoadState('networkidle');
 
-    // Check for main navigation elements
-    const nav = page.locator('header nav, header');
-    await expect(nav).toBeVisible();
+    // Check for navigation elements — look for sign in/sign up links
+    const signInLink = page.getByRole('link', { name: /sign in/i }).first();
+    await expect(signInLink).toBeVisible({ timeout: 10000 });
   });
 
   test('should navigate to shops page', async ({ page }) => {
