@@ -11,12 +11,24 @@ export const CONDITION_OPTIONS = {
   NEW_RECONDITIONED_USED: ['Brand New', 'Reconditioned', 'Used'] as const,
 };
 
+export const CONDITION_OPTIONS_NE = {
+  NEW_USED: ['नयाँ', 'पुरानो'] as const,
+  NEW_RECONDITIONED_USED: ['नयाँ', 'रिफर्बिस्ड', 'पुरानो'] as const,
+};
+
 // Common warranty options
 export const WARRANTY_OPTIONS = [
   'No Warranty',
   'Under Warranty (< 6 months)',
   'Under Warranty (6-12 months)',
   'Under Warranty (1+ years)',
+] as const;
+
+export const WARRANTY_OPTIONS_NE = [
+  'वारेन्टी छैन',
+  'वारेन्टी अन्तर्गत (< ६ महिना)',
+  'वारेन्टी अन्तर्गत (६-१२ महिना)',
+  'वारेन्टी अन्तर्गत (१+ वर्ष)',
 ] as const;
 
 // Job categories list - used in multiple fields
@@ -46,14 +58,17 @@ export const OVERSEAS_COUNTRIES = [
 export function createConditionField(
   options: readonly string[],
   appliesTo: AppliesTo = 'all',
-  required = true
+  required = true,
+  optionsNe?: readonly string[]
 ): SelectField {
   return {
     name: 'condition',
     label: 'Condition',
+    labelNe: 'अवस्था',
     type: 'select',
     required,
     options: [...options],
+    optionsNe: optionsNe ? [...optionsNe] : undefined,
     appliesTo,
   };
 }
@@ -61,14 +76,17 @@ export function createConditionField(
 export function createBrandField(
   placeholder: string,
   appliesTo: AppliesTo = 'all',
-  required = true
+  required = true,
+  placeholderNe?: string
 ): TextField {
   return {
     name: 'brand',
     label: 'Brand',
+    labelNe: 'ब्रान्ड',
     type: 'text',
     required,
     placeholder,
+    placeholderNe: placeholderNe || 'ब्रान्ड नाम लेख्नुहोस्',
     appliesTo,
   };
 }
@@ -76,14 +94,17 @@ export function createBrandField(
 export function createModelField(
   placeholder: string,
   appliesTo: AppliesTo = 'all',
-  required = false
+  required = false,
+  placeholderNe?: string
 ): TextField {
   return {
     name: 'model',
     label: 'Model',
+    labelNe: 'मोडेल',
     type: 'text',
     required,
     placeholder,
+    placeholderNe: placeholderNe || 'मोडेल नाम लेख्नुहोस्',
     appliesTo,
   };
 }
@@ -91,14 +112,17 @@ export function createModelField(
 export function createColorField(
   placeholder = 'e.g., Black, White, Red',
   appliesTo: AppliesTo = 'all',
-  required = false
+  required = false,
+  placeholderNe?: string
 ): TextField {
   return {
     name: 'color',
     label: 'Color',
+    labelNe: 'रङ',
     type: 'text',
     required,
     placeholder,
+    placeholderNe: placeholderNe || 'जस्तै, कालो, सेतो, रातो',
     appliesTo,
   };
 }
@@ -107,9 +131,11 @@ export function createWarrantyField(appliesTo: AppliesTo = 'all'): SelectField {
   return {
     name: 'warranty',
     label: 'Warranty',
+    labelNe: 'वारेन्टी',
     type: 'select',
     required: false,
     options: [...WARRANTY_OPTIONS],
+    optionsNe: [...WARRANTY_OPTIONS_NE],
     appliesTo,
   };
 }

@@ -64,8 +64,16 @@ export function getFieldsForSubcategory(subcategoryName: string): FormField[] {
       (overriddenField as { placeholder?: string }).placeholder = override.placeholder;
     }
 
+    if (override.placeholderNe !== undefined && 'placeholderNe' in overriddenField) {
+      (overriddenField as { placeholderNe?: string }).placeholderNe = override.placeholderNe;
+    }
+
     if (override.options !== undefined && 'options' in overriddenField) {
       (overriddenField as { options: string[] }).options = override.options;
+    }
+
+    if (override.optionsNe !== undefined && 'optionsNe' in overriddenField) {
+      (overriddenField as { optionsNe?: string[] }).optionsNe = override.optionsNe;
     }
 
     if (override.required !== undefined) {
@@ -74,6 +82,10 @@ export function getFieldsForSubcategory(subcategoryName: string): FormField[] {
 
     if (override.label !== undefined) {
       overriddenField.label = override.label;
+    }
+
+    if (override.labelNe !== undefined) {
+      overriddenField.labelNe = override.labelNe;
     }
 
     return overriddenField;

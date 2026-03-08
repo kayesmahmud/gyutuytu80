@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { FormField } from '@/config/formTemplates';
 
 interface DynamicFormFieldsProps {
@@ -13,8 +14,7 @@ interface DynamicFormFieldsProps {
 /**
  * Dynamic Form Fields Component
  * Renders category-specific fields based on template configuration
- *
- * EXACT port from old JavaScript version with Tailwind CSS styling
+ * Supports English and Nepali locale
  */
 export default function DynamicFormFields({
   fields,
@@ -23,11 +23,32 @@ export default function DynamicFormFields({
   onChange,
   subcategoryName
 }: DynamicFormFieldsProps) {
+  const locale = useLocale();
+  const t = useTranslations('formFields');
+  const isNe = locale === 'ne';
+
   if (fields.length === 0) return null;
+
+  const getLabel = (field: FormField) =>
+    isNe && field.labelNe ? field.labelNe : field.label;
+
+  const getPlaceholder = (field: FormField) => {
+    if ('placeholderNe' in field && isNe && field.placeholderNe) return field.placeholderNe;
+    if ('placeholder' in field) return field.placeholder;
+    return undefined;
+  };
+
+  const getOptions = (field: FormField & { options: string[]; optionsNe?: string[] }) => {
+    if (isNe && field.optionsNe && field.optionsNe.length === field.options.length) {
+      return field.optionsNe;
+    }
+    return field.options;
+  };
 
   const renderField = (field: FormField) => {
     const value = values[field.name] || '';
     const error = errors[field.name];
+    const label = getLabel(field);
 
     const inputClass = `w-full px-4 py-2.5 border-2 rounded-lg text-base transition-colors ${
       error
@@ -43,7 +64,7 @@ export default function DynamicFormFields({
         return (
           <div key={field.name} className="form-field">
             <label className={labelClass}>
-              {field.label}
+              {label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <input
@@ -51,7 +72,7 @@ export default function DynamicFormFields({
               className={inputClass}
               value={value}
               onChange={(e) => onChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
+              placeholder={getPlaceholder(field)}
               required={field.required}
             />
             {error && <p className={errorClass}>{error}</p>}
@@ -62,7 +83,7 @@ export default function DynamicFormFields({
         return (
           <div key={field.name} className="form-field">
             <label className={labelClass}>
-              {field.label}
+              {label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <input
@@ -70,7 +91,7 @@ export default function DynamicFormFields({
               className={inputClass}
               value={value}
               onChange={(e) => onChange(field.name, e.target.value)}
-              placeholder={field.placeholder}
+              placeholder={getPlaceholder(field)}
               min={field.min}
               max={field.max}
               required={field.required}
@@ -79,11 +100,12 @@ export default function DynamicFormFields({
           </div>
         );
 
-      case 'select':
+      case 'select': {
+        const displayOptions = getOptions(field);
         return (
           <div key={field.name} className="form-field">
             <label className={labelClass}>
-              {field.label}
+              {label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <select
@@ -92,24 +114,28 @@ export default function DynamicFormFields({
               onChange={(e) => onChange(field.name, e.target.value)}
               required={field.required}
             >
-              <option value="">Select {field.label}</option>
-              {field.options?.map(option => (
-                <option key={option} value={option}>{option}</option>
+              <option value="">{t('selectPlaceholder', { label })}</option>
+              {field.options?.map((option, idx) => (
+                <option key={option} value={option}>
+                  {displayOptions[idx]}
+                </option>
               ))}
             </select>
             {error && <p className={errorClass}>{error}</p>}
           </div>
         );
+      }
 
-      case 'multiselect':
+      case 'multiselect': {
+        const displayOptions = getOptions(field);
         return (
           <div key={field.name} className="form-field">
             <label className={labelClass}>
-              {field.label}
+              {label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <div className="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
-              {field.options?.map(option => {
+              {field.options?.map((option, idx) => {
                 const isChecked = Array.isArray(value) && value.includes(option);
                 return (
                   <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors">
@@ -125,7 +151,7 @@ export default function DynamicFormFields({
                       }}
                       className="w-4 h-4 text-rose-500 border-gray-300 rounded focus:ring-2 focus:ring-rose-500"
                     />
-                    <span className="text-sm text-gray-700">{option}</span>
+                    <span className="text-sm text-gray-700">{displayOptions[idx]}</span>
                   </label>
                 );
               })}
@@ -133,6 +159,7 @@ export default function DynamicFormFields({
             {error && <p className={errorClass}>{error}</p>}
           </div>
         );
+      }
 
       case 'checkbox':
         return (
@@ -145,7 +172,7 @@ export default function DynamicFormFields({
                 className="w-5 h-5 text-rose-500 border-gray-300 rounded focus:ring-2 focus:ring-rose-500"
               />
               <span className="text-sm font-medium text-gray-700">
-                {field.label}
+                {label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </span>
             </label>
@@ -157,7 +184,7 @@ export default function DynamicFormFields({
         return (
           <div key={field.name} className="form-field">
             <label className={labelClass}>
-              {field.label}
+              {label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <input
@@ -181,15 +208,15 @@ export default function DynamicFormFields({
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
           <span className="text-2xl">📋</span>
-          Additional Details
+          {t('additionalDetails')}
           {subcategoryName && (
             <span className="text-sm font-normal text-gray-600">
-              for {subcategoryName}
+              {t('forSubcategory', { subcategory: subcategoryName })}
             </span>
           )}
         </h3>
         <p className="text-sm text-gray-600">
-          Provide specific details to help buyers understand your item better
+          {t('helperText')}
         </p>
       </div>
 

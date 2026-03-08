@@ -3,7 +3,7 @@
  */
 
 import type { FormTemplate } from '../types';
-import { createConditionField, createBrandField, CONDITION_OPTIONS } from '../sharedFields';
+import { createConditionField, createBrandField, CONDITION_OPTIONS, CONDITION_OPTIONS_NE } from '../sharedFields';
 
 const FURNITURE = [
   'Bedroom Furniture', 'Living Room Furniture', 'Office & Shop Furniture',
@@ -18,7 +18,7 @@ export const generalTemplate: FormTemplate = {
   name: 'General',
   icon: '📦',
   fields: [
-    createConditionField(CONDITION_OPTIONS.NEW_USED, 'all', false),
+    createConditionField(CONDITION_OPTIONS.NEW_USED, 'all', false, CONDITION_OPTIONS_NE.NEW_USED),
     createBrandField('e.g., IKEA, Nike, Canon', 'all', false),
     // For Furniture (Home & Living)
     {

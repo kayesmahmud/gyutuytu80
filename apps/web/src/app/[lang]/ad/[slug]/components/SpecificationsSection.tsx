@@ -1,8 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 import type { SpecificationsSectionProps } from './types';
+import { getFieldTranslationLookup } from '@/config/formTemplates/fieldLookup';
 
-export async function SpecificationsSection({ customFields }: SpecificationsSectionProps) {
+export async function SpecificationsSection({ customFields, lang }: SpecificationsSectionProps) {
   const t = await getTranslations('ads');
+  const isNe = lang === 'ne';
+  const lookup = isNe ? getFieldTranslationLookup() : null;
 
   if (!customFields || Object.keys(customFields).length === 0) {
     return null;
@@ -35,6 +38,28 @@ export async function SpecificationsSection({ customFields }: SpecificationsSect
     });
   }
 
+  const getDisplayLabel = (key: string): string => {
+    if (isNe && lookup?.[key]?.labelNe) {
+      return lookup[key].labelNe;
+    }
+    return key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+  };
+
+  const getDisplayValue = (key: string, value: any): string => {
+    const strValue = String(value);
+    if (!isNe || !lookup?.[key]) return strValue;
+
+    const { optionMap } = lookup[key];
+    // Handle comma-separated values (multiselect stored as string)
+    if (strValue.includes(',') && Object.keys(optionMap).length > 0) {
+      return strValue
+        .split(',')
+        .map(v => optionMap[v.trim()] || v.trim())
+        .join(', ');
+    }
+    return optionMap[strValue] || strValue;
+  };
+
   const amenitiesValue = customFields.amenities;
   let amenitiesList: string[] = [];
 
@@ -43,6 +68,11 @@ export async function SpecificationsSection({ customFields }: SpecificationsSect
   } else if (Array.isArray(amenitiesValue)) {
     amenitiesList = amenitiesValue;
   }
+
+  const getDisplayAmenity = (amenity: string): string => {
+    if (!isNe || !lookup?.amenities) return amenity;
+    return lookup.amenities.optionMap[amenity] || amenity;
+  };
 
   return (
     <div className="mb-6">
@@ -53,10 +83,10 @@ export async function SpecificationsSection({ customFields }: SpecificationsSect
         {entries.map(([key, value]) => (
           <div key={key} className="p-3 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-600 mb-1 capitalize">
-              {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
+              {getDisplayLabel(key)}
             </div>
             <div className="text-base font-medium text-gray-800">
-              {String(value)}
+              {getDisplayValue(key, value)}
             </div>
           </div>
         ))}
@@ -74,7 +104,7 @@ export async function SpecificationsSection({ customFields }: SpecificationsSect
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600 text-sm font-bold flex-shrink-0">
                   ✓
                 </span>
-                <span>{amenity}</span>
+                <span>{getDisplayAmenity(amenity)}</span>
               </div>
             ))}
           </div>

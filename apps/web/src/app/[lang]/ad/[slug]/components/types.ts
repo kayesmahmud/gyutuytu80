@@ -12,6 +12,7 @@ export interface AdBadgesProps {
 
 export interface SpecificationsSectionProps {
   customFields: Record<string, any> | null;
+  lang?: string;
 }
 
 export interface LocationSectionProps {

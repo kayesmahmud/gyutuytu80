@@ -9,6 +9,7 @@ export type AppliesTo = 'all' | string[];
 export interface BaseField {
   name: string;
   label: string;
+  labelNe?: string;
   type: FieldType;
   required: boolean;
   appliesTo: AppliesTo;
@@ -17,11 +18,13 @@ export interface BaseField {
 export interface TextField extends BaseField {
   type: 'text';
   placeholder?: string;
+  placeholderNe?: string;
 }
 
 export interface NumberField extends BaseField {
   type: 'number';
   placeholder?: string;
+  placeholderNe?: string;
   min?: number;
   max?: number;
 }
@@ -29,11 +32,13 @@ export interface NumberField extends BaseField {
 export interface SelectField extends BaseField {
   type: 'select';
   options: string[];
+  optionsNe?: string[];
 }
 
 export interface MultiselectField extends BaseField {
   type: 'multiselect';
   options: string[];
+  optionsNe?: string[];
 }
 
 export interface CheckboxField extends BaseField {
@@ -66,9 +71,12 @@ export type CategoryTemplateMap = Record<string, TemplateName>;
 // Field override - customize specific properties of a base field
 export interface FieldOverride {
   placeholder?: string;
+  placeholderNe?: string;
   options?: string[];
+  optionsNe?: string[];
   required?: boolean;
   label?: string;
+  labelNe?: string;
 }
 
 // Field reference with optional overrides

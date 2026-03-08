@@ -3,7 +3,7 @@
  */
 
 import type { FormTemplate } from '../types';
-import { createConditionField, createBrandField, createModelField, createColorField, CONDITION_OPTIONS } from '../sharedFields';
+import { createConditionField, createBrandField, createModelField, createColorField, CONDITION_OPTIONS, CONDITION_OPTIONS_NE } from '../sharedFields';
 
 const MOTORIZED_VEHICLES = ['Cars', 'Motorbikes', 'Trucks', 'Vans', 'Buses'];
 const FUEL_VEHICLES = ['Cars', 'Motorbikes', 'Trucks', 'Vans', 'Buses', 'Three Wheelers'];
@@ -13,7 +13,7 @@ export const vehiclesTemplate: FormTemplate = {
   name: 'Vehicles',
   icon: '🚗🏍️',
   fields: [
-    createConditionField(CONDITION_OPTIONS.NEW_RECONDITIONED_USED),
+    createConditionField(CONDITION_OPTIONS.NEW_RECONDITIONED_USED, 'all', true, CONDITION_OPTIONS_NE.NEW_RECONDITIONED_USED),
     createBrandField('e.g., Toyota, Honda, Yamaha'),
     createModelField('e.g., Corolla, City, FZ', 'all', true),
     {

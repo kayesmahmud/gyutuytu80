@@ -207,22 +207,20 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
 
 // Helper functions for building location and category strings
 function buildFullLocation(locations: any, lang: string): string {
-  const getName = (loc: any) =>
-    lang === 'ne' && loc?.name_ne ? loc.name_ne : loc?.name;
   const locationParts: string[] = [];
-  if (locations?.name) locationParts.push(getName(locations));
-  if (locations?.locations?.name) locationParts.push(getName(locations.locations));
-  if (locations?.locations?.locations?.name) locationParts.push(getName(locations.locations.locations));
-  if (locations?.locations?.locations?.locations?.name) locationParts.push(getName(locations.locations.locations.locations));
+  const loc = (item: any) => lang === 'ne' && item?.name_ne ? item.name_ne : item?.name;
+  if (locations?.name) locationParts.push(loc(locations));
+  if (locations?.locations?.name) locationParts.push(loc(locations.locations));
+  if (locations?.locations?.locations?.name) locationParts.push(loc(locations.locations.locations));
+  if (locations?.locations?.locations?.locations?.name) locationParts.push(loc(locations.locations.locations.locations));
   return locationParts.join(', ');
 }
 
 function buildFullCategory(categories: any, lang: string): string {
-  const getName = (cat: any) =>
-    lang === 'ne' && cat?.name_ne ? cat.name_ne : cat?.name;
   const categoryParts: string[] = [];
-  if (categories?.categories?.name) categoryParts.push(getName(categories.categories));
-  if (categories?.name) categoryParts.push(getName(categories));
+  const loc = (item: any) => lang === 'ne' && item?.name_ne ? item.name_ne : item?.name;
+  if (categories?.categories?.name) categoryParts.push(loc(categories.categories));
+  if (categories?.name) categoryParts.push(loc(categories));
   return categoryParts.join(' > ');
 }
 
@@ -283,11 +281,8 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
     { label: t('allAds'), path: `/${lang}/ads` },
   ];
   if (ad.categories?.name && ad.categories?.slug) {
-    const categoryLabel = lang === 'ne' && (ad.categories as any).name_ne
-      ? (ad.categories as any).name_ne
-      : ad.categories.name;
     breadcrumbItems.push({
-      label: categoryLabel,
+      label: lang === 'ne' && ad.categories.name_ne ? ad.categories.name_ne : ad.categories.name,
       path: `/${lang}/ads/${ad.categories.slug}`
     });
   }
@@ -358,7 +353,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                 <p className="text-gray-600 leading-relaxed whitespace-pre-line">{ad.description}</p>
               </div>
 
-              <SpecificationsSection customFields={customFields} />
+              <SpecificationsSection customFields={customFields} lang={lang} />
               <LocationSection fullLocation={fullLocation} locationType={ad.locations?.type || null} />
             </div>
 

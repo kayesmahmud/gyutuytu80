@@ -3,7 +3,7 @@
  */
 
 import type { FormTemplate } from '../types';
-import { createConditionField, createColorField, CONDITION_OPTIONS } from '../sharedFields';
+import { createConditionField, createColorField, CONDITION_OPTIONS, CONDITION_OPTIONS_NE } from '../sharedFields';
 
 const CLOTHING = [
   'Shirts & T-Shirts', 'Pants', 'Traditional Clothing', 'Jacket & Coat',
@@ -16,7 +16,7 @@ export const fashionTemplate: FormTemplate = {
   name: 'Fashion & Apparel',
   icon: '👔👗',
   fields: [
-    createConditionField(CONDITION_OPTIONS.NEW_USED),
+    createConditionField(CONDITION_OPTIONS.NEW_USED, 'all', true, CONDITION_OPTIONS_NE.NEW_USED),
     {
       name: 'size',
       label: 'Size',

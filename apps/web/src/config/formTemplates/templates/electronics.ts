@@ -3,7 +3,7 @@
  */
 
 import type { FormTemplate } from '../types';
-import { createConditionField, createBrandField, createModelField, createWarrantyField, CONDITION_OPTIONS } from '../sharedFields';
+import { createConditionField, createBrandField, createModelField, createWarrantyField, CONDITION_OPTIONS, CONDITION_OPTIONS_NE } from '../sharedFields';
 
 const MOBILE_TABLETS = ['Mobile Phones', 'Tablets & Accessories'];
 const COMPUTERS = ['Laptops', 'Desktop Computers'];
@@ -13,7 +13,7 @@ export const electronicsTemplate: FormTemplate = {
   name: 'Electronics & Gadgets',
   icon: '📱💻',
   fields: [
-    createConditionField(CONDITION_OPTIONS.NEW_USED),
+    createConditionField(CONDITION_OPTIONS.NEW_USED, 'all', true, CONDITION_OPTIONS_NE.NEW_USED),
     createBrandField('e.g., Apple, Samsung, Dell, HP'),
     createModelField('e.g., iPhone 15 Pro, Galaxy S23'),
     createWarrantyField(),

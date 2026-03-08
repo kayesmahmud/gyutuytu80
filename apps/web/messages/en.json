@@ -814,5 +814,11 @@
     "shopsDescription": "Search all verified shops and sellers on Thulo Bazaar. Find trusted businesses and individual sellers in Nepal.",
     "shopFallbackTitle": "Shop Profile - Thulo Bazaar",
     "shopFallbackDescription": "Search products from shops on Thulo Bazaar."
+  },
+  "formFields": {
+    "additionalDetails": "Additional Details",
+    "forSubcategory": "for {subcategory}",
+    "helperText": "Provide specific details to help buyers understand your item better",
+    "selectPlaceholder": "Select {label}"
   }
 }

@@ -94,7 +94,9 @@ export function getApplicableFields(templateName: string, subcategoryName: strin
 // Shared fields (for custom template creation)
 export {
   CONDITION_OPTIONS,
+  CONDITION_OPTIONS_NE,
   WARRANTY_OPTIONS,
+  WARRANTY_OPTIONS_NE,
   JOB_CATEGORIES,
   OVERSEAS_COUNTRIES,
   createConditionField,
