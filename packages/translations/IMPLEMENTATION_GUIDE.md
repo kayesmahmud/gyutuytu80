@@ -526,7 +526,7 @@ npm install
 **Before:**
 
 ```typescript
-<Text>Welcome to ThuluBazaar</Text>
+<Text>Welcome to Thulo Bazaar</Text>
 ```
 
 **After:**

@@ -9,7 +9,7 @@ test.describe('Homepage', () => {
     await page.goto('/en');
 
     // Check page title or main heading
-    await expect(page).toHaveTitle(/ThuluBazaar/i);
+    await expect(page).toHaveTitle(/Thulo Bazaar/i);
   });
 
   test('should have navigation links', async ({ page }) => {

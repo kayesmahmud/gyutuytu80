@@ -113,7 +113,7 @@ export function createApp(): Express {
 
   // Test endpoint
   app.get('/api/test', (_req, res) => {
-    res.json({ success: true, message: 'ThuluBazaar API v2 (TypeScript)' });
+    res.json({ success: true, message: 'Thulo Bazaar API v2 (TypeScript)' });
   });
 
   // Register routes

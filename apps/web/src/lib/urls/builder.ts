@@ -71,31 +71,31 @@ export function generateAdListingMetadata(
   if (searchQuery) {
     // Search mode
     if (locationName && categoryName) {
-      title = `Search "${searchQuery}" in ${categoryName} - ${locationName} | Thulobazaar`;
+      title = `Search "${searchQuery}" in ${categoryName} - ${locationName} | Thulo Bazaar`;
       description = `Find ${searchQuery} in ${categoryName} category in ${locationName}. Search ${totalAds.toLocaleString()} ads.`;
     } else if (locationName) {
-      title = `Search "${searchQuery}" in ${locationName} | Thulobazaar`;
+      title = `Search "${searchQuery}" in ${locationName} | Thulo Bazaar`;
       description = `Search results for "${searchQuery}" in ${locationName}. ${totalAds.toLocaleString()} ads found.`;
     } else if (categoryName) {
-      title = `Search "${searchQuery}" in ${categoryName} | Thulobazaar`;
+      title = `Search "${searchQuery}" in ${categoryName} | Thulo Bazaar`;
       description = `Search results for "${searchQuery}" in ${categoryName} category. ${totalAds.toLocaleString()} ads found.`;
     } else {
-      title = `Search "${searchQuery}" | Thulobazaar`;
+      title = `Search "${searchQuery}" | Thulo Bazaar`;
       description = `Search results for "${searchQuery}". ${totalAds.toLocaleString()} ads found across Nepal.`;
     }
   } else {
     // Search mode
     if (locationName && categoryName) {
-      title = `${categoryName} in ${locationName} | Thulobazaar`;
+      title = `${categoryName} in ${locationName} | Thulo Bazaar`;
       description = `Search ${totalAds.toLocaleString()} ${categoryName} ads in ${locationName}. Find the best deals on classified ads in Nepal.`;
     } else if (locationName) {
-      title = `Ads in ${locationName} | Thulobazaar`;
+      title = `Ads in ${locationName} | Thulo Bazaar`;
       description = `Search ${totalAds.toLocaleString()} classified ads in ${locationName}. Find electronics, vehicles, property, and more.`;
     } else if (categoryName) {
-      title = `${categoryName} Ads in Nepal | Thulobazaar`;
+      title = `${categoryName} Ads in Nepal | Thulo Bazaar`;
       description = `Search ${totalAds.toLocaleString()} ${categoryName} ads across Nepal. Find the best deals on classified ads.`;
     } else {
-      title = `All Ads in Nepal | Thulobazaar`;
+      title = `All Ads in Nepal | Thulo Bazaar`;
       description = `Search ${totalAds.toLocaleString()} classified ads across Nepal. Find electronics, vehicles, property, and more.`;
     }
   }

@@ -1,8 +1,8 @@
-# 🚀 ThuLoBazaar Production Deployment Guide
+# 🚀 Thulo Bazaar Production Deployment Guide
 
 ## Overview
 
-Your ThuLoBazaar application is now a **single Next.js 15 application** - no separate Express backend needed!
+Your Thulo Bazaar application is now a **single Next.js 15 application** - no separate Express backend needed!
 
 ## ✅ What Changed
 

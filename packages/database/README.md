@@ -1,6 +1,6 @@
 # @thulobazaar/database
 
-Shared database access layer using Prisma ORM for Thulobazaar monorepo.
+Shared database access layer using Prisma ORM for Thulo Bazaar monorepo.
 
 ## Features
 

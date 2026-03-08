@@ -1,4 +1,4 @@
-# 🚀 START HERE - ThuluBazaar Monorepo
+# 🚀 START HERE - Thulo Bazaar Monorepo
 
 ## ✅ Your Monorepo is Ready! (Updated for 2025)
 

@@ -1,4 +1,4 @@
-# ThuLoBazaar Refactoring Changelog
+# Thulo Bazaar Refactoring Changelog
 
 **Date:** December 2024
 **Commit:** `6bc6c73 Refactor lib folder and fix editor ad-management images`

@@ -1,6 +1,6 @@
 /**
  * AnnouncementsList Component
- * Shows broadcast announcements from ThuluBazaar to users
+ * Shows broadcast announcements from Thulo Bazaar to users
  * Uses shared hook for mobile app compatibility
  */
 

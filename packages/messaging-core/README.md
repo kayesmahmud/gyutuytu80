@@ -1,6 +1,6 @@
 # @thulobazaar/messaging-core
 
-Shared messaging logic for Thulobazaar web and mobile applications.
+Shared messaging logic for Thulo Bazaar web and mobile applications.
 
 ## Features
 
@@ -173,4 +173,4 @@ This is a monorepo package. To contribute:
 
 ## License
 
-Proprietary - Thulobazaar
+Proprietary - Thulo Bazaar

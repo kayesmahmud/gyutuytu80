@@ -1,4 +1,4 @@
-# AWS Lambda Guide for ThuluBazaar
+# AWS Lambda Guide for Thulo Bazaar
 
 > When and how to use AWS Lambda in your architecture
 
@@ -330,7 +330,7 @@ interface EmailJob {
 
 const TEMPLATES: Record<string, (data: Record<string, string>) => string> = {
   welcome: (data) => `
-    <h1>Welcome to ThuluBazaar, ${data.name}!</h1>
+    <h1>Welcome to Thulo Bazaar, ${data.name}!</h1>
     <p>Start buying and selling today.</p>
   `,
   'password-reset': (data) => `
@@ -354,7 +354,7 @@ export const handler = async (event: SQSEvent) => {
     const htmlBody = TEMPLATES[job.template](job.data);
 
     await ses.send(new SendEmailCommand({
-      Source: 'ThuluBazaar <noreply@thulobazaar.com>',
+      Source: 'Thulo Bazaar <noreply@thulobazaar.com>',
       Destination: { ToAddresses: [job.to] },
       Message: {
         Subject: { Data: job.subject },

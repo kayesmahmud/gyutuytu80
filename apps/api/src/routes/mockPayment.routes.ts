@@ -109,7 +109,7 @@ router.post(
     }
 
     // Generate product name based on payment type
-    let productName = 'ThuLoBazaar Payment';
+    let productName = 'Thulo Bazaar Payment';
     if (metadata && metadata.promotionType) {
       productName = `Ad Promotion - ${metadata.promotionType}`;
       if (metadata.durationDays) {

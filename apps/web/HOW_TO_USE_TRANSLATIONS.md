@@ -76,7 +76,7 @@ t('common.error')       // केहि गलत भयो / Something went wro
 t('auth.login')         // लगइन / Login
 t('auth.logout')        // लगआउट / Logout
 t('auth.register')      // दर्ता गर्नुहोस् / Register
-t('auth.welcome')       // ठूलोबजारमा स्वागत छ / Welcome to ThuluBazaar
+t('auth.welcome')       // ठूलोबजारमा स्वागत छ / Welcome to Thulo Bazaar
 t('auth.phoneNumber')   // फोन नम्बर / Phone Number
 t('auth.enterOTP')      // OTP प्रविष्ट गर्नुहोस् / Enter OTP
 ```

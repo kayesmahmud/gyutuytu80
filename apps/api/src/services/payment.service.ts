@@ -117,7 +117,7 @@ export async function initiatePaymentTransaction(input: InitiatePaymentInput) {
       status: 'pending',
       metadata: JSON.stringify({
         ...metadata,
-        orderName: orderName || `ThuluBazaar ${paymentType.replace('_', ' ')}`,
+        orderName: orderName || `Thulo Bazaar ${paymentType.replace('_', ' ')}`,
         initiatedAt: new Date().toISOString(),
       }),
     },
@@ -129,7 +129,7 @@ export async function initiatePaymentTransaction(input: InitiatePaymentInput) {
     amount,
     paymentType,
     orderId,
-    orderName: orderName || `ThuluBazaar ${paymentType.replace('_', ' ')}`,
+    orderName: orderName || `Thulo Bazaar ${paymentType.replace('_', ' ')}`,
     userId,
     returnUrl,
     metadata: {

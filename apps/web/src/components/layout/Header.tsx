@@ -182,7 +182,7 @@ export default function Header({ lang }: HeaderProps) {
             >
               <Image
                 src="/logo.png"
-                alt="Thulobazaar"
+                alt="Thulo Bazaar"
                 width={84}
                 height={40}
                 className="h-8 object-contain"
@@ -212,7 +212,7 @@ export default function Header({ lang }: HeaderProps) {
           >
             <Image
               src="/logo.png"
-              alt="Thulobazaar"
+              alt="Thulo Bazaar"
               width={84}
               height={40}
               className="h-10 object-contain"
@@ -455,7 +455,7 @@ export default function Header({ lang }: HeaderProps) {
             <Link href={`/${lang}`} onClick={() => setMobileMenuOpen(false)}>
               <Image
                 src="/logo.png"
-                alt="Thulobazaar"
+                alt="Thulo Bazaar"
                 width={84}
                 height={40}
                 className="h-8 object-contain"

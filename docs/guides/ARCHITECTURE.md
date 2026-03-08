@@ -1,4 +1,4 @@
-# Thulobazaar Next.js Monorepo Architecture
+# Thulo Bazaar Next.js Monorepo Architecture
 
 ## 🎯 SEO-Friendly URL Structure (2025 Best Practices)
 
@@ -93,8 +93,8 @@ WHERE slug IS NULL;
 
 ### Dynamic Metadata
 Each page generates dynamic `<title>` and `<meta description>`:
-- `/en/ads/kathmandu/mobiles` → "Mobiles in Kathmandu - Thulobazaar"
-- `/en/search?category=mobile-phones` → "Mobile Phones - Thulobazaar"
+- `/en/ads/kathmandu/mobiles` → "Mobiles in Kathmandu - Thulo Bazaar"
+- `/en/search?category=mobile-phones` → "Mobile Phones - Thulo Bazaar"
 
 ### Breadcrumbs
 All pages include structured breadcrumbs with proper hierarchy.

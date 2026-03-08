@@ -1,4 +1,4 @@
-# ThuluBazaar AWS Infrastructure Guide
+# Thulo Bazaar AWS Infrastructure Guide
 
 > AWS setup for 100k users, 50k daily visits, serving Nepal market
 

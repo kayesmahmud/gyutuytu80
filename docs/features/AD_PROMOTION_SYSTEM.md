@@ -1,8 +1,8 @@
-# 🚀 Ad Promotion System - ThuLoBazaar
+# 🚀 Ad Promotion System - Thulo Bazaar
 
 ## Overview
 
-ThuLoBazaar offers a **3-tier ad promotion system** to help sellers increase visibility and sell faster. Each tier provides different levels of exposure with corresponding pricing.
+Thulo Bazaar offers a **3-tier ad promotion system** to help sellers increase visibility and sell faster. Each tier provides different levels of exposure with corresponding pricing.
 
 ---
 

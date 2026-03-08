@@ -1,4 +1,4 @@
-# ThuluBazaar - Essential Reference
+# Thulo Bazaar - Essential Reference
 
 ## 🎯 Quick Info
 **Stack:** Next.js 15 + Express + PostgreSQL + Prisma + Flutter (mobile)

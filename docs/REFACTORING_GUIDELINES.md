@@ -1,4 +1,4 @@
-# ThuLoBazaar Refactoring Guidelines
+# Thulo Bazaar Refactoring Guidelines
 
 **Version:** 1.0.0
 **Last Updated:** December 2024
@@ -890,5 +890,5 @@ npm run type-check       # TypeScript check
 
 ---
 
-**Maintained by:** ThuLoBazaar Engineering Team
+**Maintained by:** Thulo Bazaar Engineering Team
 **Last Updated:** December 2024

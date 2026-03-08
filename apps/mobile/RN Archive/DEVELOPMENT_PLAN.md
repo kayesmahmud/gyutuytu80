@@ -1,4 +1,4 @@
-# React Native App Development Plan for ThuluBazaar
+# React Native App Development Plan for Thulo Bazaar
 
 ## Overview
 Build a React Native (Expo) app that mirrors the web app's mobile interface, reusing existing shared packages and API infrastructure.

@@ -1,5 +1,5 @@
 /**
- * ThuLoBazaar Main Website Theme
+ * Thulo Bazaar Main Website Theme
  * ================================
  * Centralized theme configuration for the public-facing website
  * (Homepage, User Dashboard, Profile, Shop pages, etc.)

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const transactionId = `MOCK_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Generate product name
-    let productName = 'ThuLoBazaar Payment';
+    let productName = 'Thulo Bazaar Payment';
     if (metadata && metadata.promotionType) {
       productName = `Ad Promotion - ${metadata.promotionType}`;
       if (metadata.durationDays) {

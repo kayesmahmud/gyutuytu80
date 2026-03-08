@@ -19,7 +19,7 @@ Added 3 new endpoints after line 1630 (after super-admin update endpoint):
   - Generates a unique TOTP secret using `speakeasy`
   - Creates QR code data URL using `qrcode` library
   - Returns secret (base32) and QR code for scanning
-  - QR code format: `otpauth://totp/Thulobazaar(email)?secret=...&issuer=Thulobazaar`
+  - QR code format: `otpauth://totp/Thulo Bazaar(email)?secret=...&issuer=Thulo Bazaar`
 
 #### 2. Verify & Enable 2FA Endpoint
 - **Route:** `POST /api/editor/super-admins/:id/2fa/verify`

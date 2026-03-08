@@ -1,4 +1,4 @@
-# ThuLoBazaar Launch Guide
+# Thulo Bazaar Launch Guide
 
 ## Launch Status: READY FOR PRODUCTION
 

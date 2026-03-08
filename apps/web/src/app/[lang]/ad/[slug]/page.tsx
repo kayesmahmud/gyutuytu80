@@ -174,13 +174,13 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
       const priceText = ad.price ? `Rs. ${parseFloat(ad.price.toString()).toLocaleString()}` : t('priceOnRequest');
 
       return {
-        title: `${ad.title} | ${priceText} - Thulobazaar`,
+        title: `${ad.title} | ${priceText} - Thulo Bazaar`,
         description,
         openGraph: {
           title: ad.title,
           description,
           url: `${baseUrl}/${lang}/ad/${slug}`,
-          siteName: 'Thulobazaar',
+          siteName: 'Thulo Bazaar',
           images: [{ url: imageUrl, width: 800, height: 600, alt: ad.title }],
           locale: lang === 'en' ? 'en_US' : 'ne_NP',
           type: 'website',
@@ -200,7 +200,7 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
   const t = await getTranslations({ locale: lang, namespace: 'metadata' });
   const title = slug.replace(/-/g, ' ');
   return {
-    title: `${title} - Thulobazaar`,
+    title: `${title} - Thulo Bazaar`,
     description: t('adFallbackDescription', { title }),
   };
 }

@@ -1,6 +1,6 @@
 # Session & Token Expiration Guide
 
-This document explains how authentication sessions work in ThuluBazaar, including token lifetimes and potential conflicts.
+This document explains how authentication sessions work in Thulo Bazaar, including token lifetimes and potential conflicts.
 
 ---
 

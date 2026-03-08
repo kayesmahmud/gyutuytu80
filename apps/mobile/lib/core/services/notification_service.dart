@@ -40,8 +40,8 @@ class NotificationService {
   // Android notification channel
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'thulobazaar_notifications',
-    'ThuluBazaar Notifications',
-    description: 'ThuluBazaar app notifications',
+    'Thulo Bazaar Notifications',
+    description: 'Thulo Bazaar app notifications',
     importance: Importance.high,
     playSound: true,
     enableVibration: true,
@@ -212,7 +212,7 @@ class NotificationService {
     if (notification != null) {
       // Show local notification
       await showLocalNotification(
-        title: notification.title ?? 'ThuluBazaar',
+        title: notification.title ?? 'Thulo Bazaar',
         body: notification.body ?? '',
         payload: json.encode({
           ...data,

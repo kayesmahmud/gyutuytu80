@@ -1,6 +1,6 @@
-# ThuluBazaar Testing Guide
+# Thulo Bazaar Testing Guide
 
-> Comprehensive testing strategy for the ThuluBazaar marketplace platform.
+> Comprehensive testing strategy for the Thulo Bazaar marketplace platform.
 > Last updated: December 2025
 
 ## Table of Contents
@@ -1067,4 +1067,4 @@ npm run test:coverage
 
 ---
 
-*Document maintained by the ThuluBazaar development team.*
+*Document maintained by the Thulo Bazaar development team.*

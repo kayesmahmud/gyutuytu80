@@ -8,7 +8,7 @@
 
 ## Session Overview
 
-This session focused on implementing themed admin dashboards for the ThuLoBazaar monorepo, fixing authentication issues, adding logout functionality, and improving property ad specifications display.
+This session focused on implementing themed admin dashboards for the Thulo Bazaar monorepo, fixing authentication issues, adding logout functionality, and improving property ad specifications display.
 
 ---
 

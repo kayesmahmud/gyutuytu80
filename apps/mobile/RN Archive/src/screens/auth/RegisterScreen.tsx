@@ -22,7 +22,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
             <Text style={styles.backButton}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join ThuluBazaar today</Text>
+          <Text style={styles.subtitle}>Join Thulo Bazaar today</Text>
         </View>
 
         {/* Info Message */}

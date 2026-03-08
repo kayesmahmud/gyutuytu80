@@ -1,6 +1,6 @@
 # Google OAuth Login Troubleshooting Guide
 
-This document covers common issues and solutions for Google OAuth login in the ThuluBazaar monorepo.
+This document covers common issues and solutions for Google OAuth login in the Thulo Bazaar monorepo.
 
 ---
 

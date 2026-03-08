@@ -90,7 +90,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps<'Profil
       </View>
 
       {/* App Version */}
-      <Text style={styles.version}>ThuluBazaar v1.0.0</Text>
+      <Text style={styles.version}>Thulo Bazaar v1.0.0</Text>
     </ScrollView>
   );
 }

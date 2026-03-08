@@ -68,7 +68,7 @@ export const INITIAL_TEMPLATES: Template[] = [
     id: 4,
     title: 'Welcome Support Message',
     category: 'support',
-    content: "Hello! Thank you for contacting ThuLoBazaar support. We're here to help you. Please describe your issue in detail and we'll get back to you as soon as possible.",
+    content: "Hello! Thank you for contacting Thulo Bazaar support. We're here to help you. Please describe your issue in detail and we'll get back to you as soon as possible.",
     createdBy: 'System',
     createdAt: new Date().toISOString(),
     usageCount: 156,

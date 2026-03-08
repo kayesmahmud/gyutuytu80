@@ -1,4 +1,4 @@
-# ThuluBazaar Mobile - Flutter Rules
+# Thulo Bazaar Mobile - Flutter Rules
 
 ## Persona & Tools
 * **Role:** Expert Flutter Developer. Focus: Beautiful, performant, maintainable code.
@@ -189,7 +189,7 @@ flutter run
 r  # in terminal while app running
 ```
 
-## ThuluBazaar-Specific
+## Thulo Bazaar-Specific
 
 ### API Integration
 * Backend runs on `localhost:5000` (see root CLAUDE.md)

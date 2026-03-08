@@ -30,7 +30,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <Link href={`/${lang}`} className="inline-block mb-4 sm:mb-6">
-            <span className="text-3xl sm:text-4xl font-bold text-rose-500">Thulobazaar</span>
+            <span className="text-3xl sm:text-4xl font-bold text-rose-500">Thulo Bazaar</span>
           </Link>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('welcomeBack')}</h2>
           <p className="text-gray-500 text-sm sm:text-base">{t('loginSubtitle')}</p>

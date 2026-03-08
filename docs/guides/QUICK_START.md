@@ -1,4 +1,4 @@
-# ⚡ Quick Start - ThuluBazaar Monorepo
+# ⚡ Quick Start - Thulo Bazaar Monorepo
 
 ## 🚀 Get Started in 5 Minutes
 

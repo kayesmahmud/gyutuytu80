@@ -1,4 +1,4 @@
-# ThuluBazaar Unified Icon System
+# Thulo Bazaar Unified Icon System
 
 ## Current Icon Usage (Before Migration)
 

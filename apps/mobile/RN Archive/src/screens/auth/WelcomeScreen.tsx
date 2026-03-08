@@ -9,7 +9,7 @@ export default function WelcomeScreen({ navigation }: AuthScreenProps<'Welcome'>
       <View style={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <Text style={styles.logo}>ThuluBazaar</Text>
+          <Text style={styles.logo}>Thulo Bazaar</Text>
           <Text style={styles.tagline}>Nepal's Leading Classifieds Marketplace</Text>
         </View>
 

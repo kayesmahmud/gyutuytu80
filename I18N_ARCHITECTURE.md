@@ -1,4 +1,4 @@
-# ThuluBazaar i18n Architecture
+# Thulo Bazaar i18n Architecture
 
 ## 📐 Architecture Overview
 
@@ -165,7 +165,7 @@ apps/mobile/
 
 ```typescript
 // ❌ OLD WAY (Hardcoded)
-<Text>Welcome to ThuluBazaar</Text>
+<Text>Welcome to Thulo Bazaar</Text>
 <Button title="Login" />
 
 // ✅ NEW WAY (i18n)
@@ -289,7 +289,7 @@ English: Left → Right ✅
 ```json
 {
   "auth": {
-    "welcome": "Welcome to ThuluBazaar",
+    "welcome": "Welcome to Thulo Bazaar",
     "login": "Login",
     "enterPhone": "Enter your phone number"
   },

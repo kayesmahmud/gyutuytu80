@@ -1,6 +1,6 @@
 # React Native i18n Quick Start Guide
 
-## 🎯 The Best Approach for ThuluBazaar Mobile
+## 🎯 The Best Approach for Thulo Bazaar Mobile
 
 Based on your monorepo architecture, here's the **easiest and most maintainable** way to implement dual language support:
 
@@ -103,7 +103,7 @@ export default function App() {
 
 **Before (Hardcoded):**
 ```typescript
-<Text>Welcome to ThuluBazaar</Text>
+<Text>Welcome to Thulo Bazaar</Text>
 <Button title="Login" />
 ```
 
@@ -408,7 +408,7 @@ npm install && npm run build
 7. **Small Bundle**: Only loads active language
 8. **Zero Config**: Works immediately after setup
 
-### ✅ Perfect for ThuluBazaar Because
+### ✅ Perfect for Thulo Bazaar Because
 
 1. **Monorepo Structure**: Shared translations package
 2. **Dual Platform**: Web and mobile use same strings

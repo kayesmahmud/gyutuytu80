@@ -1,4 +1,4 @@
-# Thulobazaar Next.js 15 Migration Plan & Modern Suggestions
+# Thulo Bazaar Next.js 15 Migration Plan & Modern Suggestions
 
 **Generated:** 2025-10-20
 **From:** React + Vite Frontend
@@ -513,7 +513,7 @@ export async function generateMetadata({ params }: AdPageProps): Promise<Metadat
   if (!ad) return { title: 'Ad Not Found' };
 
   return {
-    title: `${ad.title} - ${ad.location_name} | Thulobazaar`,
+    title: `${ad.title} - ${ad.location_name} | Thulo Bazaar`,
     description: ad.description.substring(0, 160),
     keywords: [ad.category, ad.subcategory, ad.location_name, 'Nepal'],
     openGraph: {
@@ -596,8 +596,8 @@ export async function generateMetadata({ params }: BrowsePageProps): Promise<Met
   }
 
   return {
-    title: `${title} | Thulobazaar`,
-    description: `Find ${title.toLowerCase()} on Thulobazaar, Nepal's leading classifieds marketplace.`,
+    title: `${title} | Thulo Bazaar`,
+    description: `Find ${title.toLowerCase()} on Thulo Bazaar, Nepal's leading classifieds marketplace.`,
   };
 }
 
@@ -797,8 +797,8 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   }
 
   const title = parts.length > 0
-    ? `${parts.join(' ')} - Thulobazaar`
-    : 'Search Results - Thulobazaar';
+    ? `${parts.join(' ')} - Thulo Bazaar`
+    : 'Search Results - Thulo Bazaar';
 
   const categoryText = params.subcategory
     ? `${params.category} > ${params.subcategory}`
@@ -810,7 +810,7 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
     ? ` in ${params.location}`
     : ' across Nepal';
 
-  const description = `Find ${categoryText}${location}. Browse ads on Thulobazaar, Nepal's leading classifieds marketplace.`;
+  const description = `Find ${categoryText}${location}. Browse ads on Thulo Bazaar, Nepal's leading classifieds marketplace.`;
 
   return {
     title,

@@ -3,8 +3,8 @@ import Link from 'next/link';
 import SuperAdminLoginForm from './SuperAdminLoginForm';
 
 export const metadata: Metadata = {
-  title: 'Super Admin Login - Thulobazaar',
-  description: 'Super Admin login for Thulobazaar',
+  title: 'Super Admin Login - Thulo Bazaar',
+  description: 'Super Admin login for Thulo Bazaar',
 };
 
 interface SuperAdminLoginPageProps {
@@ -34,7 +34,7 @@ export default async function SuperAdminLoginPage({ params }: SuperAdminLoginPag
               <div className="relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
                 <h1 className="relative text-5xl font-black text-white tracking-tight">
-                  Thulobazaar
+                  Thulo Bazaar
                 </h1>
               </div>
             </Link>
@@ -87,7 +87,7 @@ export default async function SuperAdminLoginPage({ params }: SuperAdminLoginPag
 
           {/* Copyright */}
           <div className="mt-8 text-center text-sm text-indigo-300/60">
-            <p>&copy; {new Date().getFullYear()} Thulobazaar. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Thulo Bazaar. All rights reserved.</p>
           </div>
         </div>
       </div>

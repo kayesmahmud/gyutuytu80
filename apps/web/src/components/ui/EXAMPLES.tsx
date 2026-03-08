@@ -2,7 +2,7 @@
  * Example Usage of UI Components
  *
  * This file demonstrates how to use the reusable UI components
- * in your ThuLoBazaar pages and components.
+ * in your Thulo Bazaar pages and components.
  */
 
 import React, { FormEvent } from 'react';

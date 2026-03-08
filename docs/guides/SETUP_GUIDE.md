@@ -1,4 +1,4 @@
-# 🚀 ThuluBazaar Monorepo Setup Guide
+# 🚀 Thulo Bazaar Monorepo Setup Guide
 
 ## ✅ What Has Been Created
 

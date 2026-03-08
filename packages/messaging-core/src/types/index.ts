@@ -1,6 +1,6 @@
 /**
  * Messaging Core Types
- * Shared type definitions for Thulobazaar messaging system
+ * Shared type definitions for Thulo Bazaar messaging system
  * Used across Web (Next.js) and Mobile (React Native) apps
  */
 

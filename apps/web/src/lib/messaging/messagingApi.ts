@@ -42,7 +42,7 @@ async function fetchApi(endpoint: string, options: FetchOptions = {}) {
 }
 
 /**
- * Announcements API - For broadcast messages from ThuluBazaar
+ * Announcements API - For broadcast messages from Thulo Bazaar
  * Mobile-app compatible (uses standard fetch)
  */
 export const announcementsApi = {

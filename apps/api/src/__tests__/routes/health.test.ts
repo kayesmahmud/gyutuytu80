@@ -22,7 +22,7 @@ describe('Health Check Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('ThuluBazaar API');
+      expect(response.body.message).toContain('Thulo Bazaar API');
     });
   });
 

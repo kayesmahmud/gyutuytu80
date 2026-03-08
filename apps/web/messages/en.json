@@ -40,7 +40,7 @@
     "noResultsFoundDesc": "We couldn't find any ads matching your search. Try adjusting your filters or search terms.",
     "clearFilters": "Clear Filters",
     "noAdsYet": "No ads yet",
-    "noAdsYetDesc": "Start building your presence on ThuLoBazaar by posting your first ad. It's free and takes just a few minutes!",
+    "noAdsYetDesc": "Start building your presence on Thulo Bazaar by posting your first ad. It's free and takes just a few minutes!",
     "postYourFirstAd": "+ Post Your First Ad",
     "searchAllAds": "Search All Ads",
     "noFavoritesYet": "No favorites yet",
@@ -383,7 +383,7 @@
     "savedAdsCount": "{count} saved ads",
     "shopUrlUpdated": "Shop URL updated successfully!",
     "urlCopied": "URL copied!",
-    "visitShopShare": "Visit {name} on ThuLoBazaar",
+    "visitShopShare": "Visit {name} on Thulo Bazaar",
     "shopUrlCopied": "Shop URL copied!",
     "shopUrl": "Shop URL",
     "copy": "Copy",
@@ -792,7 +792,7 @@
     "faqExpiryA": "Your verified badge will be removed, but your shop page and listings remain. You can renew anytime to restore your verified status."
   },
   "metadata": {
-    "homeTitle": "Thulobazaar - Buy, Sell, and Rent Across Nepal",
+    "homeTitle": "Thulo Bazaar - Buy, Sell, and Rent Across Nepal",
     "homeDescription": "Nepal's leading classifieds marketplace. Buy and sell electronics, vehicles, real estate, and more. Post free ads and connect with buyers across Nepal.",
     "siteDescription": "Nepal's Leading Classifieds Marketplace",
     "viewDetailsFor": "View details for {title}",
@@ -802,17 +802,17 @@
     "contactDescription": "Get in touch with Thulo Bazaar. Contact us for support, partnerships, advertising, or general inquiries.",
     "faqTitle": "FAQ | Thulo Bazaar",
     "faqDescription": "Frequently asked questions about Thulo Bazaar - buying, selling, payments, and more.",
-    "messagesTitle": "Messages | Thulobazaar",
+    "messagesTitle": "Messages | Thulo Bazaar",
     "messagesDescription": "Real-time messaging system",
-    "signinTitle": "Login - Thulobazaar",
-    "signinDescription": "Login to your Thulobazaar account",
-    "signupTitle": "Sign Up - Thulobazaar",
-    "signupDescription": "Create your Thulobazaar account",
+    "signinTitle": "Login - Thulo Bazaar",
+    "signinDescription": "Login to your Thulo Bazaar account",
+    "signupTitle": "Sign Up - Thulo Bazaar",
+    "signupDescription": "Create your Thulo Bazaar account",
     "supportTitle": "Support | Thulo Bazaar",
     "supportDescription": "Get help with your account, ads, payments, and more",
-    "shopsTitle": "All Shops - Thulobazaar",
-    "shopsDescription": "Search all verified shops and sellers on Thulobazaar. Find trusted businesses and individual sellers in Nepal.",
-    "shopFallbackTitle": "Shop Profile - Thulobazaar",
-    "shopFallbackDescription": "Search products from shops on Thulobazaar."
+    "shopsTitle": "All Shops - Thulo Bazaar",
+    "shopsDescription": "Search all verified shops and sellers on Thulo Bazaar. Find trusted businesses and individual sellers in Nepal.",
+    "shopFallbackTitle": "Shop Profile - Thulo Bazaar",
+    "shopFallbackDescription": "Search products from shops on Thulo Bazaar."
   }
 }

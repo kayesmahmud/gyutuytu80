@@ -30,7 +30,7 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <Link href={`/${lang}`} className="inline-block mb-4 sm:mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold text-rose-500">Thulobazaar</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-rose-500">Thulo Bazaar</h1>
           </Link>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('createAccount')}</h2>
           <p className="text-gray-500 text-sm sm:text-base">{t('joinThuloBazaar')}</p>

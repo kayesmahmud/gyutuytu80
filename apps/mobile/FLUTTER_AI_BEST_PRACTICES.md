@@ -330,7 +330,7 @@ Constraints:
 
 ---
 
-## ThuluBazaar-Specific Notes
+## Thulo Bazaar-Specific Notes
 
 ### Matching API Structure
 

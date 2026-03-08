@@ -269,7 +269,7 @@ export function buildShopMetadata(shop: ShopProfile) {
     shop.businessDescription || shop.bio || `Shop profile for ${displayName}. Search products and contact the seller.`;
 
   return {
-    title: `${displayName} - Shop | Thulobazaar`,
+    title: `${displayName} - Shop | Thulo Bazaar`,
     description: description.substring(0, 160),
   };
 }

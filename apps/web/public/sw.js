@@ -1,4 +1,4 @@
-// Service Worker for ThuluBazaar PWA
+// Service Worker for Thulo Bazaar PWA
 const CACHE_VERSION = 'v1';
 const CACHE_NAME = `thulobazaar-${CACHE_VERSION}`;
 

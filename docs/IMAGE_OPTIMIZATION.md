@@ -1,4 +1,4 @@
-# ThuluBazaar Image Optimization Guide
+# Thulo Bazaar Image Optimization Guide
 
 > Documentation for image processing, optimization, and storage
 

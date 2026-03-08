@@ -18,7 +18,7 @@
 
 ## ⚠️ Critical Decision: Which Version to Use?
 
-### ✅ Use Tailwind v3.4 (RECOMMENDED for Thulobazaar)
+### ✅ Use Tailwind v3.4 (RECOMMENDED for Thulo Bazaar)
 
 **Why v3.4 is the right choice:**
 
@@ -536,7 +536,7 @@ function PrimaryButton({ children }) {
 
 ---
 
-## 🎨 Thulobazaar Tailwind Config (v3.4)
+## 🎨 Thulo Bazaar Tailwind Config (v3.4)
 
 **Recommended configuration for your project:**
 
@@ -603,7 +603,7 @@ module.exports = {
 
 ---
 
-## ✅ Action Items for Thulobazaar
+## ✅ Action Items for Thulo Bazaar
 
 1. **Downgrade to Tailwind v3.4** (more stable for production)
    ```bash
@@ -650,7 +650,7 @@ module.exports = {
 
 ## 📝 Summary & Recommendation
 
-**For Thulobazaar (Nepal Market):**
+**For Thulo Bazaar (Nepal Market):**
 
 ✅ **Use Tailwind CSS v3.4**
 - Better browser compatibility for Nepal market

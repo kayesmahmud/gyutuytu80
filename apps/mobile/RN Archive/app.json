@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ThuluBazaar",
+    "name": "Thulo Bazaar",
     "slug": "thulobazaar",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -50,14 +50,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow ThuluBazaar to access your photos.",
-          "cameraPermission": "Allow ThuluBazaar to access your camera."
+          "photosPermission": "Allow Thulo Bazaar to access your photos.",
+          "cameraPermission": "Allow Thulo Bazaar to access your camera."
         }
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow ThuluBazaar to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow Thulo Bazaar to use your location."
         }
       ]
     ]

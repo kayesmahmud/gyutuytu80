@@ -46,7 +46,7 @@ export const STORAGE_KEYS = {
 
 // App Info
 export const APP_INFO = {
-  name: 'ThuluBazaar',
+  name: 'Thulo Bazaar',
   version: '1.0.0',
   description: "Nepal's Leading Classifieds Marketplace",
 };

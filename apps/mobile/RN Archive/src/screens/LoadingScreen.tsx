@@ -5,7 +5,7 @@ import { COLORS } from '../constants/config';
 export default function LoadingScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>ThuluBazaar</Text>
+      <Text style={styles.logo}>Thulo Bazaar</Text>
       <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
     </View>
   );

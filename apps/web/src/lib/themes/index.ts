@@ -1,5 +1,5 @@
 /**
- * ThuLoBazaar Theme System
+ * Thulo Bazaar Theme System
  * ========================
  * Central export hub for all themes
  *

@@ -1,6 +1,6 @@
 # UI Components Library
 
-Reusable UI components for ThuLoBazaar monorepo.
+Reusable UI components for Thulo Bazaar monorepo.
 
 ## Components
 

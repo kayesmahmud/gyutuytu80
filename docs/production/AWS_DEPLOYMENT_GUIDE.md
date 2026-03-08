@@ -1,4 +1,4 @@
-# ThuluBazaar - AWS Production Deployment Guide
+# Thulo Bazaar - AWS Production Deployment Guide
 
 ## Stack Overview
 
@@ -300,7 +300,7 @@ sudo systemctl enable nginx
 
 ### Step 8: Setup Cloudflare (Security + SSL)
 
-#### Why Cloudflare for ThuluBazaar?
+#### Why Cloudflare for Thulo Bazaar?
 - **FREE** DDoS protection
 - **FREE** SSL certificate
 - **FREE** Web Application Firewall (WAF)

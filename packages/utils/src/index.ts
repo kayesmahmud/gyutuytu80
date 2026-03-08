@@ -539,7 +539,7 @@ export const generateMetaTitle = (params: {
   locationName?: string;
   siteName?: string;
 }): string => {
-  const { adTitle, categoryName, locationName, siteName = 'Thulobazaar' } = params;
+  const { adTitle, categoryName, locationName, siteName = 'Thulo Bazaar' } = params;
 
   if (adTitle) {
     const parts = [adTitle];

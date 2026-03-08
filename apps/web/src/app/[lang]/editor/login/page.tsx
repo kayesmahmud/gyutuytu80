@@ -3,8 +3,8 @@ import Link from 'next/link';
 import EditorLoginForm from './EditorLoginForm';
 
 export const metadata: Metadata = {
-  title: 'Editor Login - Thulobazaar',
-  description: 'Editor login for Thulobazaar',
+  title: 'Editor Login - Thulo Bazaar',
+  description: 'Editor login for Thulo Bazaar',
 };
 
 interface EditorLoginPageProps {
@@ -34,7 +34,7 @@ export default async function EditorLoginPage({ params }: EditorLoginPageProps) 
               <div className="relative">
                 <div className="absolute -inset-1 bg-gradient-to-r from-teal-600 to-emerald-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
                 <h1 className="relative text-5xl font-black text-white tracking-tight">
-                  Thulobazaar
+                  Thulo Bazaar
                 </h1>
               </div>
             </Link>
@@ -87,7 +87,7 @@ export default async function EditorLoginPage({ params }: EditorLoginPageProps) 
 
           {/* Copyright */}
           <div className="mt-8 text-center text-sm text-teal-300/60">
-            <p>&copy; {new Date().getFullYear()} Thulobazaar. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Thulo Bazaar. All rights reserved.</p>
           </div>
         </div>
       </div>

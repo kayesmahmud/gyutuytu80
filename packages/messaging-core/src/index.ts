@@ -1,6 +1,6 @@
 /**
  * @thulobazaar/messaging-core
- * Shared messaging logic for Thulobazaar web and mobile apps
+ * Shared messaging logic for Thulo Bazaar web and mobile apps
  *
  * This package provides platform-agnostic messaging functionality including:
  * - TypeScript type definitions

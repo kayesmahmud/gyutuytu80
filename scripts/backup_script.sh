@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Daily Backup Script for Thulobazaar
+# Daily Backup Script for Thulo Bazaar
 # This script backs up database and pushes to GitHub
 # Created: $(date)
 
@@ -36,7 +36,7 @@ warn() {
 mkdir -p "$BACKUP_DIR"
 
 # Start backup process
-log "🚀 Starting daily backup for Thulobazaar..."
+log "🚀 Starting daily backup for Thulo Bazaar..."
 
 # Change to project directory
 cd "$PROJECT_DIR" || {

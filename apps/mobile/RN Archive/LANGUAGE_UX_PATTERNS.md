@@ -1,4 +1,4 @@
-# Language Selection UX Patterns for ThuluBazaar Mobile
+# Language Selection UX Patterns for Thulo Bazaar Mobile
 
 ## 🎯 Recommended User Flow
 
@@ -295,7 +295,7 @@ export default function LanguagePickerScreen({ onComplete }: Props) {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>🛍️</Text>
-          <Text style={styles.appName}>ThuluBazaar</Text>
+          <Text style={styles.appName}>Thulo Bazaar</Text>
           <Text style={styles.tagline}>
             Nepal's Leading Classifieds Marketplace
           </Text>
@@ -554,7 +554,7 @@ export default function SmartSplashScreen({ onComplete }: Props) {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>🛍️</Text>
-          <Text style={styles.appName}>ThuluBazaar</Text>
+          <Text style={styles.appName}>Thulo Bazaar</Text>
         </View>
 
         {/* Detected Language Indicator */}
@@ -871,7 +871,7 @@ AppState.addEventListener('change', async (state) => {
 
 ## 🎉 Summary
 
-**Best Approach for ThuluBazaar:**
+**Best Approach for Thulo Bazaar:**
 
 ✅ **Auto-detect on first launch** (no extra screen)
 ✅ **Header toggle for quick switching** (power users)

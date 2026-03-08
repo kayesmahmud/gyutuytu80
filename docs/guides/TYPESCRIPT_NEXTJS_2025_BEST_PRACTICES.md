@@ -392,7 +392,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   const ad = await getAd(params.slug);
 
   return {
-    title: `${ad.title} - ThuluBazaar`,
+    title: `${ad.title} - Thulo Bazaar`,
     description: ad.description,
     openGraph: {
       images: ad.images,
@@ -409,7 +409,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 ```typescript
 // apps/web/src/app/layout.tsx
 export const metadata: Metadata = {
-  title: 'ThuluBazaar - Buy & Sell Everything',
+  title: 'Thulo Bazaar - Buy & Sell Everything',
   description: 'Nepal\'s leading marketplace',
 };
 ```
@@ -734,7 +734,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!ad) return { title: 'Ad Not Found' };
 
   return {
-    title: `${ad.title} - ThuluBazaar`,
+    title: `${ad.title} - Thulo Bazaar`,
     description: ad.description.substring(0, 160),
     openGraph: {
       title: ad.title,

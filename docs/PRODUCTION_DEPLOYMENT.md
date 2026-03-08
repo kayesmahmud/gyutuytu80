@@ -1,6 +1,6 @@
-# ThuluBazaar Production Deployment Guide
+# Thulo Bazaar Production Deployment Guide
 
-> Complete guide for testing, deploying, and maintaining ThuluBazaar in production on AWS.
+> Complete guide for testing, deploying, and maintaining Thulo Bazaar in production on AWS.
 
 ---
 
@@ -400,7 +400,7 @@ psql -h your-rds-endpoint -U postgres thulobazaar < backup_20241214.sql
 ```bash
 # CPU utilization alarm
 aws cloudwatch put-metric-alarm \
-  --alarm-name "ThuluBazaar-High-CPU" \
+  --alarm-name "Thulo Bazaar-High-CPU" \
   --metric-name CPUUtilization \
   --namespace AWS/ECS \
   --statistic Average \

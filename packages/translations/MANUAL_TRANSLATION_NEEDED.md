@@ -1,4 +1,4 @@
-# Manual Translation Checklist for ThuluBazaar
+# Manual Translation Checklist for Thulo Bazaar
 
 ## 🎯 You're Absolutely Right!
 

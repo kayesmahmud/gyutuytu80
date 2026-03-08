@@ -1,4 +1,4 @@
-# ThuluBazaar Upgrade Guide
+# Thulo Bazaar Upgrade Guide
 
 > Solutions and patterns discovered during upgrades to versions beyond Claude's January 2025 knowledge cutoff.
 > Reference this file when building new features or encountering similar issues.
@@ -173,7 +173,7 @@ function SubmitButton() {
 | `'Suspense' cannot be used as a JSX component` | Add overrides in package.json (see below) |
 | `ExoticComponent is not assignable to ReactNode` | Ensure single version of @types/react |
 
-### ThuluBazaar-Specific Migration Notes
+### Thulo Bazaar-Specific Migration Notes
 
 **Files Changed:**
 1. `package.json` (root) - Added React 19 overrides
@@ -349,7 +349,7 @@ type: alertData.type === 'danger' ? 'error' : alertData.type,
 | `Property 'X' does not exist` | Remove from Prisma select, verify schema |
 | `Module not found: 'react-easy-crop/types'` | Import types from main module |
 
-### ThuluBazaar-Specific Migration Notes
+### Thulo Bazaar-Specific Migration Notes
 
 **Files Changed:**
 1. `apps/web/package.json` - Updated next to ^16.0.4
@@ -532,7 +532,7 @@ npx prisma generate
 | `Could not find declaration file for 'pg'` | Install `@types/pg` as devDependency |
 | `Module not found: Can't resolve 'net'` | Add webpack fallbacks in next.config.ts (see below) |
 
-### ThuluBazaar-Specific Migration Notes
+### Thulo Bazaar-Specific Migration Notes
 
 **Files Changed:**
 1. `packages/database/prisma/schema.prisma` - Removed `url = env("DATABASE_URL")` from datasource
@@ -628,7 +628,7 @@ npm --version   # 11.6.2
 - Better workspace support
 - Improved lockfile handling
 
-### ThuluBazaar-Specific Migration Notes
+### Thulo Bazaar-Specific Migration Notes
 
 **Files Changed:**
 1. `~/.zshrc` - Added Node 24 to PATH
@@ -762,7 +762,7 @@ npm run lint
 | `react-hooks/purity` errors | Disable React 19 compiler rules |
 | `Cannot find module 'eslint-config-next'` | Install `eslint-config-next@16` |
 
-### ThuluBazaar-Specific Migration Notes
+### Thulo Bazaar-Specific Migration Notes
 
 **Files Changed:**
 1. `apps/web/eslint.config.mjs` - Created new flat config
@@ -1112,7 +1112,7 @@ In Tailwind v4, colors defined in `@theme` with `--color-*` prefix don't always 
 <button className="bg-[var(--color-success)] hover:bg-[var(--color-success-hover)]">
 ```
 
-### ThuluBazaar-Specific Migration Notes
+### Thulo Bazaar-Specific Migration Notes
 
 **Files Changed:**
 1. `apps/web/postcss.config.mjs` - Renamed from .js, updated to ES module format with @tailwindcss/postcss

@@ -1,7 +1,7 @@
 /**
  * @thulobazaar/upload-utils
  *
- * Platform-agnostic upload utilities for ThuluBazaar.
+ * Platform-agnostic upload utilities for Thulo Bazaar.
  *
  * Usage:
  * - Import from '@thulobazaar/upload-utils' for common utilities

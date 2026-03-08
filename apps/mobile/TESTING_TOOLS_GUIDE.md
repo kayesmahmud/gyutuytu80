@@ -1,6 +1,6 @@
 # Mobile Testing Tools Guide
 
-This guide documents all testing tools available for the ThuluBazaar Flutter app and what Claude can do with them.
+This guide documents all testing tools available for the Thulo Bazaar Flutter app and what Claude can do with them.
 
 ## Installed Tools
 
@@ -104,7 +104,7 @@ maestro studio
 appId: com.thulobazaar.mobile
 ---
 - launchApp
-- assertVisible: "ThuluBazaar"
+- assertVisible: "Thulo Bazaar"
 - takeScreenshot: 01_home
 
 - tapOn: "Browse"

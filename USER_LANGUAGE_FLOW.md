@@ -1,4 +1,4 @@
-# ThuluBazaar Language Selection - User Flow
+# Thulo Bazaar Language Selection - User Flow
 
 ## 🎯 Recommended Flow (Simplest)
 
@@ -11,7 +11,7 @@
                       │
                       ▼
 ┌─────────────────────────────────────────────────────┐
-│  User Opens ThuluBazaar App                         │
+│  User Opens Thulo Bazaar App                         │
 └─────────────────────────────────────────────────────┘
                       │
                       ▼
@@ -82,7 +82,7 @@ User Opens App First Time
 │  Welcome Screen                                     │
 │  ┌───────────────────────────────────────────────┐  │
 │  │         🛍️                                   │  │
-│  │      ThuluBazaar                             │  │
+│  │      Thulo Bazaar                             │  │
 │  │                                               │  │
 │  │  Choose Your Language                        │  │
 │  │  आफ्नो भाषा छान्नुहोस्                       │  │
@@ -134,7 +134,7 @@ After tapping:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  ThuluBazaar                        [ने] 🔔 👤    │
+│  Thulo Bazaar                        [ने] 🔔 👤    │
 │  ─────────────────────────────────────────────────  │
 │                                                     │
 │  Buy & Sell Everything                             │
@@ -186,7 +186,7 @@ After tapping:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  ☰  ThuluBazaar                    [ने] 🔔 👤     │
+│  ☰  Thulo Bazaar                    [ने] 🔔 👤     │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  🛍️ Buy & Sell Everything                         │
@@ -268,7 +268,7 @@ After tapping:
 
 ---
 
-## 💡 My Recommendation for ThuluBazaar
+## 💡 My Recommendation for Thulo Bazaar
 
 **Use Auto-Detection + Header Toggle + Settings Page**
 

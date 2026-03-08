@@ -126,7 +126,7 @@ export function Sidebar({
           </div>
           {!isCollapsed && (
             <div className="overflow-hidden">
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">ThuLoBazaar</h1>
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight">Thulo Bazaar</h1>
               <p
                 className="text-xs font-semibold uppercase tracking-wider mt-0.5"
                 style={{ color: 'var(--admin-primary)' }}

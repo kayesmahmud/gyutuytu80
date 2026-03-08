@@ -19,12 +19,12 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   return {
     title: t('homeTitle'),
     description: t('homeDescription'),
-    keywords: 'Nepal classifieds, buy sell Nepal, online marketplace Nepal, free ads Nepal, Thulobazaar',
+    keywords: 'Nepal classifieds, buy sell Nepal, online marketplace Nepal, free ads Nepal, Thulo Bazaar',
     openGraph: {
       title: t('homeTitle'),
       description: t('siteDescription'),
       type: 'website',
-      siteName: 'Thulobazaar',
+      siteName: 'Thulo Bazaar',
     },
   };
 }

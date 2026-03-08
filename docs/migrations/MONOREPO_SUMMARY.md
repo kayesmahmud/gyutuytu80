@@ -1,4 +1,4 @@
-# 🎉 ThuluBazaar Monorepo - Setup Complete!
+# 🎉 Thulo Bazaar Monorepo - Setup Complete!
 
 ## ✅ What Was Created
 
