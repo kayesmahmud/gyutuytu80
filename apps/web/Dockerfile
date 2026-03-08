@@ -39,7 +39,8 @@ WORKDIR /app
 COPY --from=deps /app .
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client (DATABASE_URL needed at generate-time but not used for codegen)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
 
 # Build shared packages in dependency order
