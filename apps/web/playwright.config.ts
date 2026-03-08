@@ -36,11 +36,14 @@ export default defineConfig({
   ],
 
   // Start server before running tests
-  // CI: serve production build; Local: use dev server
+  // CI: serve standalone production build; Local: use dev server
   webServer: {
-    command: process.env.CI ? 'npx next start -p 3333' : 'npm run dev',
+    command: process.env.CI
+      ? 'node .next/standalone/apps/web/server.js'
+      : 'npm run dev',
     url: 'http://localhost:3333',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    env: process.env.CI ? { PORT: '3333', HOSTNAME: '0.0.0.0' } : undefined,
   },
 });

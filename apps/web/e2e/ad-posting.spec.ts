@@ -40,9 +40,9 @@ test.describe('Ad Posting Flow', () => {
   // CATEGORIES API (requires database)
   // ============================================
   test.describe('Categories', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('categories API returns data', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/categories');
       expect(response.ok()).toBeTruthy();
 
@@ -52,6 +52,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     test('categories have required fields', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/categories');
       const data = await response.json();
 
@@ -64,6 +66,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     test('can fetch category with subcategories', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/categories?includeSubcategories=true');
       expect(response.ok()).toBeTruthy();
 
@@ -76,9 +80,9 @@ test.describe('Ad Posting Flow', () => {
   // ADS LISTING (requires database)
   // ============================================
   test.describe('Ads Listing', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('ads API returns paginated results', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/ads');
       expect(response.ok()).toBeTruthy();
 
@@ -90,6 +94,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     test('can filter ads by category', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const catResponse = await request.get('/api/categories');
       const catData = await catResponse.json();
 
@@ -101,6 +107,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     test('can filter ads by search term', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/ads?search=phone');
       expect(response.ok()).toBeTruthy();
 
@@ -109,6 +117,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     test('can sort ads by price', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const responseLow = await request.get('/api/ads?sortBy=price-low');
       expect(responseLow.ok()).toBeTruthy();
 
@@ -117,6 +127,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     test('can paginate ads', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/ads?limit=5&offset=0');
       expect(response.ok()).toBeTruthy();
 
@@ -130,9 +142,9 @@ test.describe('Ad Posting Flow', () => {
   // AD DETAIL VIEW (requires database)
   // ============================================
   test.describe('Ad Detail View', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('can view ad details page', async ({ page, request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/ads?limit=1');
       const data = await response.json();
 
@@ -145,6 +157,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     test('ad detail API returns full ad data', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const listResponse = await request.get('/api/ads?limit=1');
       const listData = await listResponse.json();
 
@@ -162,6 +176,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     test('viewing ad increments view count', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const listResponse = await request.get('/api/ads?limit=1');
       const listData = await listResponse.json();
 
@@ -183,9 +199,9 @@ test.describe('Ad Posting Flow', () => {
   // POST AD FORM (requires auth + database)
   // ============================================
   authTest.describe('Post Ad Form (Authenticated)', () => {
-    authTest.skip(isCI, 'Requires database and authentication');
-
     authTest('post-ad form loads with categories', async ({ authenticatedPage }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       await authenticatedPage.goto('/en/post-ad');
       await authenticatedPage.waitForLoadState('networkidle');
 
@@ -193,6 +209,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     authTest('can fill basic ad information', async ({ authenticatedPage }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       await authenticatedPage.goto('/en/post-ad');
       await authenticatedPage.waitForLoadState('networkidle');
 
@@ -217,6 +235,8 @@ test.describe('Ad Posting Flow', () => {
     });
 
     authTest('validates required fields', async ({ authenticatedPage }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       await authenticatedPage.goto('/en/post-ad');
       await authenticatedPage.waitForLoadState('networkidle');
 

@@ -16,9 +16,9 @@ test.describe('Homepage', () => {
     await page.goto('/en');
     await page.waitForLoadState('networkidle');
 
-    // Check for navigation elements — look for sign in/sign up links
-    const signInLink = page.getByRole('link', { name: /sign in/i }).first();
-    await expect(signInLink).toBeVisible({ timeout: 10000 });
+    // Check for navigation elements — look for sign in/sign up links or buttons
+    const signInElement = page.locator('a, button').filter({ hasText: /sign in/i }).first();
+    await expect(signInElement).toBeVisible({ timeout: 10000 });
   });
 
   test('should navigate to shops page', async ({ page }) => {

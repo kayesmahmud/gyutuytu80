@@ -18,9 +18,9 @@ test.describe('Payment Flow', () => {
   // PAYMENT API VALIDATION (requires database)
   // ============================================
   test.describe('Payment API Validation', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('payment initiation requires authentication', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.post('/api/payments/initiate', {
         data: {
           gateway: 'khalti',
@@ -35,6 +35,8 @@ test.describe('Payment Flow', () => {
     });
 
     test('mock payment initiation requires authentication', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.post('/api/payments/mock/initiate', {
         data: {
           amount: 100,
@@ -48,6 +50,8 @@ test.describe('Payment Flow', () => {
     });
 
     test('mock payment verification requires authentication', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.post('/api/payments/mock/verify', {
         data: {
           transactionId: 'MOCK_TEST_123',
@@ -97,9 +101,9 @@ test.describe('Payment Flow', () => {
   // PAYMENT CALLBACK HANDLING (requires database)
   // ============================================
   test.describe('Payment Callback', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('callback redirects on missing orderId', async ({ page }) => {
+      test.skip(isCI, 'Requires database connection');
+
       await page.goto('/api/payments/callback?gateway=khalti');
 
       await page.waitForLoadState('networkidle');
@@ -107,6 +111,8 @@ test.describe('Payment Flow', () => {
     });
 
     test('callback redirects on invalid gateway', async ({ page }) => {
+      test.skip(isCI, 'Requires database connection');
+
       await page.goto('/api/payments/callback?gateway=invalid&orderId=TEST123');
 
       await page.waitForLoadState('networkidle');
@@ -114,6 +120,8 @@ test.describe('Payment Flow', () => {
     });
 
     test('callback redirects on non-existent transaction', async ({ page }) => {
+      test.skip(isCI, 'Requires database connection');
+
       await page.goto('/api/payments/callback?gateway=khalti&orderId=NON_EXISTENT_123');
 
       await page.waitForLoadState('networkidle');
@@ -125,19 +133,23 @@ test.describe('Payment Flow', () => {
   // MOCK PAYMENT FLOW (requires database)
   // ============================================
   test.describe('Mock Payment Endpoints', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('mock success endpoint exists', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/payments/mock/success?txnId=TEST&amount=100');
       expect([200, 302, 307]).toContain(response.status());
     });
 
     test('mock failure endpoint exists', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/payments/mock/failure?txnId=TEST&amount=100');
       expect([200, 302, 307]).toContain(response.status());
     });
 
     test('mock status endpoint returns 404 for invalid transaction', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/payments/mock/status/INVALID_TXN_ID');
       expect([404, 401]).toContain(response.status());
     });
@@ -147,9 +159,9 @@ test.describe('Payment Flow', () => {
   // PAYMENT TYPES (requires database)
   // ============================================
   test.describe('Payment Types', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('supports ad_promotion payment type', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.post('/api/payments/initiate', {
         data: {
           gateway: 'khalti',
@@ -164,6 +176,8 @@ test.describe('Payment Flow', () => {
     });
 
     test('supports individual_verification payment type', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.post('/api/payments/initiate', {
         data: {
           gateway: 'esewa',
@@ -178,6 +192,8 @@ test.describe('Payment Flow', () => {
     });
 
     test('supports business_verification payment type', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.post('/api/payments/initiate', {
         data: {
           gateway: 'khalti',
@@ -196,9 +212,9 @@ test.describe('Payment Flow', () => {
   // PAYMENT GATEWAYS (requires database)
   // ============================================
   test.describe('Payment Gateways', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('accepts khalti gateway', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.post('/api/payments/initiate', {
         data: {
           gateway: 'khalti',
@@ -210,6 +226,8 @@ test.describe('Payment Flow', () => {
     });
 
     test('accepts esewa gateway', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.post('/api/payments/initiate', {
         data: {
           gateway: 'esewa',
@@ -225,9 +243,9 @@ test.describe('Payment Flow', () => {
   // ESEWA REDIRECT (requires database)
   // ============================================
   test.describe('eSewa Integration', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('esewa redirect endpoint exists', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/payments/esewa/redirect');
       expect([200, 400, 401, 405]).toContain(response.status());
     });
@@ -237,9 +255,9 @@ test.describe('Payment Flow', () => {
   // AUTHENTICATED PAYMENT FLOW (requires auth + database)
   // ============================================
   authTest.describe('Authenticated Payment Flow', () => {
-    authTest.skip(isCI, 'Requires database and authentication');
-
     authTest('can initiate khalti payment when authenticated', async ({ authenticatedPage, request }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       const { token, headers } = await createAuthenticatedRequest(authenticatedPage);
 
       if (!token) {
@@ -268,6 +286,8 @@ test.describe('Payment Flow', () => {
     });
 
     authTest('can initiate esewa payment when authenticated', async ({ authenticatedPage, request }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       const { token, headers } = await createAuthenticatedRequest(authenticatedPage);
 
       if (!token) {
@@ -294,6 +314,8 @@ test.describe('Payment Flow', () => {
     });
 
     authTest('can complete mock payment flow', async ({ authenticatedPage, request }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       const { token, headers } = await createAuthenticatedRequest(authenticatedPage);
 
       if (!token) {
@@ -325,6 +347,8 @@ test.describe('Payment Flow', () => {
     });
 
     authTest('payment history accessible in dashboard', async ({ authenticatedPage }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       await authenticatedPage.goto('/en/dashboard');
       await authenticatedPage.waitForLoadState('networkidle');
 
@@ -345,9 +369,9 @@ test.describe('Payment Flow', () => {
   // AD PROMOTION PAYMENT (requires database)
   // ============================================
   test.describe('Ad Promotion Payment', () => {
-    test.skip(isCI, 'Requires database connection');
-
     test('promotion pricing API is accessible', async ({ request }) => {
+      test.skip(isCI, 'Requires database connection');
+
       const response = await request.get('/api/ads/promotion-pricing');
       expect([200, 401, 404]).toContain(response.status());
     });
@@ -355,9 +379,9 @@ test.describe('Payment Flow', () => {
 
   // Authenticated ad promotion tests
   authTest.describe('Ad Promotion (Authenticated)', () => {
-    authTest.skip(isCI, 'Requires database and authentication');
-
     authTest('can view ad promotion options when authenticated', async ({ authenticatedPage }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       await authenticatedPage.goto('/en/dashboard');
       await authenticatedPage.waitForLoadState('networkidle');
 
@@ -393,9 +417,9 @@ test.describe('Payment Flow', () => {
 
   // Authenticated verification tests
   authTest.describe('Verification Payment (Authenticated)', () => {
-    authTest.skip(isCI, 'Requires database and authentication');
-
     authTest('shows verification options when authenticated', async ({ authenticatedPage }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       await authenticatedPage.goto('/en/profile/verification');
       await authenticatedPage.waitForLoadState('networkidle');
 
@@ -418,6 +442,8 @@ test.describe('Payment Flow', () => {
     });
 
     authTest('shows verification pricing', async ({ authenticatedPage }) => {
+      authTest.skip(isCI, 'Requires database and authentication');
+
       await authenticatedPage.goto('/en/profile/verification');
       await authenticatedPage.waitForLoadState('networkidle');
 

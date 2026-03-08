@@ -117,12 +117,22 @@ jobs:
         working-directory: apps/web
         env:
           SKIP_ENV_VALIDATION: true
+          NEXTAUTH_SECRET: ci-test-secret-not-for-production
+          NEXTAUTH_URL: http://localhost:3333
+          NEXT_PUBLIC_API_URL: http://localhost:5000
+
+      - name: Copy static assets for standalone build
+        run: |
+          cp -r apps/web/public apps/web/.next/standalone/apps/web/public || true
+          cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static || true
 
       - name: Run E2E Tests
         run: npm run test:e2e
         working-directory: apps/web
         env:
           CI: true
+          NEXTAUTH_SECRET: ci-test-secret-not-for-production
+          NEXTAUTH_URL: http://localhost:3333
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4

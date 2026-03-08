@@ -114,7 +114,7 @@ test.describe('Critical Paths - Must Pass Before Deploy', () => {
     // Try to access dashboard without auth
     await page.goto('/en/dashboard');
 
-    // Should redirect to login
+    // Should redirect to login or auth page
     await expect(page).toHaveURL(/login|auth/);
   });
 
@@ -123,10 +123,13 @@ test.describe('Critical Paths - Must Pass Before Deploy', () => {
     await page.goto('/en/editor/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // Should redirect to editor login or show login content
+    // Should redirect to editor login, show login content, or show auth error
     const url = page.url();
     const pageText = await page.locator('body').textContent() || '';
-    const isProtected = url.includes('login') || pageText.toLowerCase().includes('sign in');
+    const isProtected =
+      url.includes('login') ||
+      url.includes('auth') ||
+      pageText.toLowerCase().includes('sign in');
     expect(isProtected).toBeTruthy();
   });
 });
