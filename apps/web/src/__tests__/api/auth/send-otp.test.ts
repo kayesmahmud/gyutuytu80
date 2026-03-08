@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-// Create mock functions at module level
-const mockFindFirst = vi.fn();
-const mockCount = vi.fn();
-const mockUpdateMany = vi.fn();
-const mockCreate = vi.fn();
+// Create separate mock functions per model to avoid cross-contamination
+const mockUsersFindFirst = vi.fn();
+const mockOtpsFindFirst = vi.fn();
+const mockOtpsCount = vi.fn();
+const mockOtpsUpdateMany = vi.fn();
+const mockOtpsCreate = vi.fn();
 
 const mockValidateNepaliPhone = vi.fn();
 const mockFormatPhoneNumber = vi.fn();
@@ -13,19 +14,17 @@ const mockGenerateOtp = vi.fn();
 const mockSendOtpSms = vi.fn();
 const mockGetOtpExpiry = vi.fn();
 
-const mockSendOtpEmail = vi.fn();
-
-// Mock Prisma
+// Mock Prisma - separate mocks per model
 vi.mock('@thulobazaar/database', () => ({
   prisma: {
     users: {
-      findFirst: (...args: unknown[]) => mockFindFirst(...args),
+      findFirst: (...args: unknown[]) => mockUsersFindFirst(...args),
     },
     phone_otps: {
-      findFirst: (...args: unknown[]) => mockFindFirst(...args),
-      count: (...args: unknown[]) => mockCount(...args),
-      updateMany: (...args: unknown[]) => mockUpdateMany(...args),
-      create: (...args: unknown[]) => mockCreate(...args),
+      findFirst: (...args: unknown[]) => mockOtpsFindFirst(...args),
+      count: (...args: unknown[]) => mockOtpsCount(...args),
+      updateMany: (...args: unknown[]) => mockOtpsUpdateMany(...args),
+      create: (...args: unknown[]) => mockOtpsCreate(...args),
     },
   },
 }));
@@ -37,11 +36,6 @@ vi.mock('@/lib/sms', () => ({
   generateOtp: () => mockGenerateOtp(),
   sendOtpSms: (...args: unknown[]) => mockSendOtpSms(...args),
   getOtpExpiry: () => mockGetOtpExpiry(),
-}));
-
-// Mock email notifications
-vi.mock('@/lib/notifications/notifications', () => ({
-  sendOtpEmail: (...args: unknown[]) => mockSendOtpEmail(...args),
 }));
 
 // Helper to create mock requests
@@ -60,27 +54,23 @@ function setupDefaultMocks() {
   mockGenerateOtp.mockReturnValue('123456');
   mockSendOtpSms.mockResolvedValue({ success: true, message: 'OTP sent' });
   mockGetOtpExpiry.mockReturnValue(new Date(Date.now() + 600000));
-  mockSendOtpEmail.mockResolvedValue({ success: true, message: 'Email sent' });
 
   // Default prisma mocks
-  mockFindFirst.mockResolvedValue(null);
-  mockCount.mockResolvedValue(0);
-  mockUpdateMany.mockResolvedValue({ count: 0 });
-  mockCreate.mockResolvedValue({ id: 1, phone: '9800000000', otp_code: '123456' });
+  mockUsersFindFirst.mockResolvedValue(null);
+  mockOtpsFindFirst.mockResolvedValue(null);
+  mockOtpsCount.mockResolvedValue(0);
+  mockOtpsUpdateMany.mockResolvedValue({ count: 0 });
+  mockOtpsCreate.mockResolvedValue({ id: 1, phone: '9800000000', otp_code: '123456' });
 }
 
 describe('POST /api/auth/send-otp', () => {
   let POST: typeof import('@/app/api/auth/send-otp/route').POST;
 
   beforeEach(async () => {
-    // Reset all mocks
     vi.clearAllMocks();
     vi.resetModules();
-
-    // Setup default behaviors
     setupDefaultMocks();
 
-    // Dynamically import to get fresh module with mocks
     const module = await import('@/app/api/auth/send-otp/route');
     POST = module.POST;
   });
@@ -93,7 +83,7 @@ describe('POST /api/auth/send-otp', () => {
   // Validation Tests
   // ==========================================
   describe('Validation', () => {
-    it('should return 400 when neither phone nor email provided', async () => {
+    it('should return 400 when phone not provided', async () => {
       const request = createMockRequest({
         purpose: 'registration',
       });
@@ -138,35 +128,14 @@ describe('POST /api/auth/send-otp', () => {
   // ==========================================
   describe('Registration Purpose', () => {
     it('should return 400 if phone already registered', async () => {
-      // First call for user check returns existing user
-      mockFindFirst
-        .mockResolvedValueOnce({
-          id: 1,
-          phone: '9800000000',
-          phone_verified: true,
-        });
+      mockUsersFindFirst.mockResolvedValueOnce({
+        id: 1,
+        phone: '9800000000',
+        phone_verified: true,
+      });
 
       const request = createMockRequest({
         phone: '9800000000',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('already registered');
-    });
-
-    it('should return 400 if email already registered', async () => {
-      mockFindFirst
-        .mockResolvedValueOnce({
-          id: 1,
-          email: 'existing@example.com',
-        });
-
-      const request = createMockRequest({
-        email: 'existing@example.com',
         purpose: 'registration',
       });
       const response = await POST(request);
@@ -183,7 +152,7 @@ describe('POST /api/auth/send-otp', () => {
   // ==========================================
   describe('Login Purpose', () => {
     it('should return 404 if phone not registered for login', async () => {
-      mockFindFirst.mockResolvedValue(null);
+      mockUsersFindFirst.mockResolvedValue(null);
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -198,14 +167,13 @@ describe('POST /api/auth/send-otp', () => {
     });
 
     it('should return 403 if account suspended for login', async () => {
-      mockFindFirst
-        .mockResolvedValueOnce({
-          id: 1,
-          phone: '9800000000',
-          phone_verified: true,
-          is_active: true,
-          is_suspended: true,
-        });
+      mockUsersFindFirst.mockResolvedValueOnce({
+        id: 1,
+        phone: '9800000000',
+        phone_verified: true,
+        is_active: true,
+        is_suspended: true,
+      });
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -225,10 +193,10 @@ describe('POST /api/auth/send-otp', () => {
   // ==========================================
   describe('Password Reset Purpose', () => {
     it('should return 404 if account not found for password reset', async () => {
-      mockFindFirst.mockResolvedValue(null);
+      mockUsersFindFirst.mockResolvedValue(null);
 
       const request = createMockRequest({
-        email: 'notfound@example.com',
+        phone: '9800000000',
         purpose: 'password_reset',
       });
       const response = await POST(request);
@@ -236,28 +204,27 @@ describe('POST /api/auth/send-otp', () => {
 
       expect(response.status).toBe(404);
       expect(data.success).toBe(false);
+      expect(data.message).toContain('No account found');
     });
 
-    it('should return 400 for OAuth-only accounts on password reset', async () => {
-      mockFindFirst
-        .mockResolvedValueOnce({
-          id: 1,
-          email: 'oauth@example.com',
-          password_hash: null, // OAuth user without password
-          is_active: true,
-          is_suspended: false,
-        });
+    it('should return 403 if account suspended for password reset', async () => {
+      mockUsersFindFirst.mockResolvedValueOnce({
+        id: 1,
+        phone: '9800000000',
+        is_active: true,
+        is_suspended: true,
+      });
 
       const request = createMockRequest({
-        email: 'oauth@example.com',
+        phone: '9800000000',
         purpose: 'password_reset',
       });
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(403);
       expect(data.success).toBe(false);
-      expect(data.message).toContain('social login');
+      expect(data.message).toContain('suspended');
     });
   });
 
@@ -266,15 +233,14 @@ describe('POST /api/auth/send-otp', () => {
   // ==========================================
   describe('Rate Limiting', () => {
     it('should return 429 if OTP requested within cooldown', async () => {
-      // First call - no user found (registration check passes)
-      // Second call - recent OTP found
-      mockFindFirst
-        .mockResolvedValueOnce(null) // No existing user
-        .mockResolvedValueOnce({
-          id: 1,
-          phone: '9800000000',
-          created_at: new Date(Date.now() - 30000), // 30 seconds ago
-        });
+      // users.findFirst: no existing user (registration passes)
+      mockUsersFindFirst.mockResolvedValueOnce(null);
+      // phone_otps.findFirst: recent OTP exists (cooldown active)
+      mockOtpsFindFirst.mockResolvedValueOnce({
+        id: 1,
+        phone: '9800000000',
+        created_at: new Date(Date.now() - 30000), // 30 seconds ago
+      });
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -290,8 +256,9 @@ describe('POST /api/auth/send-otp', () => {
     });
 
     it('should return 429 if max attempts exceeded', async () => {
-      mockFindFirst.mockResolvedValue(null); // No user, no recent OTP
-      mockCount.mockResolvedValue(3); // Max attempts reached
+      mockUsersFindFirst.mockResolvedValue(null);
+      mockOtpsFindFirst.mockResolvedValue(null); // No cooldown
+      mockOtpsCount.mockResolvedValue(4); // MAX_OTP_ATTEMPTS = 4
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -311,8 +278,9 @@ describe('POST /api/auth/send-otp', () => {
   // ==========================================
   describe('Successful OTP Send', () => {
     it('should send OTP via SMS for phone registration', async () => {
-      mockFindFirst.mockResolvedValue(null); // No existing user, no recent OTP
-      mockCount.mockResolvedValue(0); // No attempts
+      mockUsersFindFirst.mockResolvedValue(null);
+      mockOtpsFindFirst.mockResolvedValue(null);
+      mockOtpsCount.mockResolvedValue(0);
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -329,27 +297,10 @@ describe('POST /api/auth/send-otp', () => {
       expect(mockSendOtpSms).toHaveBeenCalledWith('9800000000', '123456', 'registration');
     });
 
-    it('should send OTP via email for email registration', async () => {
-      mockFindFirst.mockResolvedValue(null);
-      mockCount.mockResolvedValue(0);
-
-      const request = createMockRequest({
-        email: 'test@example.com',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.message).toContain('email');
-      expect(data.identifier).toBe('test@example.com');
-      expect(mockSendOtpEmail).toHaveBeenCalledWith('test@example.com', '123456', 'registration');
-    });
-
     it('should invalidate previous unused OTPs', async () => {
-      mockFindFirst.mockResolvedValue(null);
-      mockCount.mockResolvedValue(0);
+      mockUsersFindFirst.mockResolvedValue(null);
+      mockOtpsFindFirst.mockResolvedValue(null);
+      mockOtpsCount.mockResolvedValue(0);
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -357,7 +308,7 @@ describe('POST /api/auth/send-otp', () => {
       });
       await POST(request);
 
-      expect(mockUpdateMany).toHaveBeenCalledWith(
+      expect(mockOtpsUpdateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             phone: '9800000000',
@@ -370,8 +321,9 @@ describe('POST /api/auth/send-otp', () => {
     });
 
     it('should store new OTP in database', async () => {
-      mockFindFirst.mockResolvedValue(null);
-      mockCount.mockResolvedValue(0);
+      mockUsersFindFirst.mockResolvedValue(null);
+      mockOtpsFindFirst.mockResolvedValue(null);
+      mockOtpsCount.mockResolvedValue(0);
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -379,7 +331,7 @@ describe('POST /api/auth/send-otp', () => {
       });
       await POST(request);
 
-      expect(mockCreate).toHaveBeenCalledWith(
+      expect(mockOtpsCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             phone: '9800000000',
@@ -391,17 +343,15 @@ describe('POST /api/auth/send-otp', () => {
     });
 
     it('should send OTP for password reset with phone', async () => {
-      // User exists for password reset
-      mockFindFirst
-        .mockResolvedValueOnce({
-          id: 1,
-          phone: '9800000000',
-          password_hash: 'hashedpassword',
-          is_active: true,
-          is_suspended: false,
-        })
-        .mockResolvedValueOnce(null); // No recent OTP
-      mockCount.mockResolvedValue(0);
+      mockUsersFindFirst.mockResolvedValueOnce({
+        id: 1,
+        phone: '9800000000',
+        password_hash: 'hashedpassword',
+        is_active: true,
+        is_suspended: false,
+      });
+      mockOtpsFindFirst.mockResolvedValue(null);
+      mockOtpsCount.mockResolvedValue(0);
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -416,17 +366,15 @@ describe('POST /api/auth/send-otp', () => {
     });
 
     it('should send OTP for login with existing user', async () => {
-      // User exists and is active
-      mockFindFirst
-        .mockResolvedValueOnce({
-          id: 1,
-          phone: '9800000000',
-          phone_verified: true,
-          is_active: true,
-          is_suspended: false,
-        })
-        .mockResolvedValueOnce(null); // No recent OTP
-      mockCount.mockResolvedValue(0);
+      mockUsersFindFirst.mockResolvedValueOnce({
+        id: 1,
+        phone: '9800000000',
+        phone_verified: true,
+        is_active: true,
+        is_suspended: false,
+      });
+      mockOtpsFindFirst.mockResolvedValue(null);
+      mockOtpsCount.mockResolvedValue(0);
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -446,12 +394,11 @@ describe('POST /api/auth/send-otp', () => {
   // ==========================================
   describe('Phone Verification Purpose', () => {
     it('should return 400 if phone already verified by another user', async () => {
-      mockFindFirst
-        .mockResolvedValueOnce({
-          id: 2,
-          phone: '9800000000',
-          phone_verified: true,
-        });
+      mockUsersFindFirst.mockResolvedValueOnce({
+        id: 2,
+        phone: '9800000000',
+        phone_verified: true,
+      });
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -466,8 +413,9 @@ describe('POST /api/auth/send-otp', () => {
     });
 
     it('should send OTP for phone verification if not verified', async () => {
-      mockFindFirst.mockResolvedValue(null); // No verified user
-      mockCount.mockResolvedValue(0);
+      mockUsersFindFirst.mockResolvedValue(null);
+      mockOtpsFindFirst.mockResolvedValue(null);
+      mockOtpsCount.mockResolvedValue(0);
 
       const request = createMockRequest({
         phone: '9800000000',
@@ -487,8 +435,9 @@ describe('POST /api/auth/send-otp', () => {
   // ==========================================
   describe('Error Handling', () => {
     it('should return 500 if SMS sending fails', async () => {
-      mockFindFirst.mockResolvedValue(null);
-      mockCount.mockResolvedValue(0);
+      mockUsersFindFirst.mockResolvedValue(null);
+      mockOtpsFindFirst.mockResolvedValue(null);
+      mockOtpsCount.mockResolvedValue(0);
       mockSendOtpSms.mockResolvedValue({
         success: false,
         message: 'Failed',
@@ -505,48 +454,6 @@ describe('POST /api/auth/send-otp', () => {
       expect(response.status).toBe(500);
       expect(data.success).toBe(false);
       expect(data.message).toContain('Failed to send OTP');
-    });
-
-    it('should return 500 if email sending fails (not SMTP config error)', async () => {
-      mockFindFirst.mockResolvedValue(null);
-      mockCount.mockResolvedValue(0);
-      mockSendOtpEmail.mockResolvedValue({
-        success: false,
-        message: 'Failed',
-        error: 'Email service error',
-      });
-
-      const request = createMockRequest({
-        email: 'test@example.com',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(500);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('Failed to send OTP');
-    });
-
-    it('should succeed if email fails due to SMTP not configured (dev mode)', async () => {
-      mockFindFirst.mockResolvedValue(null);
-      mockCount.mockResolvedValue(0);
-      mockSendOtpEmail.mockResolvedValue({
-        success: false,
-        message: 'SMTP not configured',
-        error: 'SMTP not configured',
-      });
-
-      const request = createMockRequest({
-        email: 'test@example.com',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      // Should still return 200 because in dev mode, SMTP not configured is acceptable
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
     });
 
     it('should handle invalid JSON body gracefully', async () => {
