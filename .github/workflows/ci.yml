@@ -107,7 +107,7 @@ jobs:
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
 
       - name: Fix platform-specific native modules
-        run: npm install --no-save lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu @unrs/resolver-binding-linux-x64-gnu @rollup/rollup-linux-x64-gnu
+        run: npm install --no-save lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu @unrs/resolver-binding-linux-x64-gnu @rollup/rollup-linux-x64-gnu @img/sharp-linux-x64
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium

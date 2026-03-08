@@ -390,7 +390,7 @@ describe('useShopSlug', () => {
       });
 
       expect(saved).toBe(false);
-      expect(result.current.error).toBe('Failed to update shop URL');
+      expect(result.current.error).toBe('Network error');
     });
   });
 

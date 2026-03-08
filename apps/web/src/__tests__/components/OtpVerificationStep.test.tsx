@@ -1,7 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { OtpVerificationStep } from '@/app/[lang]/auth/reset-password/components/OtpVerificationStep';
 import React from 'react';
+
+// Mock next-intl before importing the component
+const translations: Record<string, string> = {
+  enter6DigitCode: 'Enter 6-digit code',
+  verifyCode: 'Verify Code',
+  verifying: 'Verifying...',
+  didntReceiveCode: "Didn't receive the code?",
+  resendOtp: 'Resend OTP',
+  sending: 'Sending...',
+};
+
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, params?: Record<string, unknown>) => {
+    if (key === 'resendIn' && params?.seconds !== undefined) {
+      return `Resend in ${params.seconds}s`;
+    }
+    return translations[key] || key;
+  },
+}));
+
+import { OtpVerificationStep } from '@/app/[lang]/auth/reset-password/components/OtpVerificationStep';
 
 describe('OtpVerificationStep', () => {
   const defaultProps = {

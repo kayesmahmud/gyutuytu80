@@ -75,7 +75,7 @@ describe('ImageUpload', () => {
       render(<ImageUpload {...defaultProps} />);
 
       const input = document.querySelector('input[type="file"]');
-      expect(input).toHaveAttribute('accept', 'image/*');
+      expect(input).toHaveAttribute('accept', 'image/jpeg,image/png,image/gif,image/webp,image/avif');
     });
 
     it('should allow multiple file selection', () => {
@@ -126,7 +126,7 @@ describe('ImageUpload', () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       expect(onChange).not.toHaveBeenCalled();
-      expect(screen.getByText(/only image files/i)).toBeInTheDocument();
+      expect(screen.getByText(/not a supported image format/i)).toBeInTheDocument();
     });
 
     it('should reject when max images exceeded', () => {
