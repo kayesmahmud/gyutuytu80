@@ -35,9 +35,10 @@ export default defineConfig({
     // },
   ],
 
-  // Start dev server before running tests
+  // Start server before running tests
+  // CI: serve production build; Local: use dev server
   webServer: {
-    command: 'npm run dev:web',
+    command: process.env.CI ? 'npx next start -p 3333' : 'npm run dev',
     url: 'http://localhost:3333',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
