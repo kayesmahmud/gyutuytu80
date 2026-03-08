@@ -44,7 +44,7 @@ export default function FilterCarousel({
   const getConditionLabel = () => {
     if (!condition) return t('condition');
     const option = CONDITION_OPTIONS.find((opt) => opt.value === condition);
-    return option?.label || t('condition');
+    return option ? t(option.label) : t('condition');
   };
 
   return (

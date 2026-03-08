@@ -221,6 +221,7 @@
     "priceIsNegotiable": "मूल्य मोलमोलाई हुन्छ",
     "fixedPrice": "निश्चित मूल्य",
     "condition": "अवस्था",
+    "anyCondition": "जुनसुकै अवस्था",
     "brandNew": "नयाँ",
     "used": "पुरानो",
     "likeNew": "नयाँ जस्तै",

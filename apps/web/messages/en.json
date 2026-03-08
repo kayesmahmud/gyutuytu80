@@ -221,6 +221,7 @@
     "priceIsNegotiable": "Price is negotiable",
     "fixedPrice": "Fixed Price",
     "condition": "Condition",
+    "anyCondition": "Any Condition",
     "brandNew": "Brand New",
     "used": "Used",
     "likeNew": "Like New",

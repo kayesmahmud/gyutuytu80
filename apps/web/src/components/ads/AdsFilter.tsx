@@ -6,9 +6,9 @@ import CascadingLocationFilter from '@/components/CascadingLocationFilter';
 import FilterSection from '@/components/shared/FilterSection';
 import RadioOption from '@/components/shared/RadioOption';
 import { useAdsFilters } from '@/hooks/useAdsFilters';
-import { useLocalizedName } from '@/hooks/useLocalizedName';
 import { CONDITION_OPTIONS } from '@/lib/filters';
 import type { LocationHierarchyProvince } from '@/lib/location/types';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 
 interface Category {
   id: number;
@@ -67,7 +67,7 @@ export default function AdsFilter({
   });
 
   const t = useTranslations('ads');
-  const localName = useLocalizedName();
+  const localizedName = useLocalizedName();
 
   // Track expanded sections
   const [expandedSections, setExpandedSections] = useState({
@@ -179,7 +179,7 @@ export default function AdsFilter({
                   )}
                   {!hasSubcategories && <span className="w-6" />}
                   <RadioOption
-                    label={`${cat.icon} ${localName(cat.name, cat.nameNe)}`}
+                    label={`${cat.icon} ${localizedName(cat.name, cat.nameNe)}`}
                     checked={isSelected}
                     onChange={() => updateFilters({ category: cat.slug })}
                   />
@@ -191,7 +191,7 @@ export default function AdsFilter({
                     {cat.subcategories.map((subcat) => (
                       <RadioOption
                         key={subcat.id}
-                        label={localName(subcat.name, subcat.nameNe)}
+                        label={localizedName(subcat.name, subcat.nameNe)}
                         checked={selectedCategorySlug === subcat.slug}
                         onChange={() => updateFilters({ category: subcat.slug })}
                       />
@@ -269,7 +269,7 @@ export default function AdsFilter({
           {CONDITION_OPTIONS.map((opt) => (
             <RadioOption
               key={opt.value}
-              label={opt.icon ? `${opt.icon} ${opt.label}` : opt.label}
+              label={opt.icon ? `${opt.icon} ${t(opt.label)}` : t(opt.label)}
               checked={opt.value === '' ? !condition : condition === opt.value}
               onChange={() => updateFilters({ condition: opt.value || undefined })}
             />

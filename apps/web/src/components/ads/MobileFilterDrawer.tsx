@@ -5,9 +5,9 @@ import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
 import { useAdsFilters } from '@/hooks/useAdsFilters';
-import { useLocalizedName } from '@/hooks/useLocalizedName';
 import { SORT_OPTIONS, CONDITION_OPTIONS, DEFAULT_SORT } from '@/lib/filters';
 import type { LocationHierarchyProvince } from '@/lib/location/types';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 
 export type FilterSection = 'categories' | 'locations' | 'price' | 'condition' | 'sort';
 
@@ -55,7 +55,7 @@ export default function MobileFilterDrawer({
   initialSection,
 }: MobileFilterDrawerProps) {
   const t = useTranslations('ads');
-  const localName = useLocalizedName();
+  const localizedName = useLocalizedName();
   const [internalOpen, setInternalOpen] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -268,7 +268,7 @@ export default function MobileFilterDrawer({
                           }`}
                         >
                           <span className="text-xl">{category.icon || '📁'}</span>
-                          <span className="text-sm font-medium">{localName(category.name, category.nameNe)}</span>
+                          <span className="text-sm font-medium">{localizedName(category.name, category.nameNe)}</span>
                         </button>
                       </div>
 
@@ -285,7 +285,7 @@ export default function MobileFilterDrawer({
                                   : 'hover:bg-gray-100 text-gray-700'
                               }`}
                             >
-                              <span className="text-sm font-medium">{localName(subcat.name, subcat.nameNe)}</span>
+                              <span className="text-sm font-medium">{localizedName(subcat.name, subcat.nameNe)}</span>
                             </button>
                           ))}
                         </div>
@@ -418,7 +418,7 @@ export default function MobileFilterDrawer({
                     }`}
                   >
                     <span className="text-sm font-medium">
-                      {opt.icon ? `${opt.icon} ${opt.label}` : opt.label}
+                      {opt.icon ? `${opt.icon} ${t(opt.label)}` : t(opt.label)}
                     </span>
                   </button>
                 ))}
