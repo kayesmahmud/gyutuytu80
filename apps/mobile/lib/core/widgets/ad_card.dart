@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -7,6 +8,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../api/api_config.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../utils/localized_helpers.dart';
 import '../utils/page_transitions.dart';
 import '../../features/ad_detail/ad_detail_screen.dart';
 import 'tap_scale.dart';
@@ -167,7 +169,7 @@ class AdCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 2),
                               Text(
-                                'FEATURED',
+                                'common.featured'.tr(),
                                 style: GoogleFonts.inter(
                                   color: Colors.white,
                                   fontSize: 8,
@@ -200,7 +202,9 @@ class AdCard extends StatelessWidget {
                           ), // Pill shape from image? Or slight rounded rect. Image looks rounded.
                         ),
                         child: Text(
-                          ad.condition!.toUpperCase(),
+                          context.locale.languageCode == 'ne'
+                              ? (isNew ? 'नयाँ' : 'पुरानो')
+                              : ad.condition!.toUpperCase(),
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 10,
@@ -246,7 +250,7 @@ class AdCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          ad.categoryName ?? 'Uncategorized',
+                          ad.localizedCategoryName(context.locale.languageCode),
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -262,7 +266,7 @@ class AdCard extends StatelessWidget {
 
                   // Price: Rs. 4,444 (Green, Bold)
                   Text(
-                    formatPrice(ad.price),
+                    formatLocalizedPrice(ad.price, context.locale.languageCode),
                     style: GoogleFonts.inter(
                       color: const Color(0xFF10B981),
                       fontWeight: FontWeight.bold,
@@ -277,7 +281,7 @@ class AdCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          ad.userName ?? 'Seller',
+                          ad.userName ?? 'common.seller'.tr(),
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: Colors.grey[800],
@@ -353,7 +357,7 @@ class AdCard extends StatelessWidget {
 
   /// Format price with commas (Rs. 1,000,000)
   static String formatPrice(double? price) {
-    if (price == null) return 'Contact for price';
+    if (price == null) return 'common.contactForPrice'.tr();
     final formatted = price
         .toStringAsFixed(0)
         .replaceAllMapped(

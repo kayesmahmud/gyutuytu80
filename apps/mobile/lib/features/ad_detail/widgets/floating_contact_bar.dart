@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/core/providers/chat_provider.dart';
@@ -43,7 +45,7 @@ class FloatingContactBar extends StatelessWidget {
             flex: 2,
             child: _buildFilledBtn(
               LucideIcons.messageCircle,
-              "Chat",
+              context.locale.languageCode == 'ne' ? 'च्याट' : "Chat",
               const Color(0xFF2563EB),
               () => _startChat(context),
             ),
@@ -83,7 +85,7 @@ class FloatingContactBar extends StatelessWidget {
     // Prevent self-messaging
     if (authProvider.userId == ad.userId) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You cannot message yourself')),
+        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'आफैलाई सन्देश पठाउन मिल्दैन' : 'You cannot message yourself')),
       );
       return;
     }
@@ -119,7 +121,7 @@ class FloatingContactBar extends StatelessWidget {
               conversationId: conversation.id,
               recipientName: (conversation.otherUserName.isNotEmpty && conversation.otherUserName != 'Unknown')
                   ? conversation.otherUserName
-                  : (ad.userName ?? 'Seller'),
+                  : (ad.userName ?? (context.locale.languageCode == 'ne' ? 'विक्रेता' : 'Seller')),
               recipientAvatar: avatarUrl,
               adTitle: ad.title,
               initialMessage: "Hi, I'm interested in \"${ad.title}\"\nhttps://thulobazaar.com/en/ad/${ad.slug}",
@@ -128,14 +130,14 @@ class FloatingContactBar extends StatelessWidget {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to start conversation')),
+          SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'कुराकानी सुरु गर्न सकिएन' : 'Failed to start conversation')),
         );
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context); // Close loading
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: $e')),
         );
       }
     }

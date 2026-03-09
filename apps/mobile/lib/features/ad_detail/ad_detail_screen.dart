@@ -1,12 +1,14 @@
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
@@ -140,7 +142,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to load ad: $e';
+          _error = context.locale.languageCode == 'ne' ? 'विज्ञापन लोड गर्न असफल: $e' : 'Failed to load ad: $e';
           _isLoading = false;
         });
       }
@@ -194,14 +196,14 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
       if (mounted && !response.success) {
         setState(() => _isFavorite = previousState); // Rollback
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response.error ?? 'Failed to update favorite')),
+          SnackBar(content: Text(response.error ?? (context.locale.languageCode == 'ne' ? 'मनपर्ने अपडेट गर्न असफल' : 'Failed to update favorite'))),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isFavorite = previousState); // Rollback
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: $e')),
         );
       }
     }
@@ -328,7 +330,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
             Icon(LucideIcons.alertCircle, size: 64, color: Colors.red[300]),
             const SizedBox(height: 16),
             Text(
-              _error ?? 'Something went wrong',
+              _error ?? l('somethingWentWrong', context.locale.languageCode),
               style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
@@ -336,7 +338,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
             ElevatedButton(
               onPressed: _fetchAdDetails,
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
-              child: const Text('Retry', style: TextStyle(color: Colors.white)),
+              child: Text(l('retry', context.locale.languageCode), style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -409,7 +411,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${_formatTimeAgo(ad.createdAt)} • ${ad.viewCount} views',
+                          '${localizedTimeAgo(ad.createdAt, context.locale.languageCode)} • ${ad.viewCount} ${l('views', context.locale.languageCode)}',
                           style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
                         ),
                         const SizedBox(height: 12),
@@ -441,7 +443,9 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  ad.condition!,
+                                  context.locale.languageCode == 'ne'
+                                      ? (ad.condition!.toLowerCase() == 'brand new' ? 'नयाँ' : 'पुरानो')
+                                      : ad.condition!,
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     color: Colors.white,
@@ -455,9 +459,9 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                   // Navigate categories
                                 },
                                 child: Text(
-                                  ad.subcategoryName != null 
-                                    ? '${ad.categoryName} > ${ad.subcategoryName}' 
-                                    : ad.categoryName,
+                                  ad.localizedSubcategoryName(context.locale.languageCode) != null
+                                    ? '${ad.localizedCategoryName(context.locale.languageCode)} > ${ad.localizedSubcategoryName(context.locale.languageCode)}'
+                                    : ad.localizedCategoryName(context.locale.languageCode),
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     color: const Color(0xFF10B981),
@@ -479,7 +483,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Description",
+                          l('description', context.locale.languageCode),
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -509,7 +513,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Location",
+                          l('location', context.locale.languageCode),
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -530,7 +534,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  ad.locationName,
+                                  ad.localizedLocationName(context.locale.languageCode),
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
                                     color: const Color(0xFF374151),
@@ -561,7 +565,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                           const Icon(LucideIcons.flag, color: Color(0xFFEF4444), size: 16),
                           const SizedBox(width: 8),
                           Text(
-                            "Report this ad",
+                            context.locale.languageCode == 'ne' ? 'यो विज्ञापन रिपोर्ट गर्नुहोस्' : "Report this ad",
                             style: GoogleFonts.inter(
                               color: const Color(0xFF6B7280),
                               fontSize: 12,
@@ -663,7 +667,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Promote this Ad',
+                          context.locale.languageCode == 'ne' ? 'यो विज्ञापन प्रवर्द्धन गर्नुहोस्' : 'Promote this Ad',
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 15,
@@ -671,7 +675,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                           ),
                         ),
                         Text(
-                          'Increase visibility with promotions',
+                          context.locale.languageCode == 'ne' ? 'प्रवर्द्धनसँग दृश्यता बढाउनुहोस्' : 'Increase visibility with promotions',
                           style: GoogleFonts.inter(
                             color: Colors.white70,
                             fontSize: 12,
@@ -697,7 +701,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            "Related Ads",
+            context.locale.languageCode == 'ne' ? 'सम्बन्धित विज्ञापनहरू' : "Related Ads",
             style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937)),
           ),
         ),
@@ -724,24 +728,6 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
 // Banners extracted to widgets/ad_detail_banners.dart
 
 // Contact Bar logic extracted to widgets/floating_contact_bar.dart
-  String _formatPrice(double price) {
-    if (price == 0) return 'Free';
-    final formatter = NumberFormat("#,##0", "en_US");
-    return 'Rs. ${formatter.format(price)}';
-  }
-
-  String _formatTimeAgo(DateTime dateTime) {
-    final difference = DateTime.now().difference(dateTime);
-    if (difference.inDays > 7) {
-      return DateFormat('MMM d, yyyy').format(dateTime);
-    } else if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
+  String _formatPrice(double price) =>
+      formatLocalizedPrice(price, context.locale.languageCode);
 }

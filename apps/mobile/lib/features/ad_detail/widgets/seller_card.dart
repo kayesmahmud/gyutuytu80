@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -63,7 +64,7 @@ class SellerCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          ad.userName ?? "Seller",
+                          ad.userName ?? (context.locale.languageCode == 'ne' ? "विक्रेता" : "Seller"),
                           style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -81,9 +82,9 @@ class SellerCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    isBusiness
-                        ? "Verified Business Account"
-                        : (isVerified ? "Verified Individual Seller" : "Seller"),
+                    context.locale.languageCode == 'ne'
+                        ? (isBusiness ? "प्रमाणित व्यापार खाता" : (isVerified ? "प्रमाणित व्यक्तिगत विक्रेता" : "विक्रेता"))
+                        : (isBusiness ? "Verified Business Account" : (isVerified ? "Verified Individual Seller" : "Seller")),
                     style: GoogleFonts.inter(
                         fontSize: 12, color: const Color(0xFF6B7280)),
                   ),

@@ -225,9 +225,13 @@ class AdWithDetails extends Ad {
   final String? userPhone;
   final bool userVerified;
   final String categoryName;
+  final String? categoryNameNe;
   final String? subcategoryName;
+  final String? subcategoryNameNe;
   final String locationName;
+  final String? locationNameNe;
   final String? areaName;
+  final String? areaNameNe;
 
   // Additional seller info
   final String? accountType;
@@ -269,9 +273,13 @@ class AdWithDetails extends Ad {
     this.userPhone,
     required this.userVerified,
     required this.categoryName,
+    this.categoryNameNe,
     this.subcategoryName,
+    this.subcategoryNameNe,
     required this.locationName,
+    this.locationNameNe,
     this.areaName,
+    this.areaNameNe,
     this.accountType,
     this.businessVerificationStatus,
     this.individualVerified,
@@ -314,9 +322,13 @@ class AdWithDetails extends Ad {
       userPhone: json['userPhone'] as String? ?? json['user_phone'] as String?,
       userVerified: json['userVerified'] as bool? ?? json['user_verified'] as bool? ?? false,
       categoryName: json['categoryName'] as String? ?? json['category_name'] as String? ?? '',
+      categoryNameNe: json['categoryNameNe'] as String? ?? json['category_name_ne'] as String?,
       subcategoryName: json['subcategoryName'] as String? ?? json['subcategory_name'] as String?,
+      subcategoryNameNe: json['subcategoryNameNe'] as String? ?? json['subcategory_name_ne'] as String?,
       locationName: json['locationName'] as String? ?? json['location_name'] as String? ?? '',
+      locationNameNe: json['locationNameNe'] as String? ?? json['location_name_ne'] as String?,
       areaName: json['areaName'] as String? ?? json['area_name'] as String?,
+      areaNameNe: json['areaNameNe'] as String? ?? json['area_name_ne'] as String?,
       accountType: json['accountType'] as String? ?? json['account_type'] as String?,
       businessVerificationStatus: json['businessVerificationStatus'] as String? ?? json['business_verification_status'] as String?,
       individualVerified: json['individualVerified'] as bool? ?? json['individual_verified'] as bool?,
@@ -333,9 +345,13 @@ class AdWithDetails extends Ad {
       'userPhone': userPhone,
       'userVerified': userVerified,
       'categoryName': categoryName,
+      'categoryNameNe': categoryNameNe,
       'subcategoryName': subcategoryName,
+      'subcategoryNameNe': subcategoryNameNe,
       'locationName': locationName,
+      'locationNameNe': locationNameNe,
       'areaName': areaName,
+      'areaNameNe': areaNameNe,
       'accountType': accountType,
       'businessVerificationStatus': businessVerificationStatus,
       'individualVerified': individualVerified,
@@ -346,6 +362,22 @@ class AdWithDetails extends Ad {
 
   /// Get the shop slug for navigation (uses shopSlug if available, else fallback to user-{userId})
   String get effectiveShopSlug => shopSlug ?? 'user-$userId';
+
+  /// Get localized category name based on locale
+  String localizedCategoryName(String locale) =>
+      locale == 'ne' && categoryNameNe != null && categoryNameNe!.isNotEmpty ? categoryNameNe! : categoryName;
+
+  /// Get localized location name based on locale
+  String localizedLocationName(String locale) =>
+      locale == 'ne' && locationNameNe != null && locationNameNe!.isNotEmpty ? locationNameNe! : locationName;
+
+  /// Get localized subcategory name based on locale
+  String? localizedSubcategoryName(String locale) =>
+      locale == 'ne' && subcategoryNameNe != null && subcategoryNameNe!.isNotEmpty ? subcategoryNameNe : subcategoryName;
+
+  /// Get localized area name based on locale
+  String? localizedAreaName(String locale) =>
+      locale == 'ne' && areaNameNe != null && areaNameNe!.isNotEmpty ? areaNameNe : areaName;
 }
 
 // Helper functions

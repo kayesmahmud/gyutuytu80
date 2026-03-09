@@ -34,7 +34,7 @@ class AdClient {
   }) async {
     try {
       final queryParams = <String, dynamic>{
-        'page': page,
+        'offset': (page - 1) * limit,
         'limit': limit,
       };
 
