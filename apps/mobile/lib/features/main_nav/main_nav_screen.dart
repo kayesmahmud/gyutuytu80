@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -59,6 +60,13 @@ class _MainNavScreenState extends State<MainNavScreen> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchKey.currentState?.searchFor(query);
+    });
+  }
+
+  void _handleViewAllAds() {
+    setState(() {
+      _visitedTabs.add(1);
+      _selectedIndex = 1;
     });
   }
 
@@ -135,7 +143,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Login Required',
+              'auth.loginRequired'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -144,7 +152,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Please login to post an ad on Thulo Bazaar',
+              'auth.loginToPostAd'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -179,7 +187,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                   ),
                 ),
                 child: Text(
-                  'Login to Continue',
+                  'auth.loginToContinue'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -192,7 +200,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Maybe Later',
+                'auth.maybeLater'.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -220,7 +228,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
           index: _selectedIndex,
           children: [
             if (_visitedTabs.contains(0))
-              HomeScreen(onSearch: _handleHomeSearch, onCategoryTap: _handleCategoryTap)
+              HomeScreen(onSearch: _handleHomeSearch, onCategoryTap: _handleCategoryTap, onViewAllAds: _handleViewAllAds)
             else
               const SizedBox.shrink(),
             if (_visitedTabs.contains(1))
@@ -259,15 +267,15 @@ class _MainNavScreenState extends State<MainNavScreen> {
                 selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12),
                 unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12),
                 items: [
-                  const BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.home),
-                    activeIcon: Icon(LucideIcons.home),
-                    label: 'Home',
+                  BottomNavigationBarItem(
+                    icon: const Icon(LucideIcons.home),
+                    activeIcon: const Icon(LucideIcons.home),
+                    label: 'nav.home'.tr(),
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.search),
-                    activeIcon: Icon(LucideIcons.search),
-                    label: 'Search',
+                  BottomNavigationBarItem(
+                    icon: const Icon(LucideIcons.search),
+                    activeIcon: const Icon(LucideIcons.search),
+                    label: 'nav.search'.tr(),
                   ),
                   // Spacer for FAB — invisible, FAB covers this slot
                   const BottomNavigationBarItem(
@@ -315,12 +323,12 @@ class _MainNavScreenState extends State<MainNavScreen> {
                       ],
                     ),
                     activeIcon: const Icon(LucideIcons.messageCircle),
-                    label: 'Messages',
+                    label: 'nav.messages'.tr(),
                   ),
-                  const BottomNavigationBarItem(
-                    icon: Icon(LucideIcons.user),
-                    activeIcon: Icon(LucideIcons.user),
-                    label: 'Profile',
+                  BottomNavigationBarItem(
+                    icon: const Icon(LucideIcons.user),
+                    activeIcon: const Icon(LucideIcons.user),
+                    label: 'nav.profile'.tr(),
                   ),
                 ],
               );

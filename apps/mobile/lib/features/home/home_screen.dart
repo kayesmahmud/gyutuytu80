@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:mobile/core/widgets/main_app_bar.dart';
 import 'package:mobile/core/widgets/main_drawer.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
@@ -21,8 +23,9 @@ import 'package:mobile/core/utils/skeleton_data.dart';
 class HomeScreen extends StatefulWidget {
   final void Function(String query)? onSearch;
   final void Function(int categoryId, String categoryName)? onCategoryTap;
+  final VoidCallback? onViewAllAds;
 
-  const HomeScreen({super.key, this.onSearch, this.onCategoryTap});
+  const HomeScreen({super.key, this.onSearch, this.onCategoryTap, this.onViewAllAds});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -136,12 +139,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildHeroSection(context),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader("Browse Categories", ""),
+                _buildSectionHeader('home.browseCategories'.tr(), ""),
                 const SizedBox(height: 12),
                 _buildCategoriesList(),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader("Latest Ads", "View All Ads >"),
+                _buildSectionHeader('home.latestAds'.tr(), 'home.viewAllAds'.tr(), onTap: widget.onViewAllAds),
                 const SizedBox(height: 12),
                 _buildAdsGrid(
                   _isLoading ? SkeletonData.fakeAds(4) : _displayLatestAds,
@@ -181,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
-            "Buy, Sell, and Rent Across Nepal",
+            'home.heroTitle'.tr(),
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -202,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
-                hintText: "Search for anything...",
+                hintText: 'home.searchPlaceholder'.tr(),
                 hintStyle: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -235,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, String actionText) {
+  Widget _buildSectionHeader(String title, String actionText, {VoidCallback? onTap}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -249,14 +252,18 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppTheme.textDark,
             ),
           ),
-          Text(
-            actionText,
-            style: GoogleFonts.inter(
-              color: AppTheme.primary,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
+          if (actionText.isNotEmpty)
+            GestureDetector(
+              onTap: onTap,
+              child: Text(
+                actionText,
+                style: GoogleFonts.inter(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -271,10 +278,13 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.only(left: 16),
         child: Row(
           children: _categories.map((apiCat) {
+            final localizedName = apiCat.localizedName(context.locale.languageCode);
             final mockMatch = _findMockCategory(apiCat.slug, apiCat.name);
             final icon = mockMatch?['icon'] as String? ?? apiCat.icon ?? '📁';
-            final shortName = mockMatch?['shortName'] as String? ?? apiCat.name;
-            return _buildApiCategoryItem(icon, shortName, apiCat.id, apiCat.name);
+            final shortName = context.locale.languageCode == 'ne'
+                ? localizedName
+                : (mockMatch?['shortName'] as String? ?? localizedName);
+            return _buildApiCategoryItem(icon, shortName, apiCat.id, localizedName);
           }).toList(),
         ),
       );
@@ -436,7 +446,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               width: 60,
               child: Text(
-                category.name,
+                category.localizedName(context.locale.languageCode),
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   color: AppTheme.textDark,
@@ -460,7 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Center(
             child: Text(
-              "No ads yet",
+              'home.noAdsYet'.tr(),
               style: GoogleFonts.inter(color: Colors.grey[500]),
             ),
           ),
@@ -502,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Icon(LucideIcons.star, color: Colors.amber, size: 24),
               const SizedBox(width: 8),
               Text(
-                "Featured Ads",
+                'home.featuredAds'.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -513,7 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            "Premium listings from verified sellers",
+            'home.featuredSubtitle'.tr(),
             style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
           ),
         ],
@@ -529,7 +539,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Center(
             child: Text(
-              "No featured ads yet",
+              'home.noFeaturedAds'.tr(),
               style: GoogleFonts.inter(color: Colors.grey[500]),
             ),
           ),
@@ -558,16 +568,5 @@ class _HomeScreenState extends State<HomeScreen> {
             .toList(),
       ),
     );
-  }
-
-  String _formatPrice(double? price) {
-    if (price == null) return 'Contact for price';
-    final formatted = price
-        .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-        );
-    return 'Rs. $formatted';
   }
 }
