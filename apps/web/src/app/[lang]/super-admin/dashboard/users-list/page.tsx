@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/admin';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
-import { apiClient } from '@/lib/api';
+import { apiClient } from '@/lib/api'; // kept for other methods if needed
 import { getSuperAdminNavSections } from '@/lib/navigation';
 
 interface UserRow {
@@ -38,16 +38,21 @@ export default function UsersListPage() {
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiClient.getAllUsers({ limit: 1000, status: statusFilter });
-      if (res.success && res.data) {
+      const params = new URLSearchParams({ limit: '1000', status: statusFilter });
+      const res = await fetch(`/api/super-admin/users?${params}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const json = await res.json();
+      if (json.success && json.data) {
         setUsers(
-          res.data.map((u: any) => ({
+          json.data.map((u: any) => ({
             id: u.id,
-            fullName: u.full_name || u.fullName || '',
+            fullName: u.fullName || u.full_name || '',
             email: u.email || '',
             phone: u.phone || null,
-            businessVerificationStatus: u.business_verification_status || u.businessVerificationStatus || null,
-            individualVerified: Boolean(u.individual_verified ?? u.individualVerified),
+            businessVerificationStatus: u.businessVerificationStatus || u.business_verification_status || null,
+            individualVerified: Boolean(u.individualVerified ?? u.individual_verified),
           }))
         );
       }
