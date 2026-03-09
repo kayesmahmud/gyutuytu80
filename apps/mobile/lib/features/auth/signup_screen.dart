@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -134,13 +135,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Google Sign Up failed')),
+          SnackBar(content: Text(result['message'] ?? (context.locale.languageCode == 'ne' ? 'गुगल साइन अप असफल' : 'Google Sign Up failed'))),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google Sign Up Error: $e')),
+        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'गुगल साइन अप त्रुटि: $e' : 'Google Sign Up Error: $e')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -152,7 +153,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (!_isValidNepaliPhone(rawPhone)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid phone number. Must be 10 digits starting with 97 or 98.')),
+        SnackBar(content: Text('auth.invalidPhone'.tr())),
       );
       return;
     }
@@ -169,7 +170,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         final expiresIn = result['expiresIn'] as int? ?? 600;
         _startExpiryTimer(expiresIn);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP sent successfully! Check your phone.')),
+          SnackBar(content: Text('auth.otpSentSuccess'.tr())),
         );
       } else {
         // Handle cooldown from API response
@@ -179,13 +180,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           _startCooldownTimer();
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['error'] ?? result['message'] ?? 'Failed to send OTP')),
+          SnackBar(content: Text(result['error'] ?? result['message'] ?? (context.locale.languageCode == 'ne' ? 'OTP पठाउन असफल' : 'Failed to send OTP'))),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'त्रुटि: $e' : 'Error: $e')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -210,7 +211,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a 6-digit OTP')),
+        SnackBar(content: Text('auth.enterValidOtp'.tr())),
       );
       return;
     }
@@ -228,17 +229,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           _currentStep = SignUpStep.details;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Phone verified! Complete your registration.')),
+          SnackBar(content: Text('auth.phoneVerifiedComplete'.tr())),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(verifyResult['error'] ?? verifyResult['message'] ?? 'Invalid OTP')),
+          SnackBar(content: Text(verifyResult['error'] ?? verifyResult['message'] ?? (context.locale.languageCode == 'ne' ? 'अमान्य OTP' : 'Invalid OTP'))),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString().replaceAll("Exception: ", "")}')),
+        SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString().replaceAll("Exception: ", "")}')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -253,28 +254,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (fullName.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Full name must be at least 2 characters')),
+        SnackBar(content: Text('auth.nameMinLength'.tr())),
       );
       return;
     }
 
     if (password.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 6 characters')),
+        SnackBar(content: Text('auth.passwordMinLength'.tr())),
       );
       return;
     }
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        SnackBar(content: Text('auth.passwordsDoNotMatch'.tr())),
       );
       return;
     }
 
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to Terms & Conditions')),
+        SnackBar(content: Text('auth.agreeToTerms'.tr())),
       );
       return;
     }
@@ -309,12 +310,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         }
       } else {
-        throw Exception(registerResult['error'] ?? registerResult['message'] ?? 'Registration failed');
+        throw Exception(registerResult['error'] ?? registerResult['message'] ?? (context.locale.languageCode == 'ne' ? 'दर्ता असफल' : 'Registration failed'));
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString().replaceAll("Exception: ", "")}')),
+        SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString().replaceAll("Exception: ", "")}')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -343,7 +344,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'assets/images/logo.png',
           height: 28,
           fit: BoxFit.contain,
-          errorBuilder: (ctx, err, stack) => Text("THULO BAZAAR", style: GoogleFonts.poppins(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+          errorBuilder: (ctx, err, stack) => Text('common.appNameFallback'.tr(), style: GoogleFonts.poppins(color: AppTheme.primary, fontWeight: FontWeight.bold)),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -355,7 +356,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           children: [
             const SizedBox(height: 10),
             Text(
-              'Thulo Bazaar',
+              'common.appName'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -364,7 +365,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              _currentStep == SignUpStep.details ? 'Complete registration' : 'Create an account',
+              _currentStep == SignUpStep.details ? 'auth.completeRegistration'.tr() : 'auth.createAccount'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -374,8 +375,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 8),
             Text(
               _currentStep == SignUpStep.details
-                  ? 'Fill in your details to finish signing up'
-                  : 'Join Thulo Bazaar to buy and sell easily',
+                  ? 'auth.fillDetails'.tr()
+                  : 'auth.joinSubtitle'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -441,7 +442,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                'Sign up with Google',
+                                'auth.signUpWithGoogle'.tr(),
                                 style: GoogleFonts.roboto(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
@@ -460,7 +461,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Expanded(child: Divider(color: Colors.grey[200])),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text("or register with phone", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                          child: Text('auth.orRegisterWithPhone'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
                         ),
                         Expanded(child: Divider(color: Colors.grey[200])),
                       ],
@@ -469,14 +470,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     // Phone Number Input
                     Text(
-                      'Phone Number *',
+                      'auth.phoneRequired'.tr(),
                       style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.textDark, fontSize: 14),
                     ),
                     const SizedBox(height: 8),
                     _buildPhoneInput(enabled: true),
                     const SizedBox(height: 8),
                     Text(
-                      'Enter 10-digit Nepali mobile number (starting with 97 or 98)',
+                      'auth.phoneValidation'.tr(),
                       style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
                     ),
                     const SizedBox(height: 24),
@@ -493,7 +494,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: _isLoading
                             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                             : Text(
-                                _otpCooldown > 0 ? 'Resend in ${_otpCooldown}s' : 'Send OTP',
+                                _otpCooldown > 0 ? 'auth.resendIn'.tr(args: ['$_otpCooldown']) : 'auth.sendOtp'.tr(),
                                 style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                               ),
                       ),
@@ -507,14 +508,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: Column(
                         children: [
                           Text(
-                            'OTP sent to +977 ${_phoneController.text.trim()}',
+                            'auth.otpSentTo'.tr(args: [_phoneController.text.trim()]),
                             style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14),
                           ),
                           if (_otpExpiry > 0)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                'Expires in ${_formatTime(_otpExpiry)}',
+                                context.locale.languageCode == 'ne'
+                                    ? '${_formatTime(_otpExpiry)} मा समाप्त हुन्छ'
+                                    : 'Expires in ${_formatTime(_otpExpiry)}',
                                 style: GoogleFonts.inter(fontSize: 12, color: Colors.orange[700]),
                               ),
                             ),
@@ -523,7 +526,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    Text('Enter OTP *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text('auth.enterOtp'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _otpController,
@@ -532,7 +535,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(fontSize: 24, letterSpacing: 8),
                       decoration: InputDecoration(
-                        hintText: '------',
+                        hintText: 'auth.otpPlaceholder'.tr(),
                         counterText: "",
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -553,7 +556,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: _isLoading
                             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                             : Text(
-                                'Verify OTP',
+                                'auth.verifyOtp'.tr(),
                                 style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                               ),
                       ),
@@ -566,12 +569,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       children: [
                         TextButton(
                           onPressed: _handleChangeNumber,
-                          child: Text('Change number', style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600])),
+                          child: Text('auth.changeNumber'.tr(), style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600])),
                         ),
                         TextButton(
                           onPressed: _isLoading || _otpCooldown > 0 ? null : _handleSendOtp,
                           child: Text(
-                            _otpCooldown > 0 ? 'Resend in ${_otpCooldown}s' : 'Resend OTP',
+                            _otpCooldown > 0 ? 'auth.resendIn'.tr(args: ['$_otpCooldown']) : 'auth.resendOtp'.tr(),
                             style: GoogleFonts.inter(fontSize: 13, color: _otpCooldown > 0 ? Colors.grey[400] : AppTheme.primary),
                           ),
                         ),
@@ -595,32 +598,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           const Icon(LucideIcons.checkCircle, color: AppTheme.success, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            '+977 ${_phoneController.text.trim()} verified',
+                            context.locale.languageCode == 'ne'
+                                ? '+977 ${_phoneController.text.trim()} प्रमाणित'
+                                : '+977 ${_phoneController.text.trim()} verified',
                             style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.success),
                           ),
                         ],
                       ),
                     ),
 
-                    Text('Full Name *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text('auth.fullName'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _fullNameController,
                       decoration: InputDecoration(
-                        hintText: 'Enter your full name',
+                        hintText: 'auth.enterFullName'.tr(),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    Text('Password *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text('auth.passwordRequired'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        hintText: 'At least 6 characters',
+                        hintText: 'auth.atLeast6Chars'.tr(),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         suffixIcon: IconButton(
@@ -635,13 +640,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    Text('Confirm Password *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text('auth.confirmPassword'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
-                        hintText: 'Re-enter password',
+                        hintText: 'auth.reEnterPassword'.tr(),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         suffixIcon: IconButton(
@@ -672,15 +677,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Expanded(
                           child: Wrap(
                             children: [
-                              Text('I agree to the ', style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
+                              Text('auth.iAgreeTo'.tr(), style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
                               InkWell(
                                 onTap: () {},
-                                child: Text('Terms & Conditions', style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                                child: Text('auth.termsAndConditions'.tr(), style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
                               ),
-                              Text(' and ', style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
+                              Text('auth.and'.tr(), style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
                               InkWell(
                                 onTap: () {},
-                                child: Text('Privacy Policy', style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                                child: Text('auth.privacyPolicy'.tr(), style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
                               ),
                             ],
                           ),
@@ -702,7 +707,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: _isLoading
                             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                             : Text(
-                                'Create account',
+                                'auth.createAccount'.tr(),
                                 style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                               ),
                       ),
@@ -715,7 +720,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Expanded(child: Divider(color: Colors.grey[200])),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text("Already have an account?", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                        child: Text('auth.alreadyHaveAccount'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
                       ),
                       Expanded(child: Divider(color: Colors.grey[200])),
                     ],
@@ -733,7 +738,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         side: const BorderSide(color: AppTheme.primary),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: Text('Sign in instead', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                      child: Text('auth.signInInstead'.tr(), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.primary)),
                     ),
                   ),
                 ],
@@ -761,7 +766,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
             ),
             child: Text(
-              '+977',
+              'auth.phonePrefix'.tr(),
               style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: AppTheme.textDark, fontSize: 15),
             ),
           ),
@@ -771,8 +776,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               keyboardType: TextInputType.phone,
               enabled: enabled,
               maxLength: 10,
-              decoration: const InputDecoration(
-                hintText: '98XXXXXXXX',
+              decoration: InputDecoration(
+                hintText: 'auth.phonePlaceholder'.tr(),
                 counterText: "",
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,

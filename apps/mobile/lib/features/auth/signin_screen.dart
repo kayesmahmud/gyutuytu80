@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,6 +11,7 @@ import '../../core/api/auth_client.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/auth_provider.dart';
 import 'signup_screen.dart';
+import 'two_factor_verify_screen.dart';
 import '../main_nav/main_nav_screen.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -117,13 +119,13 @@ class _SignInScreenState extends State<SignInScreen> {
          }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Google Login failed')),
+          SnackBar(content: Text(result['message'] ?? 'auth.googleLoginFailed'.tr())),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google Login Error: $e')),
+        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'गुगल लगइन त्रुटि: $e' : 'Google Login Error: $e')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -136,7 +138,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     if (rawPhone.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter phone and password')),
+        SnackBar(content: Text('auth.enterPhoneAndPassword'.tr())),
       );
       return;
     }
@@ -153,6 +155,23 @@ class _SignInScreenState extends State<SignInScreen> {
       if (!mounted) return;
 
       if (result['success'] == true) {
+        // Check if 2FA is required
+        if (result['requires2FA'] == true) {
+          await _saveCredentials(rawPhone);
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TwoFactorVerifyScreen(
+                  tempToken: result['tempToken'],
+                  onSuccess: widget.onSuccess,
+                ),
+              ),
+            );
+          }
+          return;
+        }
+
         final token = result['token'];
         // Save credentials if "Remember me" is checked
         await _saveCredentials(rawPhone);
@@ -172,13 +191,13 @@ class _SignInScreenState extends State<SignInScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Login failed')),
+          SnackBar(content: Text(result['message'] ?? (context.locale.languageCode == 'ne' ? 'लगइन असफल' : 'Login failed'))),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $e')),
+        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'त्रुटि भयो: $e' : 'An error occurred: $e')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -198,7 +217,7 @@ class _SignInScreenState extends State<SignInScreen> {
           'assets/images/logo.png',
           height: 28,
           fit: BoxFit.contain,
-          errorBuilder: (ctx, err, stack) => Text("THULO BAZAAR", style: GoogleFonts.poppins(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+          errorBuilder: (ctx, err, stack) => Text('common.appNameFallback'.tr(), style: GoogleFonts.poppins(color: AppTheme.primary, fontWeight: FontWeight.bold)),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -210,7 +229,7 @@ class _SignInScreenState extends State<SignInScreen> {
           children: [
             const SizedBox(height: 10),
             Text(
-              'Thulo Bazaar',
+              'common.appName'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -219,7 +238,7 @@ class _SignInScreenState extends State<SignInScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Welcome back',
+              'auth.welcomeBack'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -228,7 +247,7 @@ class _SignInScreenState extends State<SignInScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Login to your account to continue',
+              'auth.loginSubtitle'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -293,7 +312,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              'Continue with Google',
+                              'auth.continueWithGoogle'.tr(),
                               style: GoogleFonts.roboto(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
@@ -313,7 +332,7 @@ class _SignInScreenState extends State<SignInScreen> {
                        Expanded(child: Divider(color: Colors.grey[200])),
                        Padding(
                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                         child: Text("or sign in with phone", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                         child: Text('auth.orSignInWithPhone'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
                        ),
                        Expanded(child: Divider(color: Colors.grey[200])),
                     ],
@@ -322,7 +341,7 @@ class _SignInScreenState extends State<SignInScreen> {
  
                   // Phone Number
                   Text(
-                    'Phone Number',
+                    'auth.phoneNumber'.tr(),
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textDark,
@@ -345,7 +364,7 @@ class _SignInScreenState extends State<SignInScreen> {
                             borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
                           ),
                           child: Text(
-                            '+977',
+                            'auth.phonePrefix'.tr(),
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.w500,
                               color: AppTheme.textDark,
@@ -357,8 +376,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           child: TextFormField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              hintText: '98XXXXXXXX',
+                            decoration: InputDecoration(
+                              hintText: 'auth.phonePlaceholder'.tr(),
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
@@ -374,7 +393,7 @@ class _SignInScreenState extends State<SignInScreen> {
  
                   // Password
                   Text(
-                    'Password',
+                    'auth.password'.tr(),
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textDark,
@@ -386,7 +405,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      hintText: 'Enter your password',
+                      hintText: 'auth.enterPassword'.tr(),
                       hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
                       suffixIcon: IconButton(
                         icon: AnimatedRotation(
@@ -426,7 +445,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Remember me',
+                        'auth.rememberMe'.tr(),
                         style: GoogleFonts.inter(
                           color: Colors.grey[600],
                           fontSize: 13,
@@ -436,7 +455,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       InkWell(
                         onTap: () {},
                         child: Text(
-                          'Forgot password?',
+                          'auth.forgotPassword'.tr(),
                           style: GoogleFonts.inter(
                             color: AppTheme.primary,
                             fontWeight: FontWeight.w600,
@@ -464,7 +483,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: _isLoading 
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(
-                        'Sign In',
+                        'auth.signIn'.tr(),
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -480,7 +499,7 @@ class _SignInScreenState extends State<SignInScreen> {
                        Expanded(child: Divider(color: Colors.grey[200])),
                        Padding(
                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                         child: Text("Don't have an account?", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                         child: Text('auth.dontHaveAccount'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
                        ),
                        Expanded(child: Divider(color: Colors.grey[200])),
                     ],
@@ -502,7 +521,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
                       child: Text(
-                        'Create an account',
+                        'auth.createAccount'.tr(),
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

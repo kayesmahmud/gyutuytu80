@@ -17,7 +17,12 @@ import {
   updatePhone,
   getSessions,
   revokeSession,
-  toggle2FA,
+  setup2FA,
+  verify2FASetup,
+  disable2FA,
+  verify2FALogin,
+  requestAccountDeletion,
+  confirmAccountDeletion,
   type OtpPurposeType,
 } from '../services/auth.service.js';
 
@@ -184,7 +189,7 @@ router.post(
       throw new ValidationError('Phone number is required');
     }
 
-    const validPurposes: OtpPurposeType[] = ['registration', 'login', 'password_reset', 'phone_verification'];
+    const validPurposes: OtpPurposeType[] = ['registration', 'login', 'password_reset', 'phone_verification', 'account_deletion'];
     if (!validPurposes.includes(purpose)) {
       throw new ValidationError('Invalid purpose');
     }
@@ -277,6 +282,16 @@ router.post(
       return res.status(status).json({
         success: false,
         message: result.error,
+      });
+    }
+
+    // 2FA required — return temp token instead of real tokens
+    if (result.requires2FA) {
+      return res.json({
+        success: true,
+        requires2FA: true,
+        tempToken: result.tempToken,
+        message: 'Two-factor authentication required',
       });
     }
 
@@ -482,27 +497,155 @@ router.delete(
   })
 );
 
+// ============================================================================
+// 2FA Routes
+// ============================================================================
+
 /**
- * POST /api/auth/2fa/toggle
- * Toggle 2FA
+ * POST /api/auth/2fa/setup
+ * Initiate 2FA setup — returns QR code and secret
  */
 router.post(
-  '/2fa/toggle',
+  '/2fa/setup',
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
-    const { enable } = req.body;
-
-    if (typeof enable !== 'boolean') {
-      throw new ValidationError('Enable flag must be a boolean');
+    const result = await setup2FA(req.user!.userId);
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error });
     }
-
-    const result = await toggle2FA(userId, enable);
-
     res.json({
       success: true,
-      message: `Two-factor authentication ${enable ? 'enabled' : 'disabled'} successfully`,
-      data: { enabled: result.enabled },
+      data: { qrCode: result.qrCode, secret: result.secret },
+    });
+  })
+);
+
+/**
+ * POST /api/auth/2fa/verify-setup
+ * Verify TOTP code to complete 2FA setup — returns backup codes
+ */
+router.post(
+  '/2fa/verify-setup',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const { code } = req.body;
+    if (!code || code.length !== 6) {
+      throw new ValidationError('A 6-digit verification code is required');
+    }
+    const result = await verify2FASetup(req.user!.userId, code);
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+    res.json({
+      success: true,
+      message: 'Two-factor authentication enabled successfully',
+      data: { backupCodes: result.backupCodes },
+    });
+  })
+);
+
+/**
+ * POST /api/auth/2fa/disable
+ * Disable 2FA — requires password + TOTP code
+ */
+router.post(
+  '/2fa/disable',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const { password, code } = req.body;
+    if (!password || !code) {
+      throw new ValidationError('Password and 2FA code are required');
+    }
+    const result = await disable2FA(req.user!.userId, password, code);
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+    res.json({
+      success: true,
+      message: 'Two-factor authentication disabled successfully',
+    });
+  })
+);
+
+/**
+ * POST /api/auth/2fa/verify-login
+ * Verify 2FA code during login (public — uses temp token)
+ */
+router.post(
+  '/2fa/verify-login',
+  rateLimiters.auth,
+  catchAsync(async (req: Request, res: Response) => {
+    const { tempToken, code } = req.body;
+    if (!tempToken || !code) {
+      throw new ValidationError('Temp token and verification code are required');
+    }
+    const result = await verify2FALogin(tempToken, code);
+    if (!result.success) {
+      return res.status(401).json({ success: false, message: result.error });
+    }
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token: result.token,
+      refreshToken: result.refreshToken,
+      user: result.user,
+    });
+  })
+);
+
+// ============================================================================
+// Account Deletion Routes
+// ============================================================================
+
+/**
+ * POST /api/auth/account/delete-request
+ * Request account deletion — sends OTP to verified phone
+ */
+router.post(
+  '/account/delete-request',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const result = await requestAccountDeletion(req.user!.userId);
+    if (!result.success) {
+      const status = (result as any).cooldownRemaining ? 429 : 400;
+      return res.status(status).json({
+        success: false,
+        message: result.error,
+        cooldownRemaining: (result as any).cooldownRemaining,
+      });
+    }
+    res.json({
+      success: true,
+      message: 'Verification code sent',
+      data: { phone: result.phone, expiresIn: result.expiresIn },
+    });
+  })
+);
+
+/**
+ * POST /api/auth/account/delete-confirm
+ * Confirm account deletion with OTP
+ */
+router.post(
+  '/account/delete-confirm',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const { otp } = req.body;
+    if (!otp || otp.length !== 6) {
+      throw new ValidationError('A 6-digit verification code is required');
+    }
+    const result = await confirmAccountDeletion(req.user!.userId, otp);
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.error,
+        remainingAttempts: (result as any).remainingAttempts,
+      });
+    }
+    res.json({
+      success: true,
+      message: 'Account scheduled for deletion',
+      data: { recoveryDeadline: result.recoveryDeadline },
     });
   })
 );

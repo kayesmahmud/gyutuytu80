@@ -4,6 +4,7 @@
  */
 
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { prisma } from '@thulobazaar/database';
 import {
   validateNepaliPhone,
@@ -15,6 +16,9 @@ import {
 } from '../lib/sms.js';
 import { generateAccessToken, generateRefreshToken } from '../lib/token.js';
 import { OAuth2Client } from 'google-auth-library';
+import { generateSecret, generateURI, verifySync } from 'otplib';
+import QRCode from 'qrcode';
+import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -27,12 +31,13 @@ const MAX_OTP_ATTEMPTS = 4;
 const OTP_COOLDOWN_SECONDS = 60;
 const MAX_VERIFY_ATTEMPTS = 5;
 const VERIFICATION_TOKEN_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
+const RECOVERY_DAYS = 30;
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export type OtpPurposeType = 'registration' | 'login' | 'password_reset' | 'phone_verification';
+export type OtpPurposeType = 'registration' | 'login' | 'password_reset' | 'phone_verification' | 'account_deletion';
 
 export interface SendOtpResult {
   success: boolean;
@@ -55,6 +60,8 @@ export interface LoginResult {
   error?: string;
   token?: string;
   refreshToken?: string;
+  requires2FA?: boolean;
+  tempToken?: string;
   user?: {
     id: number;
     email: string | null;
@@ -317,18 +324,48 @@ export async function loginWithPhone(phone: string, password: string): Promise<L
     return { success: false, error: 'No account found with this phone number' };
   }
 
-  if (!user.is_active) {
-    return { success: false, error: 'Your account has been deactivated. Please contact support.' };
-  }
-
   if (user.is_suspended) {
     return { success: false, error: 'Your account has been suspended. Please contact support.' };
+  }
+
+  // Account deletion recovery: allow login within 30-day recovery window
+  if (user.deleted_at && user.deletion_requested_at) {
+    const daysSinceDeletion = (Date.now() - user.deletion_requested_at.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceDeletion >= RECOVERY_DAYS) {
+      return { success: false, error: 'This account has been permanently deleted.' };
+    }
+    // Will reactivate after password verification below
+  } else if (!user.is_active) {
+    return { success: false, error: 'Your account has been deactivated. Please contact support.' };
   }
 
   // Verify password
   const isPasswordValid = await bcrypt.compare(password, user.password_hash!);
   if (!isPasswordValid) {
     return { success: false, error: 'Invalid password' };
+  }
+
+  // Reactivate account if within recovery window
+  if (user.deleted_at && user.deletion_requested_at) {
+    await prisma.users.update({
+      where: { id: user.id },
+      data: {
+        deleted_at: null,
+        deletion_requested_at: null,
+        is_active: true,
+      },
+    });
+    console.log(`🔄 Account reactivated for ${formattedPhone} (userId: ${user.id})`);
+  }
+
+  // Check if 2FA is enabled
+  if (user.two_factor_enabled && user.two_factor_secret) {
+    const tempToken = jwt.sign(
+      { userId: user.id, purpose: '2fa' },
+      config.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+    return { success: true, requires2FA: true, tempToken };
   }
 
   // Update last login
@@ -532,12 +569,23 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
       }
     }
 
-    if (!user.is_active) {
-      return { success: false, error: 'Your account has been deactivated.' };
-    }
-
     if (user.is_suspended) {
       return { success: false, error: 'Your account has been suspended.' };
+    }
+
+    // Account deletion recovery for Google login
+    if (user.deleted_at && user.deletion_requested_at) {
+      const daysSinceDeletion = (Date.now() - user.deletion_requested_at.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceDeletion >= RECOVERY_DAYS) {
+        return { success: false, error: 'This account has been permanently deleted.' };
+      }
+      await prisma.users.update({
+        where: { id: user.id },
+        data: { deleted_at: null, deletion_requested_at: null, is_active: true },
+      });
+      console.log(`🔄 Account reactivated via Google login (userId: ${user.id})`);
+    } else if (!user.is_active) {
+      return { success: false, error: 'Your account has been deactivated.' };
     }
 
     // Generate tokens
@@ -657,13 +705,301 @@ export async function revokeSession(userId: number, sessionId: number) {
   return { success: true };
 }
 
-export async function toggle2FA(userId: number, enable: boolean) {
-  // In a real app, we would generate a secret and verify a code before enabling.
-  // For now, we just toggle the flag as requested by "mock implementation".
+// ============================================================================
+// Two-Factor Authentication (TOTP) Functions
+// ============================================================================
+
+const BACKUP_CODE_COUNT = 10;
+const BACKUP_CODE_LENGTH = 8;
+const TWO_FA_APP_NAME = 'Thulo Bazaar';
+
+function generateBackupCodes(): string[] {
+  const codes: string[] = [];
+  for (let i = 0; i < BACKUP_CODE_COUNT; i++) {
+    codes.push(crypto.randomBytes(BACKUP_CODE_LENGTH / 2).toString('hex'));
+  }
+  return codes;
+}
+
+export async function setup2FA(userId: number) {
+  const user = await prisma.users.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: 'User not found' };
+
+  if (user.two_factor_enabled) {
+    return { success: false, error: '2FA is already enabled. Disable it first to re-setup.' };
+  }
+
+  const secret = generateSecret();
+  const label = user.phone || user.email || `user-${userId}`;
+  const otpauthUri = generateURI({ issuer: TWO_FA_APP_NAME, label, secret });
+  const qrCode = await QRCode.toDataURL(otpauthUri);
+
+  // Store secret (not yet enabled until verified)
   await prisma.users.update({
     where: { id: userId },
-    data: { two_factor_enabled: enable },
+    data: { two_factor_secret: secret },
   });
 
-  return { success: true, enabled: enable };
+  return { success: true, secret, qrCode, otpauthUri };
+}
+
+export async function verify2FASetup(userId: number, code: string) {
+  const user = await prisma.users.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: 'User not found' };
+  if (!user.two_factor_secret) return { success: false, error: 'Please initiate 2FA setup first' };
+  if (user.two_factor_enabled) return { success: false, error: '2FA is already enabled' };
+
+  const isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
+  if (!isValid) return { success: false, error: 'Invalid verification code. Please try again.' };
+
+  // Generate backup codes
+  const plaintextCodes = generateBackupCodes();
+  const hashedCodes = await Promise.all(
+    plaintextCodes.map(c => bcrypt.hash(c, 10))
+  );
+
+  await prisma.users.update({
+    where: { id: userId },
+    data: {
+      two_factor_enabled: true,
+      two_factor_backup_codes: hashedCodes,
+    },
+  });
+
+  return { success: true, backupCodes: plaintextCodes };
+}
+
+export async function disable2FA(userId: number, password: string, code: string) {
+  const user = await prisma.users.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: 'User not found' };
+  if (!user.two_factor_enabled) return { success: false, error: '2FA is not enabled' };
+
+  // Verify password
+  if (!user.password_hash) return { success: false, error: 'Cannot verify identity' };
+  const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+  if (!isPasswordValid) return { success: false, error: 'Invalid password' };
+
+  // Verify TOTP code
+  if (!user.two_factor_secret) return { success: false, error: '2FA secret not found' };
+  const isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
+  if (!isValid) return { success: false, error: 'Invalid 2FA code' };
+
+  await prisma.users.update({
+    where: { id: userId },
+    data: {
+      two_factor_enabled: false,
+      two_factor_secret: null,
+      two_factor_backup_codes: null as any,
+    },
+  });
+
+  return { success: true };
+}
+
+export async function verify2FALogin(tempToken: string, code: string): Promise<LoginResult> {
+  // Validate temp token
+  let payload: { userId: number; purpose: string };
+  try {
+    payload = jwt.verify(tempToken, config.JWT_SECRET) as { userId: number; purpose: string };
+  } catch {
+    return { success: false, error: 'Invalid or expired 2FA session. Please login again.' };
+  }
+
+  if (payload.purpose !== '2fa') {
+    return { success: false, error: 'Invalid token purpose' };
+  }
+
+  const user = await prisma.users.findUnique({ where: { id: payload.userId } });
+  if (!user || !user.two_factor_secret) {
+    return { success: false, error: 'User not found or 2FA not configured' };
+  }
+
+  // Try TOTP first
+  let isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
+
+  // If TOTP fails, try backup codes
+  if (!isValid && user.two_factor_backup_codes) {
+    const backupCodes = user.two_factor_backup_codes as string[];
+    for (let i = 0; i < backupCodes.length; i++) {
+      const match = await bcrypt.compare(code, backupCodes[i]);
+      if (match) {
+        isValid = true;
+        // Remove used backup code
+        const updatedCodes = [...backupCodes];
+        updatedCodes.splice(i, 1);
+        await prisma.users.update({
+          where: { id: user.id },
+          data: { two_factor_backup_codes: updatedCodes },
+        });
+        break;
+      }
+    }
+  }
+
+  if (!isValid) {
+    return { success: false, error: 'Invalid verification code' };
+  }
+
+  // Update last login
+  await prisma.users.update({
+    where: { id: user.id },
+    data: { last_login: new Date() },
+  });
+
+  // Generate real tokens
+  const accessToken = generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user);
+
+  return {
+    success: true,
+    token: accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name,
+      phone: user.phone,
+      phoneVerified: user.phone_verified,
+      role: user.role,
+      shopSlug: user.shop_slug,
+      accountType: user.account_type,
+      avatar: user.avatar,
+    },
+  };
+}
+
+// ============================================================================
+// Account Deletion Functions
+// ============================================================================
+
+const DELETE_OTP_COOLDOWN_SECONDS = 60;
+const DELETE_MAX_OTP_PER_HOUR = 3;
+
+export async function requestAccountDeletion(userId: number) {
+  const user = await prisma.users.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: 'User not found' };
+  if (user.deleted_at) return { success: false, error: 'Account is already scheduled for deletion' };
+  if (user.is_suspended) return { success: false, error: 'Cannot delete a suspended account. Contact support.' };
+  if (!user.phone || !user.phone_verified) {
+    return { success: false, error: 'A verified phone number is required to delete your account' };
+  }
+
+  // Cooldown check
+  const recentOtp = await prisma.phone_otps.findFirst({
+    where: {
+      phone: user.phone,
+      purpose: 'account_deletion',
+      created_at: { gte: new Date(Date.now() - DELETE_OTP_COOLDOWN_SECONDS * 1000) },
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
+  if (recentOtp) {
+    const secondsRemaining = Math.ceil(
+      (DELETE_OTP_COOLDOWN_SECONDS * 1000 - (Date.now() - recentOtp.created_at.getTime())) / 1000
+    );
+    return { success: false, error: `Please wait ${secondsRemaining} seconds`, cooldownRemaining: secondsRemaining };
+  }
+
+  // Rate limit check
+  const recentAttempts = await prisma.phone_otps.count({
+    where: {
+      phone: user.phone,
+      purpose: 'account_deletion',
+      created_at: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+    },
+  });
+
+  if (recentAttempts >= DELETE_MAX_OTP_PER_HOUR) {
+    return { success: false, error: 'Too many requests. Please try again after 1 hour.' };
+  }
+
+  // Invalidate previous OTPs
+  await prisma.phone_otps.updateMany({
+    where: { phone: user.phone, purpose: 'account_deletion', is_used: false },
+    data: { is_used: true },
+  });
+
+  // Generate and send OTP
+  const otp = generateOtp();
+  const expiresAt = getOtpExpiry();
+
+  await prisma.phone_otps.create({
+    data: {
+      phone: user.phone,
+      otp_code: otp,
+      purpose: 'account_deletion',
+      expires_at: expiresAt,
+    },
+  });
+
+  const smsResult = await sendOtpSms(user.phone, otp, 'account_deletion' as OtpPurpose);
+  if (!smsResult.success) {
+    return { success: false, error: 'Failed to send verification code. Please try again.' };
+  }
+
+  // Mask phone: 98XXXX6096
+  const maskedPhone = user.phone.slice(0, 2) + '****' + user.phone.slice(-4);
+
+  return { success: true, phone: maskedPhone, expiresIn: 600 };
+}
+
+export async function confirmAccountDeletion(userId: number, otp: string) {
+  const user = await prisma.users.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: 'User not found' };
+  if (!user.phone) return { success: false, error: 'Phone number not found' };
+  if (user.deleted_at) return { success: false, error: 'Account is already scheduled for deletion' };
+
+  // Find valid OTP
+  const otpRecord = await prisma.phone_otps.findFirst({
+    where: {
+      phone: user.phone,
+      purpose: 'account_deletion',
+      is_used: false,
+      expires_at: { gte: new Date() },
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
+  if (!otpRecord) return { success: false, error: 'Invalid or expired code. Please request a new one.' };
+
+  if (otpRecord.attempts >= MAX_VERIFY_ATTEMPTS) {
+    await prisma.phone_otps.update({ where: { id: otpRecord.id }, data: { is_used: true } });
+    return { success: false, error: 'Too many failed attempts. Please request a new code.' };
+  }
+
+  if (otpRecord.otp_code !== otp) {
+    await prisma.phone_otps.update({
+      where: { id: otpRecord.id },
+      data: { attempts: { increment: 1 } },
+    });
+    const remaining = MAX_VERIFY_ATTEMPTS - otpRecord.attempts - 1;
+    return { success: false, error: `Invalid code. ${remaining} attempts remaining.`, remainingAttempts: remaining };
+  }
+
+  // Soft-delete in transaction
+  const now = new Date();
+  const recoveryDeadline = new Date(now.getTime() + RECOVERY_DAYS * 24 * 60 * 60 * 1000);
+
+  await prisma.$transaction([
+    prisma.phone_otps.update({
+      where: { id: otpRecord.id },
+      data: { is_used: true },
+    }),
+    prisma.users.update({
+      where: { id: userId },
+      data: {
+        deleted_at: now,
+        deletion_requested_at: now,
+        is_active: false,
+      },
+    }),
+    // Revoke all refresh tokens
+    prisma.refresh_tokens.updateMany({
+      where: { user_id: userId },
+      data: { is_revoked: true },
+    }),
+  ]);
+
+  return { success: true, recoveryDeadline: recoveryDeadline.toISOString() };
 }

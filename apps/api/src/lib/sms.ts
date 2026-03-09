@@ -50,7 +50,7 @@ export function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-export type OtpPurpose = 'registration' | 'login' | 'password_reset' | 'phone_verification';
+export type OtpPurpose = 'registration' | 'login' | 'password_reset' | 'phone_verification' | 'account_deletion';
 
 export type NotificationType =
   | 'business_verification_approved'
@@ -77,6 +77,8 @@ function getOtpMessage(otp: string, purpose: OtpPurpose): string {
       return `Your Thulo Bazaar password reset code is: ${otp}. Valid for 10 minutes. If you didn't request this, please ignore.`;
     case 'phone_verification':
       return `Your Thulo Bazaar phone verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`;
+    case 'account_deletion':
+      return `Your Thulo Bazaar account deletion code is: ${otp}. Valid for 10 minutes. If you did not request this, ignore this message.`;
     default:
       return `Your Thulo Bazaar verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`;
   }

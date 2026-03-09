@@ -71,7 +71,8 @@ class AuthClient {
         'password': password,
       });
 
-      if (response.data['success'] == true) {
+      // Don't save tokens if 2FA is required
+      if (response.data['success'] == true && response.data['requires2FA'] != true) {
         await _saveTokens(response.data);
       }
 
@@ -169,11 +170,82 @@ class AuthClient {
     }
   }
 
-  // Toggle 2FA
-  Future<Map<String, dynamic>> toggle2FA(bool enable) async {
+  // ==========================================
+  // 2FA ENDPOINTS (/api/auth/2fa/*)
+  // ==========================================
+
+  // Setup 2FA — returns QR code + secret
+  Future<Map<String, dynamic>> setup2FA() async {
     try {
-      final response = await _dio.post('/auth/2fa/toggle', data: {
-        'enable': enable,
+      final response = await _dio.post('/auth/2fa/setup');
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Verify 2FA setup — returns backup codes
+  Future<Map<String, dynamic>> verify2FASetup(String code) async {
+    try {
+      final response = await _dio.post('/auth/2fa/verify-setup', data: {
+        'code': code,
+      });
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Disable 2FA — requires password + TOTP code
+  Future<Map<String, dynamic>> disable2FA(String password, String code) async {
+    try {
+      final response = await _dio.post('/auth/2fa/disable', data: {
+        'password': password,
+        'code': code,
+      });
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Verify 2FA during login — uses temp token
+  Future<Map<String, dynamic>> verify2FALogin(String tempToken, String code) async {
+    try {
+      final response = await _dio.post('/auth/2fa/verify-login', data: {
+        'tempToken': tempToken,
+        'code': code,
+      });
+
+      if (response.data['success'] == true) {
+        await _saveTokens(response.data);
+      }
+
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // ==========================================
+  // ACCOUNT DELETION ENDPOINTS
+  // ==========================================
+
+  // Request account deletion — sends OTP
+  Future<Map<String, dynamic>> requestAccountDeletion() async {
+    try {
+      final response = await _dio.post('/auth/account/delete-request');
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Confirm account deletion with OTP
+  Future<Map<String, dynamic>> confirmAccountDeletion(String otp) async {
+    try {
+      final response = await _dio.post('/auth/account/delete-confirm', data: {
+        'otp': otp,
       });
       return response.data;
     } on DioException catch (e) {
