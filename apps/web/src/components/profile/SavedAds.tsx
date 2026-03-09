@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useUserAuth } from '@/contexts/UserAuthContext';
-import { useLocalizedName } from '@/hooks/useLocalizedName';
 import { formatPrice } from '@thulobazaar/utils';
 import { Heart as HeartSolid } from '@untitledui-pro/icons/solid';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 
 interface SavedAd {
   id: number;
@@ -47,7 +47,7 @@ interface SavedAdsProps {
 export default function SavedAds({ lang }: SavedAdsProps) {
   const tp = useTranslations('profile');
   const tc = useTranslations('common');
-  const localName = useLocalizedName();
+  const localizedName = useLocalizedName();
   const { user, isAuthenticated } = useUserAuth();
   const [savedAds, setSavedAds] = useState<SavedAd[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,7 +229,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
 
                   {ad.category && (
                     <p className="text-xs text-gray-500 mt-1 truncate">
-                      {localName(ad.category.name, ad.category.nameNe)}
+                      {localizedName(ad.category.name, ad.category.nameNe)}
                     </p>
                   )}
 
@@ -251,7 +251,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
                   {ad.location && (
                     <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                       <span>📍</span>
-                      <span className="truncate">{localName(ad.location.name, ad.location.nameNe)}</span>
+                      <span className="truncate">{localizedName(ad.location.name, ad.location.nameNe)}</span>
                     </p>
                   )}
                 </div>

@@ -10,7 +10,7 @@ interface SelectedLocationDisplayProps {
 }
 
 export function SelectedLocationDisplay({ location, onClear }: SelectedLocationDisplayProps) {
-  const localName = useLocalizedName();
+  const localizedName = useLocalizedName();
   return (
     <div style={{
       padding: '0.75rem',
@@ -24,7 +24,7 @@ export function SelectedLocationDisplay({ location, onClear }: SelectedLocationD
       justifyContent: 'space-between',
       alignItems: 'center'
     }}>
-      <span>{localName(location.name, location.nameNe)} ({getLocationTypeLabel(location.type)})</span>
+      <span>{localizedName(location.name, location.nameNe)} ({getLocationTypeLabel(location.type)})</span>
       <button
         type="button"
         onClick={onClear}

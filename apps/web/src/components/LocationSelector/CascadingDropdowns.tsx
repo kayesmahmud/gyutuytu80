@@ -42,7 +42,7 @@ export function CascadingDropdowns({
   onDistrictChange,
   onMunicipalityChange,
 }: CascadingDropdownsProps) {
-  const localName = useLocalizedName();
+  const localizedName = useLocalizedName();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Province Dropdown */}
@@ -63,7 +63,7 @@ export function CascadingDropdowns({
           <option value="">{isLoading ? 'Loading...' : '-- Select Province --'}</option>
           {provinces.map((province) => (
             <option key={province.id} value={province.id}>
-              {localName(province.name, province.nameNe)}
+              {localizedName(province.name, province.nameNe)}
             </option>
           ))}
         </select>
@@ -83,7 +83,7 @@ export function CascadingDropdowns({
             <option value="">-- Select District --</option>
             {selectedProvince.districts.map((district) => (
               <option key={district.id} value={district.id}>
-                {localName(district.name, district.nameNe)}
+                {localizedName(district.name, district.nameNe)}
               </option>
             ))}
           </select>
@@ -104,7 +104,7 @@ export function CascadingDropdowns({
             <option value="">-- Select Municipality --</option>
             {selectedDistrict.municipalities.map((municipality) => (
               <option key={municipality.id} value={municipality.id}>
-                {localName(municipality.name, municipality.nameNe)}
+                {localizedName(municipality.name, municipality.nameNe)}
               </option>
             ))}
           </select>

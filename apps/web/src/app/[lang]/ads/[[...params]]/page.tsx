@@ -117,12 +117,8 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
     parsed.categoryId || parsed.locationId || minPrice || maxPrice || condition || searchQuery
   );
 
-  // Helper to get localized name
-  const localName = (name: string | null, nameNe: string | null) =>
-    lang === 'ne' && nameNe ? nameNe : name;
-
-  const displayLocationName = localName(parsed.locationName, parsed.locationNameNe);
-  const displayCategoryName = localName(parsed.categoryName, parsed.categoryNameNe);
+  const displayLocationName = lang === 'ne' && parsed.locationNameNe ? parsed.locationNameNe : parsed.locationName;
+  const displayCategoryName = lang === 'ne' && parsed.categoryNameNe ? parsed.categoryNameNe : parsed.categoryName;
 
   // Build breadcrumb using parsed data
   const breadcrumbs = [{ label: tc('home'), href: `/${lang}` }];

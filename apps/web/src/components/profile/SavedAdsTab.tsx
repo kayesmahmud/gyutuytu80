@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { useLocalizedName } from '@/hooks/useLocalizedName';
 import { formatPrice } from '@thulobazaar/utils';
 import { getImageUrl } from '@/lib/images/imageUrl';
+import { useLocalizedName } from '@/hooks/useLocalizedName';
 
 interface FavoriteAd {
   id: number;
@@ -92,7 +92,7 @@ interface FavoriteAdCardProps {
 function FavoriteAdCard({ favorite, lang, onRemove }: FavoriteAdCardProps) {
   const tp = useTranslations('profile');
   const ta = useTranslations('ads');
-  const localName = useLocalizedName();
+  const localizedName = useLocalizedName();
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden">
       <div className="flex gap-3 p-3">
@@ -130,10 +130,10 @@ function FavoriteAdCard({ favorite, lang, onRemove }: FavoriteAdCardProps) {
             </Link>
             <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500 flex-wrap">
               {favorite.ad.category && (
-                <span className="bg-gray-100 px-2 py-0.5 rounded-full">{localName(favorite.ad.category.name, favorite.ad.category.nameNe)}</span>
+                <span className="bg-gray-100 px-2 py-0.5 rounded-full">{localizedName(favorite.ad.category.name, favorite.ad.category.nameNe)}</span>
               )}
               {favorite.ad.location && (
-                <span className="truncate max-w-[140px]">{localName(favorite.ad.location.name, favorite.ad.location.nameNe)}</span>
+                <span className="truncate max-w-[140px]">{localizedName(favorite.ad.location.name, favorite.ad.location.nameNe)}</span>
               )}
             </div>
           </div>

@@ -33,7 +33,7 @@ export default function CascadingLocationFilter({
     selectedLocationName,
   });
 
-  const localName = useLocalizedName();
+  const localizedName = useLocalizedName();
   const searchInputRef = useRef<HTMLDivElement>(null);
 
   // Close autocomplete when clicking outside
@@ -104,7 +104,7 @@ export default function CascadingLocationFilter({
                     selectedLocationSlug === result.slug ? 'bg-indigo-50 text-rose-500 font-semibold' : 'text-gray-800'
                   }`}
                 >
-                  <div className="text-sm font-medium">{localName(result.name, result.nameNe)}</div>
+                  <div className="text-sm font-medium">{localizedName(result.name, result.nameNe)}</div>
                   <div className="text-xs text-gray-500">{getLocationTypeLabel(result.type)}</div>
                 </button>
               ))
@@ -144,7 +144,7 @@ export default function CascadingLocationFilter({
                   : 'bg-transparent text-gray-800 font-medium hover:bg-gray-50'
               }`}
             >
-              <span>{localName(province.name, province.nameNe)}</span>
+              <span>{localizedName(province.name, province.nameNe)}</span>
             </button>
           </div>
 
@@ -173,7 +173,7 @@ export default function CascadingLocationFilter({
                           : 'bg-transparent text-gray-600 font-normal hover:bg-gray-50 hover:text-gray-800'
                       }`}
                     >
-                      <span>{localName(district.name, district.nameNe)}</span>
+                      <span>{localizedName(district.name, district.nameNe)}</span>
                     </button>
                   </div>
 
@@ -207,7 +207,7 @@ export default function CascadingLocationFilter({
                                   : 'bg-transparent text-gray-500 font-normal hover:bg-gray-50 hover:text-gray-800'
                               }`}
                             >
-                              <span>{localName(municipality.name, municipality.nameNe)}</span>
+                              <span>{localizedName(municipality.name, municipality.nameNe)}</span>
                             </button>
                           </div>
 
@@ -225,7 +225,7 @@ export default function CascadingLocationFilter({
                                       : 'bg-transparent text-gray-400 font-normal hover:bg-gray-50 hover:text-gray-800'
                                   }`}
                                 >
-                                  <span>{localName(area.name, area.nameNe)}</span>
+                                  <span>{localizedName(area.name, area.nameNe)}</span>
                                 </button>
                               ))}
                             </div>
