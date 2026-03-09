@@ -102,7 +102,7 @@ export function createFinancialMethods(client: AxiosInstance) {
         is_active?: boolean;
       }
     ): Promise<ApiResponse<any>> {
-      const response = await client.put(`/api/promotion-pricing/${id}`, data);
+      const response = await client.put(`/api/promotion-pricing/admin/${id}`, data);
       return response.data;
     },
 
@@ -114,12 +114,12 @@ export function createFinancialMethods(client: AxiosInstance) {
       price: number;
       discount_percentage?: number;
     }): Promise<ApiResponse<any>> {
-      const response = await client.post('/api/promotion-pricing', data);
+      const response = await client.post('/api/promotion-pricing/admin/create', data);
       return response.data;
     },
 
     async deletePromotionPricing(id: number): Promise<ApiResponse<any>> {
-      const response = await client.delete(`/api/promotion-pricing/${id}`);
+      const response = await client.delete(`/api/promotion-pricing/admin/${id}`);
       return response.data;
     },
   };
