@@ -143,7 +143,9 @@ class _AnimatedBadgeState extends State<_AnimatedBadge>
             style: TextStyle(
               fontSize: _getFontSize(),
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: widget.type == PromotionTypeEnum.featured
+                  ? Colors.black
+                  : Colors.white,
               letterSpacing: 0.5,
             ),
           ),

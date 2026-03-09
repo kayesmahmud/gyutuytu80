@@ -164,14 +164,14 @@ class AdCard extends StatelessWidget {
                             children: [
                               const Icon(
                                 LucideIcons.star,
-                                color: Colors.white,
+                                color: Colors.black,
                                 size: 10,
                               ),
                               const SizedBox(width: 2),
                               Text(
                                 'common.featured'.tr(),
                                 style: GoogleFonts.inter(
-                                  color: Colors.white,
+                                  color: Colors.black,
                                   fontSize: 8,
                                   fontWeight: FontWeight.bold,
                                 ),
