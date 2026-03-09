@@ -72,8 +72,10 @@ export function transformAdForList(ad: any) {
     categoryId: ad.category_id,
     locationId: ad.location_id,
     categoryName: ad.categories?.name,
+    categoryNameNe: ad.categories?.name_ne,
     categoryIcon: ad.categories?.icon,
     locationName: ad.locations?.name,
+    locationNameNe: ad.locations?.name_ne,
     accountType: ad.users_ads_user_idTousers?.account_type,
     businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status,
     individualVerified: ad.users_ads_user_idTousers?.individual_verified,
@@ -110,8 +112,10 @@ export function transformAdForDashboard(ad: any) {
     categoryId: ad.category_id,
     locationId: ad.location_id,
     categoryName: ad.categories?.name,
+    categoryNameNe: ad.categories?.name_ne,
     categoryIcon: ad.categories?.icon,
     locationName: ad.locations?.name,
+    locationNameNe: ad.locations?.name_ne,
     primaryImage: ad.ad_images?.find((img: any) => img.is_primary)?.filename || ad.ad_images?.[0]?.filename,
     images: ad.ad_images?.map((img: any) => ({
       id: img.id,
@@ -125,7 +129,10 @@ export function transformAdForDashboard(ad: any) {
 export async function transformAdForDetail(ad: any) {
   return {
     ...ad,
-    category_name: ad.categories?.name,
+    category_name: ad.categories?.categories?.name ?? ad.categories?.name,
+    category_name_ne: ad.categories?.categories?.name_ne ?? ad.categories?.name_ne,
+    subcategory_name: ad.categories?.categories ? ad.categories.name : undefined,
+    subcategory_name_ne: ad.categories?.categories ? ad.categories.name_ne : undefined,
     location_name: await getLocationHierarchy(ad.location_id),
     userName: ad.users_ads_user_idTousers?.full_name,
     userAvatar: ad.users_ads_user_idTousers?.avatar,
@@ -400,8 +407,8 @@ export async function generateAdSlug(title: string, locationId?: number): Promis
 
 const adListSelect = {
   include: {
-    categories: { select: { name: true, icon: true } },
-    locations: { select: { name: true } },
+    categories: { select: { name: true, name_ne: true, icon: true } },
+    locations: { select: { name: true, name_ne: true } },
     users_ads_user_idTousers: {
       select: {
         account_type: true,
@@ -419,7 +426,11 @@ const adListSelect = {
 
 const adDetailSelect = {
   include: {
-    categories: true,
+    categories: {
+      include: {
+        categories: true, // parent category via self-relation
+      },
+    },
     locations: true,
     users_ads_user_idTousers: {
       select: {
@@ -496,8 +507,8 @@ export async function getUserAds(userId: number) {
   const ads = await prisma.ads.findMany({
     where: { user_id: userId },
     include: {
-      categories: { select: { name: true, icon: true } },
-      locations: { select: { name: true } },
+      categories: { select: { name: true, name_ne: true, icon: true } },
+      locations: { select: { name: true, name_ne: true } },
       ad_images: {
         orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
       },
