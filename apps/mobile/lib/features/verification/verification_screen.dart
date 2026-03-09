@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/api/auth_client.dart';
 import '../../core/api/verification_client.dart';
 import '../../core/models/verification_models.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/utils/localized_helpers.dart';
 import '../../core/widgets/login_required_widget.dart';
 import '../profile/profile_screen.dart';
 import 'verification_widgets.dart';
@@ -100,8 +102,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
     // Phone verification gate
     if (!_isPhoneVerified) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please verify your phone number first')),
+        SnackBar(
+            content: Text(context.locale.languageCode == 'ne'
+                ? 'कृपया पहिले आफ्नो फोन नम्बर प्रमाणित गर्नुहोस्'
+                : 'Please verify your phone number first')),
       );
       return;
     }
@@ -115,13 +119,20 @@ class _VerificationScreenState extends State<VerificationScreen> {
     // Block if the OTHER verification type is active or pending
     final otherStatus = type == 'individual' ? _businessStatus : _individualStatus;
     if (otherStatus == 'verified' || otherStatus == 'pending') {
-      final otherLabel = type == 'individual' ? 'business' : 'individual';
+      final lang = context.locale.languageCode;
+      final otherLabel = type == 'individual'
+          ? (lang == 'ne' ? 'व्यापार' : 'business')
+          : (lang == 'ne' ? 'व्यक्तिगत' : 'individual');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             otherStatus == 'verified'
-                ? 'You already have an active $otherLabel verification. Wait for it to expire before applying.'
-                : 'You already have a pending $otherLabel verification request.',
+                ? (lang == 'ne'
+                    ? 'तपाईंसँग पहिले नै सक्रिय $otherLabel प्रमाणीकरण छ। कृपया म्याद सकिएपछि आवेदन दिनुहोस्।'
+                    : 'You already have an active $otherLabel verification. Wait for it to expire before applying.')
+                : (lang == 'ne'
+                    ? 'तपाईंसँग पहिले नै लंबित $otherLabel प्रमाणीकरण अनुरोध छ।'
+                    : 'You already have a pending $otherLabel verification request.'),
           ),
         ),
       );
@@ -225,7 +236,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Select Duration',
+                    context.locale.languageCode == 'ne' ? 'अवधि छान्नुहोस्' : 'Select Duration',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -281,7 +292,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             ),
                           ),
                           Text(
-                            '${_pricing!.campaign!.daysRemaining} days left',
+                            context.locale.languageCode == 'ne'
+                                ? '${_pricing!.campaign!.daysRemaining} दिन बाँकी'
+                                : '${_pricing!.campaign!.daysRemaining} days left',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.white70,
@@ -341,7 +354,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Selected Plan:',
+                            context.locale.languageCode == 'ne' ? 'छानिएको योजना:' : 'Selected Plan:',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -349,7 +362,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${type == 'individual' ? 'Individual' : 'Business'} — ${_selectedDuration!.durationLabel}',
+                            '${type == 'individual' ? (context.locale.languageCode == 'ne' ? 'व्यक्तिगत' : 'Individual') : (context.locale.languageCode == 'ne' ? 'व्यापार' : 'Business')} — ${_selectedDuration!.durationLabel}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -357,8 +370,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           ),
                           Text(
                             _selectedDuration!.finalPrice <= 0
-                                ? 'FREE'
-                                : 'NPR ${_selectedDuration!.finalPrice.toInt()}',
+                                ? (context.locale.languageCode == 'ne' ? 'निःशुल्क' : 'FREE')
+                                : formatLocalizedPrice(_selectedDuration!.finalPrice, context.locale.languageCode),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
@@ -373,7 +386,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     ElevatedButton.icon(
                       onPressed: _onProceed,
                       icon: const Icon(LucideIcons.arrowRight, size: 18),
-                      label: const Text('Proceed'),
+                      label: Text(l('proceed', context.locale.languageCode)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.indigo,
                         foregroundColor: Colors.white,
@@ -402,23 +415,24 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final strips = <Widget>[];
 
     // Rejection reasons
+    final lang = context.locale.languageCode;
     if (_individualStatus == 'rejected' && _individualRejectionReason != null) {
-      strips.add(_buildRejectionStrip('Individual', _individualRejectionReason!));
+      strips.add(_buildRejectionStrip(lang == 'ne' ? 'व्यक्तिगत' : 'Individual', _individualRejectionReason!));
     }
     if (_businessStatus == 'rejected' && _businessRejectionReason != null) {
-      strips.add(_buildRejectionStrip('Business', _businessRejectionReason!));
+      strips.add(_buildRejectionStrip(lang == 'ne' ? 'व्यापार' : 'Business', _businessRejectionReason!));
     }
 
     // Expiry warnings
     if (_individualStatus == 'verified' &&
         (_ind?.isExpiringSoon ?? false) &&
         _individualDaysRemaining != null) {
-      strips.add(_buildExpiryStrip('Individual', _individualDaysRemaining!));
+      strips.add(_buildExpiryStrip(lang == 'ne' ? 'व्यक्तिगत' : 'Individual', _individualDaysRemaining!));
     }
     if (_businessStatus == 'verified' &&
         (_biz?.isExpiringSoon ?? false) &&
         _businessDaysRemaining != null) {
-      strips.add(_buildExpiryStrip('Business', _businessDaysRemaining!));
+      strips.add(_buildExpiryStrip(lang == 'ne' ? 'व्यापार' : 'Business', _businessDaysRemaining!));
     }
 
     return strips;
@@ -443,7 +457,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$label Verification Rejected',
+                  context.locale.languageCode == 'ne'
+                      ? '$label प्रमाणीकरण अस्वीकृत'
+                      : '$label Verification Rejected',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
@@ -478,7 +494,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '$label verification expires in $days days',
+              context.locale.languageCode == 'ne'
+                  ? '$label प्रमाणीकरण $days दिनमा समाप्त हुन्छ'
+                  : '$label verification expires in $days days',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -499,18 +517,20 @@ class _VerificationScreenState extends State<VerificationScreen> {
       return Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          title: const Text(
-            'Verification',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          title: Text(
+            context.locale.languageCode == 'ne' ? 'प्रमाणीकरण' : 'Verification',
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black87,
           elevation: 0,
         ),
-        body: const LoginRequiredWidget(
+        body: LoginRequiredWidget(
           icon: LucideIcons.badgeCheck,
-          title: 'Login to Get Verified',
-          subtitle: 'Sign in to verify your account\nand build trust with buyers',
+          title: context.locale.languageCode == 'ne' ? 'प्रमाणित हुन लगइन गर्नुहोस्' : 'Login to Get Verified',
+          subtitle: context.locale.languageCode == 'ne'
+              ? 'आफ्नो खाता प्रमाणित गर्न\nर किनमेलकर्ताहरूसँग विश्वास बनाउन साइन इन गर्नुहोस्'
+              : 'Sign in to verify your account\nand build trust with buyers',
         ),
       );
     }
@@ -518,9 +538,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Verification',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          context.locale.languageCode == 'ne' ? 'प्रमाणीकरण' : 'Verification',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
@@ -569,7 +589,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Phone Verification Required',
+                                          context.locale.languageCode == 'ne'
+                                              ? 'फोन प्रमाणीकरण आवश्यक'
+                                              : 'Phone Verification Required',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.orange.shade900,
@@ -578,8 +600,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                         const SizedBox(height: 2),
                                         Text(
                                           _phone != null
-                                              ? 'Your phone $_phone is not verified. Tap to verify.'
-                                              : 'Verify your phone number to apply for verification.',
+                                              ? (context.locale.languageCode == 'ne'
+                                                  ? 'तपाईंको फोन $_phone प्रमाणित भएको छैन। प्रमाणित गर्न ट्याप गर्नुहोस्।'
+                                                  : 'Your phone $_phone is not verified. Tap to verify.')
+                                              : (context.locale.languageCode == 'ne'
+                                                  ? 'प्रमाणीकरणको लागि आफ्नो फोन नम्बर प्रमाणित गर्नुहोस्।'
+                                                  : 'Verify your phone number to apply for verification.'),
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.orange.shade700,
@@ -622,9 +648,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               Expanded(
                                 child: VerificationStatusCard(
                                   type: 'individual',
-                                  title: 'Individual Verification',
-                                  subtitle:
-                                      'Verify your personal identity with a government-issued ID',
+                                  title: context.locale.languageCode == 'ne'
+                                      ? 'व्यक्तिगत प्रमाणीकरण'
+                                      : 'Individual Verification',
+                                  subtitle: context.locale.languageCode == 'ne'
+                                      ? 'सरकारी परिचयपत्रले आफ्नो व्यक्तिगत पहिचान प्रमाणित गर्नुहोस्'
+                                      : 'Verify your personal identity with a government-issued ID',
                                   status: _individualStatus,
                                   isSelected: _selectedType == 'individual',
                                   rejectionReason: _individualRejectionReason,
@@ -639,9 +668,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               Expanded(
                                 child: VerificationStatusCard(
                                   type: 'business',
-                                  title: 'Business Verification',
-                                  subtitle:
-                                      'Verify your business with registration documents',
+                                  title: context.locale.languageCode == 'ne'
+                                      ? 'व्यापार प्रमाणीकरण'
+                                      : 'Business Verification',
+                                  subtitle: context.locale.languageCode == 'ne'
+                                      ? 'दर्ता कागजातहरूले आफ्नो व्यापार प्रमाणित गर्नुहोस्'
+                                      : 'Verify your business with registration documents',
                                   status: _businessStatus,
                                   isSelected: _selectedType == 'business',
                                   rejectionReason: _businessRejectionReason,
@@ -689,7 +721,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 size: 48, color: Colors.red.shade300),
             const SizedBox(height: 16),
             Text(
-              'Failed to load verification',
+              context.locale.languageCode == 'ne'
+                  ? 'प्रमाणीकरण लोड गर्न असफल'
+                  : 'Failed to load verification',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -698,7 +732,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Unknown error',
+              _error ?? (context.locale.languageCode == 'ne' ? 'अज्ञात त्रुटि' : 'Unknown error'),
               style: TextStyle(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
@@ -706,7 +740,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(LucideIcons.refreshCw),
-              label: const Text('Try Again'),
+              label: Text(l('tryAgain', context.locale.languageCode)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo,
                 foregroundColor: Colors.white,
@@ -796,9 +830,9 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'FREE',
-                    style: TextStyle(
+                  child: Text(
+                    context.locale.languageCode == 'ne' ? 'निःशुल्क' : 'FREE',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -822,9 +856,9 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'PROMO',
-                    style: TextStyle(
+                  child: Text(
+                    context.locale.languageCode == 'ne' ? 'प्रोमो' : 'PROMO',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -845,9 +879,9 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'POPULAR',
-                    style: TextStyle(
+                  child: Text(
+                    context.locale.languageCode == 'ne' ? 'लोकप्रिय' : 'POPULAR',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -872,7 +906,7 @@ class _DurationOptionCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   if (_isFree) ...[
                     Text(
-                      'FREE',
+                      context.locale.languageCode == 'ne' ? 'निःशुल्क' : 'FREE',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -881,7 +915,7 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     if (option.price > 0)
                       Text(
-                        'NPR ${option.price.toInt()}',
+                        formatLocalizedPrice(option.price, context.locale.languageCode),
                         style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration.lineThrough,
@@ -893,7 +927,7 @@ class _DurationOptionCard extends StatelessWidget {
                   ] else ...[
                     if (option.discountPercentage > 0) ...[
                       Text(
-                        'NPR ${option.finalPrice.toInt()}',
+                        formatLocalizedPrice(option.finalPrice, context.locale.languageCode),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -901,7 +935,7 @@ class _DurationOptionCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'NPR ${option.price.toInt()}',
+                        formatLocalizedPrice(option.price, context.locale.languageCode),
                         style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration.lineThrough,
@@ -912,7 +946,7 @@ class _DurationOptionCard extends StatelessWidget {
                       ),
                     ] else
                       Text(
-                        'NPR ${option.price.toInt()}',
+                        formatLocalizedPrice(option.price, context.locale.languageCode),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -934,7 +968,9 @@ class _DurationOptionCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'Save ${option.discountPercentage.toInt()}%',
+                        context.locale.languageCode == 'ne'
+                            ? '${option.discountPercentage.toInt()}% बचत'
+                            : 'Save ${option.discountPercentage.toInt()}%',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,

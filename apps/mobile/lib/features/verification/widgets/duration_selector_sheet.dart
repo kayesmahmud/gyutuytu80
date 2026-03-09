@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/models/verification_models.dart';
+import '../../../core/utils/localized_helpers.dart';
 
 /// Bottom sheet for selecting verification duration/pricing.
 /// Pricing is controlled via campaigns — a 100% discount campaign makes it free.
@@ -57,7 +59,7 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Select Duration',
+                        context.locale.languageCode == 'ne' ? 'अवधि छान्नुहोस्' : 'Select Duration',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -100,7 +102,9 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                                 ),
                               ),
                               Text(
-                                '${widget.campaign!.daysRemaining} days left',
+                                context.locale.languageCode == 'ne'
+                                    ? '${widget.campaign!.daysRemaining} दिन बाँकी'
+                                    : '${widget.campaign!.daysRemaining} days left',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.white70,
@@ -161,7 +165,7 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Selected Plan:',
+                                context.locale.languageCode == 'ne' ? 'छानिएको योजना:' : 'Selected Plan:',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -169,7 +173,7 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${widget.verificationType == 'individual' ? 'Individual' : 'Business'} — ${_selected!.durationLabel}',
+                                '${widget.verificationType == 'individual' ? (context.locale.languageCode == 'ne' ? 'व्यक्तिगत' : 'Individual') : (context.locale.languageCode == 'ne' ? 'व्यापार' : 'Business')} — ${_selected!.durationLabel}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -177,8 +181,8 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                               ),
                               Text(
                                 _selected!.finalPrice <= 0
-                                    ? 'FREE'
-                                    : 'NPR ${_selected!.finalPrice.toInt()}',
+                                    ? (context.locale.languageCode == 'ne' ? 'निःशुल्क' : 'FREE')
+                                    : formatLocalizedPrice(_selected!.finalPrice, context.locale.languageCode),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
@@ -199,7 +203,7 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                             );
                           },
                           icon: const Icon(LucideIcons.arrowRight, size: 18),
-                          label: const Text('Proceed'),
+                          label: Text(l('proceed', context.locale.languageCode)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.indigo,
                             foregroundColor: Colors.white,
@@ -296,9 +300,9 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'FREE',
-                    style: TextStyle(
+                  child: Text(
+                    context.locale.languageCode == 'ne' ? 'निःशुल्क' : 'FREE',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -319,9 +323,9 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'PROMO',
-                    style: TextStyle(
+                  child: Text(
+                    context.locale.languageCode == 'ne' ? 'प्रोमो' : 'PROMO',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -342,9 +346,9 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'POPULAR',
-                    style: TextStyle(
+                  child: Text(
+                    context.locale.languageCode == 'ne' ? 'लोकप्रिय' : 'POPULAR',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -369,7 +373,7 @@ class _DurationOptionCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   if (_isFree) ...[
                     Text(
-                      'FREE',
+                      context.locale.languageCode == 'ne' ? 'निःशुल्क' : 'FREE',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -378,7 +382,7 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     if (option.price > 0)
                       Text(
-                        'NPR ${option.price.toInt()}',
+                        formatLocalizedPrice(option.price, context.locale.languageCode),
                         style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration.lineThrough,
@@ -390,7 +394,7 @@ class _DurationOptionCard extends StatelessWidget {
                   ] else ...[
                     if (option.discountPercentage > 0) ...[
                       Text(
-                        'NPR ${option.finalPrice.toInt()}',
+                        formatLocalizedPrice(option.finalPrice, context.locale.languageCode),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -398,7 +402,7 @@ class _DurationOptionCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'NPR ${option.price.toInt()}',
+                        formatLocalizedPrice(option.price, context.locale.languageCode),
                         style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration.lineThrough,
@@ -409,7 +413,7 @@ class _DurationOptionCard extends StatelessWidget {
                       ),
                     ] else
                       Text(
-                        'NPR ${option.price.toInt()}',
+                        formatLocalizedPrice(option.price, context.locale.languageCode),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -431,7 +435,9 @@ class _DurationOptionCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'Save ${option.discountPercentage.toInt()}%',
+                        context.locale.languageCode == 'ne'
+                            ? '${option.discountPercentage.toInt()}% बचत'
+                            : 'Save ${option.discountPercentage.toInt()}%',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,

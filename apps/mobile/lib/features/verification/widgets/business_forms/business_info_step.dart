@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -22,11 +23,12 @@ class BusinessInfoStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.locale.languageCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Business Information',
+          lang == 'ne' ? 'व्यापार जानकारी' : 'Business Information',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -35,7 +37,9 @@ class BusinessInfoStep extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Enter your business details. Fields marked with * are required.',
+          lang == 'ne'
+              ? 'आफ्नो व्यापार विवरणहरू लेख्नुहोस्। * चिन्ह लागेका फिल्डहरू आवश्यक छन्।'
+              : 'Enter your business details. Fields marked with * are required.',
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 24),
@@ -43,24 +47,24 @@ class BusinessInfoStep extends StatelessWidget {
         // Business Name
         _buildTextField(
           controller: businessNameController,
-          label: 'Business Name *',
-          hint: 'Enter your registered business name',
+          label: lang == 'ne' ? 'व्यापारको नाम *' : 'Business Name *',
+          hint: lang == 'ne' ? 'आफ्नो दर्ता गरिएको व्यापारको नाम लेख्नुहोस्' : 'Enter your registered business name',
         ),
         const SizedBox(height: 16),
 
         // Business Category
         _buildTextField(
           controller: businessCategoryController,
-          label: 'Business Category',
-          hint: 'e.g., Electronics, Fashion, Real Estate',
+          label: lang == 'ne' ? 'व्यापार वर्ग' : 'Business Category',
+          hint: lang == 'ne' ? 'जस्तै इलेक्ट्रोनिक्स, फेसन, रियल इस्टेट' : 'e.g., Electronics, Fashion, Real Estate',
         ),
         const SizedBox(height: 16),
 
         // Business Description
         _buildTextField(
           controller: businessDescriptionController,
-          label: 'Business Description',
-          hint: 'Brief description of your business',
+          label: lang == 'ne' ? 'व्यापार विवरण' : 'Business Description',
+          hint: lang == 'ne' ? 'आफ्नो व्यापारको संक्षिप्त विवरण' : 'Brief description of your business',
           maxLines: 3,
         ),
         const SizedBox(height: 16),
@@ -68,7 +72,7 @@ class BusinessInfoStep extends StatelessWidget {
         // Business Website
         _buildTextField(
           controller: businessWebsiteController,
-          label: 'Business Website',
+          label: lang == 'ne' ? 'व्यापार वेबसाइट' : 'Business Website',
           hint: 'https://www.example.com',
           keyboardType: TextInputType.url,
         ),
@@ -77,7 +81,7 @@ class BusinessInfoStep extends StatelessWidget {
         // Business Phone
         _buildTextField(
           controller: businessPhoneController,
-          label: 'Business Phone',
+          label: lang == 'ne' ? 'व्यापार फोन' : 'Business Phone',
           hint: '+977 9XXXXXXXXX',
           keyboardType: TextInputType.phone,
         ),
@@ -86,8 +90,8 @@ class BusinessInfoStep extends StatelessWidget {
         // Business Address
         _buildTextField(
           controller: businessAddressController,
-          label: 'Business Address',
-          hint: 'Enter your business address',
+          label: lang == 'ne' ? 'व्यापार ठेगाना' : 'Business Address',
+          hint: lang == 'ne' ? 'आफ्नो व्यापार ठेगाना लेख्नुहोस्' : 'Enter your business address',
           maxLines: 2,
         ),
 
@@ -108,7 +112,7 @@ class BusinessInfoStep extends StatelessWidget {
                   const Icon(LucideIcons.lightbulb, color: Color(0xFF6366F1), size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Tips',
+                    lang == 'ne' ? 'सुझावहरू' : 'Tips',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -119,9 +123,13 @@ class BusinessInfoStep extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '• Use your official registered business name\n'
-                '• Complete information helps with faster verification\n'
-                '• Provide accurate contact details',
+                lang == 'ne'
+                    ? '• आधिकारिक दर्ता गरिएको व्यापारको नाम प्रयोग गर्नुहोस्\n'
+                      '• पूर्ण जानकारीले छिटो प्रमाणीकरणमा मद्दत गर्छ\n'
+                      '• सही सम्पर्क विवरणहरू दिनुहोस्'
+                    : '• Use your official registered business name\n'
+                      '• Complete information helps with faster verification\n'
+                      '• Provide accurate contact details',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: Colors.grey[700],

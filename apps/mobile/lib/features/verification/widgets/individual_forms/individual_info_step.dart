@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,11 +19,12 @@ class IndividualInfoStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.locale.languageCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Personal Information',
+          lang == 'ne' ? 'व्यक्तिगत जानकारी' : 'Personal Information',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -31,14 +33,16 @@ class IndividualInfoStep extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Enter your details exactly as they appear on your ID document.',
+          lang == 'ne'
+              ? 'तपाईंको परिचयपत्रमा देखिए अनुसार विवरणहरू लेख्नुहोस्।'
+              : 'Enter your details exactly as they appear on your ID document.',
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 24),
 
         // Full Name
         Text(
-          'Full Name *',
+          lang == 'ne' ? 'पूरा नाम *' : 'Full Name *',
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -49,7 +53,7 @@ class IndividualInfoStep extends StatelessWidget {
         TextFormField(
           controller: fullNameController,
           decoration: InputDecoration(
-            hintText: 'Enter your full name',
+            hintText: lang == 'ne' ? 'आफ्नो पूरा नाम लेख्नुहोस्' : 'Enter your full name',
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -70,7 +74,7 @@ class IndividualInfoStep extends StatelessWidget {
 
         // ID Type
         Text(
-          'ID Document Type *',
+          lang == 'ne' ? 'परिचयपत्र प्रकार *' : 'ID Document Type *',
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -89,10 +93,10 @@ class IndividualInfoStep extends StatelessWidget {
             child: DropdownButton<String>(
               value: idType,
               isExpanded: true,
-              items: const [
-                DropdownMenuItem(value: 'citizenship', child: Text('Citizenship')),
-                DropdownMenuItem(value: 'passport', child: Text('Passport')),
-                DropdownMenuItem(value: 'driving_license', child: Text('Driving License')),
+              items: [
+                DropdownMenuItem(value: 'citizenship', child: Text(lang == 'ne' ? 'नागरिकता' : 'Citizenship')),
+                DropdownMenuItem(value: 'passport', child: Text(lang == 'ne' ? 'राहदानी' : 'Passport')),
+                DropdownMenuItem(value: 'driving_license', child: Text(lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License')),
               ],
               onChanged: onIdTypeChanged,
             ),
@@ -102,7 +106,7 @@ class IndividualInfoStep extends StatelessWidget {
 
         // ID Number
         Text(
-          'ID Document Number *',
+          lang == 'ne' ? 'परिचयपत्र नम्बर *' : 'ID Document Number *',
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -113,7 +117,7 @@ class IndividualInfoStep extends StatelessWidget {
         TextFormField(
           controller: idNumberController,
           decoration: InputDecoration(
-            hintText: 'Enter your ID number',
+            hintText: lang == 'ne' ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्' : 'Enter your ID number',
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -148,7 +152,7 @@ class IndividualInfoStep extends StatelessWidget {
                   const Icon(LucideIcons.lightbulb, color: Color(0xFF6366F1), size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Tips',
+                    lang == 'ne' ? 'सुझावहरू' : 'Tips',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -159,9 +163,13 @@ class IndividualInfoStep extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '• Use the exact name as shown on your ID\n'
-                '• Double-check your ID number for accuracy\n'
-                '• Information must match your documents',
+                lang == 'ne'
+                    ? '• तपाईंको परिचयपत्रमा देखिए अनुसारको नाम प्रयोग गर्नुहोस्\n'
+                      '• परिचयपत्र नम्बर शुद्ध छ भनी जाँच गर्नुहोस्\n'
+                      '• जानकारी तपाईंको कागजातसँग मिल्नुपर्छ'
+                    : '• Use the exact name as shown on your ID\n'
+                      '• Double-check your ID number for accuracy\n'
+                      '• Information must match your documents',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: Colors.grey[700],

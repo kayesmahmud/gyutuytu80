@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,11 +18,12 @@ class BusinessDocumentStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.locale.languageCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Upload Business License',
+          lang == 'ne' ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस्' : 'Upload Business License',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -30,14 +32,16 @@ class BusinessDocumentStep extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Upload a clear photo of your business registration or license document.',
+          lang == 'ne'
+              ? 'आफ्नो व्यापार दर्ता वा लाइसेन्स कागजातको स्पष्ट फोटो अपलोड गर्नुहोस्।'
+              : 'Upload a clear photo of your business registration or license document.',
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 24),
 
         // File Upload
         Text(
-          'Business License Document *',
+          lang == 'ne' ? 'व्यापार लाइसेन्स कागजात *' : 'Business License Document *',
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -107,12 +111,16 @@ class BusinessDocumentStep extends StatelessWidget {
                       Icon(LucideIcons.upload, size: 48, color: Colors.grey[400]),
                       const SizedBox(height: 12),
                       Text(
-                        'Tap to upload business license',
+                        lang == 'ne'
+                            ? 'व्यापार लाइसेन्स अपलोड गर्न ट्याप गर्नुहोस्'
+                            : 'Tap to upload business license',
                         style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'JPEG, PNG, or PDF • Max 5MB',
+                        lang == 'ne'
+                            ? 'JPEG, PNG, वा PDF • अधिकतम ५MB'
+                            : 'JPEG, PNG, or PDF • Max 5MB',
                         style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400]),
                       ),
                     ],
@@ -137,7 +145,7 @@ class BusinessDocumentStep extends StatelessWidget {
                   const Icon(LucideIcons.checkCircle, color: Color(0xFF10B981), size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Accepted Documents',
+                    lang == 'ne' ? 'स्वीकृत कागजातहरू' : 'Accepted Documents',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -148,10 +156,15 @@ class BusinessDocumentStep extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '• Company Registration Certificate\n'
-                '• PAN/VAT Registration\n'
-                '• Business License\n'
-                '• Trade License',
+                lang == 'ne'
+                    ? '• कम्पनी दर्ता प्रमाणपत्र\n'
+                      '• PAN/VAT दर्ता\n'
+                      '• व्यापार लाइसेन्स\n'
+                      '• व्यापार अनुमतिपत्र'
+                    : '• Company Registration Certificate\n'
+                      '• PAN/VAT Registration\n'
+                      '• Business License\n'
+                      '• Trade License',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: Colors.grey[700],
@@ -179,7 +192,7 @@ class BusinessDocumentStep extends StatelessWidget {
                   const Icon(LucideIcons.alertTriangle, color: Color(0xFFF59E0B), size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Photo Requirements',
+                    lang == 'ne' ? 'फोटो आवश्यकताहरू' : 'Photo Requirements',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -190,10 +203,15 @@ class BusinessDocumentStep extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '• All text must be clearly readable\n'
-                '• Avoid glare and shadows\n'
-                '• Document should be fully visible\n'
-                '• No cropped or blurry images',
+                lang == 'ne'
+                    ? '• सबै पाठ स्पष्ट पढ्न सकिनुपर्छ\n'
+                      '• चम्किलो प्रकाश र छायाबाट बच्नुहोस्\n'
+                      '• कागजात पूर्ण रूपमा देखिनुपर्छ\n'
+                      '• काटिएको वा धमिलो छविहरू नराख्नुहोस्'
+                    : '• All text must be clearly readable\n'
+                      '• Avoid glare and shadows\n'
+                      '• Document should be fully visible\n'
+                      '• No cropped or blurry images',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: Colors.grey[700],

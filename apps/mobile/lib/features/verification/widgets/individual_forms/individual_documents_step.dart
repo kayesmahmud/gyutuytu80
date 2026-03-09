@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -29,11 +30,12 @@ class IndividualDocumentsStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.locale.languageCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Upload Documents',
+          lang == 'ne' ? 'कागजातहरू अपलोड गर्नुहोस्' : 'Upload Documents',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -42,15 +44,17 @@ class IndividualDocumentsStep extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Upload clear photos of your ID document and a selfie.',
+          lang == 'ne'
+              ? 'तपाईंको परिचयपत्र र सेल्फीको स्पष्ट फोटो अपलोड गर्नुहोस्।'
+              : 'Upload clear photos of your ID document and a selfie.',
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 24),
 
         // ID Front
         _buildFileUpload(
-          label: 'ID Document (Front) *',
-          hint: 'Upload front side of your ID',
+          label: lang == 'ne' ? 'परिचयपत्र (अगाडि) *' : 'ID Document (Front) *',
+          hint: lang == 'ne' ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्' : 'Upload front side of your ID',
           file: idFrontFile,
           onTap: onPickFront,
           onClear: onClearFront,
@@ -59,8 +63,8 @@ class IndividualDocumentsStep extends StatelessWidget {
 
         // ID Back (Optional)
         _buildFileUpload(
-          label: 'ID Document (Back)',
-          hint: 'Upload back side of your ID (optional)',
+          label: lang == 'ne' ? 'परिचयपत्र (पछाडि)' : 'ID Document (Back)',
+          hint: lang == 'ne' ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस् (ऐच्छिक)' : 'Upload back side of your ID (optional)',
           file: idBackFile,
           onTap: onPickBack,
           onClear: onClearBack,
@@ -70,8 +74,8 @@ class IndividualDocumentsStep extends StatelessWidget {
 
         // Selfie
         _buildFileUpload(
-          label: 'Selfie with ID *',
-          hint: 'Upload a selfie holding your ID document',
+          label: lang == 'ne' ? 'परिचयपत्रसहित सेल्फी *' : 'Selfie with ID *',
+          hint: lang == 'ne' ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्' : 'Upload a selfie holding your ID document',
           file: selfieFile,
           onTap: onPickSelfie,
           onClear: onClearSelfie,
@@ -94,7 +98,7 @@ class IndividualDocumentsStep extends StatelessWidget {
                   const Icon(LucideIcons.alertTriangle, color: Color(0xFFF59E0B), size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Photo Requirements',
+                    lang == 'ne' ? 'फोटो आवश्यकताहरू' : 'Photo Requirements',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -105,10 +109,15 @@ class IndividualDocumentsStep extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                '• Ensure all text is clearly visible\n'
-                '• Avoid glare and shadows\n'
-                '• For selfie: Hold ID next to your face\n'
-                '• Max file size: 5MB per image',
+                lang == 'ne'
+                    ? '• सबै पाठ स्पष्ट देखिनुपर्छ\n'
+                      '• चम्किलो प्रकाश र छायाबाट बच्नुहोस्\n'
+                      '• सेल्फीको लागि: परिचयपत्र अनुहारको छेउमा राख्नुहोस्\n'
+                      '• अधिकतम फाइल साइज: प्रति छवि ५MB'
+                    : '• Ensure all text is clearly visible\n'
+                      '• Avoid glare and shadows\n'
+                      '• For selfie: Hold ID next to your face\n'
+                      '• Max file size: 5MB per image',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: Colors.grey[700],

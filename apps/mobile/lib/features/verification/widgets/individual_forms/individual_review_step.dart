@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/localized_helpers.dart';
 
 class IndividualReviewStep extends StatelessWidget {
   final String fullName;
@@ -28,11 +30,12 @@ class IndividualReviewStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.locale.languageCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Review & Submit',
+          lang == 'ne' ? 'समीक्षा र पेश गर्नुहोस्' : 'Review & Submit',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -41,7 +44,9 @@ class IndividualReviewStep extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Please review your information before submitting.',
+          lang == 'ne'
+              ? 'कृपया पेश गर्नु अघि आफ्नो जानकारी समीक्षा गर्नुहोस्।'
+              : 'Please review your information before submitting.',
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 24),
@@ -56,17 +61,19 @@ class IndividualReviewStep extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _buildReviewRow('Full Name', fullName),
+              _buildReviewRow(lang == 'ne' ? 'पूरा नाम' : 'Full Name', fullName),
               const Divider(height: 24),
-              _buildReviewRow('ID Type', _getIdTypeLabel(idType)),
+              _buildReviewRow(lang == 'ne' ? 'परिचयपत्र प्रकार' : 'ID Type', _getIdTypeLabel(idType, lang)),
               const Divider(height: 24),
-              _buildReviewRow('ID Number', idNumber),
+              _buildReviewRow(lang == 'ne' ? 'परिचयपत्र नम्बर' : 'ID Number', idNumber),
               const Divider(height: 24),
-              _buildReviewRow('Duration', '$durationDays days'),
+              _buildReviewRow(lang == 'ne' ? 'अवधि' : 'Duration', lang == 'ne' ? '$durationDays दिन' : '$durationDays days'),
               const Divider(height: 24),
               _buildReviewRow(
-                'Price',
-                isFreeVerification ? 'FREE' : 'Rs. ${price.toStringAsFixed(0)}',
+                lang == 'ne' ? 'मूल्य' : 'Price',
+                isFreeVerification
+                    ? (lang == 'ne' ? 'निःशुल्क' : 'FREE')
+                    : formatLocalizedPrice(price, lang),
                 isHighlighted: true,
               ),
             ],
@@ -77,7 +84,7 @@ class IndividualReviewStep extends StatelessWidget {
 
         // Documents preview
         Text(
-          'Documents Uploaded',
+          lang == 'ne' ? 'अपलोड गरिएका कागजातहरू' : 'Documents Uploaded',
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -88,17 +95,17 @@ class IndividualReviewStep extends StatelessWidget {
         Row(
           children: [
             if (idFrontFile != null)
-              Expanded(child: _buildDocPreview('ID Front', idFrontFile!)),
+              Expanded(child: _buildDocPreview(lang == 'ne' ? 'परिचयपत्र अगाडि' : 'ID Front', idFrontFile!)),
             const SizedBox(width: 8),
             if (idBackFile != null)
-              Expanded(child: _buildDocPreview('ID Back', idBackFile!))
+              Expanded(child: _buildDocPreview(lang == 'ne' ? 'परिचयपत्र पछाडि' : 'ID Back', idBackFile!))
             else
               const Spacer(),
           ],
         ),
         const SizedBox(height: 12),
         if (selfieFile != null)
-          _buildDocPreview('Selfie with ID', selfieFile!),
+          _buildDocPreview(lang == 'ne' ? 'परिचयपत्रसहित सेल्फी' : 'Selfie with ID', selfieFile!),
       ],
     );
   }
@@ -152,7 +159,19 @@ class IndividualReviewStep extends StatelessWidget {
     );
   }
 
-  String _getIdTypeLabel(String type) {
+  String _getIdTypeLabel(String type, String lang) {
+    if (lang == 'ne') {
+      switch (type) {
+        case 'citizenship':
+          return 'नागरिकता';
+        case 'passport':
+          return 'राहदानी';
+        case 'driving_license':
+          return 'सवारी चालक अनुमतिपत्र';
+        default:
+          return type;
+      }
+    }
     switch (type) {
       case 'citizenship':
         return 'Citizenship';

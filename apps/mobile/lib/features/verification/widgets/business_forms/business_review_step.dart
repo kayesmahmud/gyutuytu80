@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/localized_helpers.dart';
 
 class BusinessReviewStep extends StatelessWidget {
   final String businessName;
@@ -26,11 +28,12 @@ class BusinessReviewStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.locale.languageCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Review & Submit',
+          lang == 'ne' ? 'समीक्षा र पेश गर्नुहोस्' : 'Review & Submit',
           style: GoogleFonts.inter(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -39,7 +42,9 @@ class BusinessReviewStep extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Please review your information before submitting.',
+          lang == 'ne'
+              ? 'कृपया पेश गर्नु अघि आफ्नो जानकारी समीक्षा गर्नुहोस्।'
+              : 'Please review your information before submitting.',
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 24),
@@ -54,25 +59,27 @@ class BusinessReviewStep extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _buildReviewRow('Business Name', businessName),
+              _buildReviewRow(lang == 'ne' ? 'व्यापारको नाम' : 'Business Name', businessName),
               if (businessCategory.isNotEmpty) ...[
                 const Divider(height: 24),
-                _buildReviewRow('Category', businessCategory),
+                _buildReviewRow(lang == 'ne' ? 'वर्ग' : 'Category', businessCategory),
               ],
               if (businessPhone.isNotEmpty) ...[
                 const Divider(height: 24),
-                _buildReviewRow('Phone', businessPhone),
+                _buildReviewRow(lang == 'ne' ? 'फोन' : 'Phone', businessPhone),
               ],
               if (businessAddress.isNotEmpty) ...[
                 const Divider(height: 24),
-                _buildReviewRow('Address', businessAddress),
+                _buildReviewRow(lang == 'ne' ? 'ठेगाना' : 'Address', businessAddress),
               ],
               const Divider(height: 24),
-              _buildReviewRow('Duration', '$durationDays days'),
+              _buildReviewRow(lang == 'ne' ? 'अवधि' : 'Duration', lang == 'ne' ? '$durationDays दिन' : '$durationDays days'),
               const Divider(height: 24),
               _buildReviewRow(
-                'Price',
-                isFreeVerification ? 'FREE' : 'Rs. ${price.toStringAsFixed(0)}',
+                lang == 'ne' ? 'मूल्य' : 'Price',
+                isFreeVerification
+                    ? (lang == 'ne' ? 'निःशुल्क' : 'FREE')
+                    : formatLocalizedPrice(price, lang),
                 isHighlighted: true,
               ),
             ],
@@ -83,7 +90,7 @@ class BusinessReviewStep extends StatelessWidget {
 
         // Document preview
         Text(
-          'Document Uploaded',
+          lang == 'ne' ? 'अपलोड गरिएको कागजात' : 'Document Uploaded',
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -103,7 +110,7 @@ class BusinessReviewStep extends StatelessWidget {
           )
         else
           Text(
-            'No document uploaded',
+            lang == 'ne' ? 'कुनै कागजात अपलोड गरिएको छैन' : 'No document uploaded',
             style: GoogleFonts.inter(color: Colors.red),
           ),
       ],

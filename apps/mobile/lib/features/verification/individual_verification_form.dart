@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/api/verification_client.dart';
 import '../../core/models/payment.dart';
+import '../../core/utils/localized_helpers.dart';
 import '../payment/payment_screen.dart';
 import 'verification_widgets.dart';
 
@@ -55,8 +57,10 @@ class _IndividualVerificationFormState
       if (fileSize > 5 * 1024 * 1024) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Image must be less than 5MB. Please upload a smaller file.'),
+            SnackBar(
+              content: Text(context.locale.languageCode == 'ne'
+                  ? 'छवि ५MB भन्दा कम हुनुपर्छ। कृपया सानो फाइल अपलोड गर्नुहोस्।'
+                  : 'Image must be less than 5MB. Please upload a smaller file.'),
             ),
           );
         }
@@ -87,8 +91,10 @@ class _IndividualVerificationFormState
       if (_idFront == null || _selfie == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Please upload required documents')),
+            SnackBar(
+                content: Text(context.locale.languageCode == 'ne'
+                    ? 'कृपया आवश्यक कागजातहरू अपलोड गर्नुहोस्'
+                    : 'Please upload required documents')),
           );
         }
         return;
@@ -107,7 +113,9 @@ class _IndividualVerificationFormState
     if (_step == 'payment') {
       if (_selectedPaymentMethod == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a payment method')),
+          SnackBar(content: Text(context.locale.languageCode == 'ne'
+              ? 'कृपया भुक्तानी विधि छान्नुहोस्'
+              : 'Please select a payment method')),
         );
         return;
       }
@@ -142,8 +150,10 @@ class _IndividualVerificationFormState
       if (submitResult.success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Verification submitted successfully!')),
+            SnackBar(
+                content: Text(context.locale.languageCode == 'ne'
+                    ? 'प्रमाणीकरण सफलतापूर्वक पेश गरियो!'
+                    : 'Verification submitted successfully!')),
           );
           Navigator.pop(context, true);
         }
@@ -153,7 +163,7 @@ class _IndividualVerificationFormState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}')),
         );
       }
     } finally {
@@ -207,7 +217,7 @@ class _IndividualVerificationFormState
               paymentType: PaymentType.individualVerification,
               relatedId: requestId,
               orderName:
-                  'Individual Verification - ${_formatDuration(widget.durationDays)}',
+                  'Individual Verification - ${_formatDuration(widget.durationDays, context.locale.languageCode)}',
               metadata: {
                 'fullName': _fullName,
                 'verificationRequestId': requestId,
@@ -218,22 +228,25 @@ class _IndividualVerificationFormState
 
         if (paymentResult == true && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Payment successful! Verification submitted.')),
+            SnackBar(
+                content: Text(context.locale.languageCode == 'ne'
+                    ? 'भुक्तानी सफल! प्रमाणीकरण पेश गरियो।'
+                    : 'Payment successful! Verification submitted.')),
           );
           Navigator.pop(context, true);
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-                    'Payment was not completed. Your verification is pending payment.')),
+            SnackBar(
+                content: Text(context.locale.languageCode == 'ne'
+                    ? 'भुक्तानी पूरा भएन। तपाईंको प्रमाणीकरण भुक्तानी पर्खिरहेको छ।'
+                    : 'Payment was not completed. Your verification is pending payment.')),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}')),
         );
       }
     } finally {
@@ -243,7 +256,21 @@ class _IndividualVerificationFormState
     }
   }
 
-  String _formatDuration(int days) {
+  String _formatDuration(int days, String lang) {
+    if (lang == 'ne') {
+      switch (days) {
+        case 30:
+          return '१ महिना';
+        case 90:
+          return '३ महिना';
+        case 180:
+          return '६ महिना';
+        case 365:
+          return '१ वर्ष';
+        default:
+          return '$days दिन';
+      }
+    }
     switch (days) {
       case 30:
         return '1 Month';
@@ -260,6 +287,7 @@ class _IndividualVerificationFormState
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.locale.languageCode;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -268,14 +296,14 @@ class _IndividualVerificationFormState
           children: [
             Text(
               _step == 'form'
-                  ? 'Individual Verification'
-                  : 'Select Payment Method',
+                  ? (lang == 'ne' ? 'व्यक्तिगत प्रमाणीकरण' : 'Individual Verification')
+                  : (lang == 'ne' ? 'भुक्तानी विधि छान्नुहोस्' : 'Select Payment Method'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
               widget.isFreeVerification || widget.isResubmission
-                  ? 'Free — ${_formatDuration(widget.durationDays)}'
-                  : 'NPR ${widget.price.toInt()} — ${_formatDuration(widget.durationDays)}',
+                  ? '${lang == 'ne' ? 'निःशुल्क' : 'Free'} — ${_formatDuration(widget.durationDays, lang)}'
+                  : '${formatLocalizedPrice(widget.price, lang)} — ${_formatDuration(widget.durationDays, lang)}',
               style: TextStyle(
                 fontSize: 12,
                 color: widget.isFreeVerification || widget.isResubmission
@@ -301,6 +329,7 @@ class _IndividualVerificationFormState
   }
 
   Widget _buildFormStep() {
+    final lang = context.locale.languageCode;
     return Form(
       key: _formKey,
       child: ListView(
@@ -323,55 +352,55 @@ class _IndividualVerificationFormState
             ),
 
           // Full Name
-          _buildLabel('Full Name (as on ID)'),
+          _buildLabel(lang == 'ne' ? 'पूरा नाम (परिचयपत्रमा जस्तो)' : 'Full Name (as on ID)'),
           TextFormField(
-            decoration: _inputDecoration('Enter your full name'),
+            decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो पूरा नाम लेख्नुहोस्' : 'Enter your full name'),
             validator: (v) =>
-                v?.isEmpty == true ? 'Full name is required' : null,
+                v?.isEmpty == true ? (lang == 'ne' ? 'पूरा नाम आवश्यक छ' : 'Full name is required') : null,
             onSaved: (v) => _fullName = v ?? '',
           ),
           const SizedBox(height: 16),
 
           // ID Type
-          _buildLabel('ID Document Type'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्र प्रकार' : 'ID Document Type'),
           DropdownButtonFormField<String>(
             value: _idType,
             decoration: _inputDecoration(''),
-            items: const [
+            items: [
               DropdownMenuItem(
-                  value: 'citizenship', child: Text('Citizenship')),
-              DropdownMenuItem(value: 'passport', child: Text('Passport')),
+                  value: 'citizenship', child: Text(lang == 'ne' ? 'नागरिकता' : 'Citizenship')),
+              DropdownMenuItem(value: 'passport', child: Text(lang == 'ne' ? 'राहदानी' : 'Passport')),
               DropdownMenuItem(
                   value: 'driving_license',
-                  child: Text('Driving License')),
+                  child: Text(lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License')),
             ],
             onChanged: (v) => setState(() => _idType = v ?? 'citizenship'),
           ),
           const SizedBox(height: 16),
 
           // ID Number
-          _buildLabel('ID Number'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्र नम्बर' : 'ID Number'),
           TextFormField(
-            decoration: _inputDecoration('Enter your ID number'),
+            decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्' : 'Enter your ID number'),
             validator: (v) =>
-                v?.isEmpty == true ? 'ID number is required' : null,
+                v?.isEmpty == true ? (lang == 'ne' ? 'परिचयपत्र नम्बर आवश्यक छ' : 'ID number is required') : null,
             onSaved: (v) => _idNumber = v ?? '',
           ),
           const SizedBox(height: 24),
 
           // Documents
-          _buildLabel('ID Document - Front *'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्र - अगाडि *' : 'ID Document - Front *'),
           _buildDocUpload(
-              _idFront, 'front', 'Upload front of your ID'),
+              _idFront, 'front', lang == 'ne' ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्' : 'Upload front of your ID'),
           const SizedBox(height: 12),
 
-          _buildLabel('ID Document - Back (optional)'),
-          _buildDocUpload(_idBack, 'back', 'Upload back of your ID'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्र - पछाडि (ऐच्छिक)' : 'ID Document - Back (optional)'),
+          _buildDocUpload(_idBack, 'back', lang == 'ne' ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस्' : 'Upload back of your ID'),
           const SizedBox(height: 12),
 
-          _buildLabel('Selfie with ID *'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्रसहित सेल्फी *' : 'Selfie with ID *'),
           _buildDocUpload(
-              _selfie, 'selfie', 'Upload a selfie holding your ID'),
+              _selfie, 'selfie', lang == 'ne' ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्' : 'Upload a selfie holding your ID'),
           const SizedBox(height: 32),
 
           // Submit button
@@ -397,8 +426,8 @@ class _IndividualVerificationFormState
                     )
                   : Text(
                       widget.isFreeVerification || widget.isResubmission
-                          ? 'Submit Verification'
-                          : 'Proceed to Payment',
+                          ? (lang == 'ne' ? 'प्रमाणीकरण पेश गर्नुहोस्' : 'Submit Verification')
+                          : (lang == 'ne' ? 'भुक्तानीमा जानुहोस्' : 'Proceed to Payment'),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -413,6 +442,7 @@ class _IndividualVerificationFormState
   }
 
   Widget _buildPaymentStep() {
+    final lang = context.locale.languageCode;
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -433,13 +463,13 @@ class _IndividualVerificationFormState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(LucideIcons.receipt, size: 20, color: Colors.indigo),
-                  SizedBox(width: 8),
+                  const Icon(LucideIcons.receipt, size: 20, color: Colors.indigo),
+                  const SizedBox(width: 8),
                   Text(
-                    'Order Summary',
-                    style: TextStyle(
+                    lang == 'ne' ? 'अर्डर सारांश' : 'Order Summary',
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -447,14 +477,14 @@ class _IndividualVerificationFormState
                 ],
               ),
               const SizedBox(height: 12),
-              _buildSummaryRow('Plan', 'Individual Verification'),
+              _buildSummaryRow(lang == 'ne' ? 'योजना' : 'Plan', lang == 'ne' ? 'व्यक्तिगत प्रमाणीकरण' : 'Individual Verification'),
               _buildSummaryRow(
-                  'Duration', _formatDuration(widget.durationDays)),
-              _buildSummaryRow('Name', _fullName),
+                  lang == 'ne' ? 'अवधि' : 'Duration', _formatDuration(widget.durationDays, lang)),
+              _buildSummaryRow(lang == 'ne' ? 'नाम' : 'Name', _fullName),
               const Divider(height: 24),
               _buildSummaryRow(
-                'Total Amount',
-                'NPR ${widget.price.toInt()}',
+                lang == 'ne' ? 'कुल रकम' : 'Total Amount',
+                formatLocalizedPrice(widget.price, lang),
                 isTotal: true,
               ),
             ],
@@ -463,9 +493,9 @@ class _IndividualVerificationFormState
         const SizedBox(height: 24),
 
         // Payment Method Selection
-        const Text(
-          'Select Payment Method',
-          style: TextStyle(
+        Text(
+          lang == 'ne' ? 'भुक्तानी विधि छान्नुहोस्' : 'Select Payment Method',
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -474,7 +504,7 @@ class _IndividualVerificationFormState
 
         _buildPaymentMethodCard(
           name: 'Khalti',
-          description: 'Pay with Khalti wallet or bank',
+          description: lang == 'ne' ? 'Khalti वालेट वा बैंकबाट भुक्तानी गर्नुहोस्' : 'Pay with Khalti wallet or bank',
           color: const Color(0xFF5C2D91),
           icon: LucideIcons.wallet,
           gateway: PaymentGateway.khalti,
@@ -483,7 +513,7 @@ class _IndividualVerificationFormState
 
         _buildPaymentMethodCard(
           name: 'eSewa',
-          description: 'Pay with eSewa wallet',
+          description: lang == 'ne' ? 'eSewa वालेटबाट भुक्तानी गर्नुहोस्' : 'Pay with eSewa wallet',
           color: const Color(0xFF60BB46),
           icon: LucideIcons.smartphone,
           gateway: PaymentGateway.esewa,
@@ -512,7 +542,7 @@ class _IndividualVerificationFormState
                         strokeWidth: 2, color: Colors.white),
                   )
                 : Text(
-                    'Pay NPR ${widget.price.toInt()}',
+                    '${lang == 'ne' ? 'भुक्तानी गर्नुहोस्' : 'Pay'} ${formatLocalizedPrice(widget.price, lang)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -524,7 +554,9 @@ class _IndividualVerificationFormState
         const SizedBox(height: 12),
         Center(
           child: Text(
-            'Secured with 256-bit SSL encryption',
+            lang == 'ne'
+                ? '२५६-बिट SSL इन्क्रिप्शनले सुरक्षित'
+                : 'Secured with 256-bit SSL encryption',
             style: TextStyle(fontSize: 12, color: Colors.grey[500]),
           ),
         ),
