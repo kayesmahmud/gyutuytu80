@@ -388,49 +388,71 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     final timeRemaining = promo.timeRemaining;
     final days = timeRemaining.inDays;
     final hours = timeRemaining.inHours % 24;
+    final isSameType = promo.promotionType.apiValue == _selectedType.apiValue;
+    final bannerColor = isSameType ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _getTypeColor(promo.promotionType).withValues(alpha: 0.1),
-            _getTypeColor(promo.promotionType).withValues(alpha: 0.05),
+            bannerColor.withValues(alpha: 0.1),
+            bannerColor.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _getTypeColor(promo.promotionType).withValues(alpha: 0.3)),
+        border: Border.all(color: bannerColor.withValues(alpha: 0.3)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            promo.promotionType.emoji,
-            style: const TextStyle(fontSize: 24),
+          Row(
+            children: [
+              Text(
+                promo.promotionType.emoji,
+                style: const TextStyle(fontSize: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.locale.languageCode == 'ne'
+                          ? 'सक्रिय ${promo.promotionType.displayName} प्रवर्द्धन'
+                          : 'Active ${promo.promotionType.displayName} Promotion',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      context.locale.languageCode == 'ne'
+                          ? '$days दिन $hours घण्टा बाँकी'
+                          : '${days}d ${hours}h remaining',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.locale.languageCode == 'ne'
-                      ? 'सक्रिय ${promo.promotionType.displayName} प्रवर्द्धन'
-                      : 'Active ${promo.promotionType.displayName} Promotion',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  context.locale.languageCode == 'ne'
-                      ? '${days} दिन ${hours} घण्टा बाँकी'
-                      : '${days}d ${hours}h remaining',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+          const SizedBox(height: 8),
+          Text(
+            isSameType
+                ? (context.locale.languageCode == 'ne'
+                    ? 'थप दिन किनेर यो प्रवर्द्धन विस्तार गर्न सक्नुहुन्छ।'
+                    : 'You can extend this promotion by purchasing more days.')
+                : (context.locale.languageCode == 'ne'
+                    ? 'फरक प्रकारको प्रवर्द्धन थप्न सकिँदैन। ${promo.promotionType.displayName} मा स्विच गरेर विस्तार गर्नुहोस्।'
+                    : 'Cannot add a different type. Switch to ${promo.promotionType.displayName} to extend.'),
+            style: TextStyle(
+              fontSize: 12,
+              color: isSameType ? const Color(0xFF059669) : const Color(0xFFD97706),
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -997,34 +1019,46 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
           ),
         ],
       ),
-      child: ElevatedButton(
-        onPressed: _activePromotion == null && price != null && price > 0
-            ? _proceedToPayment
-            : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFDC143C),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          disabledBackgroundColor: Colors.grey[300],
-        ),
-        child: Text(
-          _activePromotion != null
-              ? (context.locale.languageCode == 'ne'
-                  ? 'प्रवर्द्धन पहिल्यै सक्रिय छ'
-                  : 'Promotion Already Active')
-              : price != null
+      child: Builder(
+        builder: (context) {
+          final isDifferentTypeActive = _activePromotion != null &&
+              _activePromotion!.promotionType.apiValue != _selectedType.apiValue;
+          final isSameTypeExtension = _activePromotion != null &&
+              _activePromotion!.promotionType.apiValue == _selectedType.apiValue;
+          final isDisabled = isDifferentTypeActive || price == null || price <= 0;
+
+          return ElevatedButton(
+            onPressed: !isDisabled ? _proceedToPayment : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC143C),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              disabledBackgroundColor: Colors.grey[300],
+            ),
+            child: Text(
+              isDifferentTypeActive
                   ? (context.locale.languageCode == 'ne'
-                      ? '${formatLocalizedPrice(price, 'ne')} मा प्रवर्द्धन गर्नुहोस्'
-                      : 'Promote for ${formatLocalizedPrice(price, 'en')}')
-                  : (context.locale.languageCode == 'ne' ? 'विकल्पहरू छान्नुहोस्' : 'Select Options'),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+                      ? '${_activePromotion!.promotionType.displayName} मा स्विच गर्नुहोस्'
+                      : 'Switch to ${_activePromotion!.promotionType.displayName} to Extend')
+                  : isSameTypeExtension
+                      ? (context.locale.languageCode == 'ne'
+                          ? '${formatLocalizedPrice(price!, 'ne')} मा विस्तार गर्नुहोस्'
+                          : 'Extend for ${formatLocalizedPrice(price!, 'en')}')
+                      : price != null
+                          ? (context.locale.languageCode == 'ne'
+                              ? '${formatLocalizedPrice(price, 'ne')} मा प्रवर्द्धन गर्नुहोस्'
+                              : 'Promote for ${formatLocalizedPrice(price, 'en')}')
+                          : (context.locale.languageCode == 'ne' ? 'विकल्पहरू छान्नुहोस्' : 'Select Options'),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

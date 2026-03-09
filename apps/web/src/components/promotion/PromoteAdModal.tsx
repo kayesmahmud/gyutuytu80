@@ -318,32 +318,37 @@ function SelectionStep({
   return (
     <>
       {/* Active Promotion Banner */}
-      {activePromotion && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <h4 className="font-semibold text-blue-900">
-                Active {activePromotion.promotion_type.charAt(0).toUpperCase() + activePromotion.promotion_type.slice(1)} Promotion
-              </h4>
-              <p className="text-sm text-blue-700 mt-1">
-                This ad already has an active promotion.{' '}
-                {activePromotion.days_remaining > 0
-                  ? `Expires in ${activePromotion.days_remaining} day${activePromotion.days_remaining !== 1 ? 's' : ''}`
-                  : 'Expires today'}{' '}
-                ({new Date(activePromotion.expires_at).toLocaleDateString()}).
-              </p>
-              <p className="text-sm text-blue-600 mt-1">
-                You can purchase a new promotion after the current one expires.
-              </p>
+      {activePromotion && (() => {
+        const isSameType = activePromotion.promotion_type === selectedType;
+        const isDifferentType = !isSameType;
+        return (
+          <div className={`mb-6 p-4 rounded-xl ${isDifferentType ? 'bg-amber-50 border border-amber-200' : 'bg-green-50 border border-green-200'}`}>
+            <div className="flex items-start gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isDifferentType ? 'bg-amber-100' : 'bg-green-100'}`}>
+                <svg className={`w-5 h-5 ${isDifferentType ? 'text-amber-600' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className={`font-semibold ${isDifferentType ? 'text-amber-900' : 'text-green-900'}`}>
+                  Active {activePromotion.promotion_type.charAt(0).toUpperCase() + activePromotion.promotion_type.slice(1)} Promotion
+                </h4>
+                <p className={`text-sm mt-1 ${isDifferentType ? 'text-amber-700' : 'text-green-700'}`}>
+                  {activePromotion.days_remaining > 0
+                    ? `Expires in ${activePromotion.days_remaining} day${activePromotion.days_remaining !== 1 ? 's' : ''}`
+                    : 'Expires today'}{' '}
+                  ({new Date(activePromotion.expires_at).toLocaleDateString()}).
+                </p>
+                <p className={`text-sm mt-1 ${isDifferentType ? 'text-amber-600' : 'text-green-600'}`}>
+                  {isSameType
+                    ? 'You can extend this promotion by purchasing more days.'
+                    : `Cannot add a different promotion type. You can extend the current ${activePromotion.promotion_type} promotion instead.`}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Pricing Tier Badge */}
       {pricingTier !== 'default' && (
@@ -385,14 +390,24 @@ function SelectionStep({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <Button
-          onClick={onProceed}
-          variant="primary"
-          disabled={!!activePromotion}
-          className="flex-1 bg-gradient-to-r from-primary to-purple-600 py-3 sm:py-4 text-base sm:text-lg order-1 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {activePromotion ? 'Promotion Already Active' : 'Proceed to Payment'}
-        </Button>
+        {(() => {
+          const isDifferentTypeActive = activePromotion && activePromotion.promotion_type !== selectedType;
+          const isSameTypeExtension = activePromotion && activePromotion.promotion_type === selectedType;
+          return (
+            <Button
+              onClick={onProceed}
+              variant="primary"
+              disabled={!!isDifferentTypeActive}
+              className="flex-1 bg-gradient-to-r from-primary to-purple-600 py-3 sm:py-4 text-base sm:text-lg order-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDifferentTypeActive
+                ? `Switch to ${activePromotion.promotion_type.charAt(0).toUpperCase() + activePromotion.promotion_type.slice(1)} to Extend`
+                : isSameTypeExtension
+                  ? 'Extend Promotion'
+                  : 'Proceed to Payment'}
+            </Button>
+          );
+        })()}
         <Button
           onClick={onClose}
           variant="secondary"

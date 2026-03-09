@@ -160,22 +160,31 @@ class PromotionService {
         expires_at: { gt: new Date() },
       },
     });
-    if (existingPromo) {
+    const isExtension = existingPromo && existingPromo.promotion_type === promotionType;
+    if (existingPromo && !isExtension) {
       throw new Error(
-        `Ad already has an active ${existingPromo.promotion_type} promotion until ${existingPromo.expires_at.toISOString()}`
+        `Ad already has an active ${existingPromo.promotion_type} promotion until ${existingPromo.expires_at.toISOString()}. You can only extend the same type.`
       );
     }
 
-    // 3. Calculate expiry date
+    // 3. Calculate expiry date (extend from existing expiry if same type)
     const startDate = new Date();
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + durationDays);
+    const baseDate = isExtension && existingPromo ? existingPromo.expires_at : new Date();
+    const expiryDate = new Date(baseDate.getTime() + durationDays * 24 * 60 * 60 * 1000);
 
     // 3. Determine account type
     const accountType = await this.getUserAccountType(userId);
 
     // 4. Create promotion record using transaction
     const result = await prisma.$transaction(async (tx) => {
+      // If extending, deactivate old promo record
+      if (isExtension && existingPromo) {
+        await tx.ad_promotions.update({
+          where: { id: existingPromo.id },
+          data: { is_active: false },
+        });
+      }
+
       // Insert promotion
       const promotion = await tx.ad_promotions.create({
         data: {

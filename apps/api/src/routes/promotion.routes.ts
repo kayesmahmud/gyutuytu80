@@ -243,12 +243,13 @@ router.post(
         expires_at: { gt: new Date() },
       },
     });
-    if (existingPromo) {
+    const isExtension = existingPromo && existingPromo.promotion_type === promotionType;
+    if (existingPromo && !isExtension) {
       const msRemaining = existingPromo.expires_at.getTime() - Date.now();
       const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
       return res.status(409).json({
         success: false,
-        message: `Ad already has an active ${existingPromo.promotion_type} promotion`,
+        message: `Ad already has an active ${existingPromo.promotion_type} promotion. You can only extend the same type.`,
         data: {
           activePromotion: {
             ...existingPromo,
@@ -276,10 +277,20 @@ router.post(
 
     const pricePaid = pricing?.price || 0;
     const duration = durationDays || 7;
-    const expiresAt = new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
+    // If extending, add days to existing expiry (so user doesn't lose remaining time)
+    const baseDate = isExtension && existingPromo ? existingPromo.expires_at : new Date();
+    const expiresAt = new Date(baseDate.getTime() + duration * 24 * 60 * 60 * 1000);
 
     // Use transaction to atomically create promotion + update ad flags
     const promotion = await prisma.$transaction(async (tx) => {
+      // If extending, deactivate old promo record
+      if (isExtension && existingPromo) {
+        await tx.ad_promotions.update({
+          where: { id: existingPromo.id },
+          data: { is_active: false },
+        });
+      }
+
       const promo = await tx.ad_promotions.create({
         data: {
           ad_id: parseInt(adId),
@@ -330,11 +341,13 @@ router.post(
       console.log(`🎁 User ${userId} promoted ad ${adId} owned by user ${ad.user_id}`);
     }
 
-    console.log(`✅ Promotion created: ${promotionType} for ad ${adId}`);
+    console.log(`✅ Promotion ${isExtension ? 'extended' : 'created'}: ${promotionType} for ad ${adId}`);
 
     res.status(201).json({
       success: true,
-      message: 'Promotion created successfully',
+      message: isExtension
+        ? `Promotion extended by ${duration} days`
+        : 'Promotion created successfully',
       data: promotion,
     });
   })
