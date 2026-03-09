@@ -549,6 +549,9 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                     ),
                   ),
 
+                  // 7.5 SAFETY TIPS (below location)
+                  const SafetyTipsCard(),
+
                   // 8. PROMOTE THIS AD
                   _buildBoostButton(ad),
 
@@ -581,9 +584,6 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   // 10. RELATED ADS
                   if (_relatedAds.isNotEmpty) _buildRelatedAds(),
  
-                  // 11. SAFETY TIPS
-                  const SafetyTipsCard(),
-
                   // 13. AD BANNER
                   AdBannerWidget(adUnitId: AdService.adDetailBannerId),
                   
