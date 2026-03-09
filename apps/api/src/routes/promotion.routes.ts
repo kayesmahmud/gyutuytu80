@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -450,6 +450,8 @@ router.get(
  */
 router.get(
   '/admin/all',
+  authenticateToken,
+  requireSuperAdmin,
   catchAsync(async (_req: Request, res: Response) => {
     const pricings = await prisma.promotion_pricing.findMany({
       orderBy: [
@@ -473,6 +475,8 @@ router.get(
  */
 router.post(
   '/admin/create',
+  authenticateToken,
+  requireSuperAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const { promotion_type, duration_days, account_type, pricing_tier, price, discount_percentage } = req.body;
 
@@ -520,6 +524,8 @@ router.post(
  */
 router.put(
   '/admin/:id',
+  authenticateToken,
+  requireSuperAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
     const { price, discount_percentage, is_active } = req.body;
@@ -549,6 +555,8 @@ router.put(
  */
 router.delete(
   '/admin/:id',
+  authenticateToken,
+  requireSuperAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
 

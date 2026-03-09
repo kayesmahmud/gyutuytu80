@@ -39,8 +39,6 @@ class SearchScreenState extends State<SearchScreen> {
   int _currentPage = 1;
   int _totalPages = 1;
 
-  bool _showFab = false;
-
   // Filters
   SearchFilters _filters = SearchFilters();
 
@@ -77,9 +75,6 @@ class SearchScreenState extends State<SearchScreen> {
   }
 
   void _onScroll() {
-    final show = _scrollController.offset > 200;
-    if (show != _showFab) setState(() => _showFab = show);
-
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       _loadMoreAds();
@@ -347,30 +342,6 @@ class SearchScreenState extends State<SearchScreen> {
             // Ad Grid or Loading/Error State
             Expanded(child: _buildBody()),
           ],
-        ),
-      ),
-      floatingActionButton: IgnorePointer(
-        ignoring: !_showFab,
-        child: AnimatedSlide(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          offset: _showFab ? Offset.zero : const Offset(0, 2),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 300),
-            opacity: _showFab ? 1.0 : 0.0,
-            child: FloatingActionButton(
-              onPressed: () {
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                );
-              },
-              mini: true,
-              backgroundColor: Colors.red,
-              child: const Icon(LucideIcons.arrowUp, color: Colors.white),
-            ),
-          ),
         ),
       ),
     );

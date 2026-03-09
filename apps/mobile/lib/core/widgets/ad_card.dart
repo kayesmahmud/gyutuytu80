@@ -144,42 +144,12 @@ class AdCard extends StatelessWidget {
                       ),
                     ),
 
-                  // Featured Badge (Top Right) - Keep existing feature if needed
-                  if (ad.isFeatured)
+                  // Promotion Badge (Top Right) - Priority: Urgent > Featured > Sticky
+                  if (_promotionBadge != null)
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: ShimmerBadge(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                LucideIcons.star,
-                                color: Colors.black,
-                                size: 10,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                'common.featured'.tr(),
-                                style: GoogleFonts.inter(
-                                  color: Colors.black,
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      child: _promotionBadge!,
                     ),
 
                   // Condition Badge (Bottom Right) - NEW/USED
@@ -342,6 +312,98 @@ class AdCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Build promotion badge based on priority: Urgent > Featured > Sticky
+  Widget? get _promotionBadge {
+    final now = DateTime.now();
+
+    // Check if promotion is active: boolean flag + (no expiry or not yet expired)
+    bool isActive(bool flag, DateTime? until) =>
+        flag && (until == null || now.isBefore(until));
+
+    if (isActive(ad.isUrgent, ad.urgentUntil)) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(LucideIcons.zap, color: Colors.white, size: 10),
+            const SizedBox(width: 2),
+            Text(
+              'URGENT',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (isActive(ad.isFeatured, ad.featuredUntil)) {
+      return ShimmerBadge(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.amber,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.star, color: Colors.black, size: 10),
+              const SizedBox(width: 2),
+              Text(
+                'common.featured'.tr(),
+                style: GoogleFonts.inter(
+                  color: Colors.black,
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (isActive(ad.isSticky, ad.stickyUntil)) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(LucideIcons.pin, color: Colors.white, size: 10),
+            const SizedBox(width: 2),
+            Text(
+              'STICKY',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return null;
   }
 
   /// Check if seller is business verified (gold badge)
