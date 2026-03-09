@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:mobile/core/api/support_client.dart';
 import 'package:mobile/core/models/support_ticket.dart';
@@ -66,17 +67,17 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       return Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: Text('Support',
+          title: Text('support.title'.tr(),
               style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           backgroundColor: Colors.white,
           foregroundColor: const Color(0xFF1F2937),
           elevation: 0,
           surfaceTintColor: Colors.transparent,
         ),
-        body: const LoginRequiredWidget(
+        body: LoginRequiredWidget(
           icon: LucideIcons.headphones,
-          title: 'Login to View Tickets',
-          subtitle: 'Sign in to create and manage\nyour support tickets',
+          title: 'support.loginToView'.tr(),
+          subtitle: 'support.loginSubtitle'.tr(),
         ),
       );
     }
@@ -84,7 +85,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('Support',
+        title: Text('support.title'.tr(),
             style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
@@ -95,7 +96,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             IconButton(
               onPressed: _navigateToCreate,
               icon: const Icon(LucideIcons.plusCircle, size: 22),
-              tooltip: 'New Ticket',
+              tooltip: 'support.newTicket'.tr(),
             ),
           const SizedBox(width: 4),
         ],
@@ -126,7 +127,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 child: Icon(LucideIcons.wifiOff, size: 28, color: Colors.red[300]),
               ),
               const SizedBox(height: 16),
-              Text('Something went wrong',
+              Text('support.somethingWentWrong'.tr(),
                   style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -139,7 +140,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               OutlinedButton.icon(
                 onPressed: _loadTickets,
                 icon: const Icon(LucideIcons.refreshCw, size: 16),
-                label: const Text('Try Again'),
+                label: Text('support.tryAgain'.tr()),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFE11D48),
                   side: const BorderSide(color: Color(0xFFE11D48)),
@@ -187,19 +188,19 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
         children: [
           _buildSummaryChip(
             icon: LucideIcons.messageCircle,
-            label: '$openCount active',
+            label: '$openCount ${'support.activeLabel'.tr()}',
             color: const Color(0xFF2563EB),
             bgColor: const Color(0xFFDBEAFE),
           ),
           const SizedBox(width: 8),
           _buildSummaryChip(
             icon: LucideIcons.checkCircle,
-            label: '$resolvedCount resolved',
+            label: '$resolvedCount ${'support.resolvedLabel'.tr()}',
             color: const Color(0xFF16A34A),
             bgColor: const Color(0xFFDCFCE7),
           ),
           const Spacer(),
-          Text('${_tickets.length} total',
+          Text('${_tickets.length} ${'support.totalLabel'.tr()}',
               style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400])),
         ],
       ),
@@ -259,14 +260,14 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('How can we help?',
+            Text('support.howCanWeHelp'.tr(),
                 style: GoogleFonts.poppins(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF1F2937))),
             const SizedBox(height: 8),
             Text(
-              'Create a support ticket and our team\nwill get back to you shortly.',
+              'support.createSubtitle'.tr(),
               style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500], height: 1.5),
               textAlign: TextAlign.center,
             ),
@@ -276,7 +277,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               child: ElevatedButton.icon(
                 onPressed: _navigateToCreate,
                 icon: const Icon(LucideIcons.pencil, size: 18),
-                label: Text('Create a Ticket',
+                label: Text('support.createTicket'.tr(),
                     style: GoogleFonts.inter(
                         fontSize: 16, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
@@ -295,7 +296,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context),
                 icon: Icon(LucideIcons.helpCircle, size: 18, color: Colors.grey[600]),
-                label: Text('Browse Help Center',
+                label: Text('support.browseHelp'.tr(),
                     style: GoogleFonts.inter(
                         fontSize: 15, fontWeight: FontWeight.w500, color: Colors.grey[700])),
                 style: OutlinedButton.styleFrom(
@@ -441,10 +442,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     final now = DateTime.now();
     final diff = now.difference(date);
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) return 'support.justNow'.tr();
+    if (diff.inHours < 1) return 'support.minutesAgo'.tr(args: ['${diff.inMinutes}']);
+    if (diff.inDays < 1) return 'support.hoursAgo'.tr(args: ['${diff.inHours}']);
+    if (diff.inDays < 7) return 'support.daysAgo'.tr(args: ['${diff.inDays}']);
     return DateFormat('MMM d').format(date);
   }
 }

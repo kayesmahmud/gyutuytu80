@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -14,7 +15,7 @@ class ContactScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('Contact Us',
+        title: Text('contact.title'.tr(),
             style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
@@ -39,13 +40,13 @@ class ContactScreen extends StatelessWidget {
                 children: [
                   const Icon(LucideIcons.headphones, color: Colors.white, size: 36),
                   const SizedBox(height: 12),
-                  Text("We're here to help",
+                  Text('contact.wereHereToHelp'.tr(),
                       style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text('Reach out to us through any of the channels below',
+                  Text('contact.reachOut'.tr(),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                           color: Colors.white70, fontSize: 14)),
@@ -60,37 +61,37 @@ class ContactScreen extends StatelessWidget {
               icon: LucideIcons.mail,
               iconColor: const Color(0xFF3B82F6),
               iconBg: const Color(0xFFDBEAFE),
-              title: 'Email',
-              value: 'support@thulobazaar.com',
+              title: 'contact.email'.tr(),
+              value: 'contact.emailAddress'.tr(),
               onTap: () => _launchUrl('mailto:support@thulobazaar.com'),
             ),
             _ContactCard(
               icon: LucideIcons.phone,
               iconColor: const Color(0xFF22C55E),
               iconBg: const Color(0xFFDCFCE7),
-              title: 'Phone',
-              value: '+977-1-234567890',
+              title: 'contact.phone'.tr(),
+              value: 'contact.phoneNumber'.tr(),
               onTap: () => _launchUrl('tel:+9771234567890'),
             ),
-            const _ContactCard(
+            _ContactCard(
               icon: LucideIcons.mapPin,
-              iconColor: Color(0xFF8B5CF6),
-              iconBg: Color(0xFFEDE9FE),
-              title: 'Address',
-              value: 'Kathmandu, Nepal',
+              iconColor: const Color(0xFF8B5CF6),
+              iconBg: const Color(0xFFEDE9FE),
+              title: 'contact.address'.tr(),
+              value: 'contact.location'.tr(),
             ),
-            const _ContactCard(
+            _ContactCard(
               icon: LucideIcons.clock,
-              iconColor: Color(0xFFF59E0B),
-              iconBg: Color(0xFFFEF3C7),
-              title: 'Business Hours',
-              value: 'Sun - Fri: 10:00 AM - 6:00 PM',
+              iconColor: const Color(0xFFF59E0B),
+              iconBg: const Color(0xFFFEF3C7),
+              title: 'contact.businessHours'.tr(),
+              value: 'contact.hours'.tr(),
             ),
 
             const SizedBox(height: 24),
 
             // Quick action buttons
-            Text('Quick Actions',
+            Text('contact.quickActions'.tr(),
                 style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -99,16 +100,16 @@ class ContactScreen extends StatelessWidget {
 
             _ActionButton(
               icon: LucideIcons.ticket,
-              title: 'Create Support Ticket',
-              subtitle: 'Get help from our support team',
+              title: 'contact.createSupportTicket'.tr(),
+              subtitle: 'contact.supportSubtitle'.tr(),
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const SupportTicketsScreen())),
             ),
             const SizedBox(height: 8),
             _ActionButton(
               icon: LucideIcons.helpCircle,
-              title: 'Browse FAQs',
-              subtitle: 'Find answers to common questions',
+              title: 'contact.browseFaqs'.tr(),
+              subtitle: 'contact.faqSubtitle'.tr(),
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
             ),

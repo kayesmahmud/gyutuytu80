@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../core/api/payment_client.dart';
 import '../../core/models/models.dart';
 import '../../core/models/payment.dart';
+import '../../core/utils/localized_helpers.dart';
 
 /// Payment Screen - handles Khalti/eSewa payment flows
 class PaymentScreen extends StatefulWidget {
@@ -72,7 +74,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _setupWebView();
     } else {
       setState(() {
-        _error = response.errorMessage ?? 'Failed to initiate payment';
+        _error = response.errorMessage ?? (context.locale.languageCode == 'ne' ? 'भुक्तानी सुरु गर्न असफल' : 'Failed to initiate payment');
         _isLoading = false;
       });
     }
@@ -93,7 +95,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       onWebResourceError: (WebResourceError error) {
         if (error.errorType == WebResourceErrorType.unknown) return;
         setState(() {
-          _error = 'Failed to load payment page: ${error.description}';
+          _error = context.locale.languageCode == 'ne'
+              ? 'भुक्तानी पृष्ठ लोड गर्न असफल: ${error.description}'
+              : 'Failed to load payment page: ${error.description}';
           _isLoading = false;
         });
       },
@@ -178,7 +182,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (isSuccess && _transactionId != null) {
       await _verifyPayment(params);
     } else {
-      _handleFailure('Payment was cancelled or failed');
+      _handleFailure(context.locale.languageCode == 'ne'
+          ? 'भुक्तानी रद्द भयो वा असफल भयो'
+          : 'Payment was cancelled or failed');
     }
   }
 
@@ -200,11 +206,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (response.success && response.data != null) {
       _handleSuccess(response.data!);
     } else {
-      _handleFailure(response.errorMessage ?? 'Payment verification failed');
+      _handleFailure(response.errorMessage ?? (context.locale.languageCode == 'ne'
+          ? 'भुक्तानी प्रमाणीकरण असफल'
+          : 'Payment verification failed'));
     }
   }
 
   void _handleSuccess(PaymentVerifyResponse result) {
+    final locale = context.locale.languageCode;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -227,16 +236,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Payment Successful!',
-              style: TextStyle(
+            Text(
+              locale == 'ne' ? 'भुक्तानी सफल!' : 'Payment Successful!',
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Transaction ID: ${result.transactionId}',
+              '${locale == 'ne' ? 'कारोबार आईडी' : 'Transaction ID'}: ${result.transactionId}',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -245,7 +254,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Amount: Rs. ${widget.amount.toStringAsFixed(0)}',
+              '${locale == 'ne' ? 'रकम' : 'Amount'}: ${formatLocalizedPrice(widget.amount, locale)}',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -268,9 +277,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Done',
-                  style: TextStyle(
+                child: Text(
+                  l('done', locale),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -284,6 +293,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _handleFailure(String message) {
+    final locale = context.locale.languageCode;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -306,9 +316,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Payment Failed',
-              style: TextStyle(
+            Text(
+              locale == 'ne' ? 'भुक्तानी असफल' : 'Payment Failed',
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -339,7 +349,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(l('cancel', locale)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -357,7 +367,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Retry'),
+                    child: Text(l('retry', locale)),
                   ),
                 ),
               ],
@@ -373,7 +383,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.gateway == PaymentGateway.khalti ? 'Khalti Payment' : 'eSewa Payment',
+          widget.gateway == PaymentGateway.khalti
+              ? (context.locale.languageCode == 'ne' ? 'खल्ती भुक्तानी' : 'Khalti Payment')
+              : (context.locale.languageCode == 'ne' ? 'eSewa भुक्तानी' : 'eSewa Payment'),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -416,16 +428,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
             child: const CircularProgressIndicator(),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Preparing Payment...',
-            style: TextStyle(
+          Text(
+            context.locale.languageCode == 'ne' ? 'भुक्तानी तयार गर्दै...' : 'Preparing Payment...',
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Connecting to ${widget.gateway == PaymentGateway.khalti ? 'Khalti' : 'eSewa'}',
+            context.locale.languageCode == 'ne'
+                ? '${widget.gateway == PaymentGateway.khalti ? 'खल्ती' : 'eSewa'} मा जडान हुँदैछ'
+                : 'Connecting to ${widget.gateway == PaymentGateway.khalti ? 'Khalti' : 'eSewa'}',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
@@ -453,16 +467,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Verifying Payment...',
-            style: TextStyle(
+          Text(
+            context.locale.languageCode == 'ne' ? 'भुक्तानी प्रमाणीकरण हुँदैछ...' : 'Verifying Payment...',
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Please wait while we confirm your payment',
+            context.locale.languageCode == 'ne'
+                ? 'कृपया प्रतीक्षा गर्नुहोस्, तपाईंको भुक्तानी पुष्टि हुँदैछ'
+                : 'Please wait while we confirm your payment',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
@@ -494,9 +510,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Unable to Start Payment',
-              style: TextStyle(
+            Text(
+              context.locale.languageCode == 'ne' ? 'भुक्तानी सुरु गर्न असमर्थ' : 'Unable to Start Payment',
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -523,7 +539,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text(l('cancel', context.locale.languageCode)),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
@@ -536,7 +552,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Try Again'),
+                  child: Text(l('tryAgain', context.locale.languageCode)),
                 ),
               ],
             ),
@@ -553,15 +569,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _showCancelConfirmation() {
+    final locale = context.locale.languageCode;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Payment?'),
-        content: const Text('Are you sure you want to cancel this payment?'),
+        title: Text(locale == 'ne' ? 'भुक्तानी रद्द गर्ने?' : 'Cancel Payment?'),
+        content: Text(locale == 'ne'
+            ? 'के तपाईं यो भुक्तानी रद्द गर्न चाहनुहुन्छ?'
+            : 'Are you sure you want to cancel this payment?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('No, Continue'),
+            child: Text(locale == 'ne' ? 'होइन, जारी राख्नुहोस्' : 'No, Continue'),
           ),
           TextButton(
             onPressed: () {
@@ -569,9 +588,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               Navigator.pop(context, false);
               widget.onFailure?.call();
             },
-            child: const Text(
-              'Yes, Cancel',
-              style: TextStyle(color: Color(0xFFEF4444)),
+            child: Text(
+              locale == 'ne' ? 'हो, रद्द गर्नुहोस्' : 'Yes, Cancel',
+              style: const TextStyle(color: Color(0xFFEF4444)),
             ),
           ),
         ],

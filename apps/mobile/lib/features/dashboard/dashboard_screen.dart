@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -52,7 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (response.success) {
           _allAds = response.data;
         } else {
-          _error = response.errorMessage ?? 'Failed to load ads';
+          _error = response.errorMessage ?? (context.locale.languageCode == 'ne' ? 'विज्ञापन लोड गर्न असफल' : 'Failed to load ads');
         }
       });
     }
@@ -90,17 +92,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Ad'),
-        content: Text('Are you sure you want to delete "${ad.title}"?'),
+        title: Text('dashboard.deleteAd'.tr()),
+        content: Text('dashboard.confirmDelete'.tr(args: [ad.title])),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text('common.delete'.tr()),
           ),
         ],
       ),
@@ -114,8 +116,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ad deleted successfully'),
+            SnackBar(
+              content: Text('dashboard.adDeleted'.tr()),
               backgroundColor: Colors.green,
             ),
           );
@@ -124,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.error ?? 'Failed to delete'),
+              content: Text(response.error ?? 'dashboard.failedToDelete'.tr()),
               backgroundColor: Colors.red,
             ),
           );
@@ -137,17 +139,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Mark as Sold'),
-        content: Text('Mark "${ad.title}" as sold?'),
+        title: Text('dashboard.markAsSold'.tr()),
+        content: Text('dashboard.confirmDelete'.tr(args: [ad.title])),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Mark Sold'),
+            child: Text('dashboard.markSold'.tr()),
           ),
         ],
       ),
@@ -159,8 +161,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _fetchAds();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ad marked as sold!'),
+            SnackBar(
+              content: Text('dashboard.adMarkedSold'.tr()),
               backgroundColor: Colors.green,
             ),
           );
@@ -169,7 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.error ?? 'Failed to update'),
+              content: Text(response.error ?? 'myAds.failedToUpdate'.tr()),
               backgroundColor: Colors.red,
             ),
           );
@@ -284,7 +286,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'My Listings',
+                                    'dashboard.myListings'.tr(),
                                     style: GoogleFonts.inter(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
@@ -293,7 +295,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Manage and track all your advertisements',
+                                    'dashboard.manageAds'.tr(),
                                     style: GoogleFonts.inter(
                                       fontSize: 14,
                                       color: Colors.grey[600],
@@ -355,7 +357,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'assets/images/logo.png',
             height: 32,
             errorBuilder: (context, error, stackTrace) => Text(
-              "THULO BAZAAR",
+              'common.appNameFallback'.tr(),
               style: GoogleFonts.poppins(
                 color: AppTheme.primary,
                 fontWeight: FontWeight.bold,
@@ -384,7 +386,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'My Dashboard',
+            'dashboard.title'.tr(),
             style: GoogleFonts.inter(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -393,7 +395,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Welcome back, $userName!',
+            'dashboard.welcomeBack'.tr(args: [userName]),
             style: GoogleFonts.inter(
               fontSize: 15,
               color: Colors.white.withOpacity(0.9),
@@ -408,21 +410,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: LucideIcons.barChart3,
                 iconBgColor: const Color(0xFF3B82F6),
                 value: _allAds.length,
-                label: 'Total',
+                label: 'dashboard.total'.tr(),
               ),
               const SizedBox(width: 12),
               _buildStatCard(
                 icon: LucideIcons.checkCircle,
                 iconBgColor: const Color(0xFF22C55E),
                 value: counts['Active'] ?? 0,
-                label: 'Active',
+                label: 'dashboard.active'.tr(),
               ),
               const SizedBox(width: 12),
               _buildStatCard(
                 icon: LucideIcons.eye,
                 iconBgColor: const Color(0xFFEC4899),
                 value: _totalViews,
-                label: 'Views',
+                label: 'dashboard.views'.tr(),
               ),
             ],
           ),
@@ -564,7 +566,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              '$label ($count)',
+              _localizedFilterLabel(label, count),
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -575,6 +577,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  String _localizedFilterLabel(String label, int count) {
+    switch (label) {
+      case 'Active':
+        return 'dashboard.activeCount'.tr(args: ['$count']);
+      case 'Pending':
+        return 'dashboard.pendingCount'.tr(args: ['$count']);
+      case 'Rejected':
+        return 'dashboard.rejectedCount'.tr(args: ['$count']);
+      case 'Sold':
+        return 'dashboard.soldCount'.tr(args: ['$count']);
+      default:
+        return '$label ($count)';
+    }
   }
 
   Widget _buildErrorState() {
@@ -589,7 +606,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ElevatedButton(
             onPressed: _fetchAds,
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: const Text('Retry'),
+            child: Text('common.retry'.tr()),
           ),
         ],
       ),
@@ -608,7 +625,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No ads found',
+              'dashboard.noAdsFound'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -617,7 +634,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Start selling by posting your first ad!',
+              'dashboard.startSelling'.tr(),
               style: GoogleFonts.inter(color: Colors.grey[500]),
             ),
           ],
@@ -747,7 +764,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               Text(
-                'Price',
+                'dashboard.price'.tr(),
                 style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600]),
               ),
               const Spacer(),
@@ -796,7 +813,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const Icon(LucideIcons.zap, size: 18, color: Colors.white),
                     const SizedBox(width: 6),
                     Text(
-                      'Promote',
+                      'dashboard.promote'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -817,7 +834,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: _buildActionButton(
                   icon: LucideIcons.eye,
-                  label: 'View',
+                  label: 'dashboard.view'.tr(),
                   color: Colors.blue,
                   filled: true,
                   onTap: () {
@@ -838,7 +855,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Expanded(
                   child: _buildActionButton(
                     icon: LucideIcons.checkCircle,
-                    label: 'Sold',
+                    label: 'dashboard.sold'.tr(),
                     color: Colors.green,
                     filled: true,
                     onTap: () => _markAsSold(ad),
@@ -851,7 +868,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: _buildActionButton(
                   icon: LucideIcons.trash2,
-                  label: 'Delete',
+                  label: 'common.delete'.tr(),
                   color: Colors.red,
                   filled: false,
                   onTap: () => _deleteAd(ad),
@@ -909,25 +926,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 'active':
         bgColor = Colors.green[50]!;
         textColor = Colors.green[700]!;
-        label = 'Active';
+        label = 'dashboard.active'.tr();
         icon = LucideIcons.check;
         break;
       case 'pending':
         bgColor = Colors.orange[50]!;
         textColor = Colors.orange[700]!;
-        label = 'Pending';
+        label = 'myAds.pending'.tr();
         icon = LucideIcons.clock;
         break;
       case 'sold':
         bgColor = Colors.purple[50]!;
         textColor = Colors.purple[700]!;
-        label = 'Sold';
+        label = 'myAds.sold'.tr();
         icon = LucideIcons.check;
         break;
       case 'rejected':
         bgColor = Colors.red[50]!;
         textColor = Colors.red[700]!;
-        label = 'Rejected';
+        label = 'myAds.rejected'.tr();
         icon = LucideIcons.x;
         break;
       default:
@@ -981,11 +998,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(LucideIcons.home, 'Home', 0),
-              _buildNavItem(LucideIcons.search, 'Search', 1),
+              _buildNavItem(LucideIcons.home, 'nav.home'.tr(), 0),
+              _buildNavItem(LucideIcons.search, 'nav.search'.tr(), 1),
               _buildFabButton(),
-              _buildNavItem(LucideIcons.messageSquare, 'Messages', 2),
-              _buildNavItem(LucideIcons.user, 'Profile', 3),
+              _buildNavItem(LucideIcons.messageSquare, 'nav.messages'.tr(), 2),
+              _buildNavItem(LucideIcons.user, 'nav.profile'.tr(), 3),
             ],
           ),
         ),
@@ -1058,16 +1075,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return num.toString();
   }
 
-  String _formatPrice(double? price) {
-    if (price == null) return 'Contact for price';
-    final formatted = price
-        .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-        );
-    return 'Rs. $formatted';
-  }
+  String _formatPrice(double? price) =>
+      formatLocalizedPrice(price, context.locale.languageCode);
 
   String _formatDate(DateTime? date) {
     if (date == null) return 'Unknown';

@@ -1,6 +1,7 @@
 class LocationHierarchyBase {
   final int id;
   final String name;
+  final String? nameNe;
   final String slug;
   final String type;
   final int? parentId;
@@ -8,15 +9,20 @@ class LocationHierarchyBase {
   LocationHierarchyBase({
     required this.id,
     required this.name,
+    this.nameNe,
     required this.slug,
     required this.type,
     this.parentId,
   });
 
+  String localizedName(String locale) =>
+      locale == 'ne' && nameNe != null && nameNe!.isNotEmpty ? nameNe! : name;
+
   factory LocationHierarchyBase.fromJson(Map<String, dynamic> json) {
     return LocationHierarchyBase(
       id: json['id'],
       name: json['name'],
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       slug: json['slug'] ?? '',
       type: json['type'],
       parentId: json['parent_id'],
@@ -28,6 +34,7 @@ class LocationArea extends LocationHierarchyBase {
   LocationArea({
     required super.id,
     required super.name,
+    super.nameNe,
     required super.slug,
     required super.type,
     super.parentId,
@@ -37,6 +44,7 @@ class LocationArea extends LocationHierarchyBase {
     return LocationArea(
       id: json['id'],
       name: json['name'],
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       slug: json['slug'] ?? '',
       type: json['type'],
       parentId: json['parent_id'],
@@ -50,6 +58,7 @@ class LocationMunicipality extends LocationHierarchyBase {
   LocationMunicipality({
     required super.id,
     required super.name,
+    super.nameNe,
     required super.slug,
     required super.type,
     super.parentId,
@@ -65,6 +74,7 @@ class LocationMunicipality extends LocationHierarchyBase {
     return LocationMunicipality(
       id: json['id'],
       name: json['name'],
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       slug: json['slug'] ?? '',
       type: json['type'],
       parentId: json['parent_id'],
@@ -79,6 +89,7 @@ class LocationDistrict extends LocationHierarchyBase {
   LocationDistrict({
     required super.id,
     required super.name,
+    super.nameNe,
     required super.slug,
     required super.type,
     super.parentId,
@@ -94,6 +105,7 @@ class LocationDistrict extends LocationHierarchyBase {
     return LocationDistrict(
       id: json['id'],
       name: json['name'],
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       slug: json['slug'] ?? '',
       type: json['type'],
       parentId: json['parent_id'],
@@ -108,6 +120,7 @@ class LocationProvince extends LocationHierarchyBase {
   LocationProvince({
     required super.id,
     required super.name,
+    super.nameNe,
     required super.slug,
     required super.type,
     super.parentId,
@@ -123,6 +136,7 @@ class LocationProvince extends LocationHierarchyBase {
     return LocationProvince(
       id: json['id'],
       name: json['name'],
+      nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
       slug: json['slug'] ?? '',
       type: json['type'],
       parentId: json['parent_id'],

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:mobile/core/api/shop_client.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/models/models.dart';
@@ -39,10 +41,10 @@ class _ShopTabsState extends State<ShopTabs> {
           ),
           child: Row(
             children: [
-              _buildTab('About', 'about', LucideIcons.info),
-              _buildTab('Contact', 'contact', LucideIcons.phoneCall),
-              _buildTab('Categories', 'categories', LucideIcons.layoutGrid),
-              _buildTab('Location', 'location', LucideIcons.mapPin),
+              _buildTab(l('about', context.locale.languageCode), 'about', LucideIcons.info),
+              _buildTab(context.locale.languageCode == 'ne' ? 'सम्पर्क' : 'Contact', 'contact', LucideIcons.phoneCall),
+              _buildTab(context.locale.languageCode == 'ne' ? 'वर्गहरू' : 'Categories', 'categories', LucideIcons.layoutGrid),
+              _buildTab(l('location', context.locale.languageCode), 'location', LucideIcons.mapPin),
             ],
           ),
         ),
@@ -157,7 +159,7 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
       setState(() => _isEditing = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'प्रोफाइल अपडेट भयो' : 'Profile updated')));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
@@ -172,9 +174,9 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
           TextField(
             controller: _bioController,
             maxLines: 5,
-            decoration: const InputDecoration(
-              hintText: 'Describe your business...',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: context.locale.languageCode == 'ne' ? 'आफ्नो व्यवसाय वर्णन गर्नुहोस्...' : 'Describe your business...',
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
@@ -184,14 +186,14 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving ? 'Saving...' : 'Save'),
+                  child: Text(_saving ? (context.locale.languageCode == 'ne' ? 'सेभ हुँदैछ...' : 'Saving...') : l('save', context.locale.languageCode)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => setState(() => _isEditing = false),
-                  child: const Text('Cancel'),
+                  child: Text(l('cancel', context.locale.languageCode)),
                 ),
               ),
             ],
@@ -206,7 +208,7 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('About', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(l('about', context.locale.languageCode), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
                 icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
@@ -218,7 +220,7 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
         Text(
           widget.shop.bio?.isNotEmpty == true
               ? widget.shop.bio!
-              : 'No description available.',
+              : (context.locale.languageCode == 'ne' ? 'कुनै विवरण उपलब्ध छैन।' : 'No description available.'),
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700], height: 1.5),
         ),
       ],
@@ -278,7 +280,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
       setState(() => _isEditing = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contact info updated')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'सम्पर्क जानकारी अपडेट भयो' : 'Contact info updated')));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
@@ -289,15 +291,15 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     if (_isEditing) {
       return Column(
         children: [
-          _buildTextField('WhatsApp/Phone', _phoneController),
+          _buildTextField(context.locale.languageCode == 'ne' ? 'व्हाट्सएप/फोन' : 'WhatsApp/Phone', _phoneController),
           const SizedBox(height: 12),
-          _buildTextField('Website', _websiteController),
+          _buildTextField(context.locale.languageCode == 'ne' ? 'वेबसाइट' : 'Website', _websiteController),
           const SizedBox(height: 12),
-          _buildTextField('Facebook', _facebookController),
+          _buildTextField(context.locale.languageCode == 'ne' ? 'फेसबुक' : 'Facebook', _facebookController),
           const SizedBox(height: 12),
-          _buildTextField('Instagram', _instagramController),
+          _buildTextField(context.locale.languageCode == 'ne' ? 'इन्स्टाग्राम' : 'Instagram', _instagramController),
           const SizedBox(height: 12),
-          _buildTextField('TikTok', _tiktokController),
+          _buildTextField(context.locale.languageCode == 'ne' ? 'टिकटक' : 'TikTok', _tiktokController),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -305,14 +307,14 @@ class _ShopContactSectionState extends State<ShopContactSection> {
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving ? 'Saving...' : 'Save'),
+                  child: Text(_saving ? (context.locale.languageCode == 'ne' ? 'सेभ हुँदैछ...' : 'Saving...') : l('save', context.locale.languageCode)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => setState(() => _isEditing = false),
-                  child: const Text('Cancel'),
+                  child: Text(l('cancel', context.locale.languageCode)),
                 ),
               ),
             ],
@@ -327,7 +329,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Contact Information', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(l('contactInfo', context.locale.languageCode), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
                 icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
@@ -337,22 +339,22 @@ class _ShopContactSectionState extends State<ShopContactSection> {
         ),
         const SizedBox(height: 12),
         if (widget.shop.businessPhone != null)
-          _buildContactRow(LucideIcons.phone, 'Phone', widget.shop.businessPhone!),
+          _buildContactRow(LucideIcons.phone, context.locale.languageCode == 'ne' ? 'फोन' : 'Phone', widget.shop.businessPhone!),
         if (widget.shop.businessWebsite != null)
-          _buildContactRow(LucideIcons.globe, 'Website', widget.shop.businessWebsite!),
+          _buildContactRow(LucideIcons.globe, context.locale.languageCode == 'ne' ? 'वेबसाइट' : 'Website', widget.shop.businessWebsite!),
         if (widget.shop.facebookUrl != null)
-          _buildContactRow(LucideIcons.facebook, 'Facebook', widget.shop.facebookUrl!),
+          _buildContactRow(LucideIcons.facebook, context.locale.languageCode == 'ne' ? 'फेसबुक' : 'Facebook', widget.shop.facebookUrl!),
         if (widget.shop.instagramUrl != null)
-          _buildContactRow(LucideIcons.instagram, 'Instagram', widget.shop.instagramUrl!),
+          _buildContactRow(LucideIcons.instagram, context.locale.languageCode == 'ne' ? 'इन्स्टाग्राम' : 'Instagram', widget.shop.instagramUrl!),
         if (widget.shop.tiktokUrl != null)
-          _buildContactRow(LucideIcons.music, 'TikTok', widget.shop.tiktokUrl!),
+          _buildContactRow(LucideIcons.music, context.locale.languageCode == 'ne' ? 'टिकटक' : 'TikTok', widget.shop.tiktokUrl!),
         
         if (widget.shop.businessPhone == null && 
             widget.shop.businessWebsite == null &&
             widget.shop.facebookUrl == null &&
             widget.shop.instagramUrl == null &&
             widget.shop.tiktokUrl == null)
-            Text('No contact info.', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic)),
+            Text(context.locale.languageCode == 'ne' ? 'सम्पर्क जानकारी छैन।' : 'No contact info.', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic)),
       ],
     );
   }
@@ -458,7 +460,7 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
       setState(() => _isEditing = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Category updated')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'वर्ग अपडेट भयो' : 'Category updated')));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
@@ -474,7 +476,7 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
         children: [
           DropdownButtonFormField<CategoryWithSubcategories>(
             value: _selectedCategory,
-            hint: const Text('Select Main Category'),
+            hint: Text(context.locale.languageCode == 'ne' ? 'मुख्य वर्ग छान्नुहोस्' : 'Select Main Category'),
             items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
             onChanged: (val) => setState(() {
               _selectedCategory = val;
@@ -486,7 +488,7 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
           if (_selectedCategory != null && _selectedCategory!.subcategories.isNotEmpty)
              DropdownButtonFormField<Category>(
               value: _selectedSubCategory,
-              hint: const Text('Select Subcategory'),
+              hint: Text(context.locale.languageCode == 'ne' ? 'उपवर्ग छान्नुहोस्' : 'Select Subcategory'),
               items: _selectedCategory!.subcategories.map((s) => DropdownMenuItem(value: s, child: Text(s.name))).toList(),
               onChanged: (val) => setState(() => _selectedSubCategory = val),
                decoration: const InputDecoration(border: OutlineInputBorder()),
@@ -499,14 +501,14 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving ? 'Saving...' : 'Save'),
+                  child: Text(_saving ? (context.locale.languageCode == 'ne' ? 'सेभ हुँदैछ...' : 'Saving...') : l('save', context.locale.languageCode)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => setState(() => _isEditing = false),
-                  child: const Text('Cancel'),
+                  child: Text(l('cancel', context.locale.languageCode)),
                 ),
               ),
             ],
@@ -521,7 +523,7 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Category', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(l('category', context.locale.languageCode), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
                 icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
@@ -541,7 +543,7 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
         
         if (widget.shop.categoryName == null)
            Text(
-             'No default category set.', 
+             context.locale.languageCode == 'ne' ? 'पूर्वनिर्धारित वर्ग सेट गरिएको छैन।' : 'No default category set.',
              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic), 
            ),
       ],
@@ -617,7 +619,7 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
       setState(() => _isEditing = false);
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location updated')));
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'स्थान अपडेट भयो' : 'Location updated')));
     } else {
        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
@@ -633,7 +635,7 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
         children: [
           DropdownButtonFormField<LocationProvince>(
             value: _selectedProvince,
-            hint: const Text('Select Province'),
+            hint: Text(context.locale.languageCode == 'ne' ? 'प्रदेश छान्नुहोस्' : 'Select Province'),
             items: _provinces.map((p) => DropdownMenuItem(value: p, child: Text(p.name))).toList(),
             onChanged: (val) => setState(() {
               _selectedProvince = val;
@@ -646,7 +648,7 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
           if (_selectedProvince != null)
              DropdownButtonFormField<LocationDistrict>(
               value: _selectedDistrict,
-              hint: const Text('Select District'),
+              hint: Text(context.locale.languageCode == 'ne' ? 'जिल्ला छान्नुहोस्' : 'Select District'),
               items: _selectedProvince!.districts.map((d) => DropdownMenuItem(value: d, child: Text(d.name))).toList(),
               onChanged: (val) => setState(() {
                 _selectedDistrict = val;
@@ -658,7 +660,7 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
            if (_selectedDistrict != null)
              DropdownButtonFormField<LocationMunicipality>(
               value: _selectedMunicipality,
-              hint: const Text('Select City'),
+              hint: Text(context.locale.languageCode == 'ne' ? 'शहर छान्नुहोस्' : 'Select City'),
               items: _selectedDistrict!.municipalities.map((m) => DropdownMenuItem(value: m, child: Text(m.name))).toList(),
               onChanged: (val) => setState(() => _selectedMunicipality = val),
                decoration: const InputDecoration(border: OutlineInputBorder()),
@@ -671,14 +673,14 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving ? 'Saving...' : 'Save'),
+                  child: Text(_saving ? (context.locale.languageCode == 'ne' ? 'सेभ हुँदैछ...' : 'Saving...') : l('save', context.locale.languageCode)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => setState(() => _isEditing = false),
-                  child: const Text('Cancel'),
+                  child: Text(l('cancel', context.locale.languageCode)),
                 ),
               ),
             ],
@@ -693,7 +695,7 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Location', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(l('location', context.locale.languageCode), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
                 icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
@@ -705,7 +707,7 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
         if (widget.shop.locationFullPath != null)
           _buildLocationRow(LucideIcons.mapPin, widget.shop.locationFullPath!),
         if (widget.shop.locationFullPath == null)
-           Text('No location set.', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic)),
+           Text(context.locale.languageCode == 'ne' ? 'स्थान सेट गरिएको छैन।' : 'No location set.', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic)),
       ],
     );
   }

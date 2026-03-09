@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:mobile/core/api/support_client.dart';
 import 'package:mobile/core/models/support_ticket.dart';
@@ -103,7 +104,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_ticket?.subject ?? 'Support Ticket',
+            Text(_ticket?.subject ?? 'support.supportTicket'.tr(),
                 style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600, fontSize: 16),
                 maxLines: 1,
@@ -153,7 +154,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               OutlinedButton.icon(
                 onPressed: _loadTicket,
                 icon: const Icon(LucideIcons.refreshCw, size: 16),
-                label: const Text('Retry'),
+                label: Text('support.retry'.tr()),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFE11D48),
                   side: const BorderSide(color: Color(0xFFE11D48)),
@@ -188,7 +189,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                               Icon(LucideIcons.messageSquare,
                                   size: 32, color: Colors.grey[300]),
                               const SizedBox(height: 8),
-                              Text('No messages yet',
+                              Text('support.noMessages'.tr(),
                                   style: GoogleFonts.inter(
                                       color: Colors.grey[400])),
                             ],
@@ -265,9 +266,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     final isYesterday =
         _isSameDay(date, now.subtract(const Duration(days: 1)));
     final label = isToday
-        ? 'Today'
+        ? 'support.today'.tr()
         : isYesterday
-            ? 'Yesterday'
+            ? 'support.yesterday'.tr()
             : DateFormat('MMM d, yyyy').format(date);
 
     return Padding(
@@ -344,7 +345,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                           size: 11, color: Color(0xFFE11D48)),
                     ),
                     const SizedBox(width: 5),
-                    Text('Support Team',
+                    Text('support.supportTeam'.tr(),
                         style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -390,7 +391,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             child: TextField(
               controller: _messageController,
               decoration: InputDecoration(
-                hintText: 'Type a message...',
+                hintText: 'support.typeMessage'.tr(),
                 hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
                 filled: true,
                 fillColor: Colors.grey[100],
@@ -463,8 +464,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           const SizedBox(width: 10),
           Text(
             status == SupportTicketStatus.resolved
-                ? 'This ticket has been resolved'
-                : 'This ticket is closed',
+                ? 'support.ticketResolved'.tr()
+                : 'support.ticketClosed'.tr(),
             style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

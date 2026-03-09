@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/api/api_config.dart';
 import '../../core/api/message_client.dart';
@@ -49,14 +50,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final chatProvider = context.watch<ChatProvider>();
 
     if (!authProvider.isLoggedIn) {
-      return const Scaffold(
-        appBar: MainAppBar(),
-        drawer: MainDrawer(),
+      return Scaffold(
+        appBar: const MainAppBar(),
+        drawer: const MainDrawer(),
         body: LoginRequiredWidget(
           icon: LucideIcons.messageCircle,
-          title: 'Login to View Messages',
-          subtitle:
-              'Sign in to see your conversations\nand chat with buyers and sellers',
+          title: 'messages.loginToView'.tr(),
+          subtitle: 'messages.loginSubtitle'.tr(),
         ),
       );
     }
@@ -97,7 +97,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               fontSize: 14,
             ),
             tabs: [
-              const Tab(text: "Chats"),
+              Tab(text: 'messages.chats'.tr()),
               Consumer<ChatProvider>(
                 builder: (context, chatProvider, _) {
                   final unread = chatProvider.unreadAnnouncementsCount;
@@ -105,7 +105,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text("Announcements"),
+                        Text('messages.announcements'.tr()),
                         if (unread > 0) ...[
                           const SizedBox(width: 6),
                           Container(
@@ -228,13 +228,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Offline mode - messages will sync when reconnected',
+              'messages.offlineMode'.tr(),
               style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
             ),
           ),
           TextButton(
             onPressed: () => chatProvider.reconnect(),
-            child: const Text('Retry'),
+            child: Text('common.retry'.tr()),
           ),
         ],
       ),
@@ -710,7 +710,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 backgroundColor: const Color(0xFFDC143C),
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Retry'),
+              child: Text('common.retry'.tr()),
             ),
           ],
         ),
@@ -744,7 +744,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'No Messages Yet',
+                'messages.noMessages'.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -753,7 +753,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Start a conversation by contacting\na seller from their ad listing',
+                'messages.startConversation'.tr(),
                 style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
@@ -790,7 +790,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'No Announcements',
+                'messages.noAnnouncements'.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -799,7 +799,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Important updates will appear here',
+                'messages.announcementsSubtitle'.tr(),
                 style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
@@ -900,7 +900,7 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'New Message',
+              'messages.newMessage'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -912,7 +912,7 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
               autofocus: true,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Search users by name...',
+                hintText: 'messages.searchUsers'.tr(),
                 prefixIcon: const Icon(LucideIcons.search),
                 suffixIcon: _isSearching
                     ? const Padding(
@@ -939,7 +939,7 @@ class _NewConversationSheetState extends State<_NewConversationSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Center(
                   child: Text(
-                    'Type at least 2 characters to search',
+                    'messages.typeToSearch'.tr(),
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: Colors.grey[500],

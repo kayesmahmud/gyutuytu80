@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/api/payment_client.dart';
 import '../../core/models/payment.dart';
+import '../../core/utils/localized_helpers.dart';
 import 'payment_screen.dart';
 
 /// Gateway Selector - shows available payment gateways
@@ -86,7 +88,9 @@ class _GatewaySelectorState extends State<GatewaySelector> {
           _selectedGateway = _gateways.first.gateway;
         }
       } else {
-        _error = response.errorMessage ?? 'Failed to load payment options';
+        _error = response.errorMessage ?? (context.locale.languageCode == 'ne'
+            ? 'भुक्तानी विकल्पहरू लोड गर्न असफल'
+            : 'Failed to load payment options');
       }
     });
   }
@@ -175,9 +179,9 @@ class _GatewaySelectorState extends State<GatewaySelector> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Select Payment Method',
-                  style: TextStyle(
+                Text(
+                  context.locale.languageCode == 'ne' ? 'भुक्तानी विधि छान्नुहोस्' : 'Select Payment Method',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -196,15 +200,15 @@ class _GatewaySelectorState extends State<GatewaySelector> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                'Total',
-                style: TextStyle(
+              Text(
+                context.locale.languageCode == 'ne' ? 'जम्मा' : 'Total',
+                style: const TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
                 ),
               ),
               Text(
-                'Rs. ${widget.amount.toStringAsFixed(0)}',
+                formatLocalizedPrice(widget.amount, context.locale.languageCode),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -247,7 +251,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
             const SizedBox(height: 16),
             TextButton(
               onPressed: _loadGateways,
-              child: const Text('Retry'),
+              child: Text(l('retry', context.locale.languageCode)),
             ),
           ],
         ),
@@ -266,7 +270,9 @@ class _GatewaySelectorState extends State<GatewaySelector> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No payment methods available',
+              context.locale.languageCode == 'ne'
+                  ? 'कुनै भुक्तानी विधि उपलब्ध छैन'
+                  : 'No payment methods available',
               style: TextStyle(color: Colors.grey[600]),
             ),
           ],
@@ -300,7 +306,9 @@ class _GatewaySelectorState extends State<GatewaySelector> {
                 disabledBackgroundColor: Colors.grey[300],
               ),
               child: Text(
-                'Pay Rs. ${widget.amount.toStringAsFixed(0)}',
+                context.locale.languageCode == 'ne'
+                    ? '${formatLocalizedPrice(widget.amount, 'ne')} तिर्नुहोस्'
+                    : 'Pay ${formatLocalizedPrice(widget.amount, 'en')}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -404,7 +412,9 @@ class _GatewaySelectorState extends State<GatewaySelector> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Your payment is secure and encrypted',
+              context.locale.languageCode == 'ne'
+                  ? 'तपाईंको भुक्तानी सुरक्षित र इन्क्रिप्टेड छ'
+                  : 'Your payment is secure and encrypted',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[600],

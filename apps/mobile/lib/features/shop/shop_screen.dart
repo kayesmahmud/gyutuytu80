@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -177,7 +179,7 @@ class _ShopScreenState extends State<ShopScreen> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+      ).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'छवि छान्दा त्रुटि: $e' : 'Error picking image: $e')));
     }
   }
 
@@ -189,7 +191,9 @@ class _ShopScreenState extends State<ShopScreen> {
           : const CropAspectRatio(ratioX: 1, ratioY: 1),
       uiSettings: [
         AndroidUiSettings(
-          toolbarTitle: isCover ? 'Crop Cover Photo' : 'Crop Avatar',
+          toolbarTitle: isCover
+              ? (context.locale.languageCode == 'ne' ? 'कभर फोटो क्रप गर्नुहोस्' : 'Crop Cover Photo')
+              : (context.locale.languageCode == 'ne' ? 'अवतार क्रप गर्नुहोस्' : 'Crop Avatar'),
           toolbarColor: const Color(0xFFF43F5E),
           toolbarWidgetColor: Colors.white,
           initAspectRatio: isCover
@@ -197,7 +201,9 @@ class _ShopScreenState extends State<ShopScreen> {
               : CropAspectRatioPreset.square,
           lockAspectRatio: true,
         ),
-        IOSUiSettings(title: isCover ? 'Crop Cover Photo' : 'Crop Avatar'),
+        IOSUiSettings(title: isCover
+            ? (context.locale.languageCode == 'ne' ? 'कभर फोटो क्रप गर्नुहोस्' : 'Crop Cover Photo')
+            : (context.locale.languageCode == 'ne' ? 'अवतार क्रप गर्नुहोस्' : 'Crop Avatar')),
       ],
     );
 
@@ -226,7 +232,9 @@ class _ShopScreenState extends State<ShopScreen> {
     if (response.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${isCover ? "Cover" : "Avatar"} updated successfully'),
+          content: Text(context.locale.languageCode == 'ne'
+              ? 'कभर/अवतार सफलतापूर्वक अपडेट भयो'
+              : '${isCover ? "Cover" : "Avatar"} updated successfully'),
         ),
       );
       // Refresh shop data to show new image
@@ -274,7 +282,7 @@ class _ShopScreenState extends State<ShopScreen> {
           const SizedBox(height: 16),
           Text(_error ?? 'An error occurred'),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _fetchShopData, child: const Text('Retry')),
+          ElevatedButton(onPressed: _fetchShopData, child: Text(l('retry', context.locale.languageCode))),
         ],
       ),
     );
@@ -334,7 +342,9 @@ class _ShopScreenState extends State<ShopScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
               child: Text(
-                'Ads from ${_shop!.displayName} (${_ads.length})',
+                context.locale.languageCode == 'ne'
+                    ? '${_shop!.displayName} का विज्ञापनहरू (${_ads.length})'
+                    : 'Ads from ${_shop!.displayName} (${_ads.length})',
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -558,10 +568,10 @@ class _ShopScreenState extends State<ShopScreen> {
                               ),
                               Text(
                                 _shop!.isBusinessVerified
-                                    ? 'Verified Business'
+                                    ? (context.locale.languageCode == 'ne' ? 'प्रमाणित व्यवसाय' : 'Verified Business')
                                     : _shop!.individualVerified
-                                    ? 'Verified Individual'
-                                    : 'Seller',
+                                    ? (context.locale.languageCode == 'ne' ? 'प्रमाणित व्यक्ति' : 'Verified Individual')
+                                    : (context.locale.languageCode == 'ne' ? 'विक्रेता' : 'Seller'),
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: Colors.grey[600],
@@ -580,11 +590,11 @@ class _ShopScreenState extends State<ShopScreen> {
                   offset: const Offset(0, -20),
                   child: Row(
                     children: [
-                      _buildStatItem('${_shop!.totalAds}', 'Active Ads'),
+                      _buildStatItem('${_shop!.totalAds}', context.locale.languageCode == 'ne' ? 'विज्ञापनहरू' : 'Active Ads'),
                       const SizedBox(width: 24),
-                      _buildStatItem(_formatNumber(_shop!.totalViews), 'Views'),
+                      _buildStatItem(_formatNumber(_shop!.totalViews), l('views', context.locale.languageCode)),
                       const SizedBox(width: 24),
-                      _buildStatItem(_shop!.memberSince, 'Joined'),
+                      _buildStatItem(_shop!.memberSince, context.locale.languageCode == 'ne' ? 'सदस्य' : 'Joined'),
                     ],
                   ),
                 ),
@@ -651,7 +661,9 @@ class _ShopScreenState extends State<ShopScreen> {
               const Text('📦', style: TextStyle(fontSize: 48)),
               const SizedBox(height: 16),
               Text(
-                'No active ads at the moment',
+                context.locale.languageCode == 'ne'
+                    ? 'अहिलेसम्म कुनै विज्ञापन छैन'
+                    : 'No active ads at the moment',
                 style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
               ),
             ],

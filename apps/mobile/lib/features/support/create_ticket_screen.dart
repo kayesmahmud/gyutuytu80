@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:mobile/core/api/support_client.dart';
 import 'package:mobile/core/models/support_ticket.dart';
@@ -64,7 +65,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('New Ticket',
+        title: Text('support.newTicket'.tr(),
             style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
@@ -92,7 +93,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Describe your issue clearly so we can help you faster.',
+                        'support.ticketHelper'.tr(),
                         style: GoogleFonts.inter(
                             fontSize: 13,
                             color: const Color(0xFF1E40AF),
@@ -106,11 +107,11 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               const SizedBox(height: 24),
 
               // Category
-              _buildLabel('Category', LucideIcons.tag),
+              _buildLabel('support.categoryLabel'.tr(), LucideIcons.tag),
               const SizedBox(height: 8),
               DropdownButtonFormField<SupportTicketCategory>(
                 initialValue: _category,
-                decoration: _inputDecoration('Select a category'),
+                decoration: _inputDecoration('support.selectCategory'.tr()),
                 items: SupportTicketCategory.values
                     .map((c) => DropdownMenuItem(
                         value: c,
@@ -125,13 +126,13 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               const SizedBox(height: 20),
 
               // Subject
-              _buildLabel('Subject', LucideIcons.type),
+              _buildLabel('support.subject'.tr(), LucideIcons.type),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _subjectController,
-                decoration: _inputDecoration('Brief summary of your issue'),
+                decoration: _inputDecoration('support.subjectHint'.tr()),
                 validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Subject is required' : null,
+                    v == null || v.trim().isEmpty ? 'support.subjectRequired'.tr() : null,
                 textInputAction: TextInputAction.next,
                 style: GoogleFonts.inter(fontSize: 15),
               ),
@@ -139,13 +140,13 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               const SizedBox(height: 20),
 
               // Description
-              _buildLabel('Description', LucideIcons.alignLeft),
+              _buildLabel('support.descriptionLabel'.tr(), LucideIcons.alignLeft),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _messageController,
-                decoration: _inputDecoration('Describe your issue in detail...'),
+                decoration: _inputDecoration('support.descriptionHint'.tr()),
                 validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Description is required'
+                    ? 'support.descriptionRequired'.tr()
                     : null,
                 maxLines: 6,
                 style: GoogleFonts.inter(fontSize: 15),
@@ -178,7 +179,7 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                           children: [
                             const Icon(LucideIcons.send, size: 18),
                             const SizedBox(width: 8),
-                            Text('Submit Ticket',
+                            Text('support.submitTicket'.tr(),
                                 style: GoogleFonts.inter(
                                     fontSize: 16, fontWeight: FontWeight.w600)),
                           ],

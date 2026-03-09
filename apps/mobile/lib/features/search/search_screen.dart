@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/api/ad_client.dart';
@@ -221,7 +222,9 @@ class SearchScreenState extends State<SearchScreen> {
                                 focusNode: _searchFocusNode,
                                 onSubmitted: (_) => _onSearch(),
                                 decoration: InputDecoration(
-                                  hintText: "Search for anything...",
+                                  hintText: context.locale.languageCode == 'ne'
+                                      ? "केही पनि खोज्नुहोस्..."
+                                      : "Search for anything...",
                                   hintStyle: GoogleFonts.inter(
                                     color: Colors.grey[500],
                                   ),
@@ -284,14 +287,16 @@ class SearchScreenState extends State<SearchScreen> {
                       children: [
                         _buildFilterChip(
                           context,
-                          _filters.locationName ?? "All Nepal",
+                          _filters.locationName ??
+                              (context.locale.languageCode == 'ne' ? 'सम्पूर्ण नेपाल' : "All Nepal"),
                           icon: LucideIcons.mapPin,
                           openSection: "Locations",
                           isActive: _filters.locationId != null,
                         ),
                         _buildFilterChip(
                           context,
-                          _filters.categoryName ?? "Category",
+                          _filters.categoryName ??
+                              (context.locale.languageCode == 'ne' ? 'वर्ग' : "Category"),
                           icon: LucideIcons.layoutGrid,
                           openSection: "Categories",
                           isActive: _filters.categoryId != null,
@@ -300,16 +305,16 @@ class SearchScreenState extends State<SearchScreen> {
                           context,
                           _filters.condition != null
                               ? (_filters.condition == 'new'
-                                    ? 'Brand New'
-                                    : 'Used')
-                              : "Condition",
+                                    ? (context.locale.languageCode == 'ne' ? 'नयाँ' : 'Brand New')
+                                    : (context.locale.languageCode == 'ne' ? 'पुरानो' : 'Used'))
+                              : (context.locale.languageCode == 'ne' ? 'अवस्था' : "Condition"),
                           icon: LucideIcons.tag,
                           openSection: "Condition",
                           isActive: _filters.condition != null,
                         ),
                         _buildFilterChip(
                           context,
-                          "Sort by",
+                          context.locale.languageCode == 'ne' ? "क्रमबद्ध" : "Sort by",
                           icon: LucideIcons.arrowUpDown,
                           openSection: "Sort By",
                           isActive: _filters.sortBy != null,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:mobile/core/widgets/floating_widget.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -65,6 +67,23 @@ class _MyAdsScreenState extends State<MyAdsScreen>
     }
   }
 
+  String _localizedTabName(String tab) {
+    switch (tab) {
+      case 'All':
+        return 'myAds.all'.tr();
+      case 'Active':
+        return 'myAds.active'.tr();
+      case 'Pending':
+        return 'myAds.pending'.tr();
+      case 'Sold':
+        return 'myAds.sold'.tr();
+      case 'Rejected':
+        return 'myAds.rejected'.tr();
+      default:
+        return tab;
+    }
+  }
+
   Future<void> _fetchAds() async {
     setState(() {
       _isLoading = true;
@@ -105,17 +124,17 @@ class _MyAdsScreenState extends State<MyAdsScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Ad'),
-        content: Text('Are you sure you want to delete "${ad.title}"?'),
+        title: Text('dashboard.deleteAd'.tr()),
+        content: Text('dashboard.confirmDelete'.tr(args: [ad.title])),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text('common.delete'.tr()),
           ),
         ],
       ),
@@ -129,8 +148,8 @@ class _MyAdsScreenState extends State<MyAdsScreen>
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ad deleted successfully'),
+            SnackBar(
+              content: Text('dashboard.adDeleted'.tr()),
               backgroundColor: Colors.green,
             ),
           );
@@ -139,7 +158,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.error ?? 'Failed to delete'),
+              content: Text(response.error ?? 'dashboard.failedToDelete'.tr()),
               backgroundColor: Colors.red,
             ),
           );
@@ -152,17 +171,17 @@ class _MyAdsScreenState extends State<MyAdsScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Mark as Sold'),
-        content: Text('Mark "${ad.title}" as sold?'),
+        title: Text('dashboard.markAsSold'.tr()),
+        content: Text('dashboard.confirmDelete'.tr(args: [ad.title])),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text('common.cancel'.tr()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: const Text('Mark Sold'),
+            child: Text('dashboard.markSold'.tr()),
           ),
         ],
       ),
@@ -174,8 +193,8 @@ class _MyAdsScreenState extends State<MyAdsScreen>
         _fetchAds(); // Refresh to get updated status
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ad marked as sold!'),
+            SnackBar(
+              content: Text('dashboard.adMarkedSold'.tr()),
               backgroundColor: Colors.green,
             ),
           );
@@ -184,7 +203,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.error ?? 'Failed to update'),
+              content: Text(response.error ?? 'myAds.failedToUpdate'.tr()),
               backgroundColor: Colors.red,
             ),
           );
@@ -199,7 +218,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          'My Ads',
+          'myAds.title'.tr(),
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             color: AppTheme.textDark,
@@ -229,7 +248,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
               ),
               tabs: _tabs.map((tab) {
                 final count = _statusCounts[tab] ?? 0;
-                return Tab(text: '$tab ($count)');
+                return Tab(text: '${_localizedTabName(tab)} ($count)');
               }).toList(),
             ),
           ),
@@ -272,10 +291,10 @@ class _MyAdsScreenState extends State<MyAdsScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('Total', counts['All'] ?? 0, Colors.blue),
-          _buildStatItem('Active', counts['Active'] ?? 0, Colors.green),
-          _buildStatItem('Pending', counts['Pending'] ?? 0, Colors.orange),
-          _buildStatItem('Sold', counts['Sold'] ?? 0, Colors.purple),
+          _buildStatItem('dashboard.total'.tr(), counts['All'] ?? 0, Colors.blue),
+          _buildStatItem('myAds.active'.tr(), counts['Active'] ?? 0, Colors.green),
+          _buildStatItem('myAds.pending'.tr(), counts['Pending'] ?? 0, Colors.orange),
+          _buildStatItem('myAds.sold'.tr(), counts['Sold'] ?? 0, Colors.purple),
         ],
       ),
     );
@@ -312,7 +331,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
           ElevatedButton(
             onPressed: _fetchAds,
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: const Text('Retry'),
+            child: Text('common.retry'.tr()),
           ),
         ],
       ),
@@ -331,7 +350,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'No ads found',
+              'myAds.noAdsFound'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -340,7 +359,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Start selling by posting your first ad!',
+              'myAds.startSelling'.tr(),
               style: GoogleFonts.inter(color: Colors.grey[500]),
             ),
           ],
@@ -481,8 +500,8 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                         case 'edit':
                           // TODO: Navigate to edit screen
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Edit feature coming soon'),
+                            SnackBar(
+                              content: Text('myAds.editComingSoon'.tr()),
                             ),
                           );
                           break;
@@ -495,22 +514,22 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'view',
-                        child: Text('View Ad'),
+                        child: Text('myAds.viewAd'.tr()),
                       ),
                       if (ad.status == AdStatus.active)
-                        const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        PopupMenuItem(value: 'edit', child: Text('myAds.edit'.tr())),
                       if (ad.status == AdStatus.active)
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'sold',
-                          child: Text('Mark as Sold'),
+                          child: Text('dashboard.markAsSold'.tr()),
                         ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Text(
-                          'Delete',
-                          style: TextStyle(color: Colors.red),
+                          'common.delete'.tr(),
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
@@ -566,22 +585,22 @@ class _MyAdsScreenState extends State<MyAdsScreen>
       case 'active':
         bgColor = Colors.green[50]!;
         textColor = Colors.green[700]!;
-        label = 'Active';
+        label = 'myAds.active'.tr();
         break;
       case 'pending':
         bgColor = Colors.orange[50]!;
         textColor = Colors.orange[700]!;
-        label = 'Pending';
+        label = 'myAds.pending'.tr();
         break;
       case 'sold':
         bgColor = Colors.purple[50]!;
         textColor = Colors.purple[700]!;
-        label = 'Sold';
+        label = 'myAds.sold'.tr();
         break;
       case 'rejected':
         bgColor = Colors.red[50]!;
         textColor = Colors.red[700]!;
-        label = 'Rejected';
+        label = 'myAds.rejected'.tr();
         break;
       default:
         bgColor = Colors.grey[100]!;
@@ -606,26 +625,23 @@ class _MyAdsScreenState extends State<MyAdsScreen>
     );
   }
 
-  String _formatPrice(double? price) {
-    if (price == null) return 'Contact for price';
-    final formatted = price
-        .toStringAsFixed(0)
-        .replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-        );
-    return 'Rs. $formatted';
-  }
+  String _formatPrice(double? price) =>
+      formatLocalizedPrice(price, context.locale.languageCode);
 
   String _formatDate(DateTime? date) {
     if (date == null) return 'Unknown';
     final now = DateTime.now();
     final diff = now.difference(date);
 
-    if (diff.inDays == 0) return 'Today';
-    if (diff.inDays == 1) return 'Yesterday';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
-    return '${(diff.inDays / 30).floor()} months ago';
+    final isNe = context.locale.languageCode == 'ne';
+    if (diff.inDays == 0) return isNe ? 'आज' : 'Today';
+    if (diff.inDays == 1) return isNe ? 'हिजो' : 'Yesterday';
+    if (diff.inDays < 7) return isNe ? '${diff.inDays} दिन अघि' : '${diff.inDays} days ago';
+    if (diff.inDays < 30) {
+      final w = (diff.inDays / 7).floor();
+      return isNe ? '$w हप्ता अघि' : '$w weeks ago';
+    }
+    final m = (diff.inDays / 30).floor();
+    return isNe ? '$m महिना अघि' : '$m months ago';
   }
 }

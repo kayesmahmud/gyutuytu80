@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/widgets/staggered_fade_in.dart';
 import '../../core/widgets/floating_widget.dart';
@@ -146,8 +147,8 @@ class _ChatScreenState extends State<ChatScreen> {
     if (fileSize > 5 * 1024 * 1024) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Image must be less than 5MB. Please upload a smaller file.'),
+          SnackBar(
+            content: Text('messages.imageSizeError'.tr()),
           ),
         );
       }
@@ -184,7 +185,7 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() => _isUploading = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to upload image')),
+            SnackBar(content: Text('messages.failedToUpload'.tr())),
           );
         }
       }
@@ -336,7 +337,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Online',
+                            'messages.online'.tr(),
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               color: const Color(0xFF10B981),
@@ -375,7 +376,7 @@ class _ChatScreenState extends State<ChatScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'About: ${widget.adTitle}',
+              'messages.aboutAd'.tr(args: [widget.adTitle!]),
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: Colors.grey[700],
@@ -452,11 +453,11 @@ class _ChatScreenState extends State<ChatScreen> {
     if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day) {
-      text = 'Today';
+      text = 'messages.today'.tr();
     } else if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day - 1) {
-      text = 'Yesterday';
+      text = 'messages.yesterday'.tr();
     } else {
       text = DateFormat('MMMM d, yyyy').format(date);
     }
@@ -487,7 +488,7 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(18),
             ),
             child: Text(
-              'Message deleted',
+              'messages.messageDeleted'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -583,7 +584,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     if (message.isEdited) ...[
                       const SizedBox(width: 4),
                       Text(
-                        '(edited)',
+                        'messages.edited'.tr(),
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: isMe
@@ -605,7 +606,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String _getFullImageUrl(String url) {
     if (url.startsWith('http')) return url;
-    return '${ApiConfig.baseUrl.replaceAll('/api', '')}$url';
+    return '${ApiConfig.baseUrl.replaceFirst(RegExp(r'/api$'), '')}$url';
   }
 
   void _showFullImage(BuildContext context, String url) {
@@ -647,7 +648,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                '${widget.recipientName} is typing...',
+                'messages.typing'.tr(args: [widget.recipientName]),
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: Colors.grey[600],
@@ -682,7 +683,7 @@ class _ChatScreenState extends State<ChatScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Image ready to send',
+              'messages.imageReady'.tr(),
               style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700]),
             ),
           ),
@@ -741,7 +742,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       controller: _messageController,
                       focusNode: _focusNode,
                       decoration: InputDecoration(
-                        hintText: 'Type a message...',
+                        hintText: 'messages.typeMessage'.tr(),
                         hintStyle: GoogleFonts.inter(
                           color: Colors.grey[500],
                           fontSize: 15,
@@ -807,7 +808,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No messages yet',
+            'messages.noMessagesYet'.tr(),
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -816,7 +817,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Start the conversation!',
+            'messages.startTheConversation'.tr(),
             style: GoogleFonts.inter(
               fontSize: 14,
               color: Colors.grey[500],

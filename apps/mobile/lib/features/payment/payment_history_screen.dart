@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../../core/api/payment_client.dart';
 import '../../core/models/models.dart';
 import '../../core/models/payment.dart';
+import '../../core/utils/localized_helpers.dart';
 import '../../core/widgets/floating_widget.dart';
 
 /// Payment History Screen - shows user's payment transactions
@@ -27,7 +29,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   bool _hasMorePages = true;
   String? _statusFilter;
 
-  final List<String> _filterOptions = ['All', 'Completed', 'Pending', 'Failed'];
+  final List<String> _filterKeys = ['All', 'Completed', 'Pending', 'Failed'];
 
   @override
   void initState() {
@@ -79,7 +81,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         _hasMorePages =
             response.pagination.page < response.pagination.totalPages;
       } else {
-        _error = response.errorMessage ?? 'Failed to load payment history';
+        _error = response.errorMessage ?? (context.locale.languageCode == 'ne'
+          ? 'भुक्तानी इतिहास लोड गर्न असफल'
+          : 'Failed to load payment history');
       }
     });
   }
@@ -99,6 +103,21 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     });
   }
 
+  String _filterLabel(String key) {
+    switch (key) {
+      case 'All':
+        return 'payment.all'.tr();
+      case 'Completed':
+        return 'payment.completed'.tr();
+      case 'Pending':
+        return 'payment.pending'.tr();
+      case 'Failed':
+        return 'payment.failed'.tr();
+      default:
+        return key;
+    }
+  }
+
   void _onFilterChanged(String filter) {
     setState(() {
       _statusFilter = filter == 'All' ? null : filter.toLowerCase();
@@ -109,7 +128,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment History'), centerTitle: true),
+      appBar: AppBar(title: Text('payment.title'.tr()), centerTitle: true),
       body: Column(
         children: [
           _buildFilterBar(),
@@ -135,14 +154,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: _filterOptions.map((filter) {
+          children: _filterKeys.map((filter) {
             final isSelected =
                 (_statusFilter == null && filter == 'All') ||
                 _statusFilter == filter.toLowerCase();
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
-                label: Text(filter),
+                label: Text(_filterLabel(filter)),
                 selected: isSelected,
                 onSelected: (_) => _onFilterChanged(filter),
                 selectedColor: const Color(0xFFDC143C),
@@ -207,7 +226,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => _loadTransactions(refresh: true),
-              child: const Text('Retry'),
+              child: Text('common.retry'.tr()),
             ),
           ],
         ),
@@ -239,7 +258,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No Transactions Yet',
+              'payment.noTransactions'.tr(),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -248,7 +267,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your payment history will appear here',
+              'payment.historySubtitle'.tr(),
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
@@ -310,7 +329,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Rs. ${transaction.amount.toStringAsFixed(0)}',
+                          formatLocalizedPrice(transaction.amount, context.locale.languageCode),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -401,27 +420,37 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       case PaymentStatus.completed:
         bgColor = const Color(0xFF10B981).withValues(alpha: 0.1);
         textColor = const Color(0xFF10B981);
-        label = 'Completed';
+        label = 'payment.completed'.tr();
         break;
       case PaymentStatus.pending:
         bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.1);
         textColor = const Color(0xFFF59E0B);
-        label = 'Pending';
+        label = 'payment.pending'.tr();
         break;
       case PaymentStatus.failed:
         bgColor = const Color(0xFFEF4444).withValues(alpha: 0.1);
         textColor = const Color(0xFFEF4444);
-        label = 'Failed';
+        label = 'payment.failed'.tr();
         break;
       case PaymentStatus.refunded:
         bgColor = const Color(0xFF6366F1).withValues(alpha: 0.1);
         textColor = const Color(0xFF6366F1);
-        label = 'Refunded';
+        label = 'payment.refunded'.tr();
         break;
       case PaymentStatus.expired:
         bgColor = Colors.grey.withValues(alpha: 0.1);
         textColor = Colors.grey;
-        label = 'Expired';
+        label = 'payment.expired'.tr();
+        break;
+      case PaymentStatus.canceled:
+        bgColor = Colors.grey.withValues(alpha: 0.1);
+        textColor = Colors.grey;
+        label = 'payment.expired'.tr();
+        break;
+      case PaymentStatus.verified:
+        bgColor = const Color(0xFF10B981).withValues(alpha: 0.1);
+        textColor = const Color(0xFF10B981);
+        label = 'common.verified'.tr();
         break;
     }
 
@@ -494,7 +523,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   _buildGatewayIcon(transaction.gateway),
                   const SizedBox(height: 16),
                   Text(
-                    'Rs. ${transaction.amount.toStringAsFixed(0)}',
+                    formatLocalizedPrice(transaction.amount, context.locale.languageCode),
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -503,28 +532,28 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   const SizedBox(height: 8),
                   _buildStatusBadge(transaction.status),
                   const SizedBox(height: 24),
-                  _buildDetailRow('Order', transaction.orderName),
-                  _buildDetailRow('Type', transaction.type.displayName),
-                  _buildDetailRow('Gateway', transaction.gateway.displayName),
+                  _buildDetailRow('payment.order'.tr(), transaction.orderName),
+                  _buildDetailRow('payment.type'.tr(), transaction.type.displayName),
+                  _buildDetailRow('payment.gateway'.tr(), transaction.gateway.displayName),
                   _buildDetailRow(
-                    'Date',
+                    'payment.date'.tr(),
                     dateFormat.format(transaction.createdAt),
                   ),
                   if (transaction.transactionId != null)
                     _buildDetailRow(
-                      'Transaction ID',
+                      'payment.transactionId'.tr(),
                       transaction.transactionId!,
                     ),
                   if (transaction.gatewayTransactionId != null)
                     _buildDetailRow(
-                      'Gateway Ref',
+                      'payment.gatewayRef'.tr(),
                       transaction.gatewayTransactionId!,
                     ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx),
+                      onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey[100],
                         foregroundColor: Colors.grey[800],
@@ -534,7 +563,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text('Close'),
+                      child: Text('common.close'.tr()),
                     ),
                   ),
                 ],

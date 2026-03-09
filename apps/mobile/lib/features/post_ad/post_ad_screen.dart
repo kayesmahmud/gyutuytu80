@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -26,10 +27,12 @@ class PostAdScreen extends StatelessWidget {
             : null,
         ),
         drawer: const MainDrawer(),
-        body: const LoginRequiredWidget(
+        body: LoginRequiredWidget(
           icon: LucideIcons.plusCircle,
-          title: 'Login to Post an Ad',
-          subtitle: 'Sign in to list your items\nand reach thousands of buyers',
+          title: context.locale.languageCode == 'ne' ? 'विज्ञापन पोस्ट गर्न लगइन गर्नुहोस्' : 'Login to Post an Ad',
+          subtitle: context.locale.languageCode == 'ne'
+              ? 'आफ्ना सामानहरू सूचीबद्ध गर्न\nर हजारौं खरिदकर्ताहरूसम्म पुग्न साइन इन गर्नुहोस्'
+              : 'Sign in to list your items\nand reach thousands of buyers',
         ),
       );
     }
@@ -53,22 +56,30 @@ class PostAdScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Section
-              Text(
-                "Post a Free Ad",
-                style: GoogleFonts.inter(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF111827), // Dark grey like screenshot
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Fill in the details below to create your listing",
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  color: Colors.grey[500],
-                ),
-              ),
+              Builder(builder: (context) {
+                final isNe = context.locale.languageCode == 'ne';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isNe ? "निःशुल्क विज्ञापन पोस्ट गर्नुहोस्" : "Post a Free Ad",
+                      style: GoogleFonts.inter(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isNe ? "आफ्नो सूची बनाउन तलका विवरणहरू भर्नुहोस्" : "Fill in the details below to create your listing",
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                );
+              }),
               const SizedBox(height: 32),
 
               // Saved Drafts Header Card
@@ -83,7 +94,7 @@ class PostAdScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        "Saved Drafts (10)",
+                        context.locale.languageCode == 'ne' ? "सुरक्षित ड्राफ्ट (१०)" : "Saved Drafts (10)",
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -99,7 +110,7 @@ class PostAdScreen extends StatelessWidget {
                            Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateAdScreen()));
                          } catch (e) {
                            debugPrint("🔴 Error navigating to CreateAdScreen: $e");
-                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: $e')));
                          }
                       },
                       style: ElevatedButton.styleFrom(
@@ -112,7 +123,7 @@ class PostAdScreen extends StatelessWidget {
                       ),
                       icon: const Icon(LucideIcons.plus, size: 18),
                       label: Text(
-                        "Start New Ad",
+                        context.locale.languageCode == 'ne' ? "नयाँ विज्ञापन" : "Start New Ad",
                         style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -136,11 +147,16 @@ class PostAdScreen extends StatelessWidget {
                   itemCount: 3,
                   separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey[200]),
                   itemBuilder: (context, index) {
+                    final isNe = context.locale.languageCode == 'ne';
+                    final untitled = isNe ? "शीर्षकविहीन - ..." : "Untitled - ...";
+                    final lastEdited = isNe ? "अन्तिम सम्पादन" : "Last edited";
+                    final justNow = isNe ? "भर्खरै" : "Just now";
                     return _buildDraftItem(
-                      title: index == 0 ? "Untitled - ..." : (index == 1 ? "Untitled - ..." : "house 55"),
-                      subtitle: index == 0 
-                        ? "Last edited: Just now • Women's Fashion & Beauty"
-                        : (index == 1 ? "Last edited: 4 hours ago • Property" : "Last edited: Jan 14 • Property"),
+                      context: context,
+                      title: index == 0 ? untitled : (index == 1 ? untitled : "house 55"),
+                      subtitle: index == 0
+                        ? "$lastEdited: $justNow • Women's Fashion & Beauty"
+                        : (index == 1 ? "$lastEdited: ${isNe ? '४ घण्टा अघि' : '4 hours ago'} • Property" : "$lastEdited: Jan 14 • Property"),
                     );
                   },
                 ),
@@ -153,7 +169,8 @@ class PostAdScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDraftItem({required String title, required String subtitle}) {
+  Widget _buildDraftItem({required BuildContext context, required String title, required String subtitle}) {
+    final isNe = context.locale.languageCode == 'ne';
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -190,7 +207,7 @@ class PostAdScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: Text(
-                    "Continue",
+                    isNe ? "जारी राख्नुहोस्" : "Continue",
                     style: GoogleFonts.inter(
                       color: Colors.black87,
                       fontWeight: FontWeight.w500,
@@ -211,7 +228,7 @@ class PostAdScreen extends StatelessWidget {
                      padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: Text(
-                    "Delete",
+                    isNe ? "हटाउनुहोस्" : "Delete",
                     style: GoogleFonts.inter(
                       color: Colors.red,
                       fontWeight: FontWeight.w500,

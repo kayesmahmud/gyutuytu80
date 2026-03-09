@@ -3,6 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:io';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/models/models.dart';
@@ -88,7 +89,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   Future<void> _pickImages() async {
     if (_selectedImages.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maximum 5 images allowed')),
+        SnackBar(content: Text('postAd.maxImagesError'.tr())),
       );
       return;
     }
@@ -114,7 +115,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${oversizedNames.length} image(s) exceed 5MB and were skipped. Please upload images under 5MB.',
+                context.locale.languageCode == 'ne'
+                    ? '${oversizedNames.length} छवि(हरू) ५MB भन्दा ठूलो भएकाले छोडियो। कृपया ५MB भन्दा सानो छवि अपलोड गर्नुहोस्।'
+                    : '${oversizedNames.length} image(s) exceed 5MB and were skipped. Please upload images under 5MB.',
               ),
               duration: const Duration(seconds: 4),
             ),
@@ -137,11 +140,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     if (_currentStep == 0) {
       if (!_step1Key.currentState!.validate()) return;
       if (_selectedCategory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a category')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('postAd.selectCategoryError'.tr())));
         return;
       }
       if (_selectedCategory!.subcategories.isNotEmpty && _selectedSubCategory == null) {
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a subcategory')));
+         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('postAd.selectSubcategoryError'.tr())));
          return;
       }
     } else if (_currentStep == 1) {
@@ -151,12 +154,12 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       if (!_step2Key.currentState!.validate()) return;
       
       if (_selectedImages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please add at least one image')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('postAd.addImageError'.tr())));
         return;
       }
       
       if (_selectedProvince == null || _selectedDistrict == null || _selectedMunicipality == null) {
-         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select full location')));
+         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('postAd.selectLocationError'.tr())));
          return;
       }
     }
@@ -177,7 +180,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   Future<void> _submitAd() async {
     // Step 3 valid? WhatsApp check if needed
     if (_whatsappController.text.isEmpty) {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter valid contact number')));
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('postAd.validContactError'.tr())));
        return;
     }
 
@@ -212,7 +215,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
       if (result.success) {
         if (mounted) {
-          await showSuccessDialog(context, message: 'Ad posted successfully!');
+          await showSuccessDialog(context, message: 'postAd.adPosted'.tr());
           if (mounted) Navigator.pop(context);
         }
       } else {
@@ -226,7 +229,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       debugPrint("🔴 Post Ad Error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: $e')),
         );
       }
     } finally {
@@ -252,7 +255,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Post a Free Ad",
+          'postAd.title'.tr(),
           style: GoogleFonts.inter(
             color: Colors.black,
             fontWeight: FontWeight.w600,
@@ -289,11 +292,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
       child: Row(
         children: [
-          _buildStepCircle(0, "Product"),
+          _buildStepCircle(0, 'postAd.stepProduct'.tr()),
           _buildStepLine(0),
-          _buildStepCircle(1, "Visuals"),
+          _buildStepCircle(1, 'postAd.stepVisuals'.tr()),
           _buildStepLine(1),
-          _buildStepCircle(2, "Contact"),
+          _buildStepCircle(2, 'postAd.stepContact'.tr()),
         ],
       ),
     );
@@ -371,34 +374,34 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Tell us about your product", style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('postAd.aboutProduct'.tr(), style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
 
-          _buildLabel("Ad Title *"),
+          _buildLabel('postAd.adTitle'.tr()),
           _buildTextField(
             controller: _titleController,
-            hintText: "e.g., iPhone 15 Pro Max 256GB",
-            validator: (val) => val == null || val.isEmpty ? 'Title is required' : null,
+            hintText: 'postAd.adTitleHint'.tr(),
+            validator: (val) => val == null || val.isEmpty ? (context.locale.languageCode == 'ne' ? 'शीर्षक आवश्यक छ' : 'Title is required') : null,
           ),
           _buildCharCount("${_titleController.text.length}/100"),
           
           const SizedBox(height: 16),
-          _buildLabel("Description *"),
+          _buildLabel('postAd.descriptionLabel'.tr()),
           _buildTextField(
             controller: _descriptionController,
-            hintText: "Describe your item in detail...", 
+            hintText: 'postAd.descriptionHint'.tr(),
             maxLines: 5,
-            validator: (val) => val == null || val.isEmpty ? 'Description is required' : null,
+            validator: (val) => val == null || val.isEmpty ? (context.locale.languageCode == 'ne' ? 'विवरण आवश्यक छ' : 'Description is required') : null,
           ),
           _buildCharCount("${_descriptionController.text.length}/5000"),
 
           const SizedBox(height: 24),
-          _buildLabel("Price (NPR) *"),
+          _buildLabel('postAd.priceLabel'.tr()),
           _buildTextField(
             controller: _priceController,
             hintText: "0", 
             keyboardType: TextInputType.number,
-            validator: (val) => val == null || val.isEmpty ? 'Price is required' : null,
+            validator: (val) => val == null || val.isEmpty ? (context.locale.languageCode == 'ne' ? 'मूल्य आवश्यक छ' : 'Price is required') : null,
           ),
           
           const SizedBox(height: 8),
@@ -415,22 +418,22 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                "Price is negotiable",
+                'postAd.priceNegotiable'.tr(),
                 style: GoogleFonts.inter(fontSize: 14, color: Colors.black87),
               ),
             ],
           ),
 
           const SizedBox(height: 24),
-          _buildLabel("Select Category *"),
+          _buildLabel('postAd.selectCategory'.tr()),
           DropdownButtonFormField<CategoryWithSubcategories>(
             value: _selectedCategory,
-            hint: Text("Select Category", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
+            hint: Text('postAd.selectCategoryHint'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
             decoration: _inputDecoration(),
             items: _categories.map<DropdownMenuItem<CategoryWithSubcategories>>((CategoryWithSubcategories cat) {
               return DropdownMenuItem<CategoryWithSubcategories>(
                 value: cat,
-                child: Text(cat.name, style: GoogleFonts.inter(fontSize: 14)),
+                child: Text(cat.localizedName(context.locale.languageCode), style: GoogleFonts.inter(fontSize: 14)),
               );
             }).toList(),
             onChanged: (val) {
@@ -445,15 +448,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           
           if (_selectedCategory != null && _selectedCategory!.subcategories.isNotEmpty) ...[
             const SizedBox(height: 20),
-            _buildLabel("Select Subcategory *"),
+            _buildLabel('postAd.selectSubcategory'.tr()),
             DropdownButtonFormField<Category>(
               value: _selectedSubCategory,
-              hint: Text("Select Subcategory", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
+              hint: Text('postAd.selectSubcategoryHint'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
               decoration: _inputDecoration(),
               items: _selectedCategory!.subcategories.map<DropdownMenuItem<Category>>((Category sub) {
                 return DropdownMenuItem<Category>(
                   value: sub,
-                  child: Text(sub.name, style: GoogleFonts.inter(fontSize: 14)),
+                  child: Text(sub.localizedName(context.locale.languageCode), style: GoogleFonts.inter(fontSize: 14)),
                 );
               }).toList(),
               onChanged: (val) => setState(() {
@@ -479,6 +482,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               if (fields.isEmpty) return const SizedBox.shrink();
               
               return DynamicFormFields(
+                locale: context.locale.languageCode,
                 fields: fields,
                 values: _attributeValues,
                 onChanged: (key, value) {
@@ -501,15 +505,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Photos & Location", style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('postAd.photosAndLocation'.tr(), style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
 
           // Photos
            Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Photos *", style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
-              Text("Max 5 Images", style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500])),
+              Text('postAd.photosLabel'.tr(), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+              Text('postAd.maxImages'.tr(), style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500])),
             ],
           ),
           const SizedBox(height: 12),
@@ -533,7 +537,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                         child: Icon(LucideIcons.camera, size: 24, color: Colors.blue[600]),
                       ),
                       const SizedBox(height: 8),
-                      Text("Tap to upload", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.black87)),
+                      Text('postAd.tapToUpload'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.black87)),
                     ],
                   )
                 : ListView.builder(
@@ -601,18 +605,18 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           const SizedBox(height: 32),
           
           // Location
-          Text("Location", style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+          Text('postAd.locationLabel'.tr(), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 16),
           
-          _buildLabel("Province *"),
+          _buildLabel('postAd.provinceLabel'.tr()),
           DropdownButtonFormField<LocationProvince>(
             value: _selectedProvince,
-            hint: Text("Select Province", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
+            hint: Text('postAd.selectProvince'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
             decoration: _inputDecoration(),
             items: _provinces.map<DropdownMenuItem<LocationProvince>>((LocationProvince prov) {
               return DropdownMenuItem<LocationProvince>(
                 value: prov,
-                child: Text(prov.name, style: GoogleFonts.inter(fontSize: 14)),
+                child: Text(prov.localizedName(context.locale.languageCode), style: GoogleFonts.inter(fontSize: 14)),
               );
             }).toList(),
             onChanged: (val) {
@@ -627,15 +631,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           
           if (_selectedProvince != null) ...[
             const SizedBox(height: 16),
-            _buildLabel("District *"),
+            _buildLabel('postAd.districtLabel'.tr()),
             DropdownButtonFormField<LocationDistrict>(
               value: _selectedDistrict,
-              hint: Text("Select District", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
+              hint: Text('postAd.selectDistrict'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
               decoration: _inputDecoration(),
               items: _selectedProvince!.districts.map<DropdownMenuItem<LocationDistrict>>((LocationDistrict dist) {
                 return DropdownMenuItem<LocationDistrict>(
                   value: dist,
-                  child: Text(dist.name, style: GoogleFonts.inter(fontSize: 14)),
+                  child: Text(dist.localizedName(context.locale.languageCode), style: GoogleFonts.inter(fontSize: 14)),
                 );
               }).toList(),
               onChanged: (val) {
@@ -650,15 +654,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
           if (_selectedDistrict != null) ...[
             const SizedBox(height: 16),
-            _buildLabel("City / Municipality *"),
+            _buildLabel('postAd.cityLabel'.tr()),
             DropdownButtonFormField<LocationMunicipality>(
               value: _selectedMunicipality,
-              hint: Text("Select City", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
+              hint: Text('postAd.selectCity'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
               decoration: _inputDecoration(),
               items: _selectedDistrict!.municipalities.map<DropdownMenuItem<LocationMunicipality>>((LocationMunicipality city) {
                 return DropdownMenuItem<LocationMunicipality>(
                   value: city,
-                  child: Text(city.name, style: GoogleFonts.inter(fontSize: 14)),
+                  child: Text(city.localizedName(context.locale.languageCode), style: GoogleFonts.inter(fontSize: 14)),
                 );
               }).toList(),
               onChanged: (val) {
@@ -673,15 +677,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
           if (_selectedMunicipality != null && _selectedMunicipality!.areas.isNotEmpty) ...[
             const SizedBox(height: 16),
-            _buildLabel("Area / Place *"),
+            _buildLabel('postAd.areaLabel'.tr()),
             DropdownButtonFormField<LocationArea>(
               value: _selectedArea,
-              hint: Text("Select Area", style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
+              hint: Text('postAd.selectArea'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
               decoration: _inputDecoration(),
               items: _selectedMunicipality!.areas.map<DropdownMenuItem<LocationArea>>((LocationArea area) {
                 return DropdownMenuItem<LocationArea>(
                   value: area,
-                  child: Text(area.name, style: GoogleFonts.inter(fontSize: 14)),
+                  child: Text(area.localizedName(context.locale.languageCode), style: GoogleFonts.inter(fontSize: 14)),
                 );
               }).toList(),
               onChanged: (val) {
@@ -702,7 +706,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Contact Information", style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text('postAd.contactInfo'.tr(), style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
 
         // Verified Phone Display
@@ -717,7 +721,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Phone Number", style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
+              Text('postAd.phoneLabel'.tr(), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -737,7 +741,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                        children: [
                          const Icon(LucideIcons.checkCircle, size: 12, color: Color(0xFF10B981)),
                          const SizedBox(width: 4),
-                         Text("Verified", style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF047857), fontWeight: FontWeight.w600)),
+                         Text('common.verified'.tr(), style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF047857), fontWeight: FontWeight.w600)),
                        ],
                      ),
                    ),
@@ -750,7 +754,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         const SizedBox(height: 24),
         
         // WhatsApp Section
-        Text("WhatsApp", style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+        Text('postAd.whatsappLabel'.tr(), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         
         // Checkbox: "Same as phone number"
@@ -786,7 +790,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text("Same as phone number", style: GoogleFonts.inter(fontSize: 14, color: Colors.black87)),
+              Text('postAd.sameAsPhone'.tr(), style: GoogleFonts.inter(fontSize: 14, color: Colors.black87)),
             ],
           ),
         ),
@@ -795,7 +799,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         
         _buildTextField(
           controller: _whatsappController,
-          hintText: "Enter WhatsApp Number",
+          hintText: 'postAd.enterWhatsapp'.tr(),
           keyboardType: TextInputType.phone,
           // Disable if checked
           // We can't easily 'disable' with just _buildTextField custom method unless we add 'enabled' prop
@@ -805,7 +809,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         if (_whatsappSameAsPhone)
            Padding(
              padding: const EdgeInsets.only(top: 4, left: 4),
-             child: Text("Uncheck to enter a different number", style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic)),
+             child: Text('postAd.uncheckNote'.tr(), style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500], fontStyle: FontStyle.italic)),
            ),
       ],
     );
@@ -838,7 +842,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                     side: BorderSide(color: Colors.grey[300]!),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: Text("Back", style: GoogleFonts.inter(color: Colors.black87, fontWeight: FontWeight.w600)),
+                  child: Text('common.back'.tr(), style: GoogleFonts.inter(color: Colors.black87, fontWeight: FontWeight.w600)),
                 ),
               ),
             ),
@@ -856,7 +860,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               child: _isLoading 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : Text(
-                    _currentStep == _totalSteps - 1 ? "Post Ad Now" : "Next Step", 
+                    _currentStep == _totalSteps - 1 ? 'postAd.postAdNow'.tr() : 'common.next'.tr(),
                     style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)
                   ),
             ),

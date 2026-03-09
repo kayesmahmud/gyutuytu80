@@ -5,16 +5,34 @@ import 'package:intl/intl.dart';
 import 'package:mobile/features/post_ad/services/form_template_service.dart';
 
 class DynamicFormFields extends StatelessWidget {
+  final String locale;
   final List<FormFieldModel> fields;
   final Map<String, dynamic> values;
   final Function(String key, dynamic value) onChanged;
 
   const DynamicFormFields({
     super.key,
+    required this.locale,
     required this.fields,
     required this.values,
     required this.onChanged,
   });
+
+  /// Returns the localized label for a field
+  String _localizedLabel(FormFieldModel field) =>
+      locale == 'ne' && field.labelNe != null ? field.labelNe! : field.label;
+
+  /// Returns the localized placeholder for a field
+  String? _localizedPlaceholder(FormFieldModel field) =>
+      locale == 'ne' && field.placeholderNe != null ? field.placeholderNe : field.placeholder;
+
+  /// Returns the localized display text for an option at a given index
+  String _localizedOption(FormFieldModel field, int index, String fallback) {
+    if (locale == 'ne' && field.optionsNe != null && index < field.optionsNe!.length) {
+      return field.optionsNe![index];
+    }
+    return fallback;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +54,7 @@ class DynamicFormFields extends StatelessWidget {
               const Icon(LucideIcons.clipboardList, color: Colors.blue, size: 20),
               const SizedBox(width: 8),
               Text(
-                "Additional Details",
+                locale == 'ne' ? 'थप विवरण' : 'Additional Details',
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -69,7 +87,7 @@ class DynamicFormFields extends StatelessWidget {
   Widget _buildLabel(FormFieldModel field) {
     return RichText(
       text: TextSpan(
-        text: field.label,
+        text: _localizedLabel(field),
         style: GoogleFonts.inter(
           fontSize: 13,
           fontWeight: FontWeight.w500,
@@ -87,6 +105,9 @@ class DynamicFormFields extends StatelessWidget {
   }
 
   Widget _buildInput(BuildContext context, FormFieldModel field) {
+    final placeholder = _localizedPlaceholder(field);
+    final label = _localizedLabel(field);
+
     switch (field.type) {
       case FieldType.text:
       case FieldType.number:
@@ -98,29 +119,30 @@ class DynamicFormFields extends StatelessWidget {
           onChanged: (val) => onChanged(field.name, val),
           validator: (val) {
             if (field.required && (val == null || val.isEmpty)) {
-              return '${field.label} is required';
+              return '$label is required';
             }
             return null;
           },
-          decoration: _inputDecoration(field.placeholder ?? 'Enter ${field.label.toLowerCase()}'),
+          decoration: _inputDecoration(placeholder ?? 'Enter ${field.label.toLowerCase()}'),
         );
 
       case FieldType.select:
         return DropdownButtonFormField<String>(
           value: values[field.name],
-          decoration: _inputDecoration(field.placeholder ?? 'Select ${field.label}'),
+          decoration: _inputDecoration(placeholder ?? 'Select ${field.label}'),
           icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
           onChanged: (val) => onChanged(field.name, val),
           validator: (val) {
             if (field.required && val == null) {
-              return 'Please select ${field.label}';
+              return 'Please select $label';
             }
             return null;
           },
-          items: field.options?.map((opt) {
+          items: field.options?.asMap().entries.map((entry) {
+            final displayLabel = _localizedOption(field, entry.key, entry.value);
             return DropdownMenuItem(
-              value: opt,
-              child: Text(opt, style: GoogleFonts.inter(fontSize: 14)),
+              value: entry.value,
+              child: Text(displayLabel, style: GoogleFonts.inter(fontSize: 14)),
             );
           }).toList(),
         );
@@ -132,7 +154,7 @@ class DynamicFormFields extends StatelessWidget {
         return CheckboxListTile(
           value: values[field.name] ?? false,
           onChanged: (val) => onChanged(field.name, val),
-          title: Text(field.label, style: GoogleFonts.inter(fontSize: 14)),
+          title: Text(_localizedLabel(field), style: GoogleFonts.inter(fontSize: 14)),
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
         );
@@ -154,11 +176,13 @@ class DynamicFormFields extends StatelessWidget {
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: (field.options ?? []).map((opt) {
+        children: (field.options ?? []).asMap().entries.map((entry) {
+          final opt = entry.value;
+          final displayLabel = _localizedOption(field, entry.key, opt);
           final isSelected = selected.contains(opt);
           return FilterChip(
             label: Text(
-              opt,
+              displayLabel,
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: isSelected ? Colors.white : Colors.grey[800],
@@ -194,12 +218,12 @@ class DynamicFormFields extends StatelessWidget {
     return TextFormField(
       readOnly: true,
       controller: TextEditingController(text: currentValue ?? ''),
-      decoration: _inputDecoration(field.placeholder ?? 'Select date').copyWith(
+      decoration: _inputDecoration(_localizedPlaceholder(field) ?? 'Select date').copyWith(
         suffixIcon: const Icon(LucideIcons.calendar, size: 18, color: Colors.grey),
       ),
       validator: (val) {
         if (field.required && (val == null || val.isEmpty)) {
-          return '${field.label} is required';
+          return '${_localizedLabel(field)} is required';
         }
         return null;
       },
