@@ -134,3 +134,22 @@ client_secret_*.json
 
 # Misc
 *.pem
+
+# Playwright MCP screenshots
+.playwright-mcp/
+
+# Firebase config (contains API keys)
+apps/mobile/android/app/google-services.json
+apps/mobile/ios/Runner/GoogleService-Info.plist
+
+# Release binaries
+*.apk
+*.aab
+*.ipa
+
+# Temp/scratch files
+device_screen.png
+emulator_screen.png
+index.js
+locations_dump.json
+pad_logo.py
