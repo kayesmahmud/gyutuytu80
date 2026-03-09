@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -74,7 +75,7 @@ class LoginRequiredWidget extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Login to Continue',
+                  'auth.loginToContinue'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -92,7 +93,7 @@ class LoginRequiredWidget extends StatelessWidget {
                 );
               },
               child: Text(
-                'Create an Account',
+                'auth.createAnAccount'.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

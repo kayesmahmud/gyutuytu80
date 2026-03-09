@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -54,7 +55,7 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'No internet connection',
+                        'common.noInternet'.tr(),
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: Colors.white,

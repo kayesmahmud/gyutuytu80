@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mobile/core/providers/auth_provider.dart';
@@ -34,9 +35,9 @@ class MainDrawer extends StatelessWidget {
                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                  children: [
                     Image.asset(
-                      'assets/images/logo.png', 
-                      height: 28, // Matches AppBar logo height
-                      errorBuilder: (context, error, stackTrace) => Text("THULO BAZAAR", style: GoogleFonts.poppins(color: const Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                      'assets/images/logo.png',
+                      height: 28,
+                      errorBuilder: (context, error, stackTrace) => Text('common.appNameFallback'.tr(), style: GoogleFonts.poppins(color: const Color(0xFFDC2626), fontWeight: FontWeight.bold)),
                     ),
                     IconButton(
                       icon: const Icon(LucideIcons.x, color: Colors.grey, size: 28),
@@ -46,38 +47,41 @@ class MainDrawer extends StatelessWidget {
                ),
              ),
              const Divider(height: 1, color: Color(0xFFE5E7EB)),
-             
+
              Expanded(
                child: SingleChildScrollView(
                  padding: const EdgeInsets.symmetric(vertical: 16),
                  child: Column(
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
-                     _buildMenuItem("Get Verified", onTap: () {
+                     // Language Toggle
+                     _buildLanguageToggle(context),
+                     const SizedBox(height: 8),
+
+                     _buildMenuItem('drawer.getVerified'.tr(), onTap: () {
                        Navigator.pop(context);
                        Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
                      }),
-                     
+
                      const SizedBox(height: 16),
                      const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
                      const SizedBox(height: 16),
-                     
+
                      if (isLoggedIn) ...[
-                        _buildMenuItem("My Profile", icon: LucideIcons.user, onTap: () {
+                        _buildMenuItem('drawer.myProfile'.tr(), icon: LucideIcons.user, onTap: () {
                           Navigator.pop(context);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
                         }),
-                        _buildMenuItem("Dashboard", icon: LucideIcons.layoutDashboard, onTap: () {
+                        _buildMenuItem('drawer.dashboard'.tr(), icon: LucideIcons.layoutDashboard, onTap: () {
                           Navigator.pop(context);
                           Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
                         }),
-                        _buildMenuItem("My Shop", icon: LucideIcons.store, onTap: () {
+                        _buildMenuItem('drawer.myShop'.tr(), icon: LucideIcons.store, onTap: () {
                           Navigator.pop(context);
-                          // Get user's shop slug (custom or fallback to user-{id})
                           final shopSlug = user?['shopSlug'] ?? user?['shop_slug'] ?? user?['customShopSlug'] ?? user?['custom_shop_slug'] ?? 'user-${user?['id']}';
                           Navigator.push(context, MaterialPageRoute(builder: (_) => ShopScreen(shopSlug: shopSlug)));
                         }),
-                        
+
                         const SizedBox(height: 24),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -87,13 +91,13 @@ class MainDrawer extends StatelessWidget {
                                Navigator.pop(context);
                              },
                              style: ElevatedButton.styleFrom(
-                               backgroundColor: const Color(0xFFDC2626), // Red color for Sign Out
+                               backgroundColor: const Color(0xFFDC2626),
                                foregroundColor: Colors.white,
                                minimumSize: const Size(double.infinity, 48),
                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                elevation: 0,
                              ),
-                             child: Text("Sign Out", style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
+                             child: Text('auth.signOut'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
                            ),
                         ),
                      ] else ...[
@@ -104,7 +108,7 @@ class MainDrawer extends StatelessWidget {
                            children: [
                              OutlinedButton(
                                onPressed: () {
-                                 Navigator.pop(context); 
+                                 Navigator.pop(context);
                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SignInScreen()));
                                },
                                style: OutlinedButton.styleFrom(
@@ -113,7 +117,7 @@ class MainDrawer extends StatelessWidget {
                                  minimumSize: const Size(double.infinity, 48),
                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                ),
-                               child: Text("Sign In", style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
+                               child: Text('auth.signIn'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
                              ),
                              const SizedBox(height: 12),
                              ElevatedButton(
@@ -128,30 +132,30 @@ class MainDrawer extends StatelessWidget {
                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                  elevation: 0,
                                ),
-                               child: Text("Sign Up", style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
+                               child: Text('auth.signUp'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
                              ),
                            ],
                          ),
                        ),
                      ],
-                     
+
                      const SizedBox(height: 24),
                      const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
                      const SizedBox(height: 16),
 
-                     _buildMenuItem("Help Center", icon: LucideIcons.helpCircle, onTap: () {
+                     _buildMenuItem('drawer.helpCenter'.tr(), icon: LucideIcons.helpCircle, onTap: () {
                        Navigator.pop(context);
                        Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen()));
                      }),
-                     _buildMenuItem("FAQ", icon: LucideIcons.fileText, onTap: () {
+                     _buildMenuItem('drawer.faq'.tr(), icon: LucideIcons.fileText, onTap: () {
                        Navigator.pop(context);
                        Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen()));
                      }),
-                     _buildMenuItem("Support Tickets", icon: LucideIcons.ticket, onTap: () {
+                     _buildMenuItem('drawer.supportTickets'.tr(), icon: LucideIcons.ticket, onTap: () {
                        Navigator.pop(context);
                        Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportTicketsScreen()));
                      }),
-                     _buildMenuItem("Contact Us", icon: LucideIcons.mail, onTap: () {
+                     _buildMenuItem('drawer.contactUs'.tr(), icon: LucideIcons.mail, onTap: () {
                        Navigator.pop(context);
                        Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactScreen()));
                      }),
@@ -165,20 +169,86 @@ class MainDrawer extends StatelessWidget {
     );
   }
 
+  Widget _buildLanguageToggle(BuildContext context) {
+    final isNepali = context.locale.languageCode == 'ne';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => context.setLocale(const Locale('en')),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: !isNepali ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: !isNepali
+                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                        : null,
+                  ),
+                  child: Text(
+                    'English',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: !isNepali ? FontWeight.w600 : FontWeight.w400,
+                      color: !isNepali ? const Color(0xFF374151) : const Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => context.setLocale(const Locale('ne')),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isNepali ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: isNepali
+                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                        : null,
+                  ),
+                  child: Text(
+                    'नेपाली',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: isNepali ? FontWeight.w600 : FontWeight.w400,
+                      color: isNepali ? const Color(0xFF374151) : const Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMenuItem(String title, {IconData? icon, VoidCallback? onTap}) {
     return ListTile(
       leading: icon != null ? Icon(icon, color: Colors.grey[600], size: 22) : null,
       title: Text(
-        title, 
+        title,
         style: GoogleFonts.inter(
-          color: const Color(0xFF374151), // Gray 700
+          color: const Color(0xFF374151),
           fontSize: 15,
           fontWeight: FontWeight.w500
         )
       ),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-      horizontalTitleGap: 12, // reduce gap if icon is present
+      horizontalTitleGap: 12,
       minLeadingWidth: icon != null ? 24 : 0,
     );
   }

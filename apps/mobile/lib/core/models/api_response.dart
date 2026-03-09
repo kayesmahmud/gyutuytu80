@@ -64,11 +64,19 @@ class PaginationInfo {
   });
 
   factory PaginationInfo.fromJson(Map<String, dynamic> json) {
+    final limit = json['limit'] as int? ?? 20;
+    final total = json['total'] as int? ?? 0;
+    final offset = json['offset'] as int? ?? 0;
+    // Backend returns offset-based pagination; compute page/totalPages
+    final page = json['page'] as int? ?? (limit > 0 ? (offset ~/ limit) + 1 : 1);
+    final totalPages = json['totalPages'] as int? ??
+        json['total_pages'] as int? ??
+        (limit > 0 ? (total + limit - 1) ~/ limit : 1);
     return PaginationInfo(
-      page: json['page'] as int? ?? 1,
-      limit: json['limit'] as int? ?? 20,
-      total: json['total'] as int? ?? 0,
-      totalPages: json['totalPages'] as int? ?? json['total_pages'] as int? ?? 1,
+      page: page,
+      limit: limit,
+      total: total,
+      totalPages: totalPages,
     );
   }
 

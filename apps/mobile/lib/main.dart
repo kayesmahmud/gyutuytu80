@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
@@ -25,6 +26,9 @@ void main() async {
   } else {
     WidgetsFlutterBinding.ensureInitialized();
   }
+
+  // Initialize easy_localization
+  await EasyLocalization.ensureInitialized();
 
   // Initialize Firebase (optional - may not be configured in dev)
   try {
@@ -57,12 +61,17 @@ void main() async {
   }
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-      ],
-      child: const ThuloBazaarApp(),
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('ne')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en'),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ],
+        child: const ThuloBazaarApp(),
+      ),
     ),
   );
 }
@@ -151,6 +160,9 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
       theme: AppTheme.lightTheme,
       home: const MainNavScreen(),
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       builder: (context, child) => ConnectivityWrapper(child: child!),
     );
   }

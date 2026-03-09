@@ -67,8 +67,8 @@ class SocketService {
         return false;
       }
 
-      // Get base URL without /api suffix
-      final baseUrl = ApiConfig.baseUrl.replaceAll('/api', '');
+      // Get base URL without trailing /api path (keep subdomain intact)
+      final baseUrl = ApiConfig.baseUrl.replaceFirst(RegExp(r'/api$'), '');
 
       if (kDebugMode) developer.log('Connecting to $baseUrl', name: 'SocketService');
       if (kDebugMode) developer.log('Token: ${token.substring(0, 10)}...', name: 'SocketService');
