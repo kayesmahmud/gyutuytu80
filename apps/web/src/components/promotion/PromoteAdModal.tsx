@@ -45,6 +45,12 @@ const tierLabels: Record<string, string> = {
 // Component
 // ============================================================================
 
+interface ActivePromotion {
+  promotion_type: string;
+  expires_at: string;
+  days_remaining: number;
+}
+
 export default function PromoteAdModal({ isOpen, onClose, ad, onPromote }: PromoteAdModalProps) {
   // Selection state
   const [selectedType, setSelectedType] = useState<PromotionType>('featured');
@@ -55,6 +61,7 @@ export default function PromoteAdModal({ isOpen, onClose, ad, onPromote }: Promo
   // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activePromotion, setActivePromotion] = useState<ActivePromotion | null>(null);
 
   // Pricing hook
   const {
@@ -76,12 +83,21 @@ export default function PromoteAdModal({ isOpen, onClose, ad, onPromote }: Promo
       setStep('select');
       setSelectedPaymentMethod(null);
       setActiveCampaign(null);
+      setActivePromotion(null);
       setError(null);
 
       Promise.all([
         fetchPricing().catch((err) => setError(err.message)),
         checkUserAccountType(),
         fetchActiveCampaigns(),
+        fetch(`/api/promotions/ad/${ad.id}`)
+          .then((r) => r.json())
+          .then((res) => {
+            if (res.success && res.data) {
+              setActivePromotion(res.data);
+            }
+          })
+          .catch(() => {}),
       ]);
     }
   }, [isOpen, ad.id, fetchPricing, checkUserAccountType, fetchActiveCampaigns, setActiveCampaign]);
@@ -183,6 +199,7 @@ export default function PromoteAdModal({ isOpen, onClose, ad, onPromote }: Promo
               priceAfterAccountDiscount={priceAfterAccountDiscount}
               onProceed={handleProceedToPayment}
               onClose={onClose}
+              activePromotion={activePromotion}
             />
           ) : (
             <PaymentStep
@@ -278,6 +295,7 @@ function SelectionStep({
   priceAfterAccountDiscount,
   onProceed,
   onClose,
+  activePromotion,
 }: {
   pricingTier: string;
   tierLabels: Record<string, string>;
@@ -295,9 +313,38 @@ function SelectionStep({
   priceAfterAccountDiscount: number;
   onProceed: () => void;
   onClose: () => void;
+  activePromotion: ActivePromotion | null;
 }) {
   return (
     <>
+      {/* Active Promotion Banner */}
+      {activePromotion && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h4 className="font-semibold text-blue-900">
+                Active {activePromotion.promotion_type.charAt(0).toUpperCase() + activePromotion.promotion_type.slice(1)} Promotion
+              </h4>
+              <p className="text-sm text-blue-700 mt-1">
+                This ad already has an active promotion.{' '}
+                {activePromotion.days_remaining > 0
+                  ? `Expires in ${activePromotion.days_remaining} day${activePromotion.days_remaining !== 1 ? 's' : ''}`
+                  : 'Expires today'}{' '}
+                ({new Date(activePromotion.expires_at).toLocaleDateString()}).
+              </p>
+              <p className="text-sm text-blue-600 mt-1">
+                You can purchase a new promotion after the current one expires.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pricing Tier Badge */}
       {pricingTier !== 'default' && (
         <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
@@ -341,9 +388,10 @@ function SelectionStep({
         <Button
           onClick={onProceed}
           variant="primary"
-          className="flex-1 bg-gradient-to-r from-primary to-purple-600 py-3 sm:py-4 text-base sm:text-lg order-1"
+          disabled={!!activePromotion}
+          className="flex-1 bg-gradient-to-r from-primary to-purple-600 py-3 sm:py-4 text-base sm:text-lg order-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Proceed to Payment
+          {activePromotion ? 'Promotion Already Active' : 'Proceed to Payment'}
         </Button>
         <Button
           onClick={onClose}

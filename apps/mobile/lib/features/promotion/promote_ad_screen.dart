@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/api/promotion_client.dart';
@@ -6,6 +7,7 @@ import '../../core/models/models.dart';
 import '../../core/models/promotion.dart';
 import '../../core/models/payment.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/utils/localized_helpers.dart';
 import '../payment/gateway_selector.dart';
 
 /// Promote Ad Screen - allows any user to promote any ad
@@ -87,7 +89,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
       if (pricingResponse.success && pricingResponse.data != null) {
         _pricingData = pricingResponse.data;
       } else {
-        _error = pricingResponse.errorMessage ?? 'Failed to load pricing';
+        _error = pricingResponse.errorMessage ?? (context.locale.languageCode == 'ne'
+            ? 'मूल्य लोड गर्न असफल'
+            : 'Failed to load pricing');
       }
 
       if (promotionResponse.success) {
@@ -167,6 +171,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
   }
 
   void _showSuccessAndPop() {
+    final locale = context.locale.languageCode;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -189,16 +194,18 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Ad Promoted!',
-              style: TextStyle(
+            Text(
+              locale == 'ne' ? 'विज्ञापन प्रवर्द्धित!' : 'Ad Promoted!',
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'This ad is now ${_selectedType.displayName.toLowerCase()} for $_selectedDuration days',
+              locale == 'ne'
+                  ? 'यो विज्ञापन अब $_selectedDuration दिनको लागि ${_selectedType.displayName.toLowerCase()} छ'
+                  : 'This ad is now ${_selectedType.displayName.toLowerCase()} for $_selectedDuration days',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -221,7 +228,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Done'),
+                child: Text(l('done', locale)),
               ),
             ),
           ],
@@ -238,7 +245,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Promote Ad'),
+        title: Text(context.locale.languageCode == 'ne' ? 'विज्ञापन प्रवर्द्धन' : 'Promote Ad'),
         centerTitle: true,
       ),
       body: _buildBody(),
@@ -304,7 +311,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadData,
-              child: const Text('Retry'),
+              child: Text(l('retry', context.locale.languageCode)),
             ),
           ],
         ),
@@ -358,7 +365,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Ad ID: ${widget.adId}',
+                  '${context.locale.languageCode == 'ne' ? 'विज्ञापन आईडी' : 'Ad ID'}: ${widget.adId}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
@@ -406,14 +413,18 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Active ${promo.promotionType.displayName} Promotion',
+                  context.locale.languageCode == 'ne'
+                      ? 'सक्रिय ${promo.promotionType.displayName} प्रवर्द्धन'
+                      : 'Active ${promo.promotionType.displayName} Promotion',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
-                  '${days}d ${hours}h remaining',
+                  context.locale.languageCode == 'ne'
+                      ? '${days} दिन ${hours} घण्टा बाँकी'
+                      : '${days}d ${hours}h remaining',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[600],
@@ -453,7 +464,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '$label category pricing applies to this ad',
+              context.locale.languageCode == 'ne'
+                  ? '$label वर्गको मूल्य यो विज्ञापनमा लागू हुन्छ'
+                  : '$label category pricing applies to this ad',
               style: const TextStyle(
                 fontSize: 13,
                 color: Color(0xFFD97706),
@@ -504,7 +517,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Extra ${campaign.discountPercentage}% OFF automatically applied!',
+                  context.locale.languageCode == 'ne'
+                      ? 'थप ${campaign.discountPercentage}% छुट स्वतः लागू भयो!'
+                      : 'Extra ${campaign.discountPercentage}% OFF automatically applied!',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
@@ -512,7 +527,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                 ),
                 if (campaign.daysRemaining > 0)
                   Text(
-                    '${campaign.daysRemaining} days remaining',
+                    context.locale.languageCode == 'ne'
+                        ? '${campaign.daysRemaining} दिन बाँकी'
+                        : '${campaign.daysRemaining} days remaining',
                     style: TextStyle(
                       fontSize: 11,
                       color: Colors.grey[500],
@@ -551,24 +568,25 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     final IconData icon;
     final String label;
 
+    final locale = context.locale.languageCode;
     switch (_userAccountType) {
       case 'business':
         bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.1);
         textColor = const Color(0xFFD97706);
         icon = LucideIcons.badgeCheck;
-        label = 'Verified Business Seller (40% OFF)';
+        label = locale == 'ne' ? 'प्रमाणित व्यापार विक्रेता (४०% छुट)' : 'Verified Business Seller (40% OFF)';
         break;
       case 'individual_verified':
         bgColor = const Color(0xFF3B82F6).withValues(alpha: 0.1);
         textColor = const Color(0xFF2563EB);
         icon = LucideIcons.checkCircle;
-        label = 'Verified Individual Seller (20% OFF)';
+        label = locale == 'ne' ? 'प्रमाणित व्यक्तिगत विक्रेता (२०% छुट)' : 'Verified Individual Seller (20% OFF)';
         break;
       default:
         bgColor = Colors.grey[100]!;
         textColor = Colors.grey[600]!;
         icon = LucideIcons.user;
-        label = 'Individual Seller (Standard Price)';
+        label = locale == 'ne' ? 'व्यक्तिगत विक्रेता (मानक मूल्य)' : 'Individual Seller (Standard Price)';
     }
 
     return Container(
@@ -604,9 +622,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Promotion Type',
-          style: TextStyle(
+        Text(
+          context.locale.languageCode == 'ne' ? 'प्रवर्द्धन प्रकार' : 'Promotion Type',
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -722,9 +740,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Duration',
-          style: TextStyle(
+        Text(
+          context.locale.languageCode == 'ne' ? 'अवधि' : 'Duration',
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -762,7 +780,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                         ),
                       ),
                       Text(
-                        'days',
+                        context.locale.languageCode == 'ne' ? 'दिन' : 'days',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -796,6 +814,8 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
     final campaignSavings = _getCampaignSavings();
     final totalSavings = originalPrice - finalPrice;
 
+    final locale = context.locale.languageCode;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -810,11 +830,11 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Base Price',
+                locale == 'ne' ? 'आधार मूल्य' : 'Base Price',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               Text(
-                'Rs. ${originalPrice.toStringAsFixed(0)}',
+                formatLocalizedPrice(originalPrice, locale),
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -840,8 +860,8 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                     const SizedBox(width: 6),
                     Text(
                       _userAccountType == 'business'
-                          ? 'Business Discount ($accountDiscount%)'
-                          : 'Verified Discount ($accountDiscount%)',
+                          ? (locale == 'ne' ? 'व्यापार छुट ($accountDiscount%)' : 'Business Discount ($accountDiscount%)')
+                          : (locale == 'ne' ? 'प्रमाणित छुट ($accountDiscount%)' : 'Verified Discount ($accountDiscount%)'),
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF3B82F6),
@@ -851,7 +871,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                   ],
                 ),
                 Text(
-                  '-Rs. ${accountSavings.toStringAsFixed(0)}',
+                  '-${formatLocalizedPrice(accountSavings, locale)}',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF3B82F6),
@@ -873,7 +893,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                     const Icon(LucideIcons.partyPopper, size: 16, color: Color(0xFF10B981)),
                     const SizedBox(width: 6),
                     Text(
-                      '${_activeCampaign?.name ?? 'Campaign'} ($campaignDiscount%)',
+                      '${_activeCampaign?.name ?? (locale == 'ne' ? 'अभियान' : 'Campaign')} ($campaignDiscount%)',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF10B981),
@@ -883,7 +903,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                   ],
                 ),
                 Text(
-                  '-Rs. ${campaignSavings.toStringAsFixed(0)}',
+                  '-${formatLocalizedPrice(campaignSavings, locale)}',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF10B981),
@@ -909,7 +929,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
                   const Icon(LucideIcons.piggyBank, size: 16, color: Color(0xFF10B981)),
                   const SizedBox(width: 6),
                   Text(
-                    'You save Rs. ${totalSavings.toStringAsFixed(0)} ($totalDiscount% OFF)',
+                    locale == 'ne'
+                        ? 'तपाईंले ${formatLocalizedPrice(totalSavings, locale)} बचत गर्नुहुन्छ ($totalDiscount% छुट)'
+                        : 'You save ${formatLocalizedPrice(totalSavings, locale)} ($totalDiscount% OFF)',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -927,15 +949,15 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Total',
-                style: TextStyle(
+              Text(
+                locale == 'ne' ? 'जम्मा' : 'Total',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
-                'Rs. ${finalPrice.toStringAsFixed(0)}',
+                formatLocalizedPrice(finalPrice, locale),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -976,7 +998,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: price != null && price > 0 ? _proceedToPayment : null,
+        onPressed: _activePromotion == null && price != null && price > 0
+            ? _proceedToPayment
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFDC143C),
           foregroundColor: Colors.white,
@@ -987,7 +1011,15 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
           disabledBackgroundColor: Colors.grey[300],
         ),
         child: Text(
-          price != null ? 'Promote for Rs. ${price.toStringAsFixed(0)}' : 'Select Options',
+          _activePromotion != null
+              ? (context.locale.languageCode == 'ne'
+                  ? 'प्रवर्द्धन पहिल्यै सक्रिय छ'
+                  : 'Promotion Already Active')
+              : price != null
+                  ? (context.locale.languageCode == 'ne'
+                      ? '${formatLocalizedPrice(price, 'ne')} मा प्रवर्द्धन गर्नुहोस्'
+                      : 'Promote for ${formatLocalizedPrice(price, 'en')}')
+                  : (context.locale.languageCode == 'ne' ? 'विकल्पहरू छान्नुहोस्' : 'Select Options'),
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,

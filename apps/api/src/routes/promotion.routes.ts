@@ -235,6 +235,29 @@ router.post(
       throw new NotFoundError('Ad not found');
     }
 
+    // Check for existing active promotion
+    const existingPromo = await prisma.ad_promotions.findFirst({
+      where: {
+        ad_id: parseInt(adId),
+        is_active: true,
+        expires_at: { gt: new Date() },
+      },
+    });
+    if (existingPromo) {
+      const msRemaining = existingPromo.expires_at.getTime() - Date.now();
+      const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
+      return res.status(409).json({
+        success: false,
+        message: `Ad already has an active ${existingPromo.promotion_type} promotion`,
+        data: {
+          activePromotion: {
+            ...existingPromo,
+            days_remaining: daysRemaining,
+          },
+        },
+      });
+    }
+
     // Use the payer's account type for pricing
     const user = await prisma.users.findUnique({
       where: { id: userId },
@@ -255,46 +278,56 @@ router.post(
     const duration = durationDays || 7;
     const expiresAt = new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
 
-    const promotion = await prisma.ad_promotions.create({
-      data: {
-        ad_id: parseInt(adId),
-        user_id: ad.user_id,
-        promoted_by: userId,
-        promotion_type: promotionType,
-        duration_days: duration,
-        price_paid: pricePaid,
-        account_type: user?.account_type || 'individual',
-        payment_reference: paymentReference || null,
-        starts_at: new Date(),
-        expires_at: expiresAt,
-      },
+    // Use transaction to atomically create promotion + update ad flags
+    const promotion = await prisma.$transaction(async (tx) => {
+      const promo = await tx.ad_promotions.create({
+        data: {
+          ad_id: parseInt(adId),
+          user_id: ad.user_id,
+          promoted_by: userId,
+          promotion_type: promotionType,
+          duration_days: duration,
+          price_paid: pricePaid,
+          account_type: user?.account_type || 'individual',
+          payment_reference: paymentReference || null,
+          starts_at: new Date(),
+          expires_at: expiresAt,
+        },
+      });
+
+      // Reset all promotion flags, then set only the new one
+      const updateData: any = {
+        promoted_at: new Date(),
+        is_featured: false,
+        featured_until: null,
+        is_urgent: false,
+        urgent_until: null,
+        is_sticky: false,
+        sticky_until: null,
+      };
+
+      if (promotionType === 'featured') {
+        updateData.is_featured = true;
+        updateData.featured_until = expiresAt;
+      } else if (promotionType === 'urgent') {
+        updateData.is_urgent = true;
+        updateData.urgent_until = expiresAt;
+      } else if (promotionType === 'sticky') {
+        updateData.is_sticky = true;
+        updateData.sticky_until = expiresAt;
+      }
+
+      await tx.ads.update({
+        where: { id: parseInt(adId) },
+        data: updateData,
+      });
+
+      return promo;
     });
 
     // Log if someone else promoted this ad
     if (userId !== ad.user_id) {
       console.log(`🎁 User ${userId} promoted ad ${adId} owned by user ${ad.user_id}`);
-    }
-
-    // Update ad flags based on promotion type
-    const updateData: any = {};
-    if (promotionType === 'featured') {
-      updateData.is_featured = true;
-      updateData.featured_until = expiresAt;
-    }
-    if (promotionType === 'urgent') {
-      updateData.is_urgent = true;
-      updateData.urgent_until = expiresAt;
-    }
-    if (promotionType === 'sticky') {
-      updateData.is_sticky = true;
-      updateData.sticky_until = expiresAt;
-    }
-
-    if (Object.keys(updateData).length > 0) {
-      await prisma.ads.update({
-        where: { id: parseInt(adId) },
-        data: updateData,
-      });
     }
 
     console.log(`✅ Promotion created: ${promotionType} for ad ${adId}`);
@@ -519,6 +552,42 @@ router.delete(
     res.json({
       success: true,
       data: pricing,
+    });
+  })
+);
+
+/**
+ * GET /api/promotions/ad/:adId
+ * Get active promotion for a specific ad
+ */
+router.get(
+  '/ad/:adId',
+  catchAsync(async (req: Request, res: Response) => {
+    const adId = parseInt(req.params.adId);
+
+    const activePromotion = await prisma.ad_promotions.findFirst({
+      where: {
+        ad_id: adId,
+        is_active: true,
+        expires_at: { gt: new Date() },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    if (!activePromotion) {
+      return res.json({ success: true, data: null });
+    }
+
+    const now = new Date();
+    const msRemaining = activePromotion.expires_at.getTime() - now.getTime();
+    const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
+
+    res.json({
+      success: true,
+      data: {
+        ...activePromotion,
+        days_remaining: daysRemaining,
+      },
     });
   })
 );

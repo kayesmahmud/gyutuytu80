@@ -152,7 +152,21 @@ class PromotionService {
       throw new Error('Cannot promote inactive ad');
     }
 
-    // 2. Calculate expiry date
+    // 2. Check for existing active promotion
+    const existingPromo = await prisma.ad_promotions.findFirst({
+      where: {
+        ad_id: adId,
+        is_active: true,
+        expires_at: { gt: new Date() },
+      },
+    });
+    if (existingPromo) {
+      throw new Error(
+        `Ad already has an active ${existingPromo.promotion_type} promotion until ${existingPromo.expires_at.toISOString()}`
+      );
+    }
+
+    // 3. Calculate expiry date
     const startDate = new Date();
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + durationDays);
@@ -177,16 +191,6 @@ class PromotionService {
           expires_at: expiryDate,
           is_active: true,
         },
-      });
-
-      // Deactivate any existing active promotions for this ad
-      await tx.ad_promotions.updateMany({
-        where: {
-          ad_id: adId,
-          is_active: true,
-          id: { not: promotion.id },
-        },
-        data: { is_active: false },
       });
 
       // Update ad with promotion flags
