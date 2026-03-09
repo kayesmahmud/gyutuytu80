@@ -68,8 +68,8 @@ router.get(
       prisma.ads.findMany({
         where,
         include: {
-          categories: { select: { name: true } },
-          locations: { select: { name: true } },
+          categories: { select: { name: true, name_ne: true } },
+          locations: { select: { name: true, name_ne: true } },
           users_ads_user_idTousers: {
             select: {
               account_type: true,
@@ -92,7 +92,9 @@ router.get(
     const data = ads.map((ad: any) => ({
       ...ad,
       category_name: ad.categories?.name,
+      category_name_ne: ad.categories?.name_ne,
       location_name: ad.locations?.name,
+      location_name_ne: ad.locations?.name_ne,
       account_type: ad.users_ads_user_idTousers?.account_type,
       business_verification_status: ad.users_ads_user_idTousers?.business_verification_status,
       individual_verified: ad.users_ads_user_idTousers?.individual_verified,

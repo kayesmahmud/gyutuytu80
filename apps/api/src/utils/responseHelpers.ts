@@ -112,6 +112,8 @@ export function transformAd(dbAd: any) {
     categoryId: dbAd.category_id,
     locationId: dbAd.location_id,
     categoryName: dbAd.categories?.name,
+    categoryNameNe: dbAd.categories?.name_ne,
     locationName: dbAd.locations?.name,
+    locationNameNe: dbAd.locations?.name_ne,
   };
 }

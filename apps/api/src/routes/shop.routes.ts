@@ -154,8 +154,8 @@ router.get(
       prisma.ads.findMany({
         where: { user_id: user.id, status: 'approved' },
         include: {
-          categories: { select: { name: true } },
-          locations: { select: { name: true } },
+          categories: { select: { name: true, name_ne: true } },
+          locations: { select: { name: true, name_ne: true } },
           ad_images: {
             orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
             take: 1,
@@ -197,7 +197,9 @@ router.get(
         ads: ads.map((ad: any) => ({
           ...ad,
           category_name: ad.categories?.name,
+          category_name_ne: ad.categories?.name_ne,
           location_name: ad.locations?.name,
+          location_name_ne: ad.locations?.name_ne,
           primary_image: ad.ad_images[0]?.filename,
         })),
         pagination: {
