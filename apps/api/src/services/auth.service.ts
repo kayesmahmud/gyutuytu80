@@ -3,7 +3,7 @@
  * Handles authentication, OTP, and user registration
  */
 
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { prisma } from '@thulobazaar/database';
 import {
