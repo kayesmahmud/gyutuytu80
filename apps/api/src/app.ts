@@ -6,6 +6,7 @@ import session from 'express-session';
 import config from './config/index.js';
 import passport from './config/passport.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { httpLoggerMiddleware } from './lib/logger.js';
 import { prisma } from '@thulobazaar/database';
 
 // Import routes (will be added as we migrate them)
@@ -53,14 +54,20 @@ export function createApp(): Express {
     })
   );
 
-  // CORS configuration - function-based to allow mobile apps (no Origin header)
+  // HTTP request logging (Morgan → Winston)
+  app.use(httpLoggerMiddleware);
+
+  // CORS configuration
+  // No-origin requests (mobile apps, native clients) are allowed only on safe read methods.
+  // State-changing methods (POST/PUT/PATCH/DELETE) require a validated Origin header.
+  const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, server-to-server)
-        if (!origin) return callback(null, true);
-
-        // Check against allowed origins list
+        if (!origin) {
+          // Allow origin-less requests only if the method is safe (set per-request below)
+          return callback(null, true);
+        }
         if (config.CORS_ORIGINS.includes(origin)) {
           callback(null, true);
         } else {
@@ -70,6 +77,19 @@ export function createApp(): Express {
       credentials: true,
     })
   );
+
+  // Reject no-origin requests on state-changing methods (CSRF protection for browser clients)
+  app.use((req, res, next) => {
+    if (!req.headers.origin && !SAFE_METHODS.has(req.method)) {
+      // Allow if request carries a valid Bearer token (native mobile app)
+      const hasBearer = req.headers.authorization?.startsWith('Bearer ');
+      if (!hasBearer) {
+        res.status(403).json({ success: false, message: 'Forbidden: Origin header required' });
+        return;
+      }
+    }
+    next();
+  });
 
   // Session middleware for Passport
   app.use(

@@ -22,7 +22,7 @@ export const config = {
   // Security
   JWT_SECRET: process.env.JWT_SECRET || '',
   JWT_EXPIRES_IN: (process.env.JWT_EXPIRES_IN || '24h') as string,
-  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET || '',
+  REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || '',
   REFRESH_TOKEN_EXPIRES_IN: (process.env.REFRESH_TOKEN_EXPIRES_IN || '30d') as string,
   SESSION_SECRET: process.env.SESSION_SECRET || '',
 
@@ -64,6 +64,10 @@ export const config = {
 export function validateConfig(): void {
   if (!config.JWT_SECRET) {
     console.error('FATAL: JWT_SECRET environment variable is not set!');
+    process.exit(1);
+  }
+  if (!config.REFRESH_TOKEN_SECRET) {
+    console.error('FATAL: REFRESH_TOKEN_SECRET environment variable is not set! Must be different from JWT_SECRET.');
     process.exit(1);
   }
   if (!config.SESSION_SECRET) {

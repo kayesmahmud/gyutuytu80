@@ -20,31 +20,37 @@ router.get(
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
 
-    const user = await prisma.users.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        full_name: true,
-        phone: true,
-        phone_verified: true,
-        phone_verified_at: true,
-        avatar: true,
-        bio: true,
-        location_id: true,
-        account_type: true,
-        shop_slug: true,
-        custom_shop_slug: true,
-        business_name: true,
-        business_verification_status: true,
-        individual_verified: true,
-        created_at: true,
-        locations: true,
-        oauth_provider: true,
-        password_hash: true,
-        two_factor_enabled: true,
-      },
-    });
+    const [user, passwordCheck] = await Promise.all([
+      prisma.users.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          full_name: true,
+          phone: true,
+          phone_verified: true,
+          phone_verified_at: true,
+          avatar: true,
+          bio: true,
+          location_id: true,
+          account_type: true,
+          shop_slug: true,
+          custom_shop_slug: true,
+          business_name: true,
+          business_verification_status: true,
+          individual_verified: true,
+          created_at: true,
+          locations: true,
+          oauth_provider: true,
+          two_factor_enabled: true,
+        },
+      }),
+      // Separate minimal query — avoids loading the hash into the main user object
+      prisma.users.findUnique({
+        where: { id: userId },
+        select: { password_hash: true },
+      }),
+    ]);
 
     if (!user) {
       throw new NotFoundError('User not found');
@@ -72,7 +78,7 @@ router.get(
         individualVerified: user.individual_verified,
         createdAt: user.created_at,
         oauthProvider: user.oauth_provider,
-        hasPassword: !!user.password_hash,
+        hasPassword: !!passwordCheck?.password_hash,
         twoFactorEnabled: user.two_factor_enabled,
       },
     });

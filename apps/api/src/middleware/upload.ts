@@ -3,6 +3,24 @@ import path from 'path';
 import fs from 'fs';
 import config from '../config/index.js';
 
+// Derive extension from MIME type — never trust client-provided filename extension
+const IMAGE_MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+  'image/avif': '.avif',
+  'image/heic': '.heic',
+  'image/heif': '.heif',
+};
+const DOC_MIME_TO_EXT: Record<string, string> = {
+  ...IMAGE_MIME_TO_EXT,
+  'application/pdf': '.pdf',
+};
+const safeExt = (mimetype: string, map: Record<string, string>): string =>
+  map[mimetype.toLowerCase()] ?? '.bin';
+
 // Maximum file size for all uploads: 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -43,8 +61,7 @@ const avatarStorage = multer.diskStorage({
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname);
-    cb(null, `avatar-${uniqueSuffix}${ext}`);
+    cb(null, `avatar-${uniqueSuffix}${safeExt(file.mimetype, IMAGE_MIME_TO_EXT)}`);
   },
 });
 
@@ -63,8 +80,7 @@ const coverStorage = multer.diskStorage({
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname);
-    cb(null, `cover-${uniqueSuffix}${ext}`);
+    cb(null, `cover-${uniqueSuffix}${safeExt(file.mimetype, IMAGE_MIME_TO_EXT)}`);
   },
 });
 
@@ -83,8 +99,7 @@ const adImageStorage = multer.diskStorage({
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname);
-    cb(null, `ad-${uniqueSuffix}${ext}`);
+    cb(null, `ad-${uniqueSuffix}${safeExt(file.mimetype, IMAGE_MIME_TO_EXT)}`);
   },
 });
 
@@ -103,8 +118,7 @@ const documentStorage = multer.diskStorage({
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname);
-    cb(null, `doc-${uniqueSuffix}${ext}`);
+    cb(null, `doc-${uniqueSuffix}${safeExt(file.mimetype, DOC_MIME_TO_EXT)}`);
   },
 });
 
@@ -137,8 +151,7 @@ const messageImageStorage = multer.diskStorage({
     const userId = (req as any).user?.userId || 'unknown';
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const ext = path.extname(file.originalname);
-    cb(null, `msg_${userId}_${timestamp}_${randomStr}${ext}`);
+    cb(null, `msg_${userId}_${timestamp}_${randomStr}${safeExt(file.mimetype, IMAGE_MIME_TO_EXT)}`);
   },
 });
 
@@ -158,8 +171,7 @@ const businessVerificationStorage = multer.diskStorage({
   filename: (_req, file, cb) => {
     const timestamp = Date.now();
     const random = Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `biz-${timestamp}-${random}${ext}`);
+    cb(null, `biz-${timestamp}-${random}${safeExt(file.mimetype, DOC_MIME_TO_EXT)}`);
   },
 });
 
@@ -201,14 +213,12 @@ const individualVerificationStorage = multer.diskStorage({
   filename: (_req, file, cb) => {
     const timestamp = Date.now();
     const random = Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    // Determine file type based on field name
     const fieldName = file.fieldname;
     let prefix = 'id';
     if (fieldName === 'id_document_front') prefix = 'id-front';
     else if (fieldName === 'id_document_back') prefix = 'id-back';
     else if (fieldName === 'selfie_with_id') prefix = 'selfie';
-    cb(null, `${prefix}-${timestamp}-${random}${ext}`);
+    cb(null, `${prefix}-${timestamp}-${random}${safeExt(file.mimetype, DOC_MIME_TO_EXT)}`);
   },
 });
 

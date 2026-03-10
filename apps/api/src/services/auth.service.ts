@@ -257,15 +257,13 @@ export async function verifyOtp(phone: string, otp: string, purpose: OtpPurposeT
 
   console.log(`✅ OTP verified for ${formattedPhone} (${purpose})`);
 
-  // Generate verification token
-  const verificationToken = Buffer.from(
-    JSON.stringify({
-      identifier: formattedPhone,
-      purpose,
-      verifiedAt: Date.now(),
-      expiresAt: Date.now() + VERIFICATION_TOKEN_EXPIRY_MS,
-    })
-  ).toString('base64');
+  // Generate HMAC-signed verification token (format: base64(payload).hmac)
+  const verificationToken = signVerificationToken({
+    identifier: formattedPhone,
+    purpose,
+    verifiedAt: Date.now(),
+    expiresAt: Date.now() + VERIFICATION_TOKEN_EXPIRY_MS,
+  });
 
   return {
     success: true,
@@ -278,13 +276,47 @@ export async function verifyOtp(phone: string, otp: string, purpose: OtpPurposeT
 // Verification Token Functions
 // ============================================================================
 
+// Token format: base64(payload).<hmac-sha256>
+// Signing prevents clients from forging tokens with a different phone/purpose.
+function signVerificationToken(payload: object): string {
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64');
+  const sig = crypto
+    .createHmac('sha256', config.SESSION_SECRET)
+    .update(encodedPayload)
+    .digest('hex');
+  return `${encodedPayload}.${sig}`;
+}
+
+function verifyAndDecodeToken(token: string): Record<string, unknown> | null {
+  const dotIndex = token.lastIndexOf('.');
+  if (dotIndex === -1) return null;
+
+  const encodedPayload = token.slice(0, dotIndex);
+  const receivedSig = token.slice(dotIndex + 1);
+  const expectedSig = crypto
+    .createHmac('sha256', config.SESSION_SECRET)
+    .update(encodedPayload)
+    .digest('hex');
+
+  // Constant-time comparison to prevent timing attacks
+  if (!crypto.timingSafeEqual(Buffer.from(receivedSig, 'hex'), Buffer.from(expectedSig, 'hex'))) {
+    return null;
+  }
+
+  return JSON.parse(Buffer.from(encodedPayload, 'base64').toString());
+}
+
 export function validateVerificationToken(
   token: string,
   expectedPhone: string,
   expectedPurpose: OtpPurposeType
 ): { valid: boolean; error?: string } {
   try {
-    const tokenData = JSON.parse(Buffer.from(token, 'base64').toString());
+    const tokenData = verifyAndDecodeToken(token);
+
+    if (!tokenData) {
+      return { valid: false, error: 'Invalid token signature' };
+    }
 
     if (tokenData.identifier !== expectedPhone) {
       return { valid: false, error: 'Token mismatch' };
@@ -294,7 +326,7 @@ export function validateVerificationToken(
       return { valid: false, error: 'Invalid token purpose' };
     }
 
-    if (Date.now() > tokenData.expiresAt) {
+    if (Date.now() > (tokenData.expiresAt as number)) {
       return { valid: false, error: 'Token expired' };
     }
 
