@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
 import { AuthenticationError } from './errorHandler.js';
+import { logger } from '../lib/logger.js';
 
 interface JwtPayload {
   userId: number;
@@ -22,8 +23,6 @@ export const authenticateToken = (
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-  console.log('🔐 [Middleware/Auth] Token present:', !!token);
-
   if (!token) {
     next(new AuthenticationError('Access token required'));
     return;
@@ -31,13 +30,13 @@ export const authenticateToken = (
 
   jwt.verify(token, config.JWT_SECRET, (err, decoded) => {
     if (err) {
-      console.log('❌ [Middleware/Auth] Token verification failed:', err.message);
+      logger.debug('[Auth] Token verification failed', { error: err.message });
       next(new AuthenticationError('Invalid or expired token'));
       return;
     }
 
     const user = decoded as JwtPayload;
-    console.log('✅ [Middleware/Auth] Token decoded successfully - user:', user);
+    logger.debug('[Auth] Token verified', { userId: user.userId, role: user.role });
     req.user = {
       userId: user.userId,
       email: user.email,

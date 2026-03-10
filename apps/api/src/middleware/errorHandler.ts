@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import config from '../config/index.js';
+import { logger } from '../lib/logger.js';
 
 /**
  * Custom Error Classes
@@ -176,14 +177,14 @@ export const errorHandler = (
 
   // Log errors
   if (err.statusCode >= 500) {
-    console.error(`[ERROR] ${err.message}`, {
+    logger.error(err.message, {
       url: req.originalUrl,
       method: req.method,
       userId: req.user?.userId,
       stack: err.stack,
     });
   } else if (err.statusCode >= 400) {
-    console.warn(`[WARN] ${err.message}`, {
+    logger.warn(err.message, {
       url: req.originalUrl,
       method: req.method,
       userId: req.user?.userId,
