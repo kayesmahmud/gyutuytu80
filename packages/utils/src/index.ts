@@ -34,7 +34,7 @@ export const isExpired = (expiryDate: Date | string): boolean => {
 // ============================================
 
 export const formatPrice = (price: number, currency: string = 'Rs.'): string => {
-  return `${currency} ${price.toLocaleString('en-NP')}`;
+  return `${currency} ${Math.round(price).toLocaleString('en-NP')}`;
 };
 
 export const formatPriceShort = (price: number): string => {

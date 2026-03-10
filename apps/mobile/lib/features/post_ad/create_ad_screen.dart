@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -399,8 +400,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           _buildLabel('postAd.priceLabel'.tr()),
           _buildTextField(
             controller: _priceController,
-            hintText: "0", 
+            hintText: "0",
             keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             validator: (val) => val == null || val.isEmpty ? (context.locale.languageCode == 'ne' ? 'मूल्य आवश्यक छ' : 'Price is required') : null,
           ),
           
@@ -894,12 +896,14 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     int maxLines = 1,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
+      inputFormatters: inputFormatters,
       style: GoogleFonts.inter(fontSize: 15, color: Colors.black87),
       decoration: _inputDecoration().copyWith(
         hintText: hintText,

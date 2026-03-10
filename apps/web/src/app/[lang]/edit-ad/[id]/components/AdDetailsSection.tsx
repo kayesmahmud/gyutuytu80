@@ -66,11 +66,11 @@ export function AdDetailsSection({ formData, onFormChange }: AdDetailsSectionPro
               <input
                 type="number"
                 value={formData.price}
-                onChange={(e) => onFormChange({ price: e.target.value })}
+                onChange={(e) => onFormChange({ price: Math.floor(Number(e.target.value)).toString() })}
                 placeholder="50000"
                 required
                 min="0"
-                step="0.01"
+                step="1"
                 className="w-full p-3 rounded-lg border border-gray-300 text-base"
               />
             </div>

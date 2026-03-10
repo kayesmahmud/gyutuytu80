@@ -175,11 +175,11 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                       <input
                         type="number"
                         value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, price: Math.floor(Number(e.target.value)).toString() })}
                         placeholder="50000"
                         required
                         min="0"
-                        step="0.01"
+                        step="1"
                         className="w-full p-3 rounded-lg border border-gray-300 text-base"
                       />
                     </div>
