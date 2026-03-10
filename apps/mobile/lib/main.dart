@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 
+import 'core/api/dio_client.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/providers/chat_provider.dart';
@@ -26,6 +27,9 @@ void main() async {
   } else {
     WidgetsFlutterBinding.ensureInitialized();
   }
+
+  // Initialize SSL certificate pinning (no-op in dev if cert file is absent)
+  await DioClient.ensureInitialized();
 
   // Initialize easy_localization
   await EasyLocalization.ensureInitialized();
