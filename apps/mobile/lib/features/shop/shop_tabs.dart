@@ -244,7 +244,8 @@ class ShopContactSection extends StatefulWidget {
 class _ShopContactSectionState extends State<ShopContactSection> {
   bool _isEditing = false;
   bool _saving = false;
-  final _phoneController = TextEditingController();
+  bool _usePhoneForWhatsApp = false;
+  final _whatsappController = TextEditingController();
   final _websiteController = TextEditingController();
   final _facebookController = TextEditingController();
   final _instagramController = TextEditingController();
@@ -257,22 +258,111 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     _fillControllers();
   }
 
+  @override
+  void dispose() {
+    _whatsappController.dispose();
+    _websiteController.dispose();
+    _facebookController.dispose();
+    _instagramController.dispose();
+    _tiktokController.dispose();
+    super.dispose();
+  }
+
   void _fillControllers() {
-    _phoneController.text = widget.shop.businessPhone ?? '';
     _websiteController.text = widget.shop.businessWebsite ?? '';
-    _facebookController.text = widget.shop.facebookUrl ?? '';
-    _instagramController.text = widget.shop.instagramUrl ?? '';
-    _tiktokController.text = widget.shop.tiktokUrl ?? '';
+    _facebookController.text = _extractUsername(widget.shop.facebookUrl, 'facebook');
+    _instagramController.text = _extractUsername(widget.shop.instagramUrl, 'instagram');
+    _tiktokController.text = _extractUsername(widget.shop.tiktokUrl, 'tiktok');
+
+    final digits = RegExp(r'[^\d]');
+    final registeredDigits = widget.shop.phone?.replaceAll(digits, '') ?? '';
+    final whatsappDigits = widget.shop.businessPhone?.replaceAll(digits, '') ?? '';
+    _usePhoneForWhatsApp = registeredDigits.isNotEmpty && registeredDigits == whatsappDigits;
+    _whatsappController.text =
+        widget.shop.businessPhone?.replaceAll(RegExp(r'^\+977\s*'), '') ?? '';
+  }
+
+  String _extractUsername(String? url, String platform) {
+    if (url == null || url.isEmpty) return '';
+    final patterns = {
+      'facebook': RegExp(r'facebook\.com/(.+?)/?$', caseSensitive: false),
+      'instagram': RegExp(r'instagram\.com/(.+?)/?$', caseSensitive: false),
+      'tiktok': RegExp(r'tiktok\.com/@?(.+?)/?$', caseSensitive: false),
+    };
+    final match = patterns[platform]?.firstMatch(url);
+    if (match != null) return match.group(1)?.replaceAll(RegExp(r'^@'), '') ?? url;
+    return url.replaceAll(RegExp(r'^@'), '');
+  }
+
+  String _buildSocialUrl(String username, String platform) {
+    final u = username.trim().replaceAll(RegExp(r'^@'), '');
+    if (u.isEmpty) return '';
+    const bases = {
+      'facebook': 'https://www.facebook.com/',
+      'instagram': 'https://www.instagram.com/',
+      'tiktok': 'https://www.tiktok.com/@',
+    };
+    return (bases[platform] ?? '') + u;
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _launchWhatsApp(String phone) async {
+    final d = phone.replaceAll(RegExp(r'[^\d]'), '');
+    final full = d.startsWith('977') ? '+$d' : '+977$d';
+    final appUri = Uri.parse('whatsapp://send?phone=$full');
+    if (await canLaunchUrl(appUri)) {
+      await launchUrl(appUri, mode: LaunchMode.externalApplication);
+    } else {
+      await launchUrl(Uri.parse('https://wa.me/$full'),
+          mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _launchSocial(String username, String platform) async {
+    final deepLinks = {
+      'facebook': 'fb://facewebmodal/f?href=https://www.facebook.com/$username',
+      'instagram': 'instagram://user?username=$username',
+      'tiktok': 'tiktok://user/@$username',
+    };
+    final webUrls = {
+      'facebook': 'https://www.facebook.com/$username',
+      'instagram': 'https://www.instagram.com/$username',
+      'tiktok': 'https://www.tiktok.com/@$username',
+    };
+    final deepLink = deepLinks[platform];
+    if (deepLink != null) {
+      final uri = Uri.tryParse(deepLink);
+      if (uri != null && await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    }
+    final webUrl = webUrls[platform];
+    if (webUrl != null) {
+      await launchUrl(Uri.parse(webUrl), mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
+    final registeredPhone = widget.shop.phone ?? '';
+    final whatsappValue = _usePhoneForWhatsApp
+        ? registeredPhone
+        : '+977${_whatsappController.text.replaceAll(RegExp(r'[^\d]'), '')}';
+
     final data = {
-      'businessPhone': _phoneController.text,
+      'businessPhone': whatsappValue,
       'businessWebsite': _websiteController.text,
-      'facebookUrl': _facebookController.text,
-      'instagramUrl': _instagramController.text,
-      'tiktokUrl': _tiktokController.text,
+      'facebookUrl': _buildSocialUrl(_facebookController.text, 'facebook'),
+      'instagramUrl': _buildSocialUrl(_instagramController.text, 'instagram'),
+      'tiktokUrl': _buildSocialUrl(_tiktokController.text, 'tiktok'),
     };
     final response = await _shopClient.updateShopContact(data);
     setState(() => _saving = false);
@@ -280,40 +370,151 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
       setState(() => _isEditing = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'सम्पर्क जानकारी अपडेट भयो' : 'Contact info updated')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.locale.languageCode == 'ne'
+              ? 'सम्पर्क जानकारी अपडेट भयो'
+              : 'Contact info updated')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.errorMessage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isNe = context.locale.languageCode == 'ne';
+
     if (_isEditing) {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField(context.locale.languageCode == 'ne' ? 'व्हाट्सएप/फोन' : 'WhatsApp/Phone', _phoneController),
-          const SizedBox(height: 12),
-          _buildTextField(context.locale.languageCode == 'ne' ? 'वेबसाइट' : 'Website', _websiteController),
-          const SizedBox(height: 12),
-          _buildTextField(context.locale.languageCode == 'ne' ? 'फेसबुक' : 'Facebook', _facebookController),
-          const SizedBox(height: 12),
-          _buildTextField(context.locale.languageCode == 'ne' ? 'इन्स्टाग्राम' : 'Instagram', _instagramController),
-          const SizedBox(height: 12),
-          _buildTextField(context.locale.languageCode == 'ne' ? 'टिकटक' : 'TikTok', _tiktokController),
+          // WhatsApp
+          _buildLabel(isNe ? 'व्हाट्सएप नम्बर' : 'WhatsApp Number'),
+          if (widget.shop.phone != null) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(LucideIcons.phone, size: 15, color: Color(0xFF16A34A)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${isNe ? 'दर्ता नम्बर' : 'Registered'}: ${widget.shop.phone}',
+                      style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF15803D)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () => setState(() {
+                _usePhoneForWhatsApp = !_usePhoneForWhatsApp;
+                if (_usePhoneForWhatsApp) {
+                  _whatsappController.text = widget.shop.phone
+                          ?.replaceAll(RegExp(r'^\+977\s*'), '')
+                          .replaceAll(RegExp(r'[^\d]'), '') ??
+                      '';
+                }
+              }),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Checkbox(
+                        value: _usePhoneForWhatsApp,
+                        onChanged: (v) => setState(() {
+                          _usePhoneForWhatsApp = v ?? false;
+                          if (_usePhoneForWhatsApp) {
+                            _whatsappController.text = widget.shop.phone
+                                    ?.replaceAll(RegExp(r'^\+977\s*'), '')
+                                    .replaceAll(RegExp(r'[^\d]'), '') ??
+                                '';
+                          }
+                        }),
+                        activeColor: const Color(0xFF16A34A),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isNe
+                            ? 'दर्ता नम्बर नै प्रयोग गर्नुहोस् (${widget.shop.phone})'
+                            : 'Same as registered number (${widget.shop.phone})',
+                        style: GoogleFonts.inter(fontSize: 13, color: Colors.black87),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          _buildPrefixField(
+            prefix: '+977',
+            controller: _whatsappController,
+            hint: '98XXXXXXXX',
+            enabled: !_usePhoneForWhatsApp,
+            keyboardType: TextInputType.phone,
+            maxLength: 10,
+          ),
+          const SizedBox(height: 14),
+
+          // Website
+          _buildLabel(isNe ? 'वेबसाइट' : 'Website'),
+          TextField(
+            controller: _websiteController,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(
+              hintText: 'https://example.com',
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Facebook
+          _buildLabel(isNe ? 'फेसबुक' : 'Facebook'),
+          _buildPrefixField(prefix: 'fb.com/', controller: _facebookController, hint: 'yourpage'),
+          const SizedBox(height: 14),
+
+          // Instagram
+          _buildLabel(isNe ? 'इन्स्टाग्राम' : 'Instagram'),
+          _buildPrefixField(prefix: 'ig.com/', controller: _instagramController, hint: 'yourprofile'),
+          const SizedBox(height: 14),
+
+          // TikTok
+          _buildLabel(isNe ? 'टिकटक' : 'TikTok'),
+          _buildPrefixField(
+              prefix: 'tiktok.com/@', controller: _tiktokController, hint: 'yourhandle'),
           const SizedBox(height: 16),
+
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving ? (context.locale.languageCode == 'ne' ? 'सेभ हुँदैछ...' : 'Saving...') : l('save', context.locale.languageCode)),
+                  child: Text(_saving
+                      ? (isNe ? 'सेभ हुँदैछ...' : 'Saving...')
+                      : l('save', context.locale.languageCode)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => setState(() => _isEditing = false),
+                  onPressed: () {
+                    _fillControllers();
+                    setState(() => _isEditing = false);
+                  },
                   child: Text(l('cancel', context.locale.languageCode)),
                 ),
               ),
@@ -323,13 +524,25 @@ class _ShopContactSectionState extends State<ShopContactSection> {
       );
     }
 
+    // Display mode
+    final fbUser = _extractUsername(widget.shop.facebookUrl, 'facebook');
+    final igUser = _extractUsername(widget.shop.instagramUrl, 'instagram');
+    final ttUser = _extractUsername(widget.shop.tiktokUrl, 'tiktok');
+    final hasAny = widget.shop.businessPhone != null ||
+        widget.shop.phone != null ||
+        widget.shop.businessWebsite != null ||
+        fbUser.isNotEmpty ||
+        igUser.isNotEmpty ||
+        ttUser.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l('contactInfo', context.locale.languageCode), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(l('contactInfo', context.locale.languageCode),
+                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
                 icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
@@ -338,55 +551,169 @@ class _ShopContactSectionState extends State<ShopContactSection> {
           ],
         ),
         const SizedBox(height: 12),
+        if (!hasAny)
+          Text(
+            isNe ? 'सम्पर्क जानकारी छैन।' : 'No contact info.',
+            style:
+                GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic),
+          ),
         if (widget.shop.businessPhone != null)
-          _buildContactRow(LucideIcons.phone, context.locale.languageCode == 'ne' ? 'फोन' : 'Phone', widget.shop.businessPhone!),
+          _buildContactTile(
+            icon: LucideIcons.messageCircle,
+            iconColor: const Color(0xFF25D366),
+            label: isNe ? 'व्हाट्सएप' : 'WhatsApp',
+            value: widget.shop.businessPhone!,
+            onTap: () => _launchWhatsApp(widget.shop.businessPhone!),
+          ),
+        if (widget.shop.phone != null)
+          _buildContactTile(
+            icon: LucideIcons.phone,
+            iconColor: const Color(0xFF3B82F6),
+            label: isNe ? 'मोबाइल' : 'Mobile',
+            value: widget.shop.phone!,
+          ),
         if (widget.shop.businessWebsite != null)
-          _buildContactRow(LucideIcons.globe, context.locale.languageCode == 'ne' ? 'वेबसाइट' : 'Website', widget.shop.businessWebsite!),
-        if (widget.shop.facebookUrl != null)
-          _buildContactRow(LucideIcons.facebook, context.locale.languageCode == 'ne' ? 'फेसबुक' : 'Facebook', widget.shop.facebookUrl!),
-        if (widget.shop.instagramUrl != null)
-          _buildContactRow(LucideIcons.instagram, context.locale.languageCode == 'ne' ? 'इन्स्टाग्राम' : 'Instagram', widget.shop.instagramUrl!),
-        if (widget.shop.tiktokUrl != null)
-          _buildContactRow(LucideIcons.music, context.locale.languageCode == 'ne' ? 'टिकटक' : 'TikTok', widget.shop.tiktokUrl!),
-        
-        if (widget.shop.businessPhone == null && 
-            widget.shop.businessWebsite == null &&
-            widget.shop.facebookUrl == null &&
-            widget.shop.instagramUrl == null &&
-            widget.shop.tiktokUrl == null)
-            Text(context.locale.languageCode == 'ne' ? 'सम्पर्क जानकारी छैन।' : 'No contact info.', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic)),
+          _buildContactTile(
+            icon: LucideIcons.globe,
+            iconColor: const Color(0xFF8B5CF6),
+            label: isNe ? 'वेबसाइट' : 'Website',
+            value: widget.shop.businessWebsite!,
+            onTap: () {
+              final url = widget.shop.businessWebsite!;
+              _launchUrl(url.startsWith('http') ? url : 'https://$url');
+            },
+          ),
+        if (fbUser.isNotEmpty)
+          _buildContactTile(
+            icon: LucideIcons.facebook,
+            iconColor: const Color(0xFF1877F2),
+            label: 'Facebook',
+            value: '@$fbUser',
+            onTap: () => _launchSocial(fbUser, 'facebook'),
+          ),
+        if (igUser.isNotEmpty)
+          _buildContactTile(
+            icon: LucideIcons.instagram,
+            iconColor: const Color(0xFFE4405F),
+            label: 'Instagram',
+            value: '@$igUser',
+            onTap: () => _launchSocial(igUser, 'instagram'),
+          ),
+        if (ttUser.isNotEmpty)
+          _buildContactTile(
+            icon: LucideIcons.music,
+            iconColor: Colors.black87,
+            label: 'TikTok',
+            value: '@$ttUser',
+            onTap: () => _launchSocial(ttUser, 'tiktok'),
+          ),
       ],
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      ),
+  Widget _buildLabel(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(text,
+            style: GoogleFonts.inter(
+                fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87)),
+      );
+
+  Widget _buildPrefixField({
+    required String prefix,
+    required TextEditingController controller,
+    required String hint,
+    bool enabled = true,
+    TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+  }) {
+    const radius8 = Radius.circular(8);
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            border: Border.all(color: const Color(0xFFD1D5DB)),
+            borderRadius: const BorderRadius.only(topLeft: radius8, bottomLeft: radius8),
+          ),
+          child: Text(prefix,
+              style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF6B7280))),
+        ),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            enabled: enabled,
+            keyboardType: keyboardType,
+            maxLength: maxLength,
+            decoration: InputDecoration(
+              hintText: hint,
+              counterText: '',
+              filled: !enabled,
+              fillColor: const Color(0xFFF9FAFB),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+              border: const OutlineInputBorder(
+                  borderRadius: BorderRadius.only(topRight: radius8, bottomRight: radius8)),
+              enabledBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.only(topRight: radius8, bottomRight: radius8),
+                  borderSide: BorderSide(color: Color(0xFFD1D5DB))),
+              disabledBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.only(topRight: radius8, bottomRight: radius8),
+                  borderSide: BorderSide(color: Color(0xFFE5E7EB))),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildContactRow(IconData icon, String label, String value) {
+  Widget _buildContactTile({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    VoidCallback? onTap,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500])),
-                Text(value, style: GoogleFonts.inter(fontSize: 14, color: Colors.black87)),
-              ],
-            ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: iconColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500])),
+                    Text(
+                      value,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: onTap != null ? const Color(0xFFF43F5E) : Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onTap != null)
+                Icon(LucideIcons.externalLink, size: 14, color: Colors.grey[400]),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
