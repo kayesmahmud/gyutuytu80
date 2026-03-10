@@ -103,8 +103,8 @@ router.get(
       publishedAt: ad.reviewed_at || ad.created_at,
     }));
 
-    console.log(`🔍 Search for "${searchTerm}": Found ${total} results`);
-
+    // Short-lived cache — search results change as ads are approved/expired
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
     res.json({
       success: true,
       data,

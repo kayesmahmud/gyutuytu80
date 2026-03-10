@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma, Prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
+import { logger } from '../lib/logger.js';
 
 const router = Router();
 
@@ -77,17 +78,20 @@ router.get(
       }
       console.log(`✅ Found ${locations.length} locations (parent_id: ${parent_id || 'NULL'})`);
     } else {
-      // Fetch all locations
+      // Fetch all locations — capped at 1000 to prevent unbounded responses.
+      // Use /api/locations/hierarchy for the full nested tree.
       locations = await prisma.$queryRaw<LocationWithCount[]>`
         SELECT l.*, COUNT(a.id)::int as ad_count
         FROM locations l
         LEFT JOIN ads a ON l.id = a.location_id AND a.status = 'approved'
         GROUP BY l.id
         ORDER BY l.name ASC
+        LIMIT 1000
       `;
-      console.log(`✅ Found ${locations.length} locations`);
     }
 
+    // Location data is static — cache aggressively
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=300');
     res.json({
       success: true,
       data: locations,
@@ -97,73 +101,58 @@ router.get(
 
 /**
  * GET /api/locations/hierarchy
- * Get complete location hierarchy
+ * Get complete location hierarchy — single recursive CTE query (replaces ~7000 N+1 queries)
  */
 router.get(
   '/hierarchy',
   catchAsync(async (_req: Request, res: Response) => {
-    // Get all provinces (parent_id is null and type is 'province')
-    const provinces = await prisma.locations.findMany({
-      where: {
-        parent_id: null,
-        type: 'province',
-      },
-      orderBy: { name: 'asc' },
-    });
-
-    // Build hierarchy
-    const hierarchy = await Promise.all(
-      provinces.map(async (province) => {
-        // Get districts for this province
-        const districts = await prisma.locations.findMany({
-          where: { parent_id: province.id, type: 'district' },
-          orderBy: { name: 'asc' },
-        });
-
-        const districtsWithChildren = await Promise.all(
-          districts.map(async (district) => {
-            // Get municipalities for this district
-            const municipalities = await prisma.locations.findMany({
-              where: { parent_id: district.id },
-              orderBy: { name: 'asc' },
-            });
-
-            const municipalitiesWithAreas = await Promise.all(
-              municipalities.map(async (municipality) => {
-                // Get areas directly under municipality (no ward level)
-                const areas = await prisma.locations.findMany({
-                  where: { parent_id: municipality.id, type: 'area' },
-                  orderBy: { name: 'asc' },
-                });
-
-                return { ...municipality, areas };
-              })
-            );
-
-            return { ...district, municipalities: municipalitiesWithAreas };
-          })
-        );
-
-        return { ...province, districts: districtsWithChildren };
-      })
-    );
-
-    const stats = {
-      provinces: hierarchy.length,
-      districts: hierarchy.reduce((sum, p) => sum + p.districts.length, 0),
-      municipalities: hierarchy.reduce(
-        (sum, p) => sum + p.districts.reduce((dSum, d) => dSum + d.municipalities.length, 0),
-        0
-      ),
+    // One query fetches all nodes; the app reassembles the tree in memory with a Map
+    type LocationRow = {
+      id: number; name: string; name_ne: string | null; slug: string;
+      type: string; parent_id: number | null;
     };
 
-    console.log('📍 Location hierarchy stats:', stats);
+    const rows = await prisma.$queryRaw<LocationRow[]>`
+      SELECT id, name, name_ne, slug, type, parent_id
+      FROM locations
+      ORDER BY name ASC
+    `;
 
-    res.json({
-      success: true,
-      data: hierarchy,
-      stats,
-    });
+    // Build lookup map
+    const nodeMap = new Map<number, LocationRow & {
+      districts?: unknown[]; municipalities?: unknown[]; areas?: unknown[];
+    }>();
+    for (const row of rows) nodeMap.set(row.id, { ...row });
+
+    const provinces: unknown[] = [];
+    for (const node of nodeMap.values()) {
+      if (node.type === 'province') {
+        node.districts = [];
+        provinces.push(node);
+      } else if (node.type === 'district') {
+        node.municipalities = [];
+        const parent = node.parent_id ? nodeMap.get(node.parent_id) : undefined;
+        parent?.districts?.push(node);
+      } else if (node.type === 'municipality' || node.type === 'sub-metropolitan' || node.type === 'metropolitan') {
+        node.areas = [];
+        const parent = node.parent_id ? nodeMap.get(node.parent_id) : undefined;
+        parent?.municipalities?.push(node);
+      } else if (node.type === 'area') {
+        const parent = node.parent_id ? nodeMap.get(node.parent_id) : undefined;
+        parent?.areas?.push(node);
+      }
+    }
+
+    const stats = {
+      provinces: provinces.length,
+      districts: rows.filter(r => r.type === 'district').length,
+      municipalities: rows.filter(r => ['municipality', 'sub-metropolitan', 'metropolitan'].includes(r.type)).length,
+    };
+
+    logger.info('Location hierarchy fetched', stats);
+
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=300');
+    res.json({ success: true, data: provinces, stats });
   })
 );
 

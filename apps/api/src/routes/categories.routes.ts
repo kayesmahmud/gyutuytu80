@@ -41,8 +41,8 @@ router.get(
       `;
     }
 
-    console.log(`✅ [Categories] Returning ${Array.isArray(categories) ? categories.length : 0} categories`);
-
+    // Category data is static — cache aggressively
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=300');
     res.json({
       success: true,
       data: categories,

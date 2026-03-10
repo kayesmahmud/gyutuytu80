@@ -68,6 +68,8 @@ router.get(
       isFeatured: req.query.is_featured as string,
     });
 
+    // Short-lived cache — new ads can be approved at any time
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');
     res.json({
       success: true,
       data: result.ads,
