@@ -8,8 +8,9 @@ import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
 import AppStoreBanner from '@/components/pwa/AppStoreBanner';
 
-// All pages query DB — render at request time (no prerendering during build)
-export const dynamic = 'force-dynamic';
+// Layout renders per-request; individual pages control their own caching strategy.
+// Pages using searchParams or auth auto-opt into dynamic rendering.
+// Static/semi-static pages should set: export const revalidate = N
 
 // Viewport configuration (separate from metadata in Next.js 15+)
 export const viewport: Viewport = {

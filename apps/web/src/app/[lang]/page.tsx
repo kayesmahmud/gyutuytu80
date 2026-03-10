@@ -7,6 +7,9 @@ import { AdCard, AdBanner } from '@/components/ads';
 import HeroSearch from './HeroSearch';
 import FeaturedAdsCarousel from './FeaturedAdsCarousel';
 
+// Home page content (featured ads, latest ads) can be stale for up to 5 minutes
+export const revalidate = 300;
+
 interface HomePageProps {
   params: Promise<{ lang: string }>;
 }

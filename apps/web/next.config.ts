@@ -6,6 +6,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  poweredByHeader: false,
   // Skip TS checking during build — handled separately in CI via tsc --noEmit
   typescript: { ignoreBuildErrors: true },
   transpilePackages: ['@thulobazaar/types', '@thulobazaar/utils', '@thulobazaar/api-client'],
@@ -69,6 +70,38 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  async headers() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const isDev = process.env.NODE_ENV === 'development';
+
+    const csp = [
+      "default-src 'self'",
+      // 'unsafe-inline' required for Next.js hydration; 'unsafe-eval' only in dev (React DevTools)
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://pagead2.googlesyndication.com https://www.googletagmanager.com https://accounts.google.com https://connect.facebook.net`,
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      `img-src 'self' data: blob: https: ${isDev ? 'http://localhost:5000 http://192.168.0.114:5000' : ''}`.trim(),
+      // API fetch + Socket.IO WebSocket connections
+      `connect-src 'self' ${apiUrl} ws: wss: https://accounts.google.com`,
+      "frame-src https://accounts.google.com https://www.facebook.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; ');
+
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Content-Security-Policy', value: csp },
+        ],
+      },
+    ];
   },
   async redirects() {
     return [

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { formatPhoneNumber, validateNepaliPhone } from '@/lib/sms';
 
 const phoneLoginSchema = z.object({

@@ -409,10 +409,10 @@ export default function Header({ lang }: HeaderProps) {
                                   <Store className="w-4 h-4 flex-shrink-0" />
                                   <span>{t('myShop')}</span>
                                   {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                                    <img src="/golden-badge.png" alt="Verified Business" title="Verified Business" className="ml-auto w-5 h-5 flex-shrink-0" />
+                                    <Image src="/golden-badge.png" alt="Verified Business" title="Verified Business" width={20} height={20} className="ml-auto flex-shrink-0" />
                                   )}
                                   {user.individualVerified && !(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                                    <img src="/blue-badge.png" alt="Verified Individual" title="Verified Individual" className="ml-auto w-5 h-5 flex-shrink-0" />
+                                    <Image src="/blue-badge.png" alt="Verified Individual" title="Verified Individual" width={20} height={20} className="ml-auto flex-shrink-0" />
                                   )}
                                 </div>
                               </Link>
@@ -534,10 +534,10 @@ export default function Header({ lang }: HeaderProps) {
                         <Store className="w-5 h-5 flex-shrink-0" />
                         <span>{t('myShop')}</span>
                         {(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                          <img src="/golden-badge.png" alt="Verified Business" title="Verified Business" className="ml-auto w-5 h-5 flex-shrink-0" />
+                          <Image src="/golden-badge.png" alt="Verified Business" title="Verified Business" width={20} height={20} className="ml-auto flex-shrink-0" />
                         )}
                         {user.individualVerified && !(user.businessVerificationStatus === 'approved' || user.businessVerificationStatus === 'verified') && (
-                          <img src="/blue-badge.png" alt="Verified Individual" title="Verified Individual" className="ml-auto w-5 h-5 flex-shrink-0" />
+                          <Image src="/blue-badge.png" alt="Verified Individual" title="Verified Individual" width={20} height={20} className="ml-auto flex-shrink-0" />
                         )}
                       </Link>
                     )}

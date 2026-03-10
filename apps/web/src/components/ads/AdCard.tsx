@@ -103,10 +103,10 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                     <div className="flex items-center gap-1">
                         <span className="font-medium text-gray-800">{ad.sellerName}</span>
                         {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                            <img src="/golden-badge.png" alt={tc('verifiedBusiness')} className="w-4 h-4 flex-shrink-0" />
+                            <Image src="/golden-badge.png" alt={tc('verifiedBusiness')} width={16} height={16} className="flex-shrink-0" />
                         )}
                         {(ad.accountType === 'individual' && ad.individualVerified) && (
-                            <img src="/blue-badge.png" alt={tc('verifiedIndividual')} className="w-4 h-4 flex-shrink-0" />
+                            <Image src="/blue-badge.png" alt={tc('verifiedIndividual')} width={16} height={16} className="flex-shrink-0" />
                         )}
                     </div>
                 </div>
@@ -175,10 +175,10 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
                 <div className="flex items-center gap-1 text-[10px] sm:text-[11px] mb-0.5">
                     <span className="font-medium text-gray-700 truncate max-w-[90px]">{ad.sellerName}</span>
                     {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                        <img src="/golden-badge.png" alt={tc('verifiedBusiness')} className="w-3 h-3 flex-shrink-0" />
+                        <Image src="/golden-badge.png" alt={tc('verifiedBusiness')} width={12} height={12} className="flex-shrink-0" />
                     )}
                     {(ad.accountType === 'individual' && ad.individualVerified) && (
-                        <img src="/blue-badge.png" alt={tc('verifiedIndividual')} className="w-3 h-3 flex-shrink-0" />
+                        <Image src="/blue-badge.png" alt={tc('verifiedIndividual')} width={12} height={12} className="flex-shrink-0" />
                     )}
                 </div>
                 {/* Timestamp */}
@@ -251,10 +251,10 @@ export default function AdCard({ ad, lang = 'en', variant = 'default' }: AdCardP
                         <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
                             <span className="font-medium text-gray-800 truncate max-w-[80px]">{ad.sellerName}</span>
                             {(ad.accountType === 'business' && (ad.businessVerificationStatus === 'verified' || ad.businessVerificationStatus === 'approved')) && (
-                                <img src="/golden-badge.png" alt={tc('verifiedBusiness')} className="w-3 h-3" />
+                                <Image src="/golden-badge.png" alt={tc('verifiedBusiness')} width={12} height={12} />
                             )}
                             {(ad.accountType === 'individual' && ad.individualVerified) && (
-                                <img src="/blue-badge.png" alt={tc('verifiedIndividual')} className="w-3 h-3" />
+                                <Image src="/blue-badge.png" alt={tc('verifiedIndividual')} width={12} height={12} />
                             )}
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 import { prisma } from '@thulobazaar/database';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { SignJWT } from 'jose';
 import crypto from 'crypto';
 import { userSelectForAuth } from './queries';

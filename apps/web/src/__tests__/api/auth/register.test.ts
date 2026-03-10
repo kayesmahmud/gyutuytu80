@@ -13,8 +13,8 @@ vi.mock('@thulobazaar/database', () => ({
   },
 }));
 
-// Mock bcryptjs
-vi.mock('bcryptjs', () => ({
+// Mock bcrypt
+vi.mock('bcrypt', () => ({
   default: {
     hash: vi.fn().mockResolvedValue('hashed_password'),
   },
@@ -230,7 +230,7 @@ describe('POST /api/auth/register', () => {
 
     it('should hash password before storing', async () => {
       const { prisma } = await import('@thulobazaar/database');
-      const bcrypt = await import('bcryptjs');
+      const bcrypt = await import('bcrypt');
 
       vi.mocked(prisma.users.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.users.create).mockResolvedValue(mockCreatedUser as any);
