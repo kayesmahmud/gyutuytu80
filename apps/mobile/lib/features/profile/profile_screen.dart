@@ -121,7 +121,12 @@ class _ProfileScreenState extends State<ProfileScreen>
       setState(() => _favorites.insert(removedIndex, removedItem)); // Rollback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.error ?? (context.locale.languageCode == 'ne' ? 'हटाउन असफल' : 'Failed to remove')),
+          content: Text(
+            response.error ??
+                (context.locale.languageCode == 'ne'
+                    ? 'हटाउन असफल'
+                    : 'Failed to remove'),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -129,7 +134,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   void _checkForChanges() {
-    final hasChanges = _nameController.text.trim() != _originalName ||
+    final hasChanges =
+        _nameController.text.trim() != _originalName ||
         _selectedLocation != null;
     if (hasChanges != _hasChanges) {
       setState(() => _hasChanges = hasChanges);
@@ -179,6 +185,22 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
+  Future<void> _openPhoneChange() async {
+    final authProvider = context.read<AuthProvider>();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PhoneVerificationScreen(
+          isChanging: true,
+          onVerified: () async {
+            await authProvider.refreshProfile();
+            if (mounted) _populateControllers();
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _tabController.removeListener(_onTabChanged);
@@ -202,7 +224,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       return Scaffold(
         body: LoginRequiredWidget(
           icon: LucideIcons.user,
-          title: context.locale.languageCode == 'ne' ? 'प्रोफाइल हेर्न लगइन गर्नुहोस्' : 'Login to View Profile',
+          title: context.locale.languageCode == 'ne'
+              ? 'प्रोफाइल हेर्न लगइन गर्नुहोस्'
+              : 'Login to View Profile',
           subtitle: context.locale.languageCode == 'ne'
               ? 'तपाईंको प्रोफाइल, विज्ञापन,\nर खाता सेटिङहरू व्यवस्थापन गर्न साइन इन गर्नुहोस्'
               : 'Sign in to manage your profile,\nads, and account settings',
@@ -268,17 +292,25 @@ class _ProfileScreenState extends State<ProfileScreen>
         children: [
           _buildGuestHeaderCard(context),
           const SizedBox(height: 24),
-          _buildSectionHeader(context.locale.languageCode == 'ne' ? 'खाता सेटिङहरू' : "Account Settings"),
+          _buildSectionHeader(
+            context.locale.languageCode == 'ne'
+                ? 'खाता सेटिङहरू'
+                : "Account Settings",
+          ),
           _buildMenuItem(
             context,
             icon: LucideIcons.settings,
-            title: context.locale.languageCode == 'ne' ? 'सेटिङहरू' : "Settings",
+            title: context.locale.languageCode == 'ne'
+                ? 'सेटिङहरू'
+                : "Settings",
             onTap: () {},
           ),
           _buildMenuItem(
             context,
             icon: LucideIcons.helpCircle,
-            title: context.locale.languageCode == 'ne' ? 'सहायता केन्द्र' : "Help Center",
+            title: context.locale.languageCode == 'ne'
+                ? 'सहायता केन्द्र'
+                : "Help Center",
             onTap: () {},
           ),
         ],
@@ -302,7 +334,9 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            context.locale.languageCode == 'ne' ? 'थुलो बजारमा स्वागत छ' : "Welcome to Thulo Bazaar",
+            context.locale.languageCode == 'ne'
+                ? 'थुलो बजारमा स्वागत छ'
+                : "Welcome to Thulo Bazaar",
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -311,7 +345,9 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            context.locale.languageCode == 'ne' ? 'तपाईंको विज्ञापन र सन्देशहरू व्यवस्थापन गर्न लगइन गर्नुहोस्' : "Log in to manage your ads and messages",
+            context.locale.languageCode == 'ne'
+                ? 'तपाईंको विज्ञापन र सन्देशहरू व्यवस्थापन गर्न लगइन गर्नुहोस्'
+                : "Log in to manage your ads and messages",
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
           ),
@@ -382,8 +418,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     final _lang = context.locale.languageCode;
     final String createdAt = _user?['createdAt'] != null
         ? (_lang == 'ne'
-            ? "${DateFormat('MMM yyyy').format(DateTime.parse(_user!['createdAt']))} देखि सदस्य"
-            : "Member since ${DateFormat('MMM yyyy').format(DateTime.parse(_user!['createdAt']))}")
+              ? "${DateFormat('MMM yyyy').format(DateTime.parse(_user!['createdAt']))} देखि सदस्य"
+              : "Member since ${DateFormat('MMM yyyy').format(DateTime.parse(_user!['createdAt']))}")
         : (_lang == 'ne' ? "२०२५ देखि सदस्य" : "Member since 2025");
 
     return Container(
@@ -511,7 +547,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        context.locale.languageCode == 'ne' ? 'व्यापार खाता' : "Business Account",
+                        context.locale.languageCode == 'ne'
+                            ? 'व्यापार खाता'
+                            : "Business Account",
                         style: GoogleFonts.inter(
                           color: Colors.purple,
                           fontSize: 10,
@@ -616,7 +654,9 @@ class _ProfileScreenState extends State<ProfileScreen>
           Row(
             children: [
               Text(
-                context.locale.languageCode == 'ne' ? 'इमेल ठेगाना' : "Email Address",
+                context.locale.languageCode == 'ne'
+                    ? 'इमेल ठेगाना'
+                    : "Email Address",
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
                   color: Colors.grey[700],
@@ -624,7 +664,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               const SizedBox(width: 4),
               Text(
-                context.locale.languageCode == 'ne' ? '(परिवर्तन गर्न सकिँदैन)' : "(Cannot be changed)",
+                context.locale.languageCode == 'ne'
+                    ? '(परिवर्तन गर्न सकिँदैन)'
+                    : "(Cannot be changed)",
                 style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
               ),
             ],
@@ -661,48 +703,87 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
           ),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
-              border: Border.all(color: const Color(0xFFA7F3D0)),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  LucideIcons.checkCircle,
-                  color: Color(0xFF10B981),
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _phoneController.text,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
+          Builder(
+            builder: (context) {
+              final isPhoneVerified = _user?['phoneVerified'] ?? false;
+              return GestureDetector(
+                onTap: _openPhoneChange,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isPhoneVerified
+                        ? const Color(0xFFECFDF5)
+                        : Colors.orange.withOpacity(0.08),
+                    border: Border.all(
+                      color: isPhoneVerified
+                          ? const Color(0xFFA7F3D0)
+                          : Colors.orange.withOpacity(0.4),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isPhoneVerified
+                            ? LucideIcons.checkCircle
+                            : LucideIcons.alertCircle,
+                        color: isPhoneVerified
+                            ? const Color(0xFF10B981)
+                            : Colors.orange,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _phoneController.text.isNotEmpty
+                            ? _phoneController.text
+                            : (context.locale.languageCode == 'ne'
+                                  ? 'फोन नम्बर थपिएको छैन'
+                                  : 'No phone added'),
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                      if (isPhoneVerified) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          l('verified', context.locale.languageCode),
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF10B981),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                      const Spacer(),
+                      Text(
+                        isPhoneVerified
+                            ? (context.locale.languageCode == 'ne'
+                                  ? 'परिवर्तन गर्नुहोस्'
+                                  : "Change")
+                            : (context.locale.languageCode == 'ne'
+                                  ? 'प्रमाणित गर्नुहोस्'
+                                  : "Verify"),
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        LucideIcons.chevronRight,
+                        size: 12,
+                        color: AppTheme.primary,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  l('verified', context.locale.languageCode),
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF10B981),
-                    fontSize: 13,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  context.locale.languageCode == 'ne' ? 'परिवर्तन गर्नुहोस्' : "Change",
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primary,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(height: 20),
 
@@ -732,7 +813,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                     child: Text(
                       _selectedLocation?.shortDisplayName ??
                           _user?['locationName'] ??
-                          (context.locale.languageCode == 'ne' ? 'स्थान चयन गर्नुहोस्' : "Select Location"),
+                          (context.locale.languageCode == 'ne'
+                              ? 'स्थान चयन गर्नुहोस्'
+                              : "Select Location"),
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.w500,
                         color: AppTheme.textDark,
@@ -742,7 +825,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    context.locale.languageCode == 'ne' ? 'परिवर्तन गर्नुहोस्' : "Change",
+                    context.locale.languageCode == 'ne'
+                        ? 'परिवर्तन गर्नुहोस्'
+                        : "Change",
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
                       color: AppTheme.primary,
@@ -792,7 +877,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                     if (newName.isEmpty) return;
                     try {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'परिवर्तन सेभ हुँदैछ...' : 'Saving changes...')),
+                        SnackBar(
+                          content: Text(
+                            context.locale.languageCode == 'ne'
+                                ? 'परिवर्तन सेभ हुँदैछ...'
+                                : 'Saving changes...',
+                          ),
+                        ),
                       );
 
                       // Build update payload
@@ -814,7 +905,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(context.locale.languageCode == 'ne' ? 'प्रोफाइल सफलतापूर्वक अपडेट भयो!' : 'Profile updated successfully!'),
+                            content: Text(
+                              context.locale.languageCode == 'ne'
+                                  ? 'प्रोफाइल सफलतापूर्वक अपडेट भयो!'
+                                  : 'Profile updated successfully!',
+                            ),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -823,7 +918,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'अपडेट गर्न असफल: $e' : 'Failed to update: $e')),
+                          SnackBar(
+                            content: Text(
+                              context.locale.languageCode == 'ne'
+                                  ? 'अपडेट गर्न असफल: $e'
+                                  : 'Failed to update: $e',
+                            ),
+                          ),
                         );
                       }
                     }
@@ -839,7 +940,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ),
                   child: Text(
-                    context.locale.languageCode == 'ne' ? 'परिवर्तनहरू सेभ गर्नुहोस्' : "Save Changes",
+                    context.locale.languageCode == 'ne'
+                        ? 'परिवर्तनहरू सेभ गर्नुहोस्'
+                        : "Save Changes",
                     style: GoogleFonts.inter(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -911,8 +1014,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                     children: [
                       Text(
                         isPhoneVerified
-                            ? (context.locale.languageCode == 'ne' ? 'फोन प्रमाणित भयो' : 'Phone Verified')
-                            : (context.locale.languageCode == 'ne' ? 'तपाईंको फोन प्रमाणित गर्नुहोस्' : 'Verify Your Phone'),
+                            ? (context.locale.languageCode == 'ne'
+                                  ? 'फोन प्रमाणित भयो'
+                                  : 'Phone Verified')
+                            : (context.locale.languageCode == 'ne'
+                                  ? 'तपाईंको फोन प्रमाणित गर्नुहोस्'
+                                  : 'Verify Your Phone'),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: isPhoneVerified
@@ -958,7 +1065,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                         vertical: 8,
                       ),
                     ),
-                    child: Text(context.locale.languageCode == 'ne' ? 'प्रमाणित गर्नुहोस्' : 'Verify'),
+                    child: Text(
+                      context.locale.languageCode == 'ne'
+                          ? 'प्रमाणित गर्नुहोस्'
+                          : 'Verify',
+                    ),
                   ),
               ],
             ),
@@ -966,7 +1077,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
           const SizedBox(height: 24),
           Text(
-            context.locale.languageCode == 'ne' ? 'सुरक्षा सेटिङहरू' : 'Security Settings',
+            context.locale.languageCode == 'ne'
+                ? 'सुरक्षा सेटिङहरू'
+                : 'Security Settings',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -985,8 +1098,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                     LucideIcons.shield,
                     color: AppTheme.primary,
                   ),
-                  title: Text(context.locale.languageCode == 'ne' ? 'सुरक्षा केन्द्र' : 'Security Center'),
-                  subtitle: Text(context.locale.languageCode == 'ne' ? 'पासवर्ड, 2FA, सक्रिय सत्रहरू' : 'Password, 2FA, Active Sessions'),
+                  title: Text(
+                    context.locale.languageCode == 'ne'
+                        ? 'सुरक्षा केन्द्र'
+                        : 'Security Center',
+                  ),
+                  subtitle: Text(
+                    context.locale.languageCode == 'ne'
+                        ? 'पासवर्ड, 2FA, सक्रिय सत्रहरू'
+                        : 'Password, 2FA, Active Sessions',
+                  ),
                   trailing: const Icon(LucideIcons.chevronRight),
                   onTap: () {
                     Navigator.push(
@@ -1003,8 +1124,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                     LucideIcons.badgeCheck,
                     color: AppTheme.primary,
                   ),
-                  title: Text(context.locale.languageCode == 'ne' ? 'प्रमाणीकरण केन्द्र' : 'Verification Center'),
-                  subtitle: Text(context.locale.languageCode == 'ne' ? 'पहिचान, व्यापार, ब्याज' : 'Identity, Business, Badges'),
+                  title: Text(
+                    context.locale.languageCode == 'ne'
+                        ? 'प्रमाणीकरण केन्द्र'
+                        : 'Verification Center',
+                  ),
+                  subtitle: Text(
+                    context.locale.languageCode == 'ne'
+                        ? 'पहिचान, व्यापार, ब्याज'
+                        : 'Identity, Business, Badges',
+                  ),
                   trailing: const Icon(LucideIcons.chevronRight),
                   onTap: () {
                     Navigator.push(
@@ -1021,7 +1150,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
           const SizedBox(height: 24),
           Text(
-            context.locale.languageCode == 'ne' ? 'खाता व्यवस्थापन' : 'Account Management',
+            context.locale.languageCode == 'ne'
+                ? 'खाता व्यवस्थापन'
+                : 'Account Management',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -1034,12 +1165,26 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
             child: ListTile(
               leading: const Icon(LucideIcons.trash2, color: Colors.red),
-              title: Text(context.locale.languageCode == 'ne' ? 'खाता हटाउनुहोस्' : 'Delete Account'),
-              subtitle: Text(context.locale.languageCode == 'ne' ? 'तपाईंको खाता र डाटा स्थायी रूपमा हटाउनुहोस्' : 'Permanently delete your account and data'),
+              title: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'खाता हटाउनुहोस्'
+                    : 'Delete Account',
+              ),
+              subtitle: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'तपाईंको खाता र डाटा स्थायी रूपमा हटाउनुहोस्'
+                    : 'Permanently delete your account and data',
+              ),
               onTap: () {
                 // TODO: Implement account deletion
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'खाता हटाउने सुविधा चाँडै आउँदैछ' : 'Account deletion coming soon')),
+                  SnackBar(
+                    content: Text(
+                      context.locale.languageCode == 'ne'
+                          ? 'खाता हटाउने सुविधा चाँडै आउँदैछ'
+                          : 'Account deletion coming soon',
+                    ),
+                  ),
                 );
               },
             ),
@@ -1144,7 +1289,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                context.locale.languageCode == 'ne' ? 'अहिलेसम्म सेभ गरिएको विज्ञापन छैन' : "No saved ads yet",
+                context.locale.languageCode == 'ne'
+                    ? 'अहिलेसम्म सेभ गरिएको विज्ञापन छैन'
+                    : "No saved ads yet",
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -1153,7 +1300,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                context.locale.languageCode == 'ne' ? 'बुकमार्क आइकनमा क्लिक गरेर विज्ञापनहरू सेभ गर्नुहोस्' : "Save ads by clicking the bookmark icon",
+                context.locale.languageCode == 'ne'
+                    ? 'बुकमार्क आइकनमा क्लिक गरेर विज्ञापनहरू सेभ गर्नुहोस्'
+                    : "Save ads by clicking the bookmark icon",
                 style: GoogleFonts.inter(color: Colors.grey[500]),
               ),
               const SizedBox(height: 24),
@@ -1166,7 +1315,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                   (route) => false,
                 ),
                 icon: const Icon(LucideIcons.search),
-                label: Text(context.locale.languageCode == 'ne' ? 'विज्ञापन खोज्नुहोस्' : "Search Ads"),
+                label: Text(
+                  context.locale.languageCode == 'ne'
+                      ? 'विज्ञापन खोज्नुहोस्'
+                      : "Search Ads",
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(
@@ -1324,8 +1477,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                       const SizedBox(height: 8),
                       Text(
                         ad.price != null
-                            ? formatLocalizedPrice(ad.price!, context.locale.languageCode)
-                            : (context.locale.languageCode == 'ne' ? 'मूल्यको लागि सम्पर्क गर्नुहोस्' : 'Price on request'),
+                            ? formatLocalizedPrice(
+                                ad.price!,
+                                context.locale.languageCode,
+                              )
+                            : (context.locale.languageCode == 'ne'
+                                  ? 'मूल्यको लागि सम्पर्क गर्नुहोस्'
+                                  : 'Price on request'),
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -1367,7 +1525,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            context.locale.languageCode == 'ne' ? 'हेर्नुहोस्' : "View",
+                            context.locale.languageCode == 'ne'
+                                ? 'हेर्नुहोस्'
+                                : "View",
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.w600,
                               color: AppTheme.primary,
@@ -1395,7 +1555,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            context.locale.languageCode == 'ne' ? 'हटाउनुहोस्' : "Remove",
+                            context.locale.languageCode == 'ne'
+                                ? 'हटाउनुहोस्'
+                                : "Remove",
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.w600,
                               color: Colors.grey[600],

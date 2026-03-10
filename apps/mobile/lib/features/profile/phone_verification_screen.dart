@@ -7,18 +7,24 @@ import 'package:mobile/core/utils/localized_helpers.dart';
 
 class PhoneVerificationScreen extends StatefulWidget {
   final VoidCallback? onVerified;
+  final bool isChanging;
 
-  const PhoneVerificationScreen({super.key, this.onVerified});
+  const PhoneVerificationScreen({
+    super.key,
+    this.onVerified,
+    this.isChanging = false,
+  });
 
   @override
-  State<PhoneVerificationScreen> createState() => _PhoneVerificationScreenState();
+  State<PhoneVerificationScreen> createState() =>
+      _PhoneVerificationScreenState();
 }
 
 class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   final AuthClient _authClient = AuthClient();
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _otpSent = false;
   int _cooldown = 0;
@@ -47,14 +53,23 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     final phone = _phoneController.text.trim();
     if (phone.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'कृपया मान्य फोन नम्बर प्रविष्ट गर्नुहोस्' : 'Please enter a valid phone number')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'कृपया मान्य फोन नम्बर प्रविष्ट गर्नुहोस्'
+                : 'Please enter a valid phone number',
+          ),
+        ),
       );
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      final result = await _authClient.sendOtp(phone, purpose: 'phone_verification');
+      final result = await _authClient.sendOtp(
+        phone,
+        purpose: 'phone_verification',
+      );
       if (result['success'] == true) {
         setState(() {
           _otpSent = true;
@@ -63,7 +78,13 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         _startTimer();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'OTP सफलतापूर्वक पठाइयो' : 'OTP sent successfully')),
+            SnackBar(
+              content: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'OTP सफलतापूर्वक पठाइयो'
+                    : 'OTP sent successfully',
+              ),
+            ),
           );
         }
       } else {
@@ -73,7 +94,13 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'OTP पठाउन असफल: $e' : 'Failed to send OTP: $e')),
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'OTP पठाउन असफल: $e'
+                  : 'Failed to send OTP: $e',
+            ),
+          ),
         );
       }
     }
@@ -85,7 +112,13 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'कृपया मान्य ६ अंकको OTP प्रविष्ट गर्नुहोस्' : 'Please enter a valid 6-digit OTP')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'कृपया मान्य ६ अंकको OTP प्रविष्ट गर्नुहोस्'
+                : 'Please enter a valid 6-digit OTP',
+          ),
+        ),
       );
       return;
     }
@@ -93,8 +126,12 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     setState(() => _isLoading = true);
     try {
       // 1. Verify OTP
-      final verifyResult = await _authClient.verifyOtp(phone, otp, purpose: 'phone_verification');
-      
+      final verifyResult = await _authClient.verifyOtp(
+        phone,
+        otp,
+        purpose: 'phone_verification',
+      );
+
       if (verifyResult['success'] != true) {
         throw Exception(verifyResult['message'] ?? 'Verification failed');
       }
@@ -106,11 +143,17 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
       // 2. Update Phone
       final updateResult = await _authClient.updatePhone(phone, token);
-      
+
       if (updateResult['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'फोन नम्बर प्रमाणित र अपडेट भयो!' : 'Phone number verified and updated!')),
+            SnackBar(
+              content: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'फोन नम्बर प्रमाणित र अपडेट भयो!'
+                    : 'Phone number verified and updated!',
+              ),
+            ),
           );
           widget.onVerified?.call();
           Navigator.pop(context, true);
@@ -118,12 +161,11 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       } else {
         throw Exception(updateResult['message']);
       }
-
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -134,7 +176,15 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.locale.languageCode == 'ne' ? 'फोन प्रमाणित गर्नुहोस्' : 'Verify Phone'),
+        title: Text(
+          widget.isChanging
+              ? (context.locale.languageCode == 'ne'
+                    ? 'फोन नम्बर परिवर्तन गर्नुहोस्'
+                    : 'Change Phone Number')
+              : (context.locale.languageCode == 'ne'
+                    ? 'फोन प्रमाणित गर्नुहोस्'
+                    : 'Verify Phone'),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
@@ -145,9 +195,13 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              context.locale.languageCode == 'ne'
-                  ? 'तपाईंको खाता सुरक्षित गर्न र थप सुविधाहरू सक्षम गर्न फोन नम्बर थप्नुहोस्।'
-                  : 'Add a phone number to secure your account and enable more features.',
+              widget.isChanging
+                  ? (context.locale.languageCode == 'ne'
+                        ? 'नयाँ फोन नम्बर प्रविष्ट गर्नुहोस्। हामी OTP पठाउनेछौं।'
+                        : 'Enter your new phone number. We will send an OTP to verify it.')
+                  : (context.locale.languageCode == 'ne'
+                        ? 'तपाईंको खाता सुरक्षित गर्न र थप सुविधाहरू सक्षम गर्न फोन नम्बर थप्नुहोस्।'
+                        : 'Add a phone number to secure your account and enable more features.'),
               style: const TextStyle(color: Colors.grey, fontSize: 16),
             ),
             const SizedBox(height: 24),
@@ -155,7 +209,9 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: context.locale.languageCode == 'ne' ? 'मोबाइल नम्बर' : 'Mobile Number',
+                labelText: context.locale.languageCode == 'ne'
+                    ? 'मोबाइल नम्बर'
+                    : 'Mobile Number',
                 prefixText: '+977 ',
                 border: const OutlineInputBorder(),
                 enabled: !_otpSent, // Disable editing after OTP sent
@@ -167,7 +223,9 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                 controller: _otpController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: context.locale.languageCode == 'ne' ? 'OTP कोड प्रविष्ट गर्नुहोस्' : 'Enter OTP Code',
+                  labelText: context.locale.languageCode == 'ne'
+                      ? 'OTP कोड प्रविष्ट गर्नुहोस्'
+                      : 'Enter OTP Code',
                   border: const OutlineInputBorder(),
                 ),
               ),
@@ -176,34 +234,46 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _cooldown > 0 ? null : _sendOtp,
-                  child: Text(_cooldown > 0
-                    ? (context.locale.languageCode == 'ne' ? '${_cooldown}s मा OTP पुन: पठाउनुहोस्' : 'Resend OTP in ${_cooldown}s')
-                    : (context.locale.languageCode == 'ne' ? 'OTP पुन: पठाउनुहोस्' : 'Resend OTP')
+                  child: Text(
+                    _cooldown > 0
+                        ? (context.locale.languageCode == 'ne'
+                              ? '${_cooldown}s मा OTP पुन: पठाउनुहोस्'
+                              : 'Resend OTP in ${_cooldown}s')
+                        : (context.locale.languageCode == 'ne'
+                              ? 'OTP पुन: पठाउनुहोस्'
+                              : 'Resend OTP'),
                   ),
                 ),
               ),
             ],
             const Spacer(),
             ElevatedButton(
-              onPressed: _isLoading 
-                ? null 
-                : (_otpSent ? _verifyAndSave : _sendOtp),
+              onPressed: _isLoading
+                  ? null
+                  : (_otpSent ? _verifyAndSave : _sendOtp),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: _isLoading
-                ? const SizedBox(
-                    height: 20, 
-                    width: 20, 
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                  )
-                : Text(
-                    _otpSent
-                        ? (context.locale.languageCode == 'ne' ? 'प्रमाणित गर्नुहोस् र सेभ गर्नुहोस्' : 'Verify & Save')
-                        : (context.locale.languageCode == 'ne' ? 'OTP पठाउनुहोस्' : 'Send OTP'),
-                    style: const TextStyle(fontSize: 16, color: Colors.white),
-                  ),
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      _otpSent
+                          ? (context.locale.languageCode == 'ne'
+                                ? 'प्रमाणित गर्नुहोस् र सेभ गर्नुहोस्'
+                                : 'Verify & Save')
+                          : (context.locale.languageCode == 'ne'
+                                ? 'OTP पठाउनुहोस्'
+                                : 'Send OTP'),
+                      style: const TextStyle(fontSize: 16, color: Colors.white),
+                    ),
             ),
           ],
         ),
