@@ -206,6 +206,7 @@ model ads {
   @@index([price], map: "idx_ads_price")
   @@index([slug], map: "idx_ads_slug")
   @@index([status, category_id, location_id], map: "idx_ads_status_category_location")
+  @@index([status, category_id, location_id, price], map: "idx_ads_status_cat_loc_price")
   @@index([status, created_at(sort: Desc)], map: "idx_ads_status_created")
   @@index([user_id], map: "idx_ads_user_id")
   @@index([view_count(sort: Desc)], map: "idx_ads_view_count")
