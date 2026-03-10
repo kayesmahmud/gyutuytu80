@@ -136,8 +136,17 @@ router.get(
         instagram_url: true,
         tiktok_url: true,
         created_at: true,
+        location_id: true,
+        default_category_id: true,
+        default_subcategory_id: true,
         locations: {
-          select: { name: true },
+          select: { name: true, slug: true },
+        },
+        default_category: {
+          select: { id: true, name: true, slug: true, icon: true },
+        },
+        default_subcategory: {
+          select: { id: true, name: true, slug: true, icon: true },
         },
       },
     });
@@ -188,7 +197,17 @@ router.get(
           email: '', // Don't expose email publicly
           businessVerificationStatus: user.business_verification_status,
           individualVerified: user.individual_verified,
+          locationId: (user as any).location_id,
           locationName: (user as any).locations?.name,
+          locationFullPath: (user as any).locations?.slug,
+          categoryId: (user as any).default_category_id,
+          categoryName: (user as any).default_category?.name,
+          categorySlug: (user as any).default_category?.slug,
+          categoryIcon: (user as any).default_category?.icon,
+          subcategoryId: (user as any).default_subcategory_id,
+          subcategoryName: (user as any).default_subcategory?.name,
+          subcategorySlug: (user as any).default_subcategory?.slug,
+          subcategoryIcon: (user as any).default_subcategory?.icon,
           facebookUrl: user.facebook_url,
           instagramUrl: user.instagram_url,
           tiktokUrl: user.tiktok_url,
