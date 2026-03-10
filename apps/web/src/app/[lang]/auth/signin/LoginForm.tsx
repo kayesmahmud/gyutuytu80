@@ -48,7 +48,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
     if (urlError) {
       setError(t(OAUTH_ERROR_KEYS[urlError] ?? 'oauthDefaultError'));
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   const Spinner = ({ className = 'h-5 w-5' }: { className?: string }) => (
     <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none">

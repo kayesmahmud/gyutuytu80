@@ -71,8 +71,8 @@ describe('POST /api/auth/send-otp', () => {
     vi.resetModules();
     setupDefaultMocks();
 
-    const module = await import('@/app/api/auth/send-otp/route');
-    POST = module.POST;
+    const routeModule = await import('@/app/api/auth/send-otp/route');
+    POST = routeModule.POST;
   });
 
   afterEach(() => {

@@ -64,9 +64,9 @@ describe('Shop Reports API', () => {
     mockCount.mockResolvedValue(0);
 
     // Import fresh module
-    const module = await import('@/app/api/shop-reports/route');
-    POST = module.POST;
-    GET = module.GET;
+    const routeModule = await import('@/app/api/shop-reports/route');
+    POST = routeModule.POST;
+    GET = routeModule.GET;
   });
 
   afterEach(() => {

@@ -119,7 +119,7 @@ export function useResetPassword(
         setIsLoading(false);
       }
     },
-    [otp, method, identifier]
+    [otp, method, identifier, t]
   );
 
   const handleResetPassword = useCallback(
@@ -168,7 +168,7 @@ export function useResetPassword(
         setIsLoading(false);
       }
     },
-    [newPassword, confirmPassword, method, identifier, otp, router, lang]
+    [newPassword, confirmPassword, method, identifier, otp, router, lang, t]
   );
 
   const handleResendOtp = useCallback(async () => {
@@ -203,7 +203,7 @@ export function useResetPassword(
     } finally {
       setIsResending(false);
     }
-  }, [method, identifier]);
+  }, [method, identifier, t]);
 
   return {
     // State

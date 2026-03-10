@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { getImageUrl } from '@/lib/images/imageUrl';
 import { formatPrice, formatDateTime } from '@thulobazaar/utils';
 
@@ -66,10 +67,12 @@ export default function FeaturedAdsCarousel({ ads, lang }: FeaturedAdsCarouselPr
               </div>
             )}
             {ad.primaryImage ? (
-              <img
+              <Image
                 src={getImageUrl(ad.primaryImage, 'ads') as string}
                 alt={ad.title}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover/card:scale-105"
+                fill
+                unoptimized
+                className="object-cover transition-transform duration-300 group-hover/card:scale-105"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
@@ -117,21 +120,11 @@ export default function FeaturedAdsCarousel({ ads, lang }: FeaturedAdsCarouselPr
                 <span className="truncate">{ad.sellerName}</span>
                 {/* Golden Badge for Verified Business */}
                 {ad.accountType === 'business' && ad.businessVerificationStatus === 'approved' && (
-                  <img
-                    src="/golden-badge.png"
-                    alt="Verified Business"
-                    title="Verified Business"
-                    className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0"
-                  />
+                  <Image src="/golden-badge.png" alt="Verified Business" title="Verified Business" width={16} height={16} className="flex-shrink-0" />
                 )}
                 {/* Blue Badge for Verified Individual */}
                 {ad.accountType === 'individual' && (ad.individualVerified || ad.businessVerificationStatus === 'verified') && (
-                  <img
-                    src="/blue-badge.png"
-                    alt="Verified Individual Seller"
-                    title="Verified Individual Seller"
-                    className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0"
-                  />
+                  <Image src="/blue-badge.png" alt="Verified Individual Seller" title="Verified Individual Seller" width={16} height={16} className="flex-shrink-0" />
                 )}
               </div>
             )}

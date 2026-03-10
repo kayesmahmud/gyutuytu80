@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { BusinessVerification, TabStatus } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -156,10 +157,12 @@ function LicenseDocument({ verification }: { verification: BusinessVerification 
         >
           <div className="relative w-32 h-32 bg-white border-2 border-blue-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors">
             {isImage ? (
-              <img
+              <Image
                 src={`${API_URL}/uploads/business_verification/${verification.businessLicense}`}
                 alt="Business License"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                fill
+                unoptimized
+                className="object-cover group-hover:scale-105 transition-transform"
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-red-100 to-pink-100">

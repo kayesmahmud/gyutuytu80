@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import {
   CheckCircle,
   XCircle,
@@ -49,10 +50,13 @@ export default function AdCard({
           {/* Ad Image */}
           <div className="flex-shrink-0">
             {ad.images && ad.images.length > 0 ? (
-              <img
+              <Image
                 src={getImageUrl(ad.images[0], 'ads') || ''}
                 alt={ad.title}
-                className="w-48 h-36 object-cover rounded-lg"
+                width={192}
+                height={144}
+                unoptimized
+                className="object-cover rounded-lg"
               />
             ) : (
               <div className="w-48 h-36 bg-gray-200 rounded-lg flex items-center justify-center">

@@ -1,7 +1,14 @@
 import nextConfig from "eslint-config-next";
 
-export default [
+const config = [
   ...nextConfig,
+  // Disable React hooks rules for Playwright e2e fixtures — `use` is a Playwright param, not a React hook
+  {
+    files: ["e2e/**/*.ts", "e2e/**/*.tsx"],
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+    },
+  },
   {
     rules: {
       // Disable React 19 compiler rules (experimental - too strict for existing code)
@@ -20,3 +27,5 @@ export default [
     },
   },
 ];
+
+export default config;
