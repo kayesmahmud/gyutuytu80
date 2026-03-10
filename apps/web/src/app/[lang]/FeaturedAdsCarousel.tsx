@@ -73,7 +73,7 @@ export default function FeaturedAdsCarousel({ ads, lang }: FeaturedAdsCarouselPr
                 fill
                 unoptimized
                 className="object-cover transition-transform duration-300 group-hover/card:scale-105"
-                onError={(e) => {
+                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                 }}
