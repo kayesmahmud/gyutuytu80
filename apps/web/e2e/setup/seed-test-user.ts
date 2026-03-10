@@ -8,7 +8,7 @@
  */
 
 import { prisma } from '@thulobazaar/database';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 // Test user credentials (must match auth fixture)
 const TEST_USER = {

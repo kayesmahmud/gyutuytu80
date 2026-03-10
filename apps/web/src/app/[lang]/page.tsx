@@ -58,7 +58,11 @@ export default async function HomePage({ params }: HomePageProps) {
   const tc = await getTranslations('common');
 
   // ✅ Fetch real data from database using Prisma (parallel queries for performance)
-  const [categories, featuredAds, latestAds] = await Promise.all([
+  // Try/catch: at Docker build time there is no DB — return empty arrays so prerender succeeds.
+  // ISR (revalidate=300) will populate real data on first runtime request.
+  let categories: any[] = [], featuredAds: any[] = [], latestAds: any[] = [];
+  try {
+  [categories, featuredAds, latestAds] = await Promise.all([
     // Get all top-level categories (no parent)
     prisma.categories.findMany({
       where: {
@@ -173,6 +177,7 @@ export default async function HomePage({ params }: HomePageProps) {
       take: 6,
     }),
   ]);
+  } catch { /* no DB at build time — ISR fills data on first runtime request */ }
 
   // Sort categories by custom display order
   const sortedCategories = [...categories].sort((a, b) => {
