@@ -18,6 +18,7 @@ import {
   smartFeaturesField,
   megapixelsField,
 } from '../fields';
+import { homeAppliances } from './general';
 
 export const mobilePhones: SubcategoryConfig = {
   name: 'Mobile Phones',
@@ -187,14 +188,6 @@ export const photocopiers: SubcategoryConfig = {
     { field: brandField, override: { placeholder: 'e.g., Canon, Xerox, HP, Ricoh' } },
     { field: modelField },
     { field: warrantyField },
-  ],
-};
-
-export const homeAppliances: SubcategoryConfig = {
-  name: 'Home Appliances',
-  fields: [
-    { field: conditionNewUsed },
-    { field: brandField, override: { placeholder: 'e.g., LG, Samsung, Whirlpool' } },
   ],
 };
 
