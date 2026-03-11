@@ -8,7 +8,18 @@ interface StatsGridProps {
   avgResponseTimeTrendText: string;
 }
 
+// For pending metrics: decrease = good (green), increase = bad (red)
+function parsePendingTrend(changeStr: string | undefined): { isPositive: boolean; label: string } {
+  if (!changeStr || changeStr === '0%') return { isPositive: true, label: 'no change vs last week' };
+  const num = parseFloat(changeStr);
+  if (num > 0) return { isPositive: false, label: 'increase vs last week' };
+  return { isPositive: true, label: 'decrease vs last week' };
+}
+
 export default function StatsGrid({ stats, avgResponseTimeTrendText }: StatsGridProps) {
+  const pendingAdsTrend = parsePendingTrend(stats?.pendingChange);
+  const verificationsTrend = parsePendingTrend(stats?.verificationsChange);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <StatsCard
@@ -18,9 +29,9 @@ export default function StatsGrid({ stats, avgResponseTimeTrendText }: StatsGrid
         color="primary"
         theme="editor"
         trend={{
-          value: stats?.pendingChange || '',
-          isPositive: true,
-          label: 'from yesterday',
+          value: stats?.pendingChange || '0%',
+          isPositive: pendingAdsTrend.isPositive,
+          label: pendingAdsTrend.label,
         }}
       />
       <StatsCard
@@ -30,9 +41,9 @@ export default function StatsGrid({ stats, avgResponseTimeTrendText }: StatsGrid
         color="success"
         theme="editor"
         trend={{
-          value: stats?.verificationsChange || '',
-          isPositive: false,
-          label: 'decrease',
+          value: stats?.verificationsChange || '0%',
+          isPositive: verificationsTrend.isPositive,
+          label: verificationsTrend.label,
         }}
       />
       <StatsCard
@@ -43,7 +54,7 @@ export default function StatsGrid({ stats, avgResponseTimeTrendText }: StatsGrid
         theme="editor"
         trend={{
           value: avgResponseTimeTrendText,
-          isPositive: avgResponseTimeTrendText.includes('Improved'),
+          isPositive: avgResponseTimeTrendText.includes('Improved') || avgResponseTimeTrendText === 'Stable',
           label: '',
         }}
       />

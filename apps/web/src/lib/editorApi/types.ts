@@ -62,6 +62,16 @@ export interface DashboardData {
     reportedAds: number;
   };
   myWorkToday: MyWorkToday;
+  pendingTasks: PendingTask[];
+}
+
+export interface PendingTask {
+  type: 'scam_report' | 'business_verification' | 'ad_review';
+  title: string;
+  description: string;
+  priority: 'high' | 'medium';
+  createdAt: string | null;
+  linkId: number | null;
 }
 
 export interface MyWorkToday {

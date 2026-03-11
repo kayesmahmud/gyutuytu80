@@ -74,6 +74,8 @@ router.get(
       reportedAdsCount,
       // Verification badge counts
       businessVerificationCount, individualVerificationCount,
+      // Pending tasks (real data)
+      recentScamReports, oldestPendingVerifications, pendingAdsByCategory,
       // My work today (6 queries)
       adsApprovedToday, adsRejectedToday, adsEditedToday,
       businessVerificationsToday, individualVerificationsToday, supportTicketsToday,
@@ -84,9 +86,11 @@ router.get(
       prisma.ads.count({ where: { status: 'pending' } }),
       prisma.ads.count({ where: { status: 'approved' } }),
       prisma.ads.count({ where: { status: 'rejected' } }),
-      prisma.users.count({
-        where: { OR: [{ business_verification_status: 'pending' }, { individual_verified: false }] },
-      }),
+      // Pending verifications = actual pending requests, not unverified users
+      Promise.all([
+        prisma.business_verification_requests.count({ where: { status: 'pending' } }),
+        prisma.individual_verification_requests.count({ where: { status: 'pending' } }),
+      ]).then(([biz, ind]) => biz + ind),
 
       // ── Avg response time (SQL aggregation instead of fetching all rows) ──
       prisma.$queryRaw<[{ avg_hours: number | null; count: bigint }]>`
@@ -111,8 +115,16 @@ router.get(
 
       // ── Trends ──
       prisma.ads.count({ where: { status: 'pending', created_at: { lte: sevenDaysAgo } } }),
-      prisma.users.count({ where: { business_verification_status: 'pending' } }),
-      prisma.users.count({ where: { business_verification_status: 'pending', created_at: { lte: sevenDaysAgo } } }),
+      // Current pending verification requests (both types combined)
+      Promise.all([
+        prisma.business_verification_requests.count({ where: { status: 'pending' } }),
+        prisma.individual_verification_requests.count({ where: { status: 'pending' } }),
+      ]).then(([biz, ind]) => biz + ind),
+      // Past pending verification requests (created 7+ days ago)
+      Promise.all([
+        prisma.business_verification_requests.count({ where: { status: 'pending', created_at: { lte: sevenDaysAgo } } }),
+        prisma.individual_verification_requests.count({ where: { status: 'pending', created_at: { lte: sevenDaysAgo } } }),
+      ]).then(([biz, ind]) => biz + ind),
 
       // ── Notifications ──
       prisma.ad_reports.count({ where: { status: 'pending', reason: { in: ['scam', 'fraud'] } } }),
@@ -132,6 +144,32 @@ router.get(
       // ── Verification badge counts ──
       prisma.business_verification_requests.count({ where: { status: 'pending' } }),
       prisma.individual_verification_requests.count({ where: { status: 'pending' } }),
+
+      // ── Pending tasks (real data for dashboard widget) ──
+      // Latest scam/fraud reports
+      prisma.ad_reports.findMany({
+        where: { status: 'pending', reason: { in: ['scam', 'fraud'] } },
+        select: { id: true, reason: true, details: true, created_at: true, ads: { select: { title: true } } },
+        orderBy: { created_at: 'desc' },
+        take: 3,
+      }),
+      // Oldest pending business verifications
+      prisma.business_verification_requests.findMany({
+        where: { status: 'pending' },
+        select: { id: true, business_name: true, created_at: true },
+        orderBy: { created_at: 'asc' },
+        take: 3,
+      }),
+      // Pending ads grouped by top category
+      prisma.$queryRaw<{ category_name: string; count: bigint }[]>`
+        SELECT c.name as category_name, COUNT(*)::bigint as count
+        FROM ads a
+        LEFT JOIN categories c ON a.category_id = c.id
+        WHERE a.status = 'pending' AND a.deleted_at IS NULL
+        GROUP BY c.name
+        ORDER BY count DESC
+        LIMIT 3
+      `,
 
       // ── My work today ──
       prisma.ads.count({ where: { status: 'approved', reviewed_by: userId, reviewed_at: { gte: today } } }),
@@ -221,6 +259,35 @@ router.get(
           individualVerificationsToday,
           supportTicketsAssigned: supportTicketsToday,
         },
+        pendingTasks: [
+          // Scam/fraud reports
+          ...recentScamReports.map((r) => ({
+            type: 'scam_report' as const,
+            title: 'Scam Report',
+            description: `Reported: ${r.ads?.title || 'Unknown ad'} — ${r.reason}`,
+            priority: 'high' as const,
+            createdAt: r.created_at?.toISOString() || null,
+            linkId: r.id,
+          })),
+          // Pending verifications
+          ...oldestPendingVerifications.map((v) => ({
+            type: 'business_verification' as const,
+            title: 'Business Verification',
+            description: `${v.business_name} — Documents submitted`,
+            priority: 'medium' as const,
+            createdAt: v.created_at?.toISOString() || null,
+            linkId: v.id,
+          })),
+          // Pending ads by category
+          ...pendingAdsByCategory.map((c) => ({
+            type: 'ad_review' as const,
+            title: 'Ad Review Batch',
+            description: `${Number(c.count)} ${c.category_name || 'Uncategorized'} ads pending review`,
+            priority: (Number(c.count) > 10 ? 'high' : 'medium') as 'high' | 'medium',
+            createdAt: null,
+            linkId: null,
+          })),
+        ],
       },
     });
   })

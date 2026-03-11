@@ -56,14 +56,12 @@ export default function WelcomeSection({ staffName, avatarUrl, myWorkToday }: We
                   <td className="px-3 py-2 text-sm text-gray-600 border-r border-gray-200 whitespace-nowrap">Business verification:</td>
                   <td className="px-3 py-2 text-right text-lg font-bold text-gray-900">{myWorkToday.businessVerificationsToday}</td>
                 </tr>
-                {/* Row 2: Ad Edited | Support tickets | Individual verification */}
+                {/* Row 2: Support tickets | Individual verification */}
                 <tr className="hover:bg-gray-50">
-                  <td className="px-3 py-2 text-sm text-gray-600 border-r border-gray-200 whitespace-nowrap">Ad Edited:</td>
-                  <td className="px-3 py-2 text-right text-lg font-bold text-gray-900 border-r border-gray-200">{myWorkToday.adsEditedToday}</td>
                   <td className="px-3 py-2 text-sm text-gray-600 border-r border-gray-200 whitespace-nowrap">Support tickets:</td>
                   <td className="px-3 py-2 text-right text-lg font-bold text-gray-900 border-r border-gray-200">{myWorkToday.supportTicketsAssigned}</td>
                   <td className="px-3 py-2 text-sm text-gray-600 border-r border-gray-200 whitespace-nowrap">Individual verification:</td>
-                  <td className="px-3 py-2 text-right text-lg font-bold text-gray-900">{myWorkToday.individualVerificationsToday}</td>
+                  <td className="px-3 py-2 text-right text-lg font-bold text-gray-900" colSpan={3}>{myWorkToday.individualVerificationsToday}</td>
                 </tr>
               </tbody>
             </table>

@@ -3,7 +3,7 @@
 import { use } from 'react';
 import { DashboardLayout, QuickActions } from '@/components/admin';
 import { useEditorDashboard } from './useEditorDashboard';
-import { WelcomeSection, StatsGrid, PendingTasks } from './components';
+import { WelcomeSection, StatsGrid } from './components';
 
 export default function EditorDashboard({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = use(params);
@@ -21,6 +21,7 @@ export default function EditorDashboard({ params }: { params: Promise<{ lang: st
     notificationCount,
     avgResponseTimeTrendText,
     quickActions,
+    handleExportReport,
   } = useEditorDashboard(lang);
 
   if (loading) {
@@ -52,6 +53,7 @@ export default function EditorDashboard({ params }: { params: Promise<{ lang: st
       notificationCount={notificationCount}
       theme="editor"
       onLogout={handleLogout}
+      onExportReport={handleExportReport}
       lastLogin={lastLogin}
     >
       {/* Welcome Section with Profile */}
@@ -73,10 +75,6 @@ export default function EditorDashboard({ params }: { params: Promise<{ lang: st
         <QuickActions actions={quickActions} theme="editor" />
       </div>
 
-      {/* Tasks & Activity Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PendingTasks />
-      </div>
     </DashboardLayout>
   );
 }

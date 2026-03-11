@@ -60,6 +60,7 @@ export type {
   Report,
   ReportedAdsCount,
   SupportChatCount,
+  PendingTask,
 } from './types';
 
 // ============================================

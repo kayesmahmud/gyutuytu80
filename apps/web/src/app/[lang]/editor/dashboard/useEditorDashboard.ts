@@ -30,6 +30,7 @@ export interface UseEditorDashboardReturn {
   notificationCount: number;
   avgResponseTimeTrendText: string;
   quickActions: QuickActionConfig[];
+  handleExportReport: () => void;
 }
 
 export function useEditorDashboard(lang: string): UseEditorDashboardReturn {
@@ -156,6 +157,30 @@ export function useEditorDashboard(lang: string): UseEditorDashboardReturn {
     loadDashboardData();
   }, [authLoading, staff, isEditor, lang, router, loadDashboardData]);
 
+  const handleExportReport = useCallback(() => {
+    const rows: string[][] = [
+      ['Metric', 'Value'],
+      ['Pending Ads', String(stats?.pendingAds ?? 0)],
+      ['Pending Verifications', String(stats?.pendingVerifications ?? 0)],
+      ['Avg Response Time', stats?.avgResponseTime ?? 'N/A'],
+      ['Ads Approved Today', String(myWorkToday.adsApprovedToday)],
+      ['Ads Rejected Today', String(myWorkToday.adsRejectedToday)],
+      ['Ads Edited Today', String(myWorkToday.adsEditedToday)],
+      ['Business Verifications Today', String(myWorkToday.businessVerificationsToday)],
+      ['Individual Verifications Today', String(myWorkToday.individualVerificationsToday)],
+      ['Support Tickets Today', String(myWorkToday.supportTicketsAssigned)],
+    ];
+
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `editor-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [stats, myWorkToday]);
+
   const quickActions: QuickActionConfig[] = useMemo(
     () => [
       {
@@ -211,5 +236,6 @@ export function useEditorDashboard(lang: string): UseEditorDashboardReturn {
     notificationCount,
     avgResponseTimeTrendText,
     quickActions,
+    handleExportReport,
   };
 }
