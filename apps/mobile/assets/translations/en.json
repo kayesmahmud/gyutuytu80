@@ -115,6 +115,27 @@
     "resetFailed": "Failed to reset password. Please try again."
   },
 
+  "report": {
+    "reportThisAd": "Report this ad",
+    "title": "Report Ad",
+    "whyReporting": "Why are you reporting this ad?",
+    "selectReason": "Please select a reason",
+    "spam": "Spam or scam",
+    "fraud": "Fraud or fake listing",
+    "inappropriate": "Inappropriate content",
+    "duplicate": "Duplicate listing",
+    "misleading": "Misleading information",
+    "other": "Other reason",
+    "additionalDetails": "Additional details (optional)",
+    "detailsHint": "Describe the issue in more detail...",
+    "submit": "Submit Report",
+    "success": "Report submitted. Our team will review it shortly.",
+    "failed": "Failed to submit report. Please try again.",
+    "disclaimer": "False reports may result in action against your account.",
+    "loginRequired": "Login Required",
+    "loginToReport": "Please sign in to report this ad."
+  },
+
   "home": {
     "heroTitle": "Buy, Sell, and Rent Across Nepal",
     "searchPlaceholder": "Search for anything...",

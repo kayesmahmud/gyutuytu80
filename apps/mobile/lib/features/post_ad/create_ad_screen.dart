@@ -555,7 +555,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   Widget _buildDraftStatusBar() {
     if (_isSaving) {
       return _buildStatusRow(
-        LucideIcons.cloudUpload,
+        LucideIcons.arrowUpFromLine,
         'Saving draft...',
         Colors.grey[500]!,
       );

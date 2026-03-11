@@ -237,12 +237,13 @@ class _AdImageGalleryState extends State<AdImageGallery> {
           ),
         ],
 
-        // Promotion Badge (top-right)
+        // Promotion Badge (middle-right)
         if (_promotionBadge != null)
           Positioned(
-            top: 16,
+            top: 0,
+            bottom: 0,
             right: 16,
-            child: _promotionBadge!,
+            child: Center(child: _promotionBadge!),
           ),
 
         // Counter Badge (bottom-left)

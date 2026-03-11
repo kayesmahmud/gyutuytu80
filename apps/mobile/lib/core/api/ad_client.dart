@@ -94,7 +94,9 @@ class AdClient {
   }
 
   /// Get featured ads
-  Future<PaginatedResponse<AdWithDetails>> getFeaturedAds({int limit = 6}) async {
+  Future<PaginatedResponse<AdWithDetails>> getFeaturedAds({
+    int limit = 6,
+  }) async {
     return getAds(limit: limit, isFeatured: true);
   }
 
@@ -149,7 +151,8 @@ class AdClient {
       await _dio.post('/ads/$adId/view');
     } catch (e) {
       // Silently fail - view count is not critical
-      if (kDebugMode) developer.log('Failed to increment view: $e', name: 'AdClient');
+      if (kDebugMode)
+        developer.log('Failed to increment view: $e', name: 'AdClient');
     }
   }
 
@@ -164,13 +167,13 @@ class AdClient {
     String? status,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
+      final queryParams = <String, dynamic>{'page': page, 'limit': limit};
       if (status != null) queryParams['status'] = status;
 
-      final response = await _dio.get('/ads/my-ads', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/ads/my-ads',
+        queryParameters: queryParams,
+      );
 
       // Handle both paginated and non-paginated responses
       if (response.data['success'] == true) {
@@ -178,8 +181,15 @@ class AdClient {
         if (data is List) {
           // Non-paginated response
           return PaginatedResponse.success(
-            data.map((e) => AdWithDetails.fromJson(e as Map<String, dynamic>)).toList(),
-            PaginationInfo(page: 1, limit: data.length, total: data.length, totalPages: 1),
+            data
+                .map((e) => AdWithDetails.fromJson(e as Map<String, dynamic>))
+                .toList(),
+            PaginationInfo(
+              page: 1,
+              limit: data.length,
+              total: data.length,
+              totalPages: 1,
+            ),
           );
         }
         // Paginated response
@@ -188,7 +198,9 @@ class AdClient {
           (json) => AdWithDetails.fromJson(json),
         );
       }
-      return PaginatedResponse.failure(response.data['error'] ?? 'Failed to fetch your ads');
+      return PaginatedResponse.failure(
+        response.data['error'] ?? 'Failed to fetch your ads',
+      );
     } on DioException catch (e) {
       return PaginatedResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch your ads',
@@ -204,30 +216,34 @@ class AdClient {
   Future<ApiResponse<Ad>> createAd(FormData formData) async {
     try {
       final response = await _dio.post('/ads', data: formData);
-      if (kDebugMode) developer.log('createAd response: ${response.data}', name: 'AdClient');
+      if (kDebugMode)
+        developer.log('createAd response: ${response.data}', name: 'AdClient');
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
           Ad.fromJson(response.data['data'] as Map<String, dynamic>),
         );
       }
-      return ApiResponse.failure(response.data['error'] is String 
-          ? response.data['error'] 
-          : response.data['message'] ?? 'Failed to create ad');
+      return ApiResponse.failure(
+        response.data['error'] is String
+            ? response.data['error']
+            : response.data['message'] ?? 'Failed to create ad',
+      );
     } on DioException catch (e) {
       final errorData = e.response?.data;
       String errorMessage = 'Failed to create ad';
-      
+
       if (errorData != null) {
         if (errorData['message'] is String) {
           errorMessage = errorData['message'];
         } else if (errorData['error'] is String) {
           errorMessage = errorData['error'];
-        } else if (errorData['error'] is Map && errorData['error']['message'] is String) {
+        } else if (errorData['error'] is Map &&
+            errorData['error']['message'] is String) {
           errorMessage = errorData['error']['message'];
         }
       }
-      
+
       return ApiResponse.failure(errorMessage);
     }
   }
@@ -242,7 +258,9 @@ class AdClient {
           Ad.fromJson(response.data['data'] as Map<String, dynamic>),
         );
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to update ad');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Failed to update ad',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to update ad',
@@ -258,7 +276,9 @@ class AdClient {
       if (response.data['success'] == true) {
         return ApiResponse.success(null);
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to delete ad');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Failed to delete ad',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to delete ad',
@@ -278,27 +298,37 @@ class AdClient {
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
         return data
-            .map((e) => CategoryWithSubcategories.fromJson(e as Map<String, dynamic>))
+            .map(
+              (e) =>
+                  CategoryWithSubcategories.fromJson(e as Map<String, dynamic>),
+            )
             .toList();
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching categories: $e', name: 'AdClient');
+      if (kDebugMode)
+        developer.log('Error fetching categories: $e', name: 'AdClient');
       return [];
     }
   }
 
   /// Get category by slug
-  Future<ApiResponse<CategoryWithSubcategories>> getCategoryBySlug(String slug) async {
+  Future<ApiResponse<CategoryWithSubcategories>> getCategoryBySlug(
+    String slug,
+  ) async {
     try {
       final response = await _dio.get('/categories/slug/$slug');
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
-          CategoryWithSubcategories.fromJson(response.data['data'] as Map<String, dynamic>),
+          CategoryWithSubcategories.fromJson(
+            response.data['data'] as Map<String, dynamic>,
+          ),
         );
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Category not found');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Category not found',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch category',
@@ -323,8 +353,40 @@ class AdClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching location hierarchy: $e', name: 'AdClient');
+      if (kDebugMode)
+        developer.log(
+          'Error fetching location hierarchy: $e',
+          name: 'AdClient',
+        );
       return [];
+    }
+  }
+
+  // ==========================================
+  // REPORT AD
+  // ==========================================
+
+  /// Report an ad (requires auth)
+  Future<Map<String, dynamic>> reportAd(
+    int adId,
+    String reason, {
+    String? details,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/reports',
+        data: {
+          'adId': adId,
+          'reason': reason,
+          if (details != null && details.isNotEmpty) 'details': details,
+        },
+      );
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response!.data as Map<String, dynamic>;
+      }
+      return {'success': false, 'message': 'Network error occurred'};
     }
   }
 
@@ -333,7 +395,11 @@ class AdClient {
   // ==========================================
 
   /// Get related ads (same category)
-  Future<List<AdWithDetails>> getRelatedAds(int categoryId, {int limit = 3, int? excludeAdId}) async {
+  Future<List<AdWithDetails>> getRelatedAds(
+    int categoryId, {
+    int limit = 3,
+    int? excludeAdId,
+  }) async {
     try {
       final response = await getAds(
         categoryId: categoryId,
@@ -351,7 +417,8 @@ class AdClient {
       }
       return [];
     } catch (e) {
-      if (kDebugMode) developer.log('Error fetching related ads: $e', name: 'AdClient');
+      if (kDebugMode)
+        developer.log('Error fetching related ads: $e', name: 'AdClient');
       return [];
     }
   }

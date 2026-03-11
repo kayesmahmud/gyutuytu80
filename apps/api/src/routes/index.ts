@@ -13,3 +13,4 @@ export { default as promotionRoutes } from './promotion.routes.js';
 export { default as mockPaymentRoutes } from './mockPayment.routes.js';
 export { default as favoritesRoutes } from './favorites.routes.js';
 export { default as supportRoutes } from './support.routes.js';
+export { default as reportsRoutes } from './reports.routes.js';

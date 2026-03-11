@@ -5,6 +5,15 @@
 **Ports:** 3333 (web), 5000 (api)
 **DB:** thulobazaar @ localhost:5432 (user: elw, pass: postgres)
 
+## 🖥️ Production Server (AWS EC2)
+- **IP:** `52.66.73.213`
+- **SSH key:** `/Users/elw/Documents/Web/thulobazaar/monorepo/thulobazaar-key.pem`
+- **User:** `ubuntu` | **App dir:** `/opt/thulobazaar` | **Region:** `ap-south-1`
+- **Security group:** `sg-0628b345587d2887c`
+- **Connect:** `ssh -i /Users/elw/Documents/Web/thulobazaar/monorepo/thulobazaar-key.pem ubuntu@52.66.73.213`
+- **Deploy:** push to `main` → GitHub Actions auto-deploys via ECR → EC2
+- **After deploy migration:** `docker compose -f docker-compose.prod.yml exec api npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma`
+
 ## 📁 Paths
 ```
 /Users/elw/Documents/Web/thulobazaar/monorepo/

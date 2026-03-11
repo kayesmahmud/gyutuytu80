@@ -28,6 +28,7 @@ import categoryPricingTiersRoutes from './routes/categoryPricingTiers.routes.js'
 import favoritesRoutes from './routes/favorites.routes.js';
 import announcementsRoutes from './routes/announcements.routes.js';
 import supportRoutes from './routes/support.routes.js';
+import reportsRoutes from './routes/reports.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -161,6 +162,7 @@ export function createApp(): Express {
   app.use('/api/favorites', favoritesRoutes);
   app.use('/api/announcements', announcementsRoutes);
   app.use('/api/support', supportRoutes);
+  app.use('/api/reports', reportsRoutes);
 
   // Public endpoint: Ad configuration for web + mobile
   app.get('/api/ad-config', async (_req, res) => {

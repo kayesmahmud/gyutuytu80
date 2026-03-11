@@ -941,7 +941,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                   child: Text(
                     context.locale.languageCode == 'ne'
-                        ? 'परिवर्तनहरू सेभ गर्नुहोस्'
+                        ? 'सेभ गर्नुहोस्'
                         : "Save Changes",
                     style: GoogleFonts.inter(
                       color: Colors.white,
@@ -952,23 +952,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 24),
-
-          // Logout Button
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              onPressed: _handleLogout,
-              child: Text(
-                context.locale.languageCode == 'ne' ? 'लग आउट' : "Log Out",
-                style: GoogleFonts.inter(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-            ),
           ),
         ],
       ),
