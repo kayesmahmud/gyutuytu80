@@ -41,7 +41,7 @@ export function useSettingsPage(lang: string) {
           supportPhone: db.support_phone || prev.supportPhone,
           maintenanceMode: db.maintenance_mode === 'true',
           allowRegistration: db.allow_registration !== 'false',
-          requireEmailVerification: db.require_email_verification !== 'false',
+          requirePhoneVerification: db.require_phone_verification !== 'false',
           maxAdsPerUser: parseInt(db.max_ads_per_user) || prev.maxAdsPerUser,
           adExpiryDays: parseInt(db.ad_expiry_days) || prev.adExpiryDays,
           freeAdsLimit: parseInt(db.free_ads_limit) || prev.freeAdsLimit,

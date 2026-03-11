@@ -5,7 +5,7 @@ export interface SystemSettings {
   supportPhone: string;
   maintenanceMode: boolean;
   allowRegistration: boolean;
-  requireEmailVerification: boolean;
+  requirePhoneVerification: boolean;
   maxAdsPerUser: number;
   adExpiryDays: number;
   freeAdsLimit: number;
@@ -85,7 +85,7 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   supportPhone: '+977-1-1234567',
   maintenanceMode: false,
   allowRegistration: true,
-  requireEmailVerification: true,
+  requirePhoneVerification: true,
   maxAdsPerUser: 50,
   adExpiryDays: 30,
   freeAdsLimit: 5,

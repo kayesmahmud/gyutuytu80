@@ -15,6 +15,7 @@ import {
   type OtpPurpose,
 } from '../lib/sms.js';
 import { generateAccessToken, generateRefreshToken } from '../lib/token.js';
+import { getBooleanSetting } from './adLimits.service.js';
 import { OAuth2Client } from 'google-auth-library';
 import { generateSecret, generateURI, verifySync } from 'otplib';
 import QRCode from 'qrcode';
@@ -567,6 +568,12 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
     });
 
     if (!user) {
+      // Check if registration is enabled before creating new user
+      const registrationAllowed = await getBooleanSetting('allow_registration', true);
+      if (!registrationAllowed) {
+        return { success: false, error: 'New user registration is currently disabled' };
+      }
+
       // Create new user
       user = await prisma.users.create({
         data: {

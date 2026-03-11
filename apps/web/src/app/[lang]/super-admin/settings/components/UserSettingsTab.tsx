@@ -22,10 +22,10 @@ export function UserSettingsTab({ settings, updateSettings }: UserSettingsTabPro
         />
 
         <ToggleRow
-          title="Require Email Verification"
-          description="New users must verify their email before posting ads"
-          checked={settings.requireEmailVerification}
-          onChange={(checked) => updateSettings({ requireEmailVerification: checked })}
+          title="Require Phone Verification"
+          description="Users must verify their phone number before posting ads"
+          checked={settings.requirePhoneVerification}
+          onChange={(checked) => updateSettings({ requirePhoneVerification: checked })}
         />
       </div>
     </div>

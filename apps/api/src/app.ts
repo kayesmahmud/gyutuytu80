@@ -139,6 +139,35 @@ export function createApp(): Express {
     res.json({ success: true, message: 'Thulo Bazaar API v2 (TypeScript)' });
   });
 
+  // Maintenance mode: block write operations for non-staff users
+  // GET/HEAD/OPTIONS are always allowed so the app remains browsable
+  app.use('/api', async (req, res, next) => {
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+
+    // Exempt auth routes (login/OTP) so staff can still log in
+    if (req.path.startsWith('/auth/')) return next();
+    // Exempt editor/admin routes (staff actions)
+    if (req.path.startsWith('/editor/') || req.path.startsWith('/admin/')) return next();
+    // Exempt health/internal endpoints
+    if (req.path === '/health' || req.path.startsWith('/internal/')) return next();
+
+    try {
+      const setting = await prisma.site_settings.findUnique({
+        where: { setting_key: 'maintenance_mode' },
+        select: { setting_value: true },
+      });
+      if (setting?.setting_value === 'true') {
+        return res.status(503).json({
+          success: false,
+          message: 'Thulo Bazaar is currently under maintenance. Please try again later.',
+        });
+      }
+    } catch {
+      // If DB check fails, don't block — allow request through
+    }
+    next();
+  });
+
   // Register routes
   app.use('/api/auth', authRoutes);
   app.use('/api/categories', categoriesRoutes);
@@ -233,6 +262,23 @@ export function createApp(): Express {
     } catch (error) {
       console.error('Ad config fetch error:', error);
       res.status(500).json({ enabled: false, web: { clientId: '', slots: {} }, mobile: { android: {}, ios: {} } });
+    }
+  });
+
+  // Public endpoint: App status (maintenance mode check for Flutter)
+  app.get('/api/app-status', async (_req, res) => {
+    try {
+      const setting = await prisma.site_settings.findUnique({
+        where: { setting_key: 'maintenance_mode' },
+        select: { setting_value: true },
+      });
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      res.json({
+        success: true,
+        maintenance: setting?.setting_value === 'true',
+      });
+    } catch {
+      res.json({ success: true, maintenance: false });
     }
   });
 

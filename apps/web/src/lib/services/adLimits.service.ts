@@ -90,6 +90,22 @@ export async function countUserActiveAds(userId: number): Promise<number> {
   });
 }
 
+/**
+ * Fetch a single boolean setting from site_settings (defaults to true)
+ */
+export async function getBooleanSetting(key: string, defaultValue = true): Promise<boolean> {
+  try {
+    const setting = await prisma.site_settings.findUnique({
+      where: { setting_key: key },
+      select: { setting_value: true },
+    });
+    if (!setting?.setting_value) return defaultValue;
+    return setting.setting_value === 'true';
+  } catch {
+    return defaultValue;
+  }
+}
+
 export function calculateExpiresAt(adExpiryDays: number): Date | null {
   if (adExpiryDays <= 0) return null;
   const date = new Date();

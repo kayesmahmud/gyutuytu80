@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError, ValidationError } from '../middleware/errorHandler.js';
 import { authenticateToken, optionalAuth } from '../middleware/auth.js';
 import { uploadAdImages } from '../middleware/upload.js';
@@ -21,6 +22,7 @@ import {
   getImageLimitForUser,
   countUserActiveAds,
   calculateExpiresAt,
+  getBooleanSetting,
 } from '../services/adLimits.service.js';
 
 const router = Router();
@@ -165,6 +167,18 @@ router.post(
       subcategoryId,
       files: req.files ? (req.files as Express.Multer.File[]).length : 0,
     });
+
+    // Check phone verification if required
+    const requirePhoneVerification = await getBooleanSetting('require_phone_verification', true);
+    if (requirePhoneVerification) {
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { phone_verified: true },
+      });
+      if (!user?.phone_verified) {
+        throw new ValidationError('Phone verification is required before posting ads');
+      }
+    }
 
     // Validate required fields
     if (!title || !description || !categoryId) {

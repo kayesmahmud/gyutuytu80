@@ -25,6 +25,7 @@ import {
   confirmAccountDeletion,
   type OtpPurposeType,
 } from '../services/auth.service.js';
+import { getBooleanSetting } from '../services/adLimits.service.js';
 
 const router = Router();
 
@@ -313,6 +314,15 @@ router.post(
   '/register-phone',
   rateLimiters.auth,
   catchAsync(async (req: Request, res: Response) => {
+    // Check if registration is enabled
+    const registrationAllowed = await getBooleanSetting('allow_registration', true);
+    if (!registrationAllowed) {
+      return res.status(403).json({
+        success: false,
+        message: 'New user registration is currently disabled',
+      });
+    }
+
     const { phone, password, fullName, verificationToken } = req.body;
 
     if (!phone || !password || !fullName) {

@@ -11,7 +11,9 @@ import {
   getImageLimitForUser,
   countUserActiveAds,
   calculateExpiresAt,
+  getBooleanSetting,
 } from '@/lib/services/adLimits.service';
+import { prisma } from '@thulobazaar/database';
 
 /**
  * GET /api/ads
@@ -57,6 +59,21 @@ export async function POST(request: NextRequest) {
     // Authenticate
     const userId = await requireAuth(request);
     console.log('✅ Auth successful, userId:', userId);
+
+    // Check phone verification if required
+    const requirePhoneVerification = await getBooleanSetting('require_phone_verification', true);
+    if (requirePhoneVerification) {
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { phone_verified: true },
+      });
+      if (!user?.phone_verified) {
+        return NextResponse.json(
+          { success: false, message: 'Phone verification is required before posting ads' },
+          { status: 403 }
+        );
+      }
+    }
 
     // Parse FormData
     const formData = await request.formData();

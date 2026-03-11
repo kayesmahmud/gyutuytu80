@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       support_phone: 'string',
       maintenance_mode: 'boolean',
       allow_registration: 'boolean',
-      require_email_verification: 'boolean',
+      require_phone_verification: 'boolean',
       max_ads_per_user: 'number',
       ad_expiry_days: 'number',
       free_ads_limit: 'number',

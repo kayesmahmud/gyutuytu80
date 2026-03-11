@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Header, Footer, BottomNav } from '@/components/layout';
 import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext';
+import { MaintenanceGate } from '@/components/MaintenanceGate';
 import { prisma } from '@thulobazaar/database';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
@@ -65,8 +66,8 @@ export async function generateMetadata({
       title: siteName,
     },
     icons: {
-      icon: '/logo.png',
-      shortcut: '/logo.png',
+      icon: '/favicon.ico',
+      shortcut: '/favicon.ico',
       apple: '/icons/apple-touch-icon.png',
     },
   };
@@ -88,21 +89,33 @@ export default async function LanguageLayout({
 
   // Enable next-intl for this locale
   setRequestLocale(lang);
-  const messages = await getMessages();
+
+  // Fetch messages and maintenance mode in parallel
+  const [messages, maintenanceSetting] = await Promise.all([
+    getMessages(),
+    prisma.site_settings.findUnique({
+      where: { setting_key: 'maintenance_mode' },
+      select: { setting_value: true },
+    }).catch(() => null),
+  ]);
+
+  const isMaintenanceMode = maintenanceSetting?.setting_value === 'true';
 
   return (
     <NextIntlClientProvider messages={messages}>
       <SiteSettingsProvider>
-        <ServiceWorkerRegister />
-        <InstallPrompt />      {/* Desktop PWA install */}
-        <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
-        <GoogleAdSense />
-        <Header lang={lang} />
-        <div className="pb-20 lg:pb-0">
-          {children}
-        </div>
-        <Footer lang={lang} />
-        <BottomNav lang={lang} />
+        <MaintenanceGate isMaintenanceMode={isMaintenanceMode} lang={lang}>
+          <ServiceWorkerRegister />
+          <InstallPrompt />      {/* Desktop PWA install */}
+          <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
+          <GoogleAdSense />
+          <Header lang={lang} />
+          <div className="pb-20 lg:pb-0">
+            {children}
+          </div>
+          <Footer lang={lang} />
+          <BottomNav lang={lang} />
+        </MaintenanceGate>
       </SiteSettingsProvider>
     </NextIntlClientProvider>
   );

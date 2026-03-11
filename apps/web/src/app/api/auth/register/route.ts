@@ -3,6 +3,7 @@ import { prisma } from '@thulobazaar/database';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { generateUniqueShopSlug } from '@/lib/urls';
+import { getBooleanSetting } from '@/lib/services/adLimits.service';
 
 // Validation schema - Phone registration only (email removed)
 const registerSchema = z.object({
@@ -35,6 +36,15 @@ function validatePhoneToken(token: string): { phone: string; expiresAt: number }
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if registration is enabled
+    const registrationAllowed = await getBooleanSetting('allow_registration', true);
+    if (!registrationAllowed) {
+      return NextResponse.json(
+        { success: false, message: 'New user registration is currently disabled' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     // Validate request body
