@@ -81,9 +81,11 @@ export function createApp(): Express {
   // Reject no-origin requests on state-changing methods (CSRF protection for browser clients)
   app.use((req, res, next) => {
     if (!req.headers.origin && !SAFE_METHODS.has(req.method)) {
+      // Auth routes are exempt: login/register produce the token, so no Bearer exists yet
+      const isAuthRoute = req.path.startsWith('/api/auth/') || req.path.startsWith('/auth/');
       // Allow if request carries a valid Bearer token (native mobile app)
       const hasBearer = req.headers.authorization?.startsWith('Bearer ');
-      if (!hasBearer) {
+      if (!isAuthRoute && !hasBearer) {
         res.status(403).json({ success: false, message: 'Forbidden: Origin header required' });
         return;
       }
