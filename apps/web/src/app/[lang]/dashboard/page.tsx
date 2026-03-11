@@ -33,7 +33,6 @@ export default function DashboardPage() {
     handleTabChange,
     handlePageChange,
     handleDeleteAd,
-    handleMarkAsSold,
     openResubmitModal,
     closeResubmitModal,
     loadUserData,
@@ -144,7 +143,6 @@ export default function DashboardPage() {
           onTabChange={handleTabChange}
           onPageChange={handlePageChange}
           onDelete={handleDeleteAd}
-          onMarkAsSold={handleMarkAsSold}
         />
       </div>
 

@@ -174,13 +174,6 @@ export function createAdMethods(client: AxiosInstance) {
       return response.data;
     },
 
-    async markAdAsSold(
-      id: number
-    ): Promise<ApiResponse<{ id: number; title: string; status: string }>> {
-      const response = await client.post(`/api/ads/${id}/mark-sold`);
-      return response.data;
-    },
-
     async incrementAdView(id: number): Promise<ApiResponse<void>> {
       const response = await client.post(`/api/ads/${id}/view`);
       return response.data;

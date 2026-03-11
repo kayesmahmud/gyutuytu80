@@ -14,10 +14,9 @@ interface AdItemProps {
   ad: Ad;
   lang: string;
   onDelete: (adId: number) => Promise<void>;
-  onMarkAsSold: (adId: number) => Promise<void>;
 }
 
-export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
+export function AdItem({ ad, lang, onDelete }: AdItemProps) {
   const router = useRouter();
   const [showPromoteModal, setShowPromoteModal] = useState(false);
 
@@ -187,8 +186,8 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
                 <span>Promote</span>
               </button>
 
-              {/* View, Sold, Delete - 3 equal buttons in row */}
-              <div className="grid grid-cols-3 gap-1.5 md:gap-2">
+              {/* View and Delete buttons */}
+              <div className="grid grid-cols-2 gap-1.5 md:gap-2">
                 <Link
                   href={`/${lang}/ad/${ad.slug}`}
                   className="inline-flex items-center justify-center gap-1 md:gap-1.5 py-1.5 md:py-2 px-1.5 md:px-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md md:rounded-lg no-underline text-[10px] md:text-sm font-medium hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
@@ -200,16 +199,6 @@ export function AdItem({ ad, lang, onDelete, onMarkAsSold }: AdItemProps) {
                   </svg>
                   <span>View</span>
                 </Link>
-                <button
-                  onClick={() => onMarkAsSold(ad.id)}
-                  className="inline-flex items-center justify-center gap-1 md:gap-1.5 py-1.5 md:py-2 px-1.5 md:px-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white border-none rounded-md md:rounded-lg cursor-pointer text-[10px] md:text-sm font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
-                  title="Mark as sold"
-                >
-                  <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Sold</span>
-                </button>
                 <button
                   onClick={() => onDelete(ad.id)}
                   className="inline-flex items-center justify-center gap-1 md:gap-1.5 py-1.5 md:py-2 px-1.5 md:px-2 bg-red-50 text-red-600 border border-red-200 rounded-md md:rounded-lg cursor-pointer text-[10px] md:text-sm font-medium hover:bg-red-100 transition-colors"

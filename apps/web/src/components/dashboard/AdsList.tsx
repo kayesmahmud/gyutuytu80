@@ -15,7 +15,6 @@ interface AdsListProps {
   onTabChange: (tab: AdTab) => void;
   onPageChange: (page: number) => void;
   onDelete: (adId: number) => Promise<void>;
-  onMarkAsSold: (adId: number) => Promise<void>;
 }
 
 const TAB_CONFIG: Array<{
@@ -96,7 +95,6 @@ export function AdsList({
   onTabChange,
   onPageChange,
   onDelete,
-  onMarkAsSold,
 }: AdsListProps) {
   return (
     <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden border border-gray-100">
@@ -154,7 +152,6 @@ export function AdsList({
                   ad={ad}
                   lang={lang}
                   onDelete={onDelete}
-                  onMarkAsSold={onMarkAsSold}
                 />
               ))}
             </div>

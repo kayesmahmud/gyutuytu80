@@ -164,23 +164,6 @@ export function useDashboardData() {
     [loadUserData, success, showError]
   );
 
-  const handleMarkAsSold = useCallback(
-    async (adId: number) => {
-      if (!confirm('Mark this ad as sold? It will be removed from active listings.')) {
-        return;
-      }
-
-      try {
-        await apiClient.markAdAsSold(adId);
-        success('Ad marked as sold successfully!');
-        loadUserData();
-      } catch (err: any) {
-        showError(err.message || 'Failed to mark ad as sold');
-      }
-    },
-    [loadUserData, success, showError]
-  );
-
   const openResubmitModal = useCallback((type: 'individual' | 'business') => {
     setResubmitType(type);
     setShowResubmitModal(true);
@@ -242,7 +225,6 @@ export function useDashboardData() {
     handleTabChange,
     handlePageChange,
     handleDeleteAd,
-    handleMarkAsSold,
     openResubmitModal,
     closeResubmitModal,
     loadUserData,

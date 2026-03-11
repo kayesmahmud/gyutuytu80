@@ -167,51 +167,6 @@ class _MyAdsScreenState extends State<MyAdsScreen>
     }
   }
 
-  Future<void> _markAsSold(AdWithDetails ad) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('dashboard.markAsSold'.tr()),
-        content: Text('dashboard.confirmDelete'.tr(args: [ad.title])),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('common.cancel'.tr()),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: Text('dashboard.markSold'.tr()),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      final response = await _adClient.markAsSold(ad.id);
-      if (response.success) {
-        _fetchAds(); // Refresh to get updated status
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('dashboard.adMarkedSold'.tr()),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.error ?? 'myAds.failedToUpdate'.tr()),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -505,9 +460,6 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                             ),
                           );
                           break;
-                        case 'sold':
-                          _markAsSold(ad);
-                          break;
                         case 'delete':
                           _deleteAd(ad);
                           break;
@@ -520,11 +472,6 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                       ),
                       if (ad.status == AdStatus.active)
                         PopupMenuItem(value: 'edit', child: Text('myAds.edit'.tr())),
-                      if (ad.status == AdStatus.active)
-                        PopupMenuItem(
-                          value: 'sold',
-                          child: Text('dashboard.markAsSold'.tr()),
-                        ),
                       PopupMenuItem(
                         value: 'delete',
                         child: Text(

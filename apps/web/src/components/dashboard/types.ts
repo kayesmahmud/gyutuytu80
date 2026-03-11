@@ -71,7 +71,6 @@ export interface DashboardState {
 export interface DashboardActions {
   setActiveTab: (tab: AdTab) => void;
   handleDeleteAd: (adId: number) => Promise<void>;
-  handleMarkAsSold: (adId: number) => Promise<void>;
   openResubmitModal: (type: 'individual' | 'business') => void;
   closeResubmitModal: () => void;
   loadUserData: () => Promise<void>;
