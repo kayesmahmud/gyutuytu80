@@ -64,7 +64,6 @@ export class ApiClient extends BaseApiClient {
   createAd: ReturnType<typeof createAdMethods>['createAd'];
   updateAd: ReturnType<typeof createAdMethods>['updateAd'];
   deleteAd: ReturnType<typeof createAdMethods>['deleteAd'];
-  markAdAsSold: ReturnType<typeof createAdMethods>['markAdAsSold'];
   incrementAdView: ReturnType<typeof createAdMethods>['incrementAdView'];
   getUserAds: ReturnType<typeof createAdMethods>['getUserAds'];
 
@@ -184,7 +183,6 @@ export class ApiClient extends BaseApiClient {
     this.createAd = adMethods.createAd;
     this.updateAd = adMethods.updateAd;
     this.deleteAd = adMethods.deleteAd;
-    this.markAdAsSold = adMethods.markAdAsSold;
     this.incrementAdView = adMethods.incrementAdView;
     this.getUserAds = adMethods.getUserAds;
 
