@@ -5,7 +5,15 @@ interface InsightsSectionProps {
   approvalRate: number;
 }
 
+function formatTime(hours: number): string {
+  if (hours <= 0) return 'N/A';
+  if (hours < 1) return `${Math.round(hours * 60)} minutes`;
+  if (hours < 24) return `${hours.toFixed(1)} hours`;
+  return `${(hours / 24).toFixed(1)} days`;
+}
+
 export default function InsightsSection({ avgResponseTime, approvalRate }: InsightsSectionProps) {
+  const formattedTime = formatTime(avgResponseTime);
   return (
     <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-200 rounded-xl p-6">
       <h3 className="text-xl font-bold text-indigo-900 mb-4 flex items-center gap-2">
@@ -30,7 +38,7 @@ export default function InsightsSection({ avgResponseTime, approvalRate }: Insig
             <div>
               <div className="font-semibold text-gray-900 mb-1">Response Time</div>
               <div className="text-sm text-gray-600">
-                Current average response time is {avgResponseTime}h. Aim to
+                Current average response time is {formattedTime}. Aim to
                 keep it under 2 hours for better user satisfaction.
               </div>
             </div>

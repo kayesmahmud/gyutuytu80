@@ -18,13 +18,6 @@ export interface AnalyticsData {
     count: number;
     percentage: number;
   }[];
-  editorPerformance: {
-    name: string;
-    reviewed: number;
-    approved: number;
-    rejected: number;
-    avgTime: number;
-  }[];
   rejectionReasons: {
     reason: string;
     count: number;

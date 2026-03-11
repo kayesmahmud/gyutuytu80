@@ -5,17 +5,31 @@ import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/admin';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { getEditorNavSections } from '@/lib/navigation';
+import { getEditorAnalytics } from '@/lib/editorApi';
 import {
   BarChart,
   LineChart,
   PieChart,
   Heatmap,
   OverviewStats,
-  EditorPerformanceTable,
   InsightsSection,
 } from './components';
 import type { AnalyticsData, TimeRange } from './types';
-import { MOCK_ANALYTICS_DATA } from './mockData';
+
+const EMPTY_ANALYTICS: AnalyticsData = {
+  overview: {
+    totalAdsReviewed: 0,
+    totalAdsApproved: 0,
+    totalAdsRejected: 0,
+    totalVerifications: 0,
+    avgResponseTime: 0,
+    approvalRate: 0,
+  },
+  dailyStats: [],
+  categoryBreakdown: [],
+  rejectionReasons: [],
+  hourlyActivity: Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 })),
+};
 
 export default function ModerationAnalyticsPage({ params: paramsPromise }: { params: Promise<{ lang: string }> }) {
   const params = use(paramsPromise);
@@ -23,13 +37,29 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
   const { staff, isLoading: authLoading, isEditor, logout } = useStaffAuth();
 
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
-  const [loading, setLoading] = useState(false);
-  const [analytics, setAnalytics] = useState<AnalyticsData>(MOCK_ANALYTICS_DATA);
+  const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<AnalyticsData>(EMPTY_ANALYTICS);
 
   const handleLogout = useCallback(async () => {
     await logout();
     router.push(`/${params.lang}/editor/login`);
   }, [logout, router, params.lang]);
+
+  const loadAnalytics = useCallback(async (range: TimeRange) => {
+    setLoading(true);
+    try {
+      const response = await getEditorAnalytics(range);
+      if (response.success) {
+        setAnalytics(response.data);
+      } else {
+        setAnalytics(EMPTY_ANALYTICS);
+      }
+    } catch (error) {
+      console.warn('[Analytics] Failed to load:', error);
+      setAnalytics(EMPTY_ANALYTICS);
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -37,7 +67,8 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
       router.push(`/${params.lang}/editor/login`);
       return;
     }
-  }, [authLoading, staff, isEditor, params.lang, router]);
+    loadAnalytics(timeRange);
+  }, [authLoading, staff, isEditor, params.lang, router, timeRange, loadAnalytics]);
 
   if (authLoading || loading) {
     return (
@@ -72,8 +103,8 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Moderation Analytics</h1>
-            <p className="text-gray-600 mt-1">Insights and statistics about moderation activities</p>
+            <h1 className="text-3xl font-bold text-gray-900">My Analytics</h1>
+            <p className="text-gray-600 mt-1">Your personal moderation performance and statistics</p>
           </div>
           <div className="flex gap-3">
             <select
@@ -96,57 +127,57 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
         </div>
 
         {/* Overview Stats */}
-        <OverviewStats
-          overview={analytics.overview}
-          editorCount={analytics.editorPerformance.length}
-        />
+        <OverviewStats overview={analytics.overview} />
 
         {/* Daily Activity Trend */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Daily Activity Trend</h3>
-          <p className="text-sm text-gray-600 mb-6">
-            Approved vs Rejected ads over the last 7 days
-          </p>
-          <LineChart data={analytics.dailyStats} />
-        </div>
+        {analytics.dailyStats.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Daily Activity Trend</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Your approved vs rejected ads over time
+            </p>
+            <LineChart data={analytics.dailyStats} />
+          </div>
+        )}
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Category Breakdown */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Category Distribution</h3>
-            <p className="text-sm text-gray-600 mb-6">Ads reviewed by category</p>
-            <PieChart
-              data={analytics.categoryBreakdown.map((cat, index) => ({
-                category: cat.category,
-                percentage: cat.percentage,
-                color: pieChartColors[index] || 'bg-gray-500',
-              }))}
-            />
-          </div>
+          {analytics.categoryBreakdown.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Category Distribution</h3>
+              <p className="text-sm text-gray-600 mb-6">Ads you reviewed by category</p>
+              <PieChart
+                data={analytics.categoryBreakdown.map((cat, index) => ({
+                  category: cat.category,
+                  percentage: cat.percentage,
+                  color: pieChartColors[index % pieChartColors.length] || 'bg-gray-500',
+                }))}
+              />
+            </div>
+          )}
 
           {/* Rejection Reasons */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Top Rejection Reasons</h3>
-            <p className="text-sm text-gray-600 mb-6">Most common reasons for ad rejection</p>
-            <BarChart
-              data={analytics.rejectionReasons.map((reason) => ({
-                label: reason.reason,
-                value: reason.count,
-                color: 'bg-red-500',
-              }))}
-            />
-          </div>
+          {analytics.rejectionReasons.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Top Rejection Reasons</h3>
+              <p className="text-sm text-gray-600 mb-6">Most common reasons you rejected ads</p>
+              <BarChart
+                data={analytics.rejectionReasons.map((reason) => ({
+                  label: reason.reason,
+                  value: reason.count,
+                  color: 'bg-red-500',
+                }))}
+              />
+            </div>
+          )}
         </div>
-
-        {/* Editor Performance */}
-        <EditorPerformanceTable data={analytics.editorPerformance} />
 
         {/* Hourly Activity Heatmap */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Hourly Activity Heatmap</h3>
           <p className="text-sm text-gray-600 mb-6">
-            Moderation activity by hour of day (0-23)
+            Your moderation activity by hour of day (0-23)
           </p>
           <Heatmap data={analytics.hourlyActivity} />
           <div className="flex items-center justify-center gap-2 mt-6">

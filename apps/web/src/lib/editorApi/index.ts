@@ -61,6 +61,7 @@ export type {
   ReportedAdsCount,
   SupportChatCount,
   PendingTask,
+  EditorAnalyticsData,
 } from './types';
 
 // ============================================
@@ -132,6 +133,7 @@ export {
   getAvgResponseTimeTrend,
   getTrends,
   getSupportChatCount,
+  getEditorAnalytics,
 } from './stats';
 
 // ============================================

@@ -14,6 +14,7 @@ import type {
   AvgResponseTimeTrend,
   Trends,
   SupportChatCount,
+  EditorAnalyticsData,
 } from './types';
 
 /**
@@ -77,4 +78,11 @@ export async function getTrends(token?: string): Promise<ApiResponse<Trends>> {
  */
 export async function getSupportChatCount(token?: string): Promise<ApiResponse<SupportChatCount>> {
   return apiRequest<ApiResponse<SupportChatCount>>('/api/editor/support-chat/count', { token });
+}
+
+/**
+ * Get per-editor analytics data scoped to the logged-in editor
+ */
+export async function getEditorAnalytics(range: string = '30d', token?: string): Promise<ApiResponse<EditorAnalyticsData>> {
+  return apiRequest<ApiResponse<EditorAnalyticsData>>(`/api/editor/analytics?range=${range}`, { token });
 }

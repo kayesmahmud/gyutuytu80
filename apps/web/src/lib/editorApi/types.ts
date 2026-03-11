@@ -324,3 +324,34 @@ export interface ReportedAdsCount {
 export interface SupportChatCount {
   count: number;
 }
+
+export interface EditorAnalyticsData {
+  overview: {
+    totalAdsReviewed: number;
+    totalAdsApproved: number;
+    totalAdsRejected: number;
+    totalVerifications: number;
+    avgResponseTime: number;
+    approvalRate: number;
+  };
+  dailyStats: {
+    date: string;
+    approved: number;
+    rejected: number;
+    pending: number;
+  }[];
+  categoryBreakdown: {
+    category: string;
+    count: number;
+    percentage: number;
+  }[];
+  rejectionReasons: {
+    reason: string;
+    count: number;
+    percentage: number;
+  }[];
+  hourlyActivity: {
+    hour: number;
+    count: number;
+  }[];
+}

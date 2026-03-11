@@ -1,14 +1,24 @@
 'use client';
 
-import { CheckCircle, XCircle, BadgeCheck, Clock, Users } from 'lucide-react';
+import { CheckCircle, XCircle, BadgeCheck, Clock } from 'lucide-react';
 import type { AnalyticsData } from '../types';
 
 interface OverviewStatsProps {
   overview: AnalyticsData['overview'];
-  editorCount: number;
 }
 
-export default function OverviewStats({ overview, editorCount }: OverviewStatsProps) {
+function formatResponseTime(hours: number): string {
+  if (hours <= 0) return 'N/A';
+  if (hours < 1) return `${Math.round(hours * 60)}m`;
+  if (hours < 24) return `${hours.toFixed(1)}h`;
+  return `${(hours / 24).toFixed(1)}d`;
+}
+
+export default function OverviewStats({ overview }: OverviewStatsProps) {
+  const rejectionRate = overview.totalAdsReviewed > 0
+    ? ((overview.totalAdsRejected / overview.totalAdsReviewed) * 100).toFixed(1)
+    : '0.0';
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-6">
@@ -47,7 +57,7 @@ export default function OverviewStats({ overview, editorCount }: OverviewStatsPr
               {overview.totalAdsRejected.toLocaleString()}
             </div>
             <div className="text-xs text-red-600 mt-1">
-              {((overview.totalAdsRejected / overview.totalAdsReviewed) * 100).toFixed(1)}% rejection rate
+              {rejectionRate}% rejection rate
             </div>
           </div>
           <XCircle size={40} className="text-red-600" strokeWidth={2} />
@@ -72,22 +82,11 @@ export default function OverviewStats({ overview, editorCount }: OverviewStatsPr
           <div>
             <div className="text-sm font-medium text-teal-700 mb-1">Avg Response Time</div>
             <div className="text-3xl font-bold text-teal-900">
-              {overview.avgResponseTime}h
+              {formatResponseTime(overview.avgResponseTime)}
             </div>
             <div className="text-xs text-teal-600 mt-1">Per review</div>
           </div>
           <Clock size={40} className="text-teal-600" strokeWidth={2} />
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-xl p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-medium text-orange-700 mb-1">Active Editors</div>
-            <div className="text-3xl font-bold text-orange-900">{editorCount}</div>
-            <div className="text-xs text-orange-600 mt-1">Team members</div>
-          </div>
-          <Users size={40} className="text-orange-600" strokeWidth={2} />
         </div>
       </div>
     </div>

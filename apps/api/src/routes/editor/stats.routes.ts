@@ -714,4 +714,210 @@ router.get(
   })
 );
 
+// ── Date range helper ────────────────────────────────────────────────
+
+function getRangeStartDate(range: string): Date | null {
+  const now = new Date();
+  switch (range) {
+    case '7d': return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    case '30d': return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    case '90d': return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    case 'all': return null;
+    default: return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  }
+}
+
+/**
+ * GET /api/editor/analytics?range=7d|30d|90d|all
+ * Per-editor analytics — all stats scoped to the logged-in editor's ID.
+ */
+router.get(
+  '/analytics',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const range = (req.query.range as string) || '30d';
+    const rangeStart = getRangeStartDate(range);
+
+    // Build date filter for reviewed_at
+    const reviewedAtFilter = rangeStart
+      ? { reviewed_by: userId, reviewed_at: { gte: rangeStart } }
+      : { reviewed_by: userId, reviewed_at: { not: null } };
+
+    // Fire all queries in parallel
+    const [
+      adsApproved,
+      adsRejected,
+      bizVerifications,
+      indVerifications,
+      avgResponseRaw,
+      dailyStatsRaw,
+      categoryBreakdownRaw,
+      rejectionReasonsRaw,
+      hourlyActivityRaw,
+    ] = await Promise.all([
+      prisma.ads.count({ where: { status: 'approved', ...reviewedAtFilter } }),
+      prisma.ads.count({ where: { status: 'rejected', ...reviewedAtFilter } }),
+      prisma.business_verification_requests.count({
+        where: {
+          reviewed_by: userId,
+          status: { in: ['approved', 'rejected'] },
+          ...(rangeStart ? { reviewed_at: { gte: rangeStart } } : {}),
+        },
+      }).catch(() => 0),
+      prisma.individual_verification_requests.count({
+        where: {
+          reviewed_by: userId,
+          status: { in: ['approved', 'rejected'] },
+          ...(rangeStart ? { reviewed_at: { gte: rangeStart } } : {}),
+        },
+      }).catch(() => 0),
+
+      // Avg response time for this editor's reviewed ads
+      rangeStart
+        ? prisma.$queryRaw<[{ avg_hours: number | null }]>`
+            SELECT AVG(EXTRACT(EPOCH FROM (reviewed_at - created_at)) / 3600) as avg_hours
+            FROM ads
+            WHERE reviewed_by = ${userId}
+              AND reviewed_at >= ${rangeStart}
+              AND reviewed_at IS NOT NULL AND created_at IS NOT NULL
+          `
+        : prisma.$queryRaw<[{ avg_hours: number | null }]>`
+            SELECT AVG(EXTRACT(EPOCH FROM (reviewed_at - created_at)) / 3600) as avg_hours
+            FROM ads
+            WHERE reviewed_by = ${userId}
+              AND reviewed_at IS NOT NULL AND created_at IS NOT NULL
+          `,
+
+      // Daily stats: approved vs rejected per day
+      rangeStart
+        ? prisma.$queryRaw<{ date: string; status: string; count: bigint }[]>`
+            SELECT DATE(reviewed_at) as date, status, COUNT(*)::bigint as count
+            FROM ads
+            WHERE reviewed_by = ${userId} AND reviewed_at >= ${rangeStart}
+              AND reviewed_at IS NOT NULL AND status IN ('approved', 'rejected')
+            GROUP BY DATE(reviewed_at), status ORDER BY date ASC
+          `
+        : prisma.$queryRaw<{ date: string; status: string; count: bigint }[]>`
+            SELECT DATE(reviewed_at) as date, status, COUNT(*)::bigint as count
+            FROM ads
+            WHERE reviewed_by = ${userId}
+              AND reviewed_at IS NOT NULL AND status IN ('approved', 'rejected')
+            GROUP BY DATE(reviewed_at), status ORDER BY date ASC
+          `,
+
+      // Category breakdown
+      rangeStart
+        ? prisma.$queryRaw<{ category_name: string; count: bigint }[]>`
+            SELECT COALESCE(c.name, 'Uncategorized') as category_name, COUNT(*)::bigint as count
+            FROM ads a LEFT JOIN categories c ON a.category_id = c.id
+            WHERE a.reviewed_by = ${userId} AND a.reviewed_at >= ${rangeStart}
+              AND a.reviewed_at IS NOT NULL AND a.status IN ('approved', 'rejected')
+            GROUP BY c.name ORDER BY count DESC
+          `
+        : prisma.$queryRaw<{ category_name: string; count: bigint }[]>`
+            SELECT COALESCE(c.name, 'Uncategorized') as category_name, COUNT(*)::bigint as count
+            FROM ads a LEFT JOIN categories c ON a.category_id = c.id
+            WHERE a.reviewed_by = ${userId}
+              AND a.reviewed_at IS NOT NULL AND a.status IN ('approved', 'rejected')
+            GROUP BY c.name ORDER BY count DESC
+          `,
+
+      // Rejection reasons
+      rangeStart
+        ? prisma.$queryRaw<{ reason: string; count: bigint }[]>`
+            SELECT COALESCE(status_reason, 'No reason specified') as reason, COUNT(*)::bigint as count
+            FROM ads
+            WHERE reviewed_by = ${userId} AND status = 'rejected'
+              AND reviewed_at >= ${rangeStart} AND reviewed_at IS NOT NULL
+            GROUP BY status_reason ORDER BY count DESC LIMIT 10
+          `
+        : prisma.$queryRaw<{ reason: string; count: bigint }[]>`
+            SELECT COALESCE(status_reason, 'No reason specified') as reason, COUNT(*)::bigint as count
+            FROM ads
+            WHERE reviewed_by = ${userId} AND status = 'rejected' AND reviewed_at IS NOT NULL
+            GROUP BY status_reason ORDER BY count DESC LIMIT 10
+          `,
+
+      // Hourly activity heatmap
+      rangeStart
+        ? prisma.$queryRaw<{ hour: number; count: bigint }[]>`
+            SELECT EXTRACT(HOUR FROM reviewed_at)::int as hour, COUNT(*)::bigint as count
+            FROM ads
+            WHERE reviewed_by = ${userId} AND reviewed_at >= ${rangeStart} AND reviewed_at IS NOT NULL
+            GROUP BY hour ORDER BY hour ASC
+          `
+        : prisma.$queryRaw<{ hour: number; count: bigint }[]>`
+            SELECT EXTRACT(HOUR FROM reviewed_at)::int as hour, COUNT(*)::bigint as count
+            FROM ads
+            WHERE reviewed_by = ${userId} AND reviewed_at IS NOT NULL
+            GROUP BY hour ORDER BY hour ASC
+          `,
+    ]);
+
+    // Process overview
+    const totalReviewed = adsApproved + adsRejected;
+    const totalVerifications = bizVerifications + indVerifications;
+    const avgHours = Number(avgResponseRaw[0]?.avg_hours) || 0;
+    const approvalRate = totalReviewed > 0 ? Math.round((adsApproved / totalReviewed) * 1000) / 10 : 0;
+
+    // Process daily stats — merge approved/rejected per date
+    const dailyMap = new Map<string, { approved: number; rejected: number }>();
+    for (const row of dailyStatsRaw) {
+      const dateStr = typeof row.date === 'string' ? row.date : new Date(row.date).toISOString().slice(0, 10);
+      const entry = dailyMap.get(dateStr) || { approved: 0, rejected: 0 };
+      if (row.status === 'approved') entry.approved = Number(row.count);
+      if (row.status === 'rejected') entry.rejected = Number(row.count);
+      dailyMap.set(dateStr, entry);
+    }
+    const dailyStats = Array.from(dailyMap.entries())
+      .map(([date, counts]) => ({ date, approved: counts.approved, rejected: counts.rejected, pending: 0 }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Process category breakdown
+    const totalCategoryAds = categoryBreakdownRaw.reduce((sum, c) => sum + Number(c.count), 0);
+    const categoryBreakdown = categoryBreakdownRaw.map((c) => ({
+      category: c.category_name,
+      count: Number(c.count),
+      percentage: totalCategoryAds > 0 ? Math.round((Number(c.count) / totalCategoryAds) * 1000) / 10 : 0,
+    }));
+
+    // Process rejection reasons
+    const totalRejections = rejectionReasonsRaw.reduce((sum, r) => sum + Number(r.count), 0);
+    const rejectionReasons = rejectionReasonsRaw.map((r) => ({
+      reason: r.reason,
+      count: Number(r.count),
+      percentage: totalRejections > 0 ? Math.round((Number(r.count) / totalRejections) * 1000) / 10 : 0,
+    }));
+
+    // Process hourly activity — fill all 24 hours
+    const hourlyMap = new Map<number, number>();
+    for (const row of hourlyActivityRaw) {
+      hourlyMap.set(Number(row.hour), Number(row.count));
+    }
+    const hourlyActivity = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      count: hourlyMap.get(hour) || 0,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        overview: {
+          totalAdsReviewed: totalReviewed,
+          totalAdsApproved: adsApproved,
+          totalAdsRejected: adsRejected,
+          totalVerifications,
+          avgResponseTime: avgHours,
+          approvalRate,
+        },
+        dailyStats,
+        categoryBreakdown,
+        rejectionReasons,
+        hourlyActivity,
+      },
+    });
+  })
+);
+
 export default router;
