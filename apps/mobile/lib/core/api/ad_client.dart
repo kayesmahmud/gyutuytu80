@@ -422,4 +422,62 @@ class AdClient {
       return [];
     }
   }
+
+  // ==========================================
+  // AD LIMITS
+  // ==========================================
+
+  /// Fetch ad limits from server (image limits, max ads, etc.)
+  Future<AdLimitsResponse> getAdLimits() async {
+    try {
+      final response = await _dio.get('/ad-limits');
+      if (response.data['success'] == true) {
+        return AdLimitsResponse.fromMap(
+          response.data['data'] as Map<String, dynamic>,
+        );
+      }
+      return const AdLimitsResponse();
+    } catch (e) {
+      if (kDebugMode) {
+        developer.log('Error fetching ad limits: $e', name: 'AdClient');
+      }
+      return const AdLimitsResponse();
+    }
+  }
+}
+
+/// Ad limits response from server
+class AdLimitsResponse {
+  final int maxAdsPerUser;
+  final int adExpiryDays;
+  final int freeAdsLimit;
+  final int maxImagesPerAd;
+  final int maxImagesVerified;
+  final int maxImagesUnverified;
+  final int? userImageLimit;
+
+  const AdLimitsResponse({
+    this.maxAdsPerUser = 50,
+    this.adExpiryDays = 0,
+    this.freeAdsLimit = 30,
+    this.maxImagesPerAd = 10,
+    this.maxImagesVerified = 10,
+    this.maxImagesUnverified = 5,
+    this.userImageLimit,
+  });
+
+  /// The effective image limit for the current user
+  int get effectiveImageLimit => userImageLimit ?? maxImagesUnverified;
+
+  factory AdLimitsResponse.fromMap(Map<String, dynamic> map) {
+    return AdLimitsResponse(
+      maxAdsPerUser: (map['maxAdsPerUser'] as num?)?.toInt() ?? 50,
+      adExpiryDays: (map['adExpiryDays'] as num?)?.toInt() ?? 0,
+      freeAdsLimit: (map['freeAdsLimit'] as num?)?.toInt() ?? 30,
+      maxImagesPerAd: (map['maxImagesPerAd'] as num?)?.toInt() ?? 10,
+      maxImagesVerified: (map['maxImagesVerified'] as num?)?.toInt() ?? 10,
+      maxImagesUnverified: (map['maxImagesUnverified'] as num?)?.toInt() ?? 5,
+      userImageLimit: (map['userImageLimit'] as num?)?.toInt(),
+    );
+  }
 }

@@ -92,6 +92,8 @@ export async function POST(request: NextRequest) {
       ad_expiry_days: 'number',
       free_ads_limit: 'number',
       max_images_per_ad: 'number',
+      max_images_verified_users: 'number',
+      max_images_unverified_users: 'number',
       // SMS Message Templates
       sms_business_approved: 'string',
       sms_business_rejected: 'string',

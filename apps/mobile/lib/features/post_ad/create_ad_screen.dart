@@ -50,6 +50,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   // Images
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedImages = [];
+  int _maxImages = 5; // Default, updated from server
 
   // Dynamic Fields
   final AdClient _adClient = AdClient();
@@ -91,12 +92,19 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   Future<void> _loadInitialData() async {
     setState(() => _isLoading = true);
     try {
-      final categories = await _adClient.getCategories();
-      final provinces = await _adClient.getLocationHierarchy();
+      final results = await Future.wait([
+        _adClient.getCategories(),
+        _adClient.getLocationHierarchy(),
+        _adClient.getAdLimits(),
+      ]);
+      final categories = results[0] as List<CategoryWithSubcategories>;
+      final provinces = results[1] as List<LocationProvince>;
+      final limits = results[2] as AdLimitsResponse;
 
       setState(() {
         _categories = categories;
         _provinces = provinces;
+        _maxImages = limits.effectiveImageLimit;
       });
     } catch (e) {
       debugPrint("Error loading initial data: $e");
@@ -282,7 +290,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   }
 
   Future<void> _pickImages() async {
-    if (_selectedImages.length >= 5) {
+    if (_selectedImages.length >= _maxImages) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('postAd.maxImagesError'.tr())));
@@ -321,8 +329,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
         setState(() {
           _selectedImages.addAll(validImages);
-          if (_selectedImages.length > 5) {
-            _selectedImages = _selectedImages.sublist(0, 5);
+          if (_selectedImages.length > _maxImages) {
+            _selectedImages = _selectedImages.sublist(0, _maxImages);
           }
         });
       }

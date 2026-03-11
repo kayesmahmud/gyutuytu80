@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 type ContactReason = 'general' | 'support' | 'advertising' | 'partnership' | 'feedback' | 'report';
 
@@ -28,6 +29,7 @@ const REASON_KEYS: Record<ContactReason, string> = {
 
 export default function ContactClient() {
   const t = useTranslations('contact');
+  const { contactEmail, supportPhone } = useSiteSettings();
 
   const [form, setForm] = useState<ContactForm>({
     name: '',
@@ -102,8 +104,8 @@ export default function ContactClient() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{t('email')}</h3>
-                    <a href="mailto:support@thulobazaar.com" className="text-blue-600 hover:underline">
-                      support@thulobazaar.com
+                    <a href={`mailto:${contactEmail}`} className="text-blue-600 hover:underline">
+                      {contactEmail}
                     </a>
                   </div>
                 </div>
@@ -116,8 +118,8 @@ export default function ContactClient() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{t('phone')}</h3>
-                    <a href="tel:+9771234567890" className="text-green-600 hover:underline">
-                      +977-1-234567890
+                    <a href={`tel:${supportPhone}`} className="text-green-600 hover:underline">
+                      {supportPhone}
                     </a>
                   </div>
                 </div>

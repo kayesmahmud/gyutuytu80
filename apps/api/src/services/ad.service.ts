@@ -36,6 +36,7 @@ export interface CreateAdInput {
   condition?: string;
   isNegotiable?: boolean;
   customFields?: Record<string, unknown>;
+  expiresAt?: Date | null;
 }
 
 export interface UpdateAdInput {
@@ -568,6 +569,7 @@ export async function createAd(userId: number, input: CreateAdInput) {
       custom_fields: input.customFields && Object.keys(input.customFields).length > 0
         ? input.customFields
         : null,
+      expires_at: input.expiresAt ?? null,
     },
     include: {
       categories: true,

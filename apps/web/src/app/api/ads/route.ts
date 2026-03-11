@@ -6,6 +6,12 @@ import {
   parseCustomFields,
   normalizeCondition,
 } from '@/lib/services/ad.service';
+import {
+  getAdLimits,
+  getImageLimitForUser,
+  countUserActiveAds,
+  calculateExpiresAt,
+} from '@/lib/services/adLimits.service';
 
 /**
  * GET /api/ads
@@ -125,6 +131,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Enforce ad limits from site_settings
+    const [limits, activeAdCount, imageLimit] = await Promise.all([
+      getAdLimits(),
+      countUserActiveAds(userId),
+      getImageLimitForUser(userId),
+    ]);
+
+    if (activeAdCount >= limits.maxAdsPerUser) {
+      return NextResponse.json(
+        { success: false, message: `You have reached the maximum limit of ${limits.maxAdsPerUser} ads` },
+        { status: 400 }
+      );
+    }
+
     // Extract images
     const images: File[] = [];
     for (const [key, value] of formData.entries()) {
@@ -133,7 +153,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create ad
+    // Enforce image limit based on verification status
+    if (images.length > imageLimit) {
+      return NextResponse.json(
+        { success: false, message: `You can upload a maximum of ${imageLimit} images per ad` },
+        { status: 400 }
+      );
+    }
+
+    // Create ad with expiry
     const result = await createAd(
       userId,
       {
@@ -150,6 +178,7 @@ export async function POST(request: NextRequest) {
         latitude: latitude ? parseFloat(latitude) : undefined,
         longitude: longitude ? parseFloat(longitude) : undefined,
         googleMapsLink,
+        expiresAt: calculateExpiresAt(limits.adExpiryDays),
       },
       images
     );

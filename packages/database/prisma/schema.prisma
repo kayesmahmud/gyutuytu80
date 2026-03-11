@@ -187,6 +187,7 @@ model ads {
   promoted_at                  DateTime?          @db.Timestamp(6)
   custom_fields                Json?              @default("{}")
   suspended_until              DateTime?          @db.Timestamp(6)
+  expires_at                   DateTime?          @db.Timestamp(6)
   ad_images                    ad_images[]
   ad_review_history            ad_review_history[]
   ad_promotions                ad_promotions[]

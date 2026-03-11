@@ -236,6 +236,49 @@ export function createApp(): Express {
     }
   });
 
+  // Public endpoint: Ad limits for web + mobile
+  app.get('/api/ad-limits', async (req, res) => {
+    try {
+      const { getAdLimits, getImageLimitForUser } = await import('./services/adLimits.service.js');
+      const limits = await getAdLimits();
+
+      // If authenticated, include user-specific image limit
+      let userImageLimit: number | undefined;
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const { authenticateToken } = await import('./middleware/auth.js');
+          await new Promise<void>((resolve, reject) => {
+            authenticateToken(req as any, res as any, (err: any) => err ? reject(err) : resolve());
+          });
+          const userId = (req as any).user?.userId;
+          if (userId) {
+            userImageLimit = await getImageLimitForUser(userId);
+          }
+        } catch {
+          // Not authenticated — skip user-specific limit
+        }
+      }
+
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.json({
+        success: true,
+        data: {
+          maxAdsPerUser: limits.maxAdsPerUser,
+          adExpiryDays: limits.adExpiryDays,
+          freeAdsLimit: limits.freeAdsLimit,
+          maxImagesPerAd: limits.maxImagesPerAd,
+          maxImagesVerified: limits.maxImagesVerified,
+          maxImagesUnverified: limits.maxImagesUnverified,
+          ...(userImageLimit !== undefined && { userImageLimit }),
+        },
+      });
+    } catch (error) {
+      console.error('Ad limits fetch error:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch ad limits' });
+    }
+  });
+
   // Internal endpoint: Next.js → Express Socket.IO bridge
   // Called by Next.js API routes after saving a message to DB
   app.post('/api/internal/broadcast-message', (req, res) => {

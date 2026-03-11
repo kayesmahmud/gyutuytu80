@@ -41,6 +41,7 @@ export interface CreateAdInput {
   latitude?: number;
   longitude?: number;
   googleMapsLink?: string;
+  expiresAt?: Date | null;
 }
 
 // ============================================================================
@@ -304,6 +305,7 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
       slug,
       custom_fields: customFields,
       status: 'pending',
+      expires_at: input.expiresAt ?? null,
     },
   });
 

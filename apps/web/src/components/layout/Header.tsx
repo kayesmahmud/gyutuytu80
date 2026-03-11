@@ -11,6 +11,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { apiClient } from '@/lib/api';
 import { User, LayoutDashboard, Store, LogOut } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 interface HeaderProps {
   lang: string;
@@ -18,6 +19,7 @@ interface HeaderProps {
 
 export default function Header({ lang }: HeaderProps) {
   const t = useTranslations('nav');
+  const { siteName } = useSiteSettings();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -182,7 +184,7 @@ export default function Header({ lang }: HeaderProps) {
             >
               <Image
                 src="/logo.png"
-                alt="Thulo Bazaar"
+                alt={siteName}
                 width={84}
                 height={40}
                 className="h-8 object-contain"
@@ -212,7 +214,7 @@ export default function Header({ lang }: HeaderProps) {
           >
             <Image
               src="/logo.png"
-              alt="Thulo Bazaar"
+              alt={siteName}
               width={84}
               height={40}
               className="h-10 object-contain"
@@ -455,7 +457,7 @@ export default function Header({ lang }: HeaderProps) {
             <Link href={`/${lang}`} onClick={() => setMobileMenuOpen(false)}>
               <Image
                 src="/logo.png"
-                alt="Thulo Bazaar"
+                alt={siteName}
                 width={84}
                 height={40}
                 className="h-8 object-contain"

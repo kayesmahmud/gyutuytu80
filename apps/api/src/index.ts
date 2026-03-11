@@ -4,6 +4,7 @@ import config, { validateConfig } from './config/index.js';
 import { initializeSocketIO } from './socket/index.js';
 import { schedulePromotionCleanup } from './jobs/promotionCleanup.js';
 import { scheduleVerificationCleanup } from './jobs/verificationCleanup.js';
+import { scheduleAdExpiry } from './jobs/adExpiry.js';
 
 // Validate required environment variables
 validateConfig();
@@ -53,4 +54,5 @@ httpServer.listen(config.PORT, '0.0.0.0', () => {
   // Start cron jobs
   schedulePromotionCleanup();
   scheduleVerificationCleanup();
+  scheduleAdExpiry();
 });

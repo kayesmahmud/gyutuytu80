@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { Header, Footer, BottomNav } from '@/components/layout';
+import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext';
+import { prisma } from '@thulobazaar/database';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
@@ -35,16 +37,32 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
 
+  // Fetch site settings from DB for SEO metadata
+  let siteName = 'Thulo Bazaar';
+  let siteDescription = "Nepal's Leading Classifieds Marketplace";
+  try {
+    const settings = await prisma.site_settings.findMany({
+      where: { setting_key: { in: ['site_name', 'site_description'] } },
+      select: { setting_key: true, setting_value: true },
+    });
+    for (const s of settings) {
+      if (s.setting_key === 'site_name' && s.setting_value) siteName = s.setting_value;
+      if (s.setting_key === 'site_description' && s.setting_value) siteDescription = s.setting_value;
+    }
+  } catch {
+    // Fall back to defaults
+  }
+
   return {
-    title: 'Thulo Bazaar - Buy & Sell Everything',
+    title: `${siteName} - Buy & Sell Everything`,
     description: lang === 'ne'
       ? 'नेपालको अग्रणी क्लासिफाइड मार्केटप्लेस'
-      : "Nepal's Leading Classifieds Marketplace",
+      : siteDescription,
     manifest: '/manifest.json',
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
-      title: 'Thulo Bazaar',
+      title: siteName,
     },
     icons: {
       icon: '/logo.png',
@@ -74,16 +92,18 @@ export default async function LanguageLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <ServiceWorkerRegister />
-      <InstallPrompt />      {/* Desktop PWA install */}
-      <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
-      <GoogleAdSense />
-      <Header lang={lang} />
-      <div className="pb-20 lg:pb-0">
-        {children}
-      </div>
-      <Footer lang={lang} />
-      <BottomNav lang={lang} />
+      <SiteSettingsProvider>
+        <ServiceWorkerRegister />
+        <InstallPrompt />      {/* Desktop PWA install */}
+        <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
+        <GoogleAdSense />
+        <Header lang={lang} />
+        <div className="pb-20 lg:pb-0">
+          {children}
+        </div>
+        <Footer lang={lang} />
+        <BottomNav lang={lang} />
+      </SiteSettingsProvider>
     </NextIntlClientProvider>
   );
 }

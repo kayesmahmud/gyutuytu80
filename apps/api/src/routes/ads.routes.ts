@@ -16,6 +16,12 @@ import {
   updateAdImages,
   deleteAd,
 } from '../services/ad.service.js';
+import {
+  getAdLimits,
+  getImageLimitForUser,
+  countUserActiveAds,
+  calculateExpiresAt,
+} from '../services/adLimits.service.js';
 
 const router = Router();
 
@@ -165,12 +171,29 @@ router.post(
       throw new ValidationError('Title, description, and category are required');
     }
 
+    // Enforce ad limits from site_settings
+    const [limits, activeAdCount, imageLimit] = await Promise.all([
+      getAdLimits(),
+      countUserActiveAds(userId),
+      getImageLimitForUser(userId),
+    ]);
+
+    if (activeAdCount >= limits.maxAdsPerUser) {
+      throw new ValidationError(`You have reached the maximum limit of ${limits.maxAdsPerUser} ads`);
+    }
+
+    // Enforce image limit based on verification status
+    const files = req.files as Express.Multer.File[];
+    if (files && files.length > imageLimit) {
+      throw new ValidationError(`You can upload a maximum of ${imageLimit} images per ad`);
+    }
+
     // Parse attributes
     const parsedAttributes = parseAttributes(attributes);
     const condition = (parsedAttributes.condition as string) || undefined;
     const { condition: _cond, ...customFields } = parsedAttributes;
 
-    // Create ad
+    // Create ad with expiry
     const ad = await createAd(userId, {
       title,
       description,
@@ -180,10 +203,10 @@ router.post(
       locationId: locationId ? parseInt(locationId) : undefined,
       condition,
       customFields,
+      expiresAt: calculateExpiresAt(limits.adExpiryDays),
     });
 
     // Handle uploaded images
-    const files = req.files as Express.Multer.File[];
     if (files && files.length > 0) {
       await createAdImages(ad.id, files);
     }

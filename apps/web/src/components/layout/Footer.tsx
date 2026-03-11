@@ -7,6 +7,7 @@ import { Mail, Phone, MapPin } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebookF, faInstagram, faTiktok, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import { useTranslations } from 'next-intl';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 interface FooterProps {
   lang: string;
@@ -15,6 +16,7 @@ interface FooterProps {
 export default function Footer({ lang }: FooterProps) {
   const t = useTranslations('footer');
   const tc = useTranslations('common');
+  const { supportPhone, contactEmail } = useSiteSettings();
   const currentYear = new Date().getFullYear();
   const pathname = usePathname();
 
@@ -71,7 +73,7 @@ export default function Footer({ lang }: FooterProps) {
               <h4 className="text-sm font-semibold text-white mb-3">{t('contact')}</h4>
               <ul className="space-y-2">
                 <li className="text-sm text-gray-400">{t('kathmandu')}</li>
-                <li><a href="tel:+977-1-4567890" className="text-sm text-gray-400 hover:text-rose-400">+977-1-4567890</a></li>
+                <li><a href={`tel:${supportPhone}`} className="text-sm text-gray-400 hover:text-rose-400">{supportPhone}</a></li>
               </ul>
             </div>
           </div>
@@ -277,14 +279,14 @@ export default function Footer({ lang }: FooterProps) {
               </li>
               <li className="flex items-start space-x-3 text-gray-400">
                 <Phone size={20} className="text-rose-500 mt-0.5 flex-shrink-0" />
-                <a href="tel:+977-1-4567890" className="text-sm hover:text-rose-400 transition-colors">
-                  +977-1-4567890
+                <a href={`tel:${supportPhone}`} className="text-sm hover:text-rose-400 transition-colors">
+                  {supportPhone}
                 </a>
               </li>
               <li className="flex items-start space-x-3 text-gray-400">
                 <Mail size={20} className="text-rose-500 mt-0.5 flex-shrink-0" />
-                <a href="mailto:support@thulobazaar.com" className="text-sm hover:text-rose-400 transition-colors">
-                  support@thulobazaar.com
+                <a href={`mailto:${contactEmail}`} className="text-sm hover:text-rose-400 transition-colors">
+                  {contactEmail}
                 </a>
               </li>
             </ul>
