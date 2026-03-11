@@ -180,6 +180,24 @@ export const acHomeElectronics: SubcategoryConfig = {
   ],
 };
 
+export const photocopiers: SubcategoryConfig = {
+  name: 'Photocopiers',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., Canon, Xerox, HP, Ricoh' } },
+    { field: modelField },
+    { field: warrantyField },
+  ],
+};
+
+export const homeAppliances: SubcategoryConfig = {
+  name: 'Home Appliances',
+  fields: [
+    { field: conditionNewUsed },
+    { field: brandField, override: { placeholder: 'e.g., LG, Samsung, Whirlpool' } },
+  ],
+};
+
 export const otherElectronics: SubcategoryConfig = {
   name: 'Other Electronics',
   fields: [
@@ -206,5 +224,7 @@ export const electronicsSubcategories: Record<string, SubcategoryConfig> = {
   'Audio Equipment': audioEquipment,
   'Video Game Consoles & Accessories': gamingConsoles,
   'ACs & Home Electronics': acHomeElectronics,
+  'Photocopiers': photocopiers,
+  'Home Appliances': homeAppliances,
   'Other Electronics': otherElectronics,
 };

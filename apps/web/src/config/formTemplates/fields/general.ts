@@ -160,6 +160,26 @@ export const expiryDateField: FormField = {
   appliesTo: 'all',
 };
 
+export const manufacturingDateField: FormField = {
+  name: 'manufacturingDate',
+  label: 'Manufacturing Date',
+  labelNe: 'उत्पादन मिति',
+  type: 'date',
+  required: false,
+  appliesTo: 'all',
+};
+
+export const productWeightField: FormField = {
+  name: 'productWeight',
+  label: 'Weight / Volume',
+  labelNe: 'तौल / आयतन',
+  type: 'text',
+  required: false,
+  placeholder: 'e.g., 250ml, 100gm, 50gm',
+  placeholderNe: 'जस्तै, २५०मिली, १००ग्राम, ५०ग्राम',
+  appliesTo: 'all',
+};
+
 // Agriculture fields
 export const cropTypeField: FormField = {
   name: 'cropType',

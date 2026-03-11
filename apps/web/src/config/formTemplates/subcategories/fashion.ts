@@ -15,6 +15,9 @@ import {
   watchTypeField,
   strapMaterialField,
   colorField,
+  productWeightField,
+  manufacturingDateField,
+  expiryDateField,
 } from '../fields';
 
 export const mensClothing: SubcategoryConfig = {
@@ -122,7 +125,12 @@ export const womensBeauty: SubcategoryConfig = {
 
 export const beautyPersonalCare: SubcategoryConfig = {
   name: 'Beauty & Personal Care',
-  fields: [],
+  fields: [
+    { field: brandField, override: { placeholder: "e.g., L'Oreal, Nivea, Garnier, Himalaya" } },
+    { field: productWeightField },
+    { field: manufacturingDateField },
+    { field: expiryDateField },
+  ],
 };
 
 export const lingerieSleepwear: SubcategoryConfig = {
