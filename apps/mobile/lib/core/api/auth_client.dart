@@ -37,12 +37,15 @@ class AuthClient {
   // ==========================================
 
   // Send OTP
-  Future<Map<String, dynamic>> sendOtp(String phone, {String purpose = 'registration'}) async {
+  Future<Map<String, dynamic>> sendOtp(
+    String phone, {
+    String purpose = 'registration',
+  }) async {
     try {
-      final response = await _dio.post('/auth/send-otp', data: {
-        'phone': phone,
-        'purpose': purpose,
-      });
+      final response = await _dio.post(
+        '/auth/send-otp',
+        data: {'phone': phone, 'purpose': purpose},
+      );
       return response.data;
     } on DioException catch (e) {
       return _handleError(e);
@@ -50,13 +53,37 @@ class AuthClient {
   }
 
   // Verify OTP
-  Future<Map<String, dynamic>> verifyOtp(String phone, String otp, {String purpose = 'registration'}) async {
+  Future<Map<String, dynamic>> verifyOtp(
+    String phone,
+    String otp, {
+    String purpose = 'registration',
+  }) async {
     try {
-      final response = await _dio.post('/auth/verify-otp', data: {
-        'phone': phone,
-        'otp': otp,
-        'purpose': purpose,
-      });
+      final response = await _dio.post(
+        '/auth/verify-otp',
+        data: {'phone': phone, 'otp': otp, 'purpose': purpose},
+      );
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Reset Password (forgot password flow — no auth required)
+  Future<Map<String, dynamic>> resetPassword(
+    String phone,
+    String newPassword,
+    String verificationToken,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/auth/reset-password',
+        data: {
+          'phone': phone,
+          'newPassword': newPassword,
+          'verificationToken': verificationToken,
+        },
+      );
       return response.data;
     } on DioException catch (e) {
       return _handleError(e);
@@ -66,13 +93,14 @@ class AuthClient {
   // Phone Login
   Future<Map<String, dynamic>> login(String phone, String password) async {
     try {
-      final response = await _dio.post('/auth/phone-login', data: {
-        'phone': phone,
-        'password': password,
-      });
+      final response = await _dio.post(
+        '/auth/phone-login',
+        data: {'phone': phone, 'password': password},
+      );
 
       // Don't save tokens if 2FA is required
-      if (response.data['success'] == true && response.data['requires2FA'] != true) {
+      if (response.data['success'] == true &&
+          response.data['requires2FA'] != true) {
         await _saveTokens(response.data);
       }
 
@@ -83,14 +111,22 @@ class AuthClient {
   }
 
   // Phone Registration
-  Future<Map<String, dynamic>> register(String phone, String password, String fullName, String verificationToken) async {
+  Future<Map<String, dynamic>> register(
+    String phone,
+    String password,
+    String fullName,
+    String verificationToken,
+  ) async {
     try {
-      final response = await _dio.post('/auth/register-phone', data: {
-        'phone': phone,
-        'password': password,
-        'fullName': fullName,
-        'verificationToken': verificationToken,
-      });
+      final response = await _dio.post(
+        '/auth/register-phone',
+        data: {
+          'phone': phone,
+          'password': password,
+          'fullName': fullName,
+          'verificationToken': verificationToken,
+        },
+      );
 
       if (response.data['success'] == true) {
         await _saveTokens(response.data);
@@ -105,9 +141,10 @@ class AuthClient {
   // Google Login
   Future<Map<String, dynamic>> googleLogin(String idToken) async {
     try {
-      final response = await _dio.post('/auth/google-token', data: {
-        'idToken': idToken,
-      });
+      final response = await _dio.post(
+        '/auth/google-token',
+        data: {'idToken': idToken},
+      );
 
       if (response.data['success'] == true) {
         await _saveTokens(response.data);
@@ -119,18 +156,20 @@ class AuthClient {
     }
   }
 
-
   // ==========================================
   // SECURITY ENDPOINTS (/api/auth)
   // ==========================================
 
   // Change Password
-  Future<Map<String, dynamic>> changePassword(String currentPassword, String newPassword) async {
+  Future<Map<String, dynamic>> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
     try {
-      final response = await _dio.post('/auth/change-password', data: {
-        'currentPassword': currentPassword,
-        'newPassword': newPassword,
-      });
+      final response = await _dio.post(
+        '/auth/change-password',
+        data: {'currentPassword': currentPassword, 'newPassword': newPassword},
+      );
       return response.data;
     } on DioException catch (e) {
       return _handleError(e);
@@ -138,12 +177,15 @@ class AuthClient {
   }
 
   // Update Phone
-  Future<Map<String, dynamic>> updatePhone(String phone, String verificationToken) async {
+  Future<Map<String, dynamic>> updatePhone(
+    String phone,
+    String verificationToken,
+  ) async {
     try {
-      final response = await _dio.post('/auth/update-phone', data: {
-        'phone': phone,
-        'verificationToken': verificationToken,
-      });
+      final response = await _dio.post(
+        '/auth/update-phone',
+        data: {'phone': phone, 'verificationToken': verificationToken},
+      );
       return response.data;
     } on DioException catch (e) {
       return _handleError(e);
@@ -187,9 +229,10 @@ class AuthClient {
   // Verify 2FA setup — returns backup codes
   Future<Map<String, dynamic>> verify2FASetup(String code) async {
     try {
-      final response = await _dio.post('/auth/2fa/verify-setup', data: {
-        'code': code,
-      });
+      final response = await _dio.post(
+        '/auth/2fa/verify-setup',
+        data: {'code': code},
+      );
       return response.data;
     } on DioException catch (e) {
       return _handleError(e);
@@ -199,10 +242,10 @@ class AuthClient {
   // Disable 2FA — requires password + TOTP code
   Future<Map<String, dynamic>> disable2FA(String password, String code) async {
     try {
-      final response = await _dio.post('/auth/2fa/disable', data: {
-        'password': password,
-        'code': code,
-      });
+      final response = await _dio.post(
+        '/auth/2fa/disable',
+        data: {'password': password, 'code': code},
+      );
       return response.data;
     } on DioException catch (e) {
       return _handleError(e);
@@ -210,12 +253,15 @@ class AuthClient {
   }
 
   // Verify 2FA during login — uses temp token
-  Future<Map<String, dynamic>> verify2FALogin(String tempToken, String code) async {
+  Future<Map<String, dynamic>> verify2FALogin(
+    String tempToken,
+    String code,
+  ) async {
     try {
-      final response = await _dio.post('/auth/2fa/verify-login', data: {
-        'tempToken': tempToken,
-        'code': code,
-      });
+      final response = await _dio.post(
+        '/auth/2fa/verify-login',
+        data: {'tempToken': tempToken, 'code': code},
+      );
 
       if (response.data['success'] == true) {
         await _saveTokens(response.data);
@@ -244,9 +290,10 @@ class AuthClient {
   // Confirm account deletion with OTP
   Future<Map<String, dynamic>> confirmAccountDeletion(String otp) async {
     try {
-      final response = await _dio.post('/auth/account/delete-confirm', data: {
-        'otp': otp,
-      });
+      final response = await _dio.post(
+        '/auth/account/delete-confirm',
+        data: {'otp': otp},
+      );
       return response.data;
     } on DioException catch (e) {
       return _handleError(e);

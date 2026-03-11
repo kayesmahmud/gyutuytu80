@@ -94,6 +94,27 @@
     "createAnAccount": "Create an Account"
   },
 
+  "forgotPassword": {
+    "title": "Reset Password",
+    "subtitle": "Enter your registered phone number to reset your password",
+    "createNewPassword": "Create a new password for your account",
+    "phoneLabel": "Registered Phone Number *",
+    "sendOtp": "Send OTP",
+    "otpSent": "OTP sent! Check your phone.",
+    "sendOtpFailed": "Failed to send OTP. Please try again.",
+    "otpVerified": "Phone verified! Set your new password.",
+    "invalidOtp": "Invalid OTP. Please try again.",
+    "newPassword": "New Password *",
+    "newPasswordHint": "At least 8 characters",
+    "confirmPassword": "Confirm New Password *",
+    "confirmPasswordHint": "Re-enter new password",
+    "resetPassword": "Reset Password",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "resetSuccess": "Password reset successfully! Please sign in with your new password.",
+    "resetFailed": "Failed to reset password. Please try again."
+  },
+
   "home": {
     "heroTitle": "Buy, Sell, and Rent Across Nepal",
     "searchPlaceholder": "Search for anything...",

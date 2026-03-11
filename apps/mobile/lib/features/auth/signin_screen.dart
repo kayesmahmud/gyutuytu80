@@ -12,17 +12,14 @@ import 'package:provider/provider.dart';
 import '../../core/providers/auth_provider.dart';
 import 'signup_screen.dart';
 import 'two_factor_verify_screen.dart';
+import 'forgot_password_screen.dart';
 import '../main_nav/main_nav_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   final bool isEmbedded;
   final VoidCallback? onSuccess;
 
-  const SignInScreen({
-    super.key,
-    this.isEmbedded = false,
-    this.onSuccess,
-  });
+  const SignInScreen({super.key, this.isEmbedded = false, this.onSuccess});
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -38,7 +35,8 @@ class _SignInScreenState extends State<SignInScreen> {
     clientId: Platform.isIOS
         ? '665688327385-lbpla4ui0ghmpq2k10mmmhj1s7cvgjfd.apps.googleusercontent.com'
         : null,
-    serverClientId: '665688327385-bc35e5a0jfis22p5d20k089l9ivm3fge.apps.googleusercontent.com',
+    serverClientId:
+        '665688327385-bc35e5a0jfis22p5d20k089l9ivm3fge.apps.googleusercontent.com',
   );
 
   bool _rememberMe = false;
@@ -99,33 +97,41 @@ class _SignInScreenState extends State<SignInScreen> {
       // Use AuthProvider
       final authClient = AuthClient(); // Helper to key token
       final result = await authClient.googleLogin(idToken);
-      
+
       if (!mounted) return;
 
       if (result['success'] == true) {
-         final token = result['token'];
-         await context.read<AuthProvider>().login(token);
-         
-         if (mounted) {
-            if (widget.onSuccess != null) {
-              widget.onSuccess!();
-            } else {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const MainNavScreen()),
-                (route) => false,
-              );
-            }
-         }
+        final token = result['token'];
+        await context.read<AuthProvider>().login(token);
+
+        if (mounted) {
+          if (widget.onSuccess != null) {
+            widget.onSuccess!();
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const MainNavScreen()),
+              (route) => false,
+            );
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'auth.googleLoginFailed'.tr())),
+          SnackBar(
+            content: Text(result['message'] ?? 'auth.googleLoginFailed'.tr()),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'गुगल लगइन त्रुटि: $e' : 'Google Login Error: $e')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'गुगल लगइन त्रुटि: $e'
+                : 'Google Login Error: $e',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -151,7 +157,7 @@ class _SignInScreenState extends State<SignInScreen> {
       // Use helper to get token, then provider to set state
       final authClient = AuthClient();
       final result = await authClient.login(phone, password);
-      
+
       if (!mounted) return;
 
       if (result['success'] == true) {
@@ -180,24 +186,37 @@ class _SignInScreenState extends State<SignInScreen> {
 
         if (mounted) {
           if (widget.onSuccess != null) {
-             widget.onSuccess!();
+            widget.onSuccess!();
           } else {
-             Navigator.pushAndRemoveUntil(
-               context,
-               MaterialPageRoute(builder: (_) => const MainNavScreen()),
-               (route) => false,
-             );
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const MainNavScreen()),
+              (route) => false,
+            );
           }
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? (context.locale.languageCode == 'ne' ? 'लगइन असफल' : 'Login failed'))),
+          SnackBar(
+            content: Text(
+              result['message'] ??
+                  (context.locale.languageCode == 'ne'
+                      ? 'लगइन असफल'
+                      : 'Login failed'),
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'त्रुटि भयो: $e' : 'An error occurred: $e')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'त्रुटि भयो: $e'
+                : 'An error occurred: $e',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -208,21 +227,30 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: widget.isEmbedded ? null : AppBar( // Hide AppBar if embedded
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Image.asset(
-          'assets/images/logo.png',
-          height: 28,
-          fit: BoxFit.contain,
-          errorBuilder: (ctx, err, stack) => Text('common.appNameFallback'.tr(), style: GoogleFonts.poppins(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
+      appBar: widget.isEmbedded
+          ? null
+          : AppBar(
+              // Hide AppBar if embedded
+              leading: IconButton(
+                icon: const Icon(LucideIcons.arrowLeft),
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: Image.asset(
+                'assets/images/logo.png',
+                height: 28,
+                fit: BoxFit.contain,
+                errorBuilder: (ctx, err, stack) => Text(
+                  'common.appNameFallback'.tr(),
+                  style: GoogleFonts.poppins(
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              centerTitle: true,
+              backgroundColor: Colors.white,
+              elevation: 0,
+            ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -248,13 +276,10 @@ class _SignInScreenState extends State<SignInScreen> {
             const SizedBox(height: 8),
             Text(
               'auth.loginSubtitle'.tr(),
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 32),
-            
+
             // Container Card
             Container(
               padding: const EdgeInsets.all(20),
@@ -285,7 +310,10 @@ class _SignInScreenState extends State<SignInScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: Colors.grey[300]!, width: 1),
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.08),
@@ -325,20 +353,26 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                       Expanded(child: Divider(color: Colors.grey[200])),
-                       Padding(
-                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                         child: Text('auth.orSignInWithPhone'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
-                       ),
-                       Expanded(child: Divider(color: Colors.grey[200])),
+                      Expanded(child: Divider(color: Colors.grey[200])),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'auth.orSignInWithPhone'.tr(),
+                          style: GoogleFonts.inter(
+                            color: Colors.grey[400],
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey[200])),
                     ],
                   ),
                   const SizedBox(height: 24),
- 
+
                   // Phone Number
                   Text(
                     'auth.phoneNumber'.tr(),
@@ -357,11 +391,19 @@ class _SignInScreenState extends State<SignInScreen> {
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                           decoration: BoxDecoration(
-                            border: Border(right: BorderSide(color: Colors.grey[300]!)),
-                            color: Colors.grey[50], 
-                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
+                            border: Border(
+                              right: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            color: Colors.grey[50],
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              bottomLeft: Radius.circular(8),
+                            ),
                           ),
                           child: Text(
                             'auth.phonePrefix'.tr(),
@@ -381,7 +423,9 @@ class _SignInScreenState extends State<SignInScreen> {
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                             ),
                             style: GoogleFonts.inter(fontSize: 15),
                           ),
@@ -390,7 +434,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
- 
+
                   // Password
                   Text(
                     'auth.password'.tr(),
@@ -412,7 +456,9 @@ class _SignInScreenState extends State<SignInScreen> {
                           turns: _obscurePassword ? 0 : 0.5,
                           duration: const Duration(milliseconds: 200),
                           child: Icon(
-                            _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
+                            _obscurePassword
+                                ? LucideIcons.eye
+                                : LucideIcons.eyeOff,
                             color: Colors.grey,
                           ),
                         ),
@@ -422,13 +468,22 @@ class _SignInScreenState extends State<SignInScreen> {
                           });
                         },
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
- 
+
                   // Remember Me & Forgot Password
                   Row(
                     children: [
@@ -437,8 +492,11 @@ class _SignInScreenState extends State<SignInScreen> {
                         width: 20,
                         child: Checkbox(
                           value: _rememberMe,
-                          onChanged: (val) => setState(() => _rememberMe = val!),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          onChanged: (val) =>
+                              setState(() => _rememberMe = val!),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                           activeColor: AppTheme.primary,
                           side: BorderSide(color: Colors.grey[400]!),
                         ),
@@ -453,7 +511,14 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       const Spacer(),
                       InkWell(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPasswordScreen(),
+                            ),
+                          );
+                        },
                         child: Text(
                           'auth.forgotPassword'.tr(),
                           style: GoogleFonts.inter(
@@ -466,7 +531,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
- 
+
                   // Sign In Button
                   SizedBox(
                     width: double.infinity,
@@ -480,38 +545,57 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: _isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(
-                        'auth.signIn'.tr(),
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'auth.signIn'.tr(),
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                       Expanded(child: Divider(color: Colors.grey[200])),
-                       Padding(
-                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                         child: Text('auth.dontHaveAccount'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
-                       ),
-                       Expanded(child: Divider(color: Colors.grey[200])),
+                      Expanded(child: Divider(color: Colors.grey[200])),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'auth.dontHaveAccount'.tr(),
+                          style: GoogleFonts.inter(
+                            color: Colors.grey[400],
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey[200])),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Create Account Button
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => SignUpScreen(onSuccess: widget.onSuccess)));
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                SignUpScreen(onSuccess: widget.onSuccess),
+                          ),
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
