@@ -750,6 +750,7 @@ router.get(
       adsRejected,
       bizVerifications,
       indVerifications,
+      supportTicketsHandled,
       avgResponseRaw,
       dailyStatsRaw,
       categoryBreakdownRaw,
@@ -770,6 +771,14 @@ router.get(
           reviewed_by: userId,
           status: { in: ['approved', 'rejected'] },
           ...(rangeStart ? { reviewed_at: { gte: rangeStart } } : {}),
+        },
+      }).catch(() => 0),
+      // Support tickets resolved/closed by this editor
+      prisma.support_tickets.count({
+        where: {
+          assigned_to: userId,
+          status: { in: ['resolved', 'closed'] },
+          ...(rangeStart ? { resolved_at: { gte: rangeStart } } : {}),
         },
       }).catch(() => 0),
 
@@ -908,6 +917,7 @@ router.get(
           totalAdsApproved: adsApproved,
           totalAdsRejected: adsRejected,
           totalVerifications,
+          totalSupportTickets: supportTicketsHandled,
           avgResponseTime: avgHours,
           approvalRate,
         },

@@ -4,6 +4,7 @@ export interface AnalyticsData {
     totalAdsApproved: number;
     totalAdsRejected: number;
     totalVerifications: number;
+    totalSupportTickets: number;
     avgResponseTime: number;
     approvalRate: number;
   };

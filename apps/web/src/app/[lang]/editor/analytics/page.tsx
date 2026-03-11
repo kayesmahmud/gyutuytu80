@@ -22,6 +22,7 @@ const EMPTY_ANALYTICS: AnalyticsData = {
     totalAdsApproved: 0,
     totalAdsRejected: 0,
     totalVerifications: 0,
+    totalSupportTickets: 0,
     avgResponseTime: 0,
     approvalRate: 0,
   },

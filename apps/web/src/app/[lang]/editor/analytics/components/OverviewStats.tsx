@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, XCircle, BadgeCheck, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, BadgeCheck, Clock, MessageSquare } from 'lucide-react';
 import type { AnalyticsData } from '../types';
 
 interface OverviewStatsProps {
@@ -87,6 +87,19 @@ export default function OverviewStats({ overview }: OverviewStatsProps) {
             <div className="text-xs text-teal-600 mt-1">Per review</div>
           </div>
           <Clock size={40} className="text-teal-600" strokeWidth={2} />
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-xl p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm font-medium text-orange-700 mb-1">Support Tickets</div>
+            <div className="text-3xl font-bold text-orange-900">
+              {overview.totalSupportTickets.toLocaleString()}
+            </div>
+            <div className="text-xs text-orange-600 mt-1">Resolved</div>
+          </div>
+          <MessageSquare size={40} className="text-orange-600" strokeWidth={2} />
         </div>
       </div>
     </div>

@@ -331,6 +331,7 @@ export interface EditorAnalyticsData {
     totalAdsApproved: number;
     totalAdsRejected: number;
     totalVerifications: number;
+    totalSupportTickets: number;
     avgResponseTime: number;
     approvalRate: number;
   };
