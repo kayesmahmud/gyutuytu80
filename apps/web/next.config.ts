@@ -87,7 +87,7 @@ const nextConfig: NextConfig = {
       "frame-src https://accounts.google.com https://www.facebook.com",
       "object-src 'none'",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np https://dev.khalti.com https://khalti.com",
     ].join('; ');
 
     return [
