@@ -48,15 +48,23 @@ export async function expireAds(): Promise<{ expired: number }> {
  */
 export function scheduleAdExpiry(): void {
   cron.schedule('0 * * * *', async () => {
-    console.log('\n⏰ [Cron] Running scheduled ad expiry check...');
-    await expireAds();
+    try {
+      console.log('\n⏰ [Cron] Running scheduled ad expiry check...');
+      await expireAds();
+    } catch (error) {
+      console.error('❌ [Cron] Scheduled ad expiry check failed:', error);
+    }
   });
 
   console.log('✅ [Cron] Ad expiry job scheduled (every hour)');
 
   // Run on startup after 10 seconds
   setTimeout(async () => {
-    console.log('\n🚀 [Cron] Running initial ad expiry check on startup...');
-    await expireAds();
+    try {
+      console.log('\n🚀 [Cron] Running initial ad expiry check on startup...');
+      await expireAds();
+    } catch (error) {
+      console.error('❌ [Cron] Initial ad expiry check failed:', error);
+    }
   }, 10000);
 }
