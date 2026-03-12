@@ -42,14 +42,22 @@ export async function GET(request: NextRequest) {
     const businessActive = isBusinessVerificationActive(user);
     const individualActive = isIndividualVerificationActive(user);
 
+    // Normalize business status to the 4 frontend states:
+    // unverified | pending | verified | rejected
+    const normalizeBusinessStatus = (dbStatus: string | null): string => {
+      if (!dbStatus || dbStatus === 'none' || dbStatus === 'unverified') return 'unverified';
+      if (dbStatus === 'approved' || dbStatus === 'verified') return 'verified';
+      return dbStatus; // 'pending', 'rejected' pass through
+    };
+
     // Initialize response
     const response: any = {
       success: true,
       data: {
         accountType: user.account_type,
         businessVerification: {
-          status: user.business_verification_status || 'none',
-          verified: user.business_verification_status === 'approved',
+          status: normalizeBusinessStatus(user.business_verification_status),
+          verified: ['approved', 'verified'].includes(user.business_verification_status || ''),
           isActive: businessActive,
           businessName: user.business_name || null,
           expiresAt: user.business_verification_expires_at || null,
@@ -106,7 +114,7 @@ export async function GET(request: NextRequest) {
           (businessRequest.payment_status === 'paid' || businessRequest.payment_status === 'free'),
       };
       // Update status based on request (if not already verified)
-      if (response.data.businessVerification.status !== 'approved') {
+      if (response.data.businessVerification.status !== 'verified') {
         if (businessRequest.status === 'pending' || businessRequest.status === 'pending_payment') {
           response.data.businessVerification.status = 'pending';
         } else if (businessRequest.status === 'rejected') {
