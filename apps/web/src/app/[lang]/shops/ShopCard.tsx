@@ -1,6 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { getAvatarUrl, getCoverUrl } from '@/lib/images';
 
 interface ShopCardProps {
@@ -81,11 +83,12 @@ export default function ShopCard({ shop, lang }: ShopCardProps) {
         {/* Verification Badge */}
         {(isVerifiedBusiness || isVerifiedIndividual) && (
           <div className="absolute top-2 right-2">
-            <img
+            <Image
               src={isVerifiedBusiness ? '/golden-badge.png' : '/blue-badge.png'}
               alt={isVerifiedBusiness ? 'Verified Business' : 'Verified Seller'}
               title={isVerifiedBusiness ? 'Verified Business' : 'Verified Seller'}
-              className="w-6 h-6"
+              width={24}
+              height={24}
             />
           </div>
         )}

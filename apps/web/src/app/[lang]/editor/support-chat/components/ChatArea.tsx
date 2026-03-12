@@ -185,6 +185,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
           <div className="mb-2 mt-1">
             {message.attachmentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
               <a href={message.attachmentUrl} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-md border border-gray-200 hover:opacity-90 transition-opacity">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={message.attachmentUrl} alt="Attachment" className="max-w-full h-auto max-h-64 object-cover" />
               </a>
             ) : (

@@ -195,6 +195,7 @@ export function useSupportChatPage(lang: string) {
         leaveTicket(selectedTicket.id);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTicket?.id, isConnected, joinTicket, leaveTicket]);
 
   const loadTicketDetail = async (ticketId: number) => {

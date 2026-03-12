@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Editor } from '../types';
 import { formatLastLogin } from '../types';
 
@@ -40,9 +41,11 @@ export default function EditorsTable({ editors, lang, onEdit, onView }: EditorsT
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {editor.avatar ? (
-                        <img
+                        <Image
                           src={`${apiUrl}/uploads/avatars/${editor.avatar}`}
                           alt={editor.fullName}
+                          width={48}
+                          height={48}
                           className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-indigo-200"
                         />
                       ) : (

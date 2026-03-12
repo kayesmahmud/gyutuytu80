@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { ReportedShop, TabStatus } from './types';
 import { getReasonBadge, getStatusBadge } from './helpers';
 
@@ -89,9 +90,11 @@ export function ReportCard({
               <div className="flex items-center gap-3 mb-3">
                 {report.shopAvatar &&
                 (report.shopAvatar.startsWith('http') || report.shopAvatar.startsWith('/')) ? (
-                  <img
+                  <Image
                     src={report.shopAvatar}
                     alt={report.shopName}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (

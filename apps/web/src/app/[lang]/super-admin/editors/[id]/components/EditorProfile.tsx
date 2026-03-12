@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { EditorDetail } from './types';
 import { formatTimestamp } from './types';
 
@@ -16,9 +17,11 @@ export function EditorProfile({ editor, onSuspend, onDelete }: EditorProfileProp
         {/* Avatar */}
         <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center border-4 border-indigo-200 shadow-lg">
           {editor.avatar ? (
-            <img
+            <Image
               src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/uploads/avatars/${editor.avatar}`}
               alt={editor.fullName}
+              width={96}
+              height={96}
               className="w-full h-full object-cover rounded-xl"
             />
           ) : (

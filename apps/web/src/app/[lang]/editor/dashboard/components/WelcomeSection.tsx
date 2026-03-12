@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { MyWorkToday } from '../types';
 
 interface WelcomeSectionProps {
@@ -17,9 +18,11 @@ export default function WelcomeSection({ staffName, avatarUrl, myWorkToday }: We
           {/* Profile Picture */}
           <div className="relative flex-shrink-0">
             {avatarUrl ? (
-              <img
+              <Image
                 src={avatarUrl}
                 alt={staffName || 'Profile'}
+                width={80}
+                height={80}
                 className="w-20 h-20 rounded-full object-cover shadow-lg ring-4 ring-white"
               />
             ) : (

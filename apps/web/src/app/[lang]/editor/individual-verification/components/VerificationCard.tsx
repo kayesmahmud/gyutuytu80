@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { IndividualVerification, TabStatus } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -212,10 +213,11 @@ function DocumentImages({ verification }: { verification: IndividualVerification
               className="block group"
             >
               <div className="relative aspect-[4/3] bg-white border-2 border-blue-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors">
-                <img
+                <Image
                   src={`${API_URL}/uploads/individual_verification/${filename}`}
                   alt={alt}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                   <span className="opacity-0 group-hover:opacity-100 text-white text-sm bg-black/50 px-2 py-1 rounded">
