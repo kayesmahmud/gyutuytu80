@@ -553,6 +553,7 @@ model users {
   user_favorites                                                                       user_favorites[]
   promotional_campaigns                                                                promotional_campaigns[]
   verification_campaigns                                                               verification_campaigns[]           @relation("verification_campaigns_created_by")
+  support_macros                                                                       support_macros[]
   locations                                                                            locations?                         @relation(fields: [location_id], references: [id], onUpdate: NoAction, map: "fk_user_location")
   users_users_business_verified_byTousers                                              users?                             @relation("users_business_verified_byTousers", fields: [business_verified_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_users_users_business_verified_byTousers                                        users[]                            @relation("users_business_verified_byTousers")
@@ -686,6 +687,10 @@ model support_tickets {
   updated_at                               DateTime?                @default(now()) @db.Timestamp(6)
   resolved_at                              DateTime?                @db.Timestamp(6)
   closed_at                                DateTime?                @db.Timestamp(6)
+  sla_breach_at                            DateTime?                @db.Timestamp(6)
+  csat_score                               Int?
+  csat_comment                             String?
+  custom_fields                            Json?
   support_messages                         support_messages[]
   users_support_tickets_assigned_toTousers users?                   @relation("support_tickets_assigned_toTousers", fields: [assigned_to], references: [id], onUpdate: NoAction)
   users_support_tickets_user_idTousers     users                    @relation("support_tickets_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -795,6 +800,19 @@ model announcement_read_receipts {
   @@unique([announcement_id, user_id])
   @@index([user_id], map: "idx_announcement_receipts_user")
   @@index([announcement_id], map: "idx_announcement_receipts_announcement")
+}
+
+/// Pre-defined templates for support agents
+model support_macros {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(100)
+  content     String
+  created_by  Int
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
+  users       users     @relation(fields: [created_by], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([created_by], map: "idx_support_macros_created_by")
 }
 
 enum user_role {
