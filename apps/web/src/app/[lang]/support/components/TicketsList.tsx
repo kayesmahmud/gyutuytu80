@@ -1,6 +1,7 @@
 'use client';
 
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isAfter, differenceInMinutes } from 'date-fns';
+import { AlertCircle, Clock } from 'lucide-react';
 import type { Ticket, TicketDetail } from './types';
 import { STATUS_COLORS } from './types';
 
@@ -37,29 +38,48 @@ export function TicketsList({
           </div>
         ) : (
           <ul className="divide-y">
-            {tickets.map((ticket) => (
-              <li
-                key={ticket.id}
-                onClick={() => onSelectTicket(ticket.id)}
-                className={`p-4 hover:bg-gray-50 cursor-pointer ${
-                  selectedTicket?.id === ticket.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''
-                }`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-mono text-gray-500">{ticket.ticketNumber}</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[ticket.status] || 'bg-gray-100'}`}>
-                    {ticket.status.replace('_', ' ')}
-                  </span>
-                </div>
-                <h3 className="font-medium text-gray-900 line-clamp-1">{ticket.subject}</h3>
-                {ticket.lastMessage && (
-                  <p className="text-sm text-gray-500 mt-1 line-clamp-1">{ticket.lastMessage.content}</p>
-                )}
-                <p className="text-xs text-gray-400 mt-2">
-                  {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
-                </p>
-              </li>
-            ))}
+            {tickets.map((ticket) => {
+              // SLA Logic
+              const isActive = ticket.status !== 'resolved' && ticket.status !== 'closed';
+              let isSlaBreached = false;
+              let slaApproaching = false;
+              
+              if (isActive && ticket.slaBreachAt) {
+                const breachDate = new Date(ticket.slaBreachAt);
+                const now = new Date();
+                isSlaBreached = isAfter(now, breachDate);
+                const minsLeft = differenceInMinutes(breachDate, now);
+                slaApproaching = !isSlaBreached && minsLeft > 0 && minsLeft <= 120; // 2 hours warning
+              }
+
+              return (
+                <li
+                  key={ticket.id}
+                  onClick={() => onSelectTicket(ticket.id)}
+                  className={`p-4 hover:bg-gray-50 cursor-pointer ${
+                    selectedTicket?.id === ticket.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-mono text-gray-500 flex items-center gap-2">
+                      {ticket.ticketNumber}
+                      {isSlaBreached && <span className="flex items-center gap-1 text-[10px] uppercase font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded"><AlertCircle size={10} /> SLA Breached</span>}
+                      {slaApproaching && <span className="flex items-center gap-1 text-[10px] uppercase font-bold text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded"><Clock size={10} /> Due Soon</span>}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[ticket.status] || 'bg-gray-100'}`}>
+                      {ticket.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <h3 className="font-medium text-gray-900 line-clamp-1">{ticket.subject}</h3>
+                  {ticket.lastMessage && (
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-1">{ticket.lastMessage.content}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-2">
+                    {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

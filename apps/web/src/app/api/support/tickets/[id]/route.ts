@@ -51,6 +51,8 @@ export async function GET(
         updated_at: true,
         resolved_at: true,
         closed_at: true,
+        csat_score: true,
+        csat_comment: true,
         users_support_tickets_user_idTousers: {
           select: {
             id: true,
@@ -138,6 +140,8 @@ export async function GET(
         updatedAt: ticket.updated_at,
         resolvedAt: ticket.resolved_at,
         closedAt: ticket.closed_at,
+        csatScore: ticket.csat_score,
+        csatComment: ticket.csat_comment,
         user: {
           id: ticket.users_support_tickets_user_idTousers.id,
           fullName: ticket.users_support_tickets_user_idTousers.full_name,

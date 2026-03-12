@@ -45,6 +45,9 @@ export interface TicketMessage {
 export interface TicketDetail extends SupportTicket {
   messages: TicketMessage[];
   isStaff: boolean;
+  csatScore?: number | null;
+  csatComment?: string | null;
+  closedAt?: string | null;
 }
 
 export type StatusFilter = 'all' | 'open' | 'in_progress' | 'waiting_on_user' | 'resolved' | 'closed';

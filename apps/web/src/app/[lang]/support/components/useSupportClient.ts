@@ -45,6 +45,8 @@ export interface UseSupportClientReturn {
   sendingFile: boolean;
   isInternal: boolean;
   setIsInternal: (isInternal: boolean) => void;
+  macros: { id: number; title: string; content: string; }[];
+  handleSubmitCsat: (ticketId: number, score: number, comment?: string) => Promise<void>;
 }
 
 export function useSupportClient(): UseSupportClientReturn {
@@ -78,6 +80,9 @@ export function useSupportClient(): UseSupportClientReturn {
 
   // Internal note state
   const [isInternal, setIsInternal] = useState(false);
+
+  // Macros state
+  const [macros, setMacros] = useState<{ id: number; title: string; content: string; }[]>([]);
 
   // Handle new messages from socket
   const handleNewMessage = useCallback((data: { ticketId: number; message: any; newStatus?: string }) => {
@@ -220,6 +225,30 @@ export function useSupportClient(): UseSupportClientReturn {
       setLoading(false);
     }
   };
+
+  const loadMacros = async () => {
+    // Only load if staff
+    if (session?.user && (session.user as any).role !== 'user') {
+      try {
+        const response = await fetch('/api/support/macros', {
+          headers: {
+            Authorization: `Bearer ${backendToken}`,
+          },
+        });
+        const data = await response.json();
+        if (data.success) {
+          setMacros(data.data);
+        }
+      } catch (err) {
+        console.error('Load macros error:', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!backendToken) return;
+    loadMacros();
+  }, [backendToken, session?.user]);
 
   const loadTicketDetail = async (ticketId: number) => {
     try {
@@ -396,6 +425,29 @@ export function useSupportClient(): UseSupportClientReturn {
     }
   };
 
+  const handleSubmitCsat = async (ticketId: number, score: number, comment?: string) => {
+    try {
+      const response = await fetch(`/api/support/tickets/${ticketId}/csat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${backendToken}`,
+        },
+        body: JSON.stringify({ score, comment }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        // Reload ticket detail to reflect the submitted score
+        loadTicketDetail(ticketId);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      console.error('Submit CSAT error:', err);
+      setError('Failed to submit rating');
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setMessageInput(e.target.value);
     if (selectedTicket && e.target.value.trim()) {
@@ -433,5 +485,7 @@ export function useSupportClient(): UseSupportClientReturn {
     sendingFile,
     isInternal,
     setIsInternal,
+    macros,
+    handleSubmitCsat,
   };
 }

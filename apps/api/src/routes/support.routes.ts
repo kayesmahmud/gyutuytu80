@@ -11,6 +11,26 @@ function generateTicketNumber(): string {
   return `TB-${timestamp}${random}`;
 }
 
+function calculateSlaBreach(priority: string): Date {
+  const now = new Date();
+  switch (priority) {
+    case 'urgent':
+      now.setHours(now.getHours() + 2);
+      break;
+    case 'high':
+      now.setHours(now.getHours() + 8);
+      break;
+    case 'normal':
+      now.setHours(now.getHours() + 24);
+      break;
+    case 'low':
+    default:
+      now.setHours(now.getHours() + 48);
+      break;
+  }
+  return now;
+}
+
 /**
  * GET /api/support/tickets
  * List user's support tickets
@@ -39,6 +59,7 @@ router.get(
           status: true,
           created_at: true,
           updated_at: true,
+          sla_breach_at: true,
           support_messages: {
             select: {
               id: true,
@@ -65,6 +86,7 @@ router.get(
       status: t.status,
       createdAt: t.created_at,
       updatedAt: t.updated_at,
+      slaBreachAt: t.sla_breach_at,
       lastMessage: t.support_messages[0]
         ? {
             content: t.support_messages[0].content.substring(0, 100),
@@ -90,7 +112,7 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const { subject, category = 'general', priority = 'normal', message } = req.body;
+    const { subject, category = 'general', priority = 'normal', message, customFields } = req.body;
 
     if (!subject?.trim()) {
       res.status(400).json({ success: false, message: 'Subject is required' });
@@ -109,6 +131,8 @@ router.post(
         subject: subject.trim(),
         category,
         priority,
+        custom_fields: customFields || null,
+        sla_breach_at: calculateSlaBreach(priority),
         support_messages: {
           create: {
             sender_id: userId,
@@ -125,6 +149,7 @@ router.post(
         priority: true,
         status: true,
         created_at: true,
+        sla_breach_at: true,
       },
     });
 
@@ -138,6 +163,7 @@ router.post(
         priority: ticket.priority,
         status: ticket.status,
         createdAt: ticket.created_at,
+        slaBreachAt: ticket.sla_breach_at,
       },
     });
   })
@@ -152,7 +178,8 @@ router.get(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const ticketId = parseInt(req.params.id, 10);
+    const userRole = req.user!.role;
+    const ticketId = parseInt(req.params.id as string, 10);
 
     if (isNaN(ticketId)) {
       res.status(400).json({ success: false, message: 'Invalid ticket ID' });
@@ -173,6 +200,10 @@ router.get(
         updated_at: true,
         resolved_at: true,
         closed_at: true,
+        sla_breach_at: true,
+        csat_score: true,
+        csat_comment: true,
+        custom_fields: true,
         support_messages: {
           select: {
             id: true,
@@ -201,14 +232,15 @@ router.get(
       return;
     }
 
-    if (ticket.user_id !== userId) {
+    if (ticket.user_id !== userId && userRole === 'user') {
       res.status(403).json({ success: false, message: 'Access denied' });
       return;
     }
 
     // Filter out internal messages for regular users
+    const isStaff = userRole !== 'user';
     const messages = ticket.support_messages
-      .filter((msg) => !msg.is_internal)
+      .filter((msg) => isStaff || !msg.is_internal)
       .map((msg) => ({
         id: msg.id,
         senderId: msg.sender_id,
@@ -225,6 +257,42 @@ router.get(
         isOwnMessage: msg.sender_id === userId,
       }));
 
+    // Fetch user context if requester is staff
+    let userContext = null;
+    if (isStaff && ticket.user_id) {
+      const ticketUser = await prisma.users.findUnique({
+        where: { id: ticket.user_id },
+        select: {
+          id: true,
+          full_name: true,
+          email: true,
+          phone: true,
+          created_at: true,
+          identity_verified: true,
+          business_verified: true,
+          ads: {
+            where: { status: 'active' },
+            select: { id: true, title: true, price: true, created_at: true },
+            orderBy: { created_at: 'desc' },
+            take: 5,
+          },
+        },
+      });
+
+      if (ticketUser) {
+        userContext = {
+          id: ticketUser.id,
+          fullName: ticketUser.full_name,
+          email: ticketUser.email,
+          phone: ticketUser.phone,
+          joinedAt: ticketUser.created_at,
+          identityVerified: ticketUser.identity_verified,
+          businessVerified: ticketUser.business_verified,
+          activeAds: ticketUser.ads,
+        };
+      }
+    }
+
     res.json({
       success: true,
       data: {
@@ -238,7 +306,12 @@ router.get(
         updatedAt: ticket.updated_at,
         resolvedAt: ticket.resolved_at,
         closedAt: ticket.closed_at,
+        slaBreachAt: ticket.sla_breach_at,
+        csatScore: ticket.csat_score,
+        csatComment: ticket.csat_comment,
+        customFields: ticket.custom_fields,
         messages,
+        userContext,
       },
     });
   })
@@ -253,7 +326,7 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const ticketId = parseInt(req.params.id, 10);
+    const ticketId = parseInt(req.params.id as string, 10);
 
     if (isNaN(ticketId)) {
       res.status(400).json({ success: false, message: 'Invalid ticket ID' });
@@ -337,6 +410,121 @@ router.post(
         isOwnMessage: true,
       },
     });
+  })
+);
+
+/**
+ * POST /api/support/tickets/:id/csat
+ * Submit a customer satisfaction rating for a resolved ticket
+ */
+router.post(
+  '/tickets/:id/csat',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const ticketId = parseInt(req.params.id as string, 10);
+    const { score, comment } = req.body;
+
+    if (isNaN(ticketId)) {
+      res.status(400).json({ success: false, message: 'Invalid ticket ID' });
+      return;
+    }
+
+    if (score < 1 || score > 5) {
+      res.status(400).json({ success: false, message: 'Score must be between 1 and 5' });
+      return;
+    }
+
+    const ticket = await prisma.support_tickets.findUnique({
+      where: { id: ticketId },
+      select: { user_id: true, status: true, csat_score: true },
+    });
+
+    if (!ticket) {
+      res.status(404).json({ success: false, message: 'Ticket not found' });
+      return;
+    }
+
+    if (ticket.user_id !== userId) {
+      res.status(403).json({ success: false, message: 'Access denied' });
+      return;
+    }
+
+    if (ticket.status !== 'resolved' && ticket.status !== 'closed') {
+      res.status(400).json({ success: false, message: 'Ticket must be resolved to leave a rating' });
+      return;
+    }
+
+    if (ticket.csat_score !== null) {
+      res.status(400).json({ success: false, message: 'A rating has already been submitted for this ticket' });
+      return;
+    }
+
+    await prisma.support_tickets.update({
+      where: { id: ticketId },
+      data: {
+        csat_score: score,
+        csat_comment: comment?.trim() || null,
+      },
+    });
+
+    res.json({ success: true, message: 'Rating submitted successfully' });
+  })
+);
+
+/**
+ * GET /api/support/macros
+ * Fetch available support macros for staff
+ */
+router.get(
+  '/macros',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    // Basic permissions check for staff roles
+    const userRole = req.user!.role;
+    if (userRole === 'user') {
+      res.status(403).json({ success: false, message: 'Access denied' });
+      return;
+    }
+
+    const macros = await prisma.support_macros.findMany({
+      orderBy: { title: 'asc' },
+    });
+
+    res.json({ success: true, data: macros });
+  })
+);
+
+/**
+ * POST /api/support/macros
+ * Create a new support macro
+ */
+router.post(
+  '/macros',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userRole = req.user!.role;
+    if (userRole === 'user') {
+      res.status(403).json({ success: false, message: 'Access denied' });
+      return;
+    }
+
+    const { title, content } = req.body;
+
+    if (!title?.trim() || !content?.trim()) {
+      res.status(400).json({ success: false, message: 'Title and content are required' });
+      return;
+    }
+
+    const macro = await prisma.support_macros.create({
+      data: {
+        title: title.trim(),
+        content: content.trim(),
+        created_by: req.user!.userId,
+      },
+    });
+
+    res.status(201).json({ success: true, data: macro });
   })
 );
 

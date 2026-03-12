@@ -32,6 +32,7 @@ export interface Ticket {
   priority: string;
   status: string;
   createdAt: string;
+  slaBreachAt?: string | null;
   lastMessage?: {
     content: string;
     createdAt: string;
@@ -68,6 +69,19 @@ export interface TicketDetail extends Ticket {
     fullName: string;
     avatar?: string;
   };
+  csatScore?: number | null;
+  csatComment?: string | null;
+  customFields?: any;
+  userContext?: {
+    id: number;
+    fullName: string;
+    email: string;
+    phone?: string;
+    joinedAt: string;
+    identityVerified: boolean;
+    businessVerified: boolean;
+    activeAds: { id: number; title: string; price: number; created_at: string; }[];
+  } | null;
 }
 
 export interface NewTicketData {
@@ -75,4 +89,5 @@ export interface NewTicketData {
   category: string;
   priority: string;
   message: string;
+  customFields?: Record<string, string>;
 }

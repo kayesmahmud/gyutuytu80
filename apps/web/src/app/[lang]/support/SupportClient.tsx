@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { format } from 'date-fns';
+import { User, CheckCircle, XCircle, Calendar, ExternalLink } from 'lucide-react';
 import {
   useSupportClient,
   TicketsList,
@@ -41,6 +43,8 @@ export default function SupportClient() {
     sendingFile,
     isInternal,
     setIsInternal,
+    macros,
+    handleSubmitCsat,
   } = useSupportClient();
 
   // Auth check
@@ -124,8 +128,72 @@ export default function SupportClient() {
               sendingFile={sendingFile}
               isInternal={isInternal}
               setIsInternal={setIsInternal}
+              macros={macros}
+              onSubmitCsat={(score, comment) => handleSubmitCsat(selectedTicket!.id, score, comment)}
             />
           </div>
+
+          {/* User Context Sidebar (Staff Only) */}
+          {selectedTicket?.userContext && (
+            <div className="hidden xl:flex w-80 flex-col bg-white rounded-lg shadow overflow-hidden border border-gray-100">
+              <div className="p-4 border-b bg-gray-50 flex items-center gap-2">
+                <User size={18} className="text-gray-500" />
+                <h3 className="font-semibold text-gray-800">User Context</h3>
+              </div>
+              <div className="p-4 overflow-y-auto flex-1">
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-500 mb-2 uppercase tracking-wider">Profile</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="font-medium text-gray-900">{selectedTicket.userContext.fullName}</p>
+                    <p className="text-gray-600 truncate">{selectedTicket.userContext.email}</p>
+                    {selectedTicket.userContext.phone && <p className="text-gray-600">{selectedTicket.userContext.phone}</p>}
+                    <p className="text-gray-500 flex items-center gap-1.5 mt-2">
+                      <Calendar size={14} /> Joined {format(new Date(selectedTicket.userContext.joinedAt), 'MMM yyyy')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-500 mb-2 uppercase tracking-wider">Verification</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      {selectedTicket.userContext.identityVerified ? 
+                        <CheckCircle size={16} className="text-green-500" /> : 
+                        <XCircle size={16} className="text-gray-300" />}
+                      <span className={selectedTicket.userContext.identityVerified ? 'text-gray-900' : 'text-gray-500'}>Identity Verified</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {selectedTicket.userContext.businessVerified ? 
+                        <CheckCircle size={16} className="text-green-500" /> : 
+                        <XCircle size={16} className="text-gray-300" />}
+                      <span className={selectedTicket.userContext.businessVerified ? 'text-gray-900' : 'text-gray-500'}>Business Verified</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2 uppercase tracking-wider">Recent Ads ({selectedTicket.userContext.activeAds.length})</h4>
+                  {selectedTicket.userContext.activeAds.length > 0 ? (
+                    <ul className="space-y-3">
+                      {selectedTicket.userContext.activeAds.map(ad => (
+                        <li key={ad.id} className="text-sm border rounded p-2 hover:bg-gray-50">
+                          <a href={`/ads/${ad.id}`} target="_blank" rel="noreferrer" className="group block">
+                            <p className="font-medium text-blue-600 group-hover:underline line-clamp-1">{ad.title}</p>
+                            <div className="flex justify-between items-center mt-1">
+                              <span className="text-gray-600 font-semibold">${ad.price}</span>
+                              <ExternalLink size={12} className="text-gray-400 group-hover:text-blue-500" />
+                            </div>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No active ads.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

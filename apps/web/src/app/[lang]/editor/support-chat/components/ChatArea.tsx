@@ -2,6 +2,7 @@
 
 import { RefObject } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { FileText } from 'lucide-react';
 import type { TicketDetail, TicketMessage } from './types';
 
 interface ChatAreaProps {
@@ -73,8 +74,13 @@ export function ChatArea({
       {/* Connection status indicator */}
       {!isConnected && <ConnectionWarning />}
 
+      {/* CSAT Feedback Banner for closed/resolved tickets */}
+      {(selectedTicket.status === 'closed' || selectedTicket.status === 'resolved') && (
+        <CsatBanner ticket={selectedTicket} />
+      )}
+
       {/* Message Input */}
-      {selectedTicket.status !== 'closed' && (
+      {selectedTicket.status !== 'closed' && selectedTicket.status !== 'resolved' && (
         <MessageInput
           newMessage={newMessage}
           isInternal={isInternal}
@@ -153,29 +159,50 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message }: MessageBubbleProps) {
+  const isAgent = message.sender.isStaff || message.isOwnMessage;
+  
   return (
-    <div className={`mb-4 flex ${message.isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+    <div className={`mb-4 flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`max-w-[70%] rounded-lg p-3 ${message.isInternal
           ? 'bg-yellow-100 border border-yellow-300 text-gray-900'
-          : message.isOwnMessage
+          : isAgent
             ? 'bg-teal-500 text-white'
-            : message.sender.isStaff
-              ? 'bg-blue-100 text-gray-900'
-              : 'bg-white border border-gray-200 text-gray-900'
+            : 'bg-white border border-gray-200 text-gray-900'
           }`}
       >
-        <div className="flex items-center gap-2 mb-1">
+        <div className={`flex items-center gap-2 mb-1 ${isAgent && !message.isInternal ? 'text-teal-50' : ''}`}>
           <span className="text-xs font-semibold opacity-80">{message.sender.fullName}</span>
-          {message.sender.isStaff && (
-            <span className="text-xs bg-blue-200 text-blue-800 px-1 rounded">Staff</span>
+          {message.sender.isStaff && !message.isOwnMessage && (
+            <span className="text-xs bg-black/10 px-1 rounded">Staff</span>
           )}
           {message.isInternal && (
             <span className="text-xs bg-yellow-200 text-yellow-800 px-1 rounded">Internal</span>
           )}
         </div>
+        
+        {message.attachmentUrl && (
+          <div className="mb-2 mt-1">
+            {message.attachmentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+              <a href={message.attachmentUrl} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-md border border-gray-200 hover:opacity-90 transition-opacity">
+                <img src={message.attachmentUrl} alt="Attachment" className="max-w-full h-auto max-h-64 object-cover" />
+              </a>
+            ) : (
+              <a href={message.attachmentUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-3 rounded-md hover:opacity-90 transition-opacity border ${isAgent ? 'bg-white/10 border-white/20' : 'bg-gray-50 border-gray-200'}`}>
+                <div className={`h-10 w-10 rounded flex items-center justify-center ${isAgent ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                  <FileText size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-medium truncate ${isAgent ? 'text-white' : 'text-gray-900'}`}>Attachment</p>
+                  <p className={`text-xs ${isAgent ? 'text-white/80' : 'text-gray-500'}`}>Click to view</p>
+                </div>
+              </a>
+            )}
+          </div>
+        )}
+
         <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-        <div className="text-xs mt-1 opacity-70">
+        <div className={`text-xs mt-1 ${isAgent && !message.isInternal ? 'text-teal-100' : 'opacity-70'}`}>
           {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
         </div>
       </div>
@@ -223,6 +250,46 @@ interface MessageInputProps {
   isConnected: boolean;
   onMessageInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSendMessage: () => void;
+}
+
+function CsatBanner({ ticket }: { ticket: TicketDetail }) {
+  const hasRating = ticket.csatScore != null;
+
+  return (
+    <div className={`px-4 py-3 border-t ${hasRating ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+      {hasRating ? (
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <svg
+                key={star}
+                className={`w-5 h-5 ${star <= ticket.csatScore! ? 'text-amber-400' : 'text-gray-300'}`}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            ))}
+          </div>
+          <span className="text-sm font-medium text-green-800">
+            Customer rated {ticket.csatScore}/5
+          </span>
+          {ticket.csatComment && (
+            <span className="text-sm text-gray-600 italic truncate max-w-xs" title={ticket.csatComment}>
+              &quot;{ticket.csatComment}&quot;
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span>Ticket {ticket.status} — awaiting customer feedback</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function MessageInput({

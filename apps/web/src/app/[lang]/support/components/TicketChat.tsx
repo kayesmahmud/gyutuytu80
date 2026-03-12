@@ -2,7 +2,7 @@
 
 import { RefObject, useRef, useState, useEffect } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
-import { Paperclip, Smile, Send, Image as ImageIcon, FileText, X, Check, CheckCheck } from 'lucide-react';
+import { Paperclip, Smile, Send, Image as ImageIcon, FileText, X, Check, CheckCheck, Star } from 'lucide-react';
 import type { TicketDetail, TicketMessage } from './types';
 import { STATUS_COLORS, PRIORITY_COLORS } from './types';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -22,6 +22,8 @@ interface TicketChatProps {
   sendingFile: boolean;
   isInternal: boolean;
   setIsInternal: (isInternal: boolean) => void;
+  macros?: { id: number; title: string; content: string; }[];
+  onSubmitCsat?: (score: number, comment: string) => Promise<void>;
 }
 
 export function TicketChat({
@@ -39,10 +41,19 @@ export function TicketChat({
   sendingFile,
   isInternal,
   setIsInternal,
+  macros = [],
+  onSubmitCsat,
 }: TicketChatProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showMacrosMenu, setShowMacrosMenu] = useState(false);
+
+  // CSAT state
+  const [hoveredStar, setHoveredStar] = useState(0);
+  const [selectedStar, setSelectedStar] = useState(0);
+  const [csatComment, setCsatComment] = useState('');
+  const [submittingCsat, setSubmittingCsat] = useState(false);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -60,11 +71,37 @@ export function TicketChat({
     }
   };
 
+  const insertMacro = (content: string) => {
+    const input = textareaRef.current;
+    if (input) {
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = messageInput;
+      const newVal = text.substring(0, start) + content + text.substring(end);
+
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
+      if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(input, newVal);
+        const ev = new Event('input', { bubbles: true });
+        input.dispatchEvent(ev);
+      }
+      setShowMacrosMenu(false);
+      input.focus();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSendMessage(e);
     }
+  };
+
+  const handleCsatSubmit = async () => {
+    if (!onSubmitCsat || selectedStar === 0) return;
+    setSubmittingCsat(true);
+    await onSubmitCsat(selectedStar, csatComment);
+    setSubmittingCsat(false);
   };
 
   if (!selectedTicket) {
@@ -255,6 +292,76 @@ export function TicketChat({
           </div>
         )}
 
+        {/* CSAT Survey / Rating View */}
+        {(selectedTicket.status === 'resolved' || selectedTicket.status === 'closed') && (
+          <div className="mt-8 flex justify-center">
+            <div className="bg-white border text-center p-6 rounded-xl shadow-sm max-w-md w-full border-gray-200">
+              {selectedTicket.csatScore ? (
+                <>
+                  <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <CheckCheck size={24} />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Feedback Received</h3>
+                  <div className="flex justify-center gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={20}
+                        className={`${star <= selectedTicket.csatScore! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`}
+                      />
+                    ))}
+                  </div>
+                  {selectedTicket.csatComment && (
+                    <p className="text-sm text-gray-500 italic mt-2">"{selectedTicket.csatComment}"</p>
+                  )}
+                  <p className="text-sm text-gray-500 mt-3 pt-3 border-t">Thank you for helping us improve!</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-semibold text-gray-900 text-lg">How did we do?</h3>
+                  <p className="text-sm text-gray-500 mt-1 mb-4">Please rate your support experience.</p>
+                  <div className="flex justify-center gap-2 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onMouseEnter={() => setHoveredStar(star)}
+                        onMouseLeave={() => setHoveredStar(0)}
+                        onClick={() => setSelectedStar(star)}
+                        className="focus:outline-none transition-transform hover:scale-110"
+                      >
+                        <Star
+                          size={32}
+                          className={`${(hoveredStar || selectedStar) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} transition-colors duration-150`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {selectedStar > 0 && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out">
+                      <textarea
+                        value={csatComment}
+                        onChange={(e) => setCsatComment(e.target.value)}
+                        placeholder="Tell us more about your experience (optional)..."
+                        className="w-full text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-3 mb-3"
+                        rows={3}
+                      />
+                      <button
+                        onClick={handleCsatSubmit}
+                        disabled={submittingCsat}
+                        className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      >
+                        {submittingCsat ? 'Submitting...' : 'Submit Feedback'}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -350,6 +457,41 @@ export function TicketChat({
                   <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-rose-600 animate-ping"></span>
                 )}
               </button>
+              
+              {/* Macros Dropdown */}
+              {macros.length > 0 && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowMacrosMenu(!showMacrosMenu)}
+                    className={`p-2 rounded-full transition-colors ${showMacrosMenu ? 'bg-indigo-100 text-indigo-600' : 'text-gray-500 hover:bg-gray-100'}`}
+                    title="Insert Macro"
+                  >
+                    <FileText size={20} />
+                  </button>
+
+                  {showMacrosMenu && (
+                    <div className="absolute bottom-full left-0 mb-2 w-64 bg-white border border-gray-200 shadow-lg rounded-lg max-h-60 overflow-y-auto z-50">
+                      <div className="p-2 border-b border-gray-100 bg-gray-50 top-0 sticky z-10">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Saved Replies</span>
+                      </div>
+                      <div className="p-1">
+                        {macros.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => insertMacro(m.content)}
+                            className="w-full text-left p-2 hover:bg-indigo-50 rounded-md transition-colors group"
+                          >
+                            <div className="font-medium text-sm text-gray-900 group-hover:text-indigo-700 truncate">{m.title}</div>
+                            <div className="text-xs text-gray-500 truncate mt-0.5">{m.content}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <textarea
