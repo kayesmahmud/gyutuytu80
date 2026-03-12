@@ -83,8 +83,10 @@ router.get(
       businessStatus = 'verified';
     } else if (businessRequest) {
       // Map request status to display status
-      if (businessRequest.status === 'pending' || businessRequest.status === 'pending_payment') {
+      if (businessRequest.status === 'pending') {
         businessStatus = 'pending';
+      } else if (businessRequest.status === 'pending_payment') {
+        businessStatus = 'pending_payment';
       } else if (businessRequest.status === 'rejected') {
         businessStatus = 'rejected';
       }
@@ -131,8 +133,10 @@ router.get(
       individualStatus = 'verified';
     } else if (individualRequest) {
       // Map request status to display status
-      if (individualRequest.status === 'pending' || individualRequest.status === 'pending_payment') {
+      if (individualRequest.status === 'pending') {
         individualStatus = 'pending';
+      } else if (individualRequest.status === 'pending_payment') {
+        individualStatus = 'pending_payment';
       } else if (individualRequest.status === 'rejected') {
         individualStatus = 'rejected';
       }

@@ -38,6 +38,11 @@ const statusConfig: Record<string, { bg: string; text: string; icon: string }> =
     text: 'text-yellow-700',
     icon: '⏳'
   },
+  pending_payment: {
+    bg: 'bg-orange-100',
+    text: 'text-orange-700',
+    icon: '💳'
+  },
   approved: {
     bg: 'bg-green-100',
     text: 'text-green-700',
@@ -86,7 +91,10 @@ export function StatusBadge({
   const normalizedStatus = status.toLowerCase();
   const config = statusConfig[normalizedStatus] || statusConfig.unverified || { bg: 'bg-gray-100', text: 'text-gray-600', icon: '' };
 
-  const label = customLabel || status.charAt(0).toUpperCase() + status.slice(1);
+  const labelMap: Record<string, string> = {
+    pending_payment: 'Awaiting Payment',
+  };
+  const label = customLabel || labelMap[normalizedStatus] || status.charAt(0).toUpperCase() + status.slice(1);
 
   return (
     <span

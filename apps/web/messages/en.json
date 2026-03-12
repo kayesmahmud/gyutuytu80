@@ -756,6 +756,8 @@
     "resubmitFree": "Resubmit (Free)",
     "startVerification": "Start Verification",
     "underReview": "Under review",
+    "completePayment": "Complete Payment",
+    "awaitingPayment": "Payment required to proceed",
     "validUntil": "Valid until {date}",
     "selectDuration": "Select Verification Duration",
     "freeEligible": "You're Eligible for FREE Verification!",

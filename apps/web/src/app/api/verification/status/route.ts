@@ -42,12 +42,12 @@ export async function GET(request: NextRequest) {
     const businessActive = isBusinessVerificationActive(user);
     const individualActive = isIndividualVerificationActive(user);
 
-    // Normalize business status to the 4 frontend states:
-    // unverified | pending | verified | rejected
+    // Normalize business status to the 5 frontend states:
+    // unverified | pending_payment | pending | verified | rejected
     const normalizeBusinessStatus = (dbStatus: string | null): string => {
       if (!dbStatus || dbStatus === 'none' || dbStatus === 'unverified') return 'unverified';
       if (dbStatus === 'approved' || dbStatus === 'verified') return 'verified';
-      return dbStatus; // 'pending', 'rejected' pass through
+      return dbStatus; // 'pending', 'pending_payment', 'rejected' pass through
     };
 
     // Initialize response
@@ -115,8 +115,10 @@ export async function GET(request: NextRequest) {
       };
       // Update status based on request (if not already verified)
       if (response.data.businessVerification.status !== 'verified') {
-        if (businessRequest.status === 'pending' || businessRequest.status === 'pending_payment') {
+        if (businessRequest.status === 'pending') {
           response.data.businessVerification.status = 'pending';
+        } else if (businessRequest.status === 'pending_payment') {
+          response.data.businessVerification.status = 'pending_payment';
         } else if (businessRequest.status === 'rejected') {
           response.data.businessVerification.status = 'rejected';
         }
@@ -166,8 +168,10 @@ export async function GET(request: NextRequest) {
       };
       // Update status based on request (if not already verified)
       if (!response.data.individualVerification.verified) {
-        if (individualRequest.status === 'pending' || individualRequest.status === 'pending_payment') {
+        if (individualRequest.status === 'pending') {
           response.data.individualVerification.status = 'pending';
+        } else if (individualRequest.status === 'pending_payment') {
+          response.data.individualVerification.status = 'pending_payment';
         } else if (individualRequest.status === 'rejected') {
           response.data.individualVerification.status = 'rejected';
         }
