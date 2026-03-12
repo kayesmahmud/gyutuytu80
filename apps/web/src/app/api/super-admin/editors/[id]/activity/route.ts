@@ -45,8 +45,8 @@ export async function GET(
         monthFilter = { gte: start, lt: end };
       }
     }
-
-    const [adsReviewed, businessVerifications, individualVerifications, adminLogs] = await Promise.all([
+    
+    const [adsReviewed, businessVerifications, individualVerifications, adminLogs, csatFeedbackTickets] = await Promise.all([
       prisma.ads.findMany({
         where: {
           reviewed_by: editorId,
@@ -99,10 +99,41 @@ export async function GET(
         orderBy: { created_at: 'desc' },
         take: 100,
       }).catch(() => []),
+      prisma.support_tickets.findMany({
+        where: {
+          csat_score: { not: null },
+          ...(monthFilter ? { updated_at: monthFilter } : {}),
+          OR: [
+            { assigned_to: editorId },
+            { support_messages: { some: { sender_id: editorId } } },
+          ],
+        },
+        select: {
+          id: true,
+          ticket_number: true,
+          subject: true,
+          csat_score: true,
+          csat_comment: true,
+          resolved_at: true,
+          updated_at: true,
+          users_support_tickets_user_idTousers: {
+            select: { full_name: true, email: true },
+          },
+        },
+        orderBy: { updated_at: 'desc' },
+      }).catch(() => []),
     ]);
 
     const supportTicketCounts = await prisma.support_tickets
-      .count({ where: { assigned_to: editorId, ...(monthFilter ? { updated_at: monthFilter } : {}) } })
+      .count({
+        where: {
+          ...(monthFilter ? { updated_at: monthFilter } : {}),
+          OR: [
+            { assigned_to: editorId },
+            { support_messages: { some: { sender_id: editorId } } },
+          ],
+        },
+      })
       .catch(() => 0);
 
     const buildRangeCounts = async (start: Date) => {
@@ -129,7 +160,15 @@ export async function GET(
           },
         }),
         prisma.support_tickets
-          .count({ where: { assigned_to: editorId, updated_at: { gte: start } } })
+          .count({
+            where: {
+              updated_at: { gte: start },
+              OR: [
+                { assigned_to: editorId },
+                { support_messages: { some: { sender_id: editorId } } },
+              ],
+            },
+          })
           .catch(() => 0),
       ]);
       return { ads, business, individual, supportTickets: tickets };
@@ -198,6 +237,22 @@ export async function GET(
       reason: iv.rejection_reason || null,
     }));
 
+    const csatTickets = (csatFeedbackTickets || []).map((t: any) => ({
+      id: t.id,
+      ticketNumber: t.ticket_number,
+      subject: t.subject,
+      score: t.csat_score,
+      comment: t.csat_comment,
+      resolvedAt: t.resolved_at || t.updated_at,
+      user: {
+        fullName: t.users_support_tickets_user_idTousers?.full_name,
+        email: t.users_support_tickets_user_idTousers?.email,
+      },
+    }));
+
+    const totalScore = csatTickets.reduce((sum: number, t: any) => sum + (t.score || 0), 0);
+    const csatAverage = csatTickets.length > 0 ? (totalScore / csatTickets.length).toFixed(1) : null;
+
     const stats = {
       adsApproved: adWork.filter((a) => a.action === 'approved').length,
       adsRejected: adWork.filter((a) => a.action === 'rejected').length,
@@ -208,6 +263,8 @@ export async function GET(
       individualApproved: individualWork.filter((i) => i.action === 'approved').length,
       individualRejected: individualWork.filter((i) => i.action === 'rejected').length,
       supportTickets: supportTicketCounts || 0,
+      csatAverage: csatAverage ? parseFloat(csatAverage) : null,
+      totalCsatReviews: csatTickets.length,
     };
 
     return NextResponse.json({
@@ -217,6 +274,7 @@ export async function GET(
         adWork,
         businessVerifications: businessWork,
         individualVerifications: individualWork,
+        csatTickets,
         stats,
         timeBuckets,
       },

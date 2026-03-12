@@ -1,6 +1,6 @@
 'use client';
 
-import type { EditorDetail, ActiveTab, EditorActivity, AdWork, VerificationWork } from './types';
+import type { EditorDetail, ActiveTab, EditorActivity, AdWork, VerificationWork, CsatTicket } from './types';
 import { getActivityIcon, getActivityColor, getActivityLabel, formatTimestamp } from './types';
 
 interface EditorTabsProps {
@@ -15,6 +15,7 @@ export function EditorTabs({ editor, activeTab, setActiveTab }: EditorTabsProps)
     { key: 'ads' as const, label: 'Ads Work', icon: '📢', badge: editor.adWork.length },
     { key: 'business' as const, label: 'Business Verifications', icon: '🏢', badge: editor.businessVerifications.length },
     { key: 'individual' as const, label: 'Individual Verifications', icon: '👤', badge: editor.individualVerifications.length },
+    { key: 'support_csat' as const, label: 'Support & CSAT', icon: '⭐', badge: editor.csatTickets?.length || 0 },
   ];
 
   return (
@@ -55,6 +56,7 @@ export function EditorTabs({ editor, activeTab, setActiveTab }: EditorTabsProps)
         {activeTab === 'ads' && <AdsTab adWork={editor.adWork} />}
         {activeTab === 'business' && <VerificationTab verifications={editor.businessVerifications} />}
         {activeTab === 'individual' && <VerificationTab verifications={editor.individualVerifications} />}
+        {activeTab === 'support_csat' && <CsatTab csatTickets={editor.csatTickets} />}
       </div>
     </div>
   );
@@ -168,5 +170,62 @@ function ActionBadge({ action }: { action: AdWork['action'] }) {
     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[action]}`}>
       {action.charAt(0).toUpperCase() + action.slice(1)}
     </span>
+  );
+}
+
+function CsatTab({ csatTickets }: { csatTickets: CsatTicket[] }) {
+  if (!csatTickets || csatTickets.length === 0) {
+    return (
+      <div className="text-center py-12 text-gray-500">
+        No CSAT feedback received yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b-2 border-gray-100">
+            <th className="text-left py-4 px-4 font-semibold text-gray-700">Ticket #</th>
+            <th className="text-left py-4 px-4 font-semibold text-gray-700">User</th>
+            <th className="text-left py-4 px-4 font-semibold text-gray-700">Rating</th>
+            <th className="text-left py-4 px-4 font-semibold text-gray-700">Comment</th>
+            <th className="text-left py-4 px-4 font-semibold text-gray-700">Resolved At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {csatTickets.map((ticket) => (
+            <tr key={ticket.id} className="border-b border-gray-100 hover:bg-gray-50">
+              <td className="py-4 px-4 font-medium text-gray-900">{ticket.ticketNumber}</td>
+              <td className="py-4 px-4 text-gray-600">
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-900">{ticket.user.fullName}</span>
+                  <span className="text-xs">{ticket.user.email}</span>
+                </div>
+              </td>
+              <td className="py-4 px-4">
+                <div className="flex items-center gap-1">
+                  <span className="font-bold text-gray-900 mr-1">{ticket.score}.0</span>
+                  {[...Array(5)].map((_, i) => (
+                    <svg
+                      key={i}
+                      className={`w-4 h-4 ${i < ticket.score ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+              </td>
+              <td className="py-4 px-4 text-gray-600 text-sm max-w-[300px] truncate" title={ticket.comment || ''}>
+                {ticket.comment || <span className="text-gray-400 italic">No comment provided</span>}
+              </td>
+              <td className="py-4 px-4 text-gray-600 text-sm">{formatTimestamp(ticket.resolvedAt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

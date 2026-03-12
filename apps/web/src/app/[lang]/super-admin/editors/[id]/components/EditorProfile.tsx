@@ -41,6 +41,19 @@ export function EditorProfile({ editor, onSuspend, onDelete }: EditorProfileProp
             </span>
           </div>
           <p className="text-gray-600 text-lg mb-1">{editor.email}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-1 rounded-md">
+              CSAT: {editor.stats.csatAverage !== null ? (
+                <span className="text-gray-900 border-l border-gray-300 pl-2 ml-1">
+                  <span className="text-yellow-500 mr-1">★</span>
+                  {editor.stats.csatAverage.toFixed(1)} / 5.0 
+                  <span className="text-xs text-gray-500 ml-1 font-normal">({editor.stats.totalCsatReviews} reviews)</span>
+                </span>
+              ) : (
+                <span className="text-gray-500 font-normal border-l border-gray-300 pl-2 ml-1">No ratings yet</span>
+              )}
+            </span>
+          </div>
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <span>Joined: {formatTimestamp(editor.createdAt)}</span>
             {editor.lastLogin && (

@@ -50,6 +50,7 @@ export function useEditorDetailPage(lang: string, editorId: number) {
       let adWork: EditorDetail['adWork'] = [];
       let businessVerifications: EditorDetail['businessVerifications'] = [];
       let individualVerifications: EditorDetail['individualVerifications'] = [];
+      let csatTickets: EditorDetail['csatTickets'] = [];
       let stats = {
         adsApproved: 0,
         adsRejected: 0,
@@ -60,6 +61,8 @@ export function useEditorDetailPage(lang: string, editorId: number) {
         individualApproved: 0,
         individualRejected: 0,
         supportTickets: 0,
+        csatAverage: null as number | null,
+        totalCsatReviews: 0,
       };
       let timeBuckets: EditorDetail['timeBuckets'] | undefined = undefined;
       let monthLabel: string | undefined = undefined;
@@ -87,6 +90,7 @@ export function useEditorDetailPage(lang: string, editorId: number) {
           adWork = activityData.data.adWork || [];
           businessVerifications = activityData.data.businessVerifications || [];
           individualVerifications = activityData.data.individualVerifications || [];
+          csatTickets = activityData.data.csatTickets || [];
           stats = activityData.data.stats || stats;
           timeBuckets = activityData.data.timeBuckets || undefined;
           if (selectedMonth) {
@@ -109,6 +113,7 @@ export function useEditorDetailPage(lang: string, editorId: number) {
         adWork,
         businessVerifications,
         individualVerifications,
+        csatTickets,
         timeBuckets,
         monthLabel,
       };

@@ -22,6 +22,19 @@ export interface VerificationWork {
   reason?: string;
 }
 
+export interface CsatTicket {
+  id: number;
+  ticketNumber: string;
+  subject: string;
+  score: number;
+  comment: string | null;
+  resolvedAt: string;
+  user: {
+    fullName: string;
+    email: string;
+  };
+}
+
 export interface EditorDetail {
   id: number;
   fullName: string;
@@ -40,11 +53,14 @@ export interface EditorDetail {
     individualApproved: number;
     individualRejected: number;
     supportTickets: number;
+    csatAverage: number | null;
+    totalCsatReviews: number;
   };
   activities: EditorActivity[];
   adWork: AdWork[];
   businessVerifications: VerificationWork[];
   individualVerifications: VerificationWork[];
+  csatTickets: CsatTicket[];
   timeBuckets?: {
     daily: { ads: number; business: number; individual: number; supportTickets: number };
     weekly: { ads: number; business: number; individual: number; supportTickets: number };
@@ -53,7 +69,7 @@ export interface EditorDetail {
   monthLabel?: string;
 }
 
-export type ActiveTab = 'activity' | 'ads' | 'business' | 'individual';
+export type ActiveTab = 'activity' | 'ads' | 'business' | 'individual' | 'support_csat';
 
 export function getActivityIcon(type: EditorActivity['type']): string {
   const icons: Record<EditorActivity['type'], string> = {
