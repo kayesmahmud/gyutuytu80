@@ -18,11 +18,14 @@ class TicketDetailScreen extends StatefulWidget {
 class _TicketDetailScreenState extends State<TicketDetailScreen> {
   final _client = SupportClient();
   final _messageController = TextEditingController();
+  final _csatCommentController = TextEditingController();
   final _scrollController = ScrollController();
 
   SupportTicketDetail? _ticket;
   bool _isLoading = true;
   bool _isSending = false;
+  bool _isSubmittingCsat = false;
+  int _selectedStar = 0;
   String? _error;
 
   @override
@@ -34,6 +37,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   @override
   void dispose() {
     _messageController.dispose();
+    _csatCommentController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -87,6 +91,45 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       await _loadTicket();
     } else {
       _messageController.text = content;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.errorMessage),
+          backgroundColor: Colors.red[700],
+        ),
+      );
+    }
+  }
+
+  Future<void> _submitCsat() async {
+    if (_selectedStar == 0) return;
+
+    setState(() => _isSubmittingCsat = true);
+
+    final comment = _csatCommentController.text.trim();
+    final response = await _client.submitCsat(
+      widget.ticketId,
+      _selectedStar,
+      comment: comment.isNotEmpty ? comment : null,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isSubmittingCsat = false);
+
+    if (response.hasData) {
+      setState(() {
+        _ticket = _ticket?.copyWith(
+          csatScore: _selectedStar,
+          csatComment: comment.isNotEmpty ? comment : null,
+        );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('support.feedbackSubmitted'.tr()),
+          backgroundColor: const Color(0xFF16A34A),
+        ),
+      );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(response.errorMessage),
@@ -219,7 +262,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           ),
         ),
         if (!isClosed) _buildInputBar(),
-        if (isClosed) _buildClosedBar(ticket.status),
+        if (isClosed) _buildCsatBar(ticket),
       ],
     );
   }
@@ -441,36 +484,163 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     );
   }
 
-  Widget _buildClosedBar(SupportTicketStatus status) {
+  Widget _buildCsatBar(SupportTicketDetail ticket) {
+    final hasRating = ticket.csatScore != null;
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+
+    // Already submitted — show thank-you state
+    if (hasRating) {
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDF4),
+          border: Border(top: BorderSide(color: Colors.green[200]!)),
+        ),
+        padding: EdgeInsets.fromLTRB(16, 14, 16, 14 + bottomPad),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                5,
+                (i) => Icon(
+                  i < ticket.csatScore! ? Icons.star_rounded : Icons.star_outline_rounded,
+                  color: const Color(0xFFF59E0B),
+                  size: 24,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'support.feedbackReceived'.tr(),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.green[700],
+              ),
+            ),
+            if (ticket.csatComment != null && ticket.csatComment!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                '"${ticket.csatComment}"',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    // Rating form
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Colors.white,
         border: Border(top: BorderSide(color: Colors.grey[200]!)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
-      padding: EdgeInsets.fromLTRB(
-          16, 14, 16, 14 + MediaQuery.of(context).padding.bottom),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: EdgeInsets.fromLTRB(16, 14, 16, 14 + bottomPad),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              shape: BoxShape.circle,
-            ),
-            child: Icon(LucideIcons.lock, size: 14, color: Colors.grey[500]),
-          ),
-          const SizedBox(width: 10),
           Text(
-            status == SupportTicketStatus.resolved
-                ? 'support.ticketResolved'.tr()
-                : 'support.ticketClosed'.tr(),
+            'support.rateExperience'.tr(),
             style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[500]),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F2937),
+            ),
           ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              final star = i + 1;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedStar = star),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    star <= _selectedStar
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    color: const Color(0xFFF59E0B),
+                    size: 36,
+                  ),
+                ),
+              );
+            }),
+          ),
+          if (_selectedStar > 0) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _csatCommentController,
+              decoration: InputDecoration(
+                hintText: 'support.csatCommentHint'.tr(),
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: Colors.grey[400],
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+              ),
+              style: GoogleFonts.inter(fontSize: 14),
+              maxLines: 2,
+              minLines: 1,
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isSubmittingCsat ? null : _submitCsat,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE11D48),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: _isSubmittingCsat
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        'support.submitFeedback'.tr(),
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ],
       ),
     );

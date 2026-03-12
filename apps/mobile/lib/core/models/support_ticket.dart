@@ -217,6 +217,8 @@ class SupportTicketDetail {
   final DateTime updatedAt;
   final DateTime? resolvedAt;
   final DateTime? closedAt;
+  final int? csatScore;
+  final String? csatComment;
   final List<SupportMessage> messages;
 
   SupportTicketDetail({
@@ -230,8 +232,28 @@ class SupportTicketDetail {
     required this.updatedAt,
     this.resolvedAt,
     this.closedAt,
+    this.csatScore,
+    this.csatComment,
     required this.messages,
   });
+
+  SupportTicketDetail copyWith({int? csatScore, String? csatComment}) {
+    return SupportTicketDetail(
+      id: id,
+      ticketNumber: ticketNumber,
+      subject: subject,
+      category: category,
+      priority: priority,
+      status: status,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      resolvedAt: resolvedAt,
+      closedAt: closedAt,
+      csatScore: csatScore ?? this.csatScore,
+      csatComment: csatComment ?? this.csatComment,
+      messages: messages,
+    );
+  }
 
   factory SupportTicketDetail.fromMap(Map<String, dynamic> json) {
     final msgList = json['messages'] as List<dynamic>? ?? [];
@@ -252,6 +274,8 @@ class SupportTicketDetail {
       updatedAt: DateTime.parse(json['updatedAt'] as String? ?? json['updated_at'] as String? ?? DateTime.now().toIso8601String()),
       resolvedAt: json['resolvedAt'] != null ? DateTime.parse(json['resolvedAt'] as String) : null,
       closedAt: json['closedAt'] != null ? DateTime.parse(json['closedAt'] as String) : null,
+      csatScore: json['csatScore'] as int?,
+      csatComment: json['csatComment'] as String?,
       messages: msgList.map((e) => SupportMessage.fromMap(e as Map<String, dynamic>)).toList(),
     );
   }

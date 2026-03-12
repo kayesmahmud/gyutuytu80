@@ -84,6 +84,26 @@ class SupportClient {
     }
   }
 
+  Future<ApiResponse<void>> submitCsat(int ticketId, int score, {String? comment}) async {
+    try {
+      final response = await _dio.post('/support/tickets/$ticketId/csat', data: {
+        'score': score,
+        if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
+      });
+
+      if (response.data['success'] == true) {
+        return ApiResponse.success(null);
+      }
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to submit rating',
+      );
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to submit rating',
+      );
+    }
+  }
+
   Future<ApiResponse<SupportMessage>> sendMessage(int ticketId, String content) async {
     try {
       final response = await _dio.post('/support/tickets/$ticketId/messages', data: {
