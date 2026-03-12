@@ -56,11 +56,11 @@ export async function POST(request: NextRequest) {
         },
       }),
       prisma.business_verification_requests.findFirst({
-        where: { user_id: userId, status: { in: ['pending', 'pending_payment'] } },
+        where: { user_id: userId, status: 'pending' },
         select: { id: true },
       }),
       prisma.individual_verification_requests.findFirst({
-        where: { user_id: userId, status: { in: ['pending', 'pending_payment'] } },
+        where: { user_id: userId, status: 'pending' },
         select: { id: true },
       }),
     ]);

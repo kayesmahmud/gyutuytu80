@@ -9,8 +9,7 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  ArrowRight,
-  CreditCard
+  ArrowRight
 } from 'lucide-react';
 import type { VerificationStatusData, VerificationType } from './types';
 
@@ -34,13 +33,12 @@ export function VerificationStatusCard({
   const t = useTranslations('verification');
   const isIndividual = type === 'individual';
   const status = data?.status || 'unverified';
-  const canSelect = !data || ['unverified', 'rejected', 'pending_payment'].includes(status);
+  const canSelect = !data || ['unverified', 'rejected'].includes(status);
 
   const getIconGradient = () => {
     if (status === 'verified') return 'from-green-400 to-emerald-500';
     if (status === 'rejected') return 'from-red-400 to-rose-500';
     if (status === 'pending') return 'from-amber-400 to-yellow-500';
-    if (status === 'pending_payment') return 'from-orange-400 to-orange-500';
     // Match avatar badge colors: blue-500 for individual, yellow-400 for business
     return isIndividual
       ? 'from-blue-400 to-blue-600'
@@ -52,7 +50,6 @@ export function VerificationStatusCard({
     if (status === 'verified') return <CheckCircle2 className={iconClass} />;
     if (status === 'rejected') return <XCircle className={iconClass} />;
     if (status === 'pending') return <Clock className={iconClass} />;
-    if (status === 'pending_payment') return <CreditCard className={iconClass} />;
     return isIndividual
       ? <User className={iconClass} />
       : <Building2 className={iconClass} />;
@@ -77,9 +74,6 @@ export function VerificationStatusCard({
     }
     if (status === 'pending') {
       return `${baseClasses} border-4 border-amber-100 hover:border-amber-200`;
-    }
-    if (status === 'pending_payment') {
-      return `${baseClasses} hover:shadow-2xl hover:-translate-y-1 cursor-pointer border-4 border-orange-200 hover:border-orange-300`;
     }
 
     // Selectable state (matching avatar badge colors: blue-500 for individual, yellow-400 for business)
@@ -155,9 +149,7 @@ export function VerificationStatusCard({
                   ? t('verifyPhoneFirst')
                   : status === 'rejected'
                     ? t('resubmitFree')
-                    : status === 'pending_payment'
-                      ? t('completePayment')
-                      : t('startVerification')}
+                    : t('startVerification')}
               </span>
               {phoneVerified && (
                 <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1" />
@@ -169,13 +161,6 @@ export function VerificationStatusCard({
             <div className="flex items-center gap-2 text-amber-600 text-xs sm:text-sm font-medium">
               <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>{t('underReview')}</span>
-            </div>
-          )}
-
-          {status === 'pending_payment' && (
-            <div className="flex items-center gap-2 text-orange-600 text-xs sm:text-sm font-medium">
-              <CreditCard className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{t('awaitingPayment')}</span>
             </div>
           )}
 

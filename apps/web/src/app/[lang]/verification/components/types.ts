@@ -9,7 +9,7 @@ export interface VerificationRequest {
 }
 
 export interface VerificationStatusData {
-  status: 'unverified' | 'pending_payment' | 'pending' | 'verified' | 'rejected';
+  status: 'unverified' | 'pending' | 'verified' | 'rejected';
   rejectionReason?: string;
   expiresAt?: string;
   daysRemaining?: number;

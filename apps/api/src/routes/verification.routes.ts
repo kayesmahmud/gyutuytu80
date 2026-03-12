@@ -85,11 +85,10 @@ router.get(
       // Map request status to display status
       if (businessRequest.status === 'pending') {
         businessStatus = 'pending';
-      } else if (businessRequest.status === 'pending_payment') {
-        businessStatus = 'pending_payment';
       } else if (businessRequest.status === 'rejected') {
         businessStatus = 'rejected';
       }
+      // pending_payment is treated as unverified — user hasn't completed submission
     }
 
     // Calculate days remaining for business verification
@@ -135,11 +134,10 @@ router.get(
       // Map request status to display status
       if (individualRequest.status === 'pending') {
         individualStatus = 'pending';
-      } else if (individualRequest.status === 'pending_payment') {
-        individualStatus = 'pending_payment';
       } else if (individualRequest.status === 'rejected') {
         individualStatus = 'rejected';
       }
+      // pending_payment is treated as unverified — user hasn't completed submission
     }
 
     // Calculate days remaining for individual verification
@@ -372,11 +370,11 @@ async function checkVerificationEligibility(userId: number): Promise<{ blocked: 
       },
     }),
     prisma.business_verification_requests.findFirst({
-      where: { user_id: userId, status: { in: ['pending', 'pending_payment'] } },
+      where: { user_id: userId, status: 'pending' },
       select: { id: true },
     }),
     prisma.individual_verification_requests.findFirst({
-      where: { user_id: userId, status: { in: ['pending', 'pending_payment'] } },
+      where: { user_id: userId, status: 'pending' },
       select: { id: true },
     }),
   ]);
