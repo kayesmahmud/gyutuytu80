@@ -53,6 +53,12 @@ const nextConfig: NextConfig = {
         hostname: process.env.NEXT_PUBLIC_API_HOSTNAME,
         pathname: '/uploads/**',
       }] : []),
+      // Unsplash (blog featured images)
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
       // OAuth providers
       {
         protocol: 'https',

@@ -166,3 +166,74 @@ export interface DbIndividualVerificationRequest {
   verified_at: Date | null;
   verified_by: number | null;
 }
+
+// ============================================
+// DATABASE BLOG TYPES
+// ============================================
+
+export type DbBlogPostStatus = 'draft' | 'published' | 'archived';
+
+export interface DbBlogAuthor {
+  id: number;
+  name: string;
+  name_ne: string | null;
+  slug: string;
+  avatar: string | null;
+  bio: string | null;
+  bio_ne: string | null;
+  credentials: string | null;
+  credentials_ne: string | null;
+  expertise_areas: string[];
+  social_links: Record<string, string> | null;
+  is_active: boolean;
+  created_at: Date | null;
+  updated_at: Date | null;
+}
+
+export interface DbBlogCategory {
+  id: number;
+  name: string;
+  name_ne: string | null;
+  slug: string;
+  description: string | null;
+  description_ne: string | null;
+  parent_id: number | null;
+  display_order: number | null;
+  is_active: boolean;
+  marketplace_category_id: number | null;
+  created_at: Date | null;
+}
+
+export interface DbBlogTag {
+  id: number;
+  name: string;
+  name_ne: string | null;
+  slug: string;
+  created_at: Date | null;
+}
+
+export interface DbBlogPost {
+  id: number;
+  title: string;
+  title_ne: string | null;
+  slug: string;
+  excerpt: string | null;
+  excerpt_ne: string | null;
+  content: string;
+  content_ne: string | null;
+  meta_description: string | null;
+  meta_description_ne: string | null;
+  featured_image: string | null;
+  featured_image_alt: string | null;
+  featured_image_alt_ne: string | null;
+  status: DbBlogPostStatus;
+  author_id: number;
+  category_id: number;
+  reading_time_min: number | null;
+  view_count: number;
+  is_featured: boolean;
+  published_at: Date | null;
+  created_at: Date | null;
+  updated_at: Date | null;
+  linked_category_slugs: string[];
+}

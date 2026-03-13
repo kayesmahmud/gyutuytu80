@@ -377,3 +377,93 @@ export interface VerificationStatusResponse {
     request?: VerificationRequestInfo;
   };
 }
+
+// ============================================
+// API BLOG TYPES
+// ============================================
+
+export type BlogPostStatus = 'draft' | 'published' | 'archived';
+
+export interface BlogAuthor {
+  id: number;
+  name: string;
+  nameNe?: string;
+  slug: string;
+  avatar?: string;
+  bio?: string;
+  bioNe?: string;
+  credentials?: string;
+  credentialsNe?: string;
+  expertiseAreas: string[];
+  socialLinks?: Record<string, string>;
+  isActive: boolean;
+  createdAt?: Date;
+}
+
+export interface BlogCategory {
+  id: number;
+  name: string;
+  nameNe?: string;
+  slug: string;
+  description?: string;
+  descriptionNe?: string;
+  parentId?: number;
+  displayOrder?: number;
+  isActive: boolean;
+  marketplaceCategoryId?: number;
+  postCount?: number;
+}
+
+export interface BlogTag {
+  id: number;
+  name: string;
+  nameNe?: string;
+  slug: string;
+  postCount?: number;
+}
+
+export interface BlogPost {
+  id: number;
+  title: string;
+  titleNe?: string;
+  slug: string;
+  excerpt?: string;
+  excerptNe?: string;
+  content: string;
+  contentNe?: string;
+  metaDescription?: string;
+  metaDescriptionNe?: string;
+  featuredImage?: string;
+  featuredImageAlt?: string;
+  featuredImageAltNe?: string;
+  status: BlogPostStatus;
+  authorId: number;
+  categoryId: number;
+  readingTimeMin?: number;
+  viewCount: number;
+  isFeatured: boolean;
+  publishedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  linkedCategorySlugs: string[];
+  // Joined relations
+  author?: BlogAuthor;
+  category?: BlogCategory;
+  tags?: BlogTag[];
+}
+
+export interface BlogPostListItem {
+  id: number;
+  title: string;
+  titleNe?: string;
+  slug: string;
+  excerpt?: string;
+  excerptNe?: string;
+  featuredImage?: string;
+  featuredImageAlt?: string;
+  featuredImageAltNe?: string;
+  readingTimeMin?: number;
+  publishedAt?: Date;
+  author?: BlogAuthor;
+  category?: BlogCategory;
+}

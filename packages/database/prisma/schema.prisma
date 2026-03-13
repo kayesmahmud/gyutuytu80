@@ -279,6 +279,7 @@ model categories {
   category_pricing_tiers                         category_pricing_tiers?
   users_as_default_category                      users[]                 @relation("users_default_category")
   users_as_default_subcategory                   users[]                 @relation("users_default_subcategory")
+  blog_categories                                blog_categories[]
 
   @@index([name], map: "idx_categories_name")
   @@index([parent_id], map: "idx_categories_parent_id")
@@ -874,4 +875,114 @@ model refresh_tokens {
 
   @@index([user_id], map: "idx_refresh_tokens_user")
   @@index([token], map: "idx_refresh_tokens_token")
+}
+
+// ============================================
+// BLOG SYSTEM
+// ============================================
+
+/// Blog authors — writer profiles with E-E-A-T credentials
+model blog_authors {
+  id              Int          @id @default(autoincrement())
+  name            String       @db.VarChar(200)
+  name_ne         String?      @db.VarChar(200)
+  slug            String       @unique @db.VarChar(200)
+  avatar          String?      @db.VarChar(500)
+  bio             String?
+  bio_ne          String?
+  credentials     String?      @db.VarChar(500)
+  credentials_ne  String?      @db.VarChar(500)
+  expertise_areas String[]     @default([])
+  social_links    Json?
+  is_active       Boolean      @default(true)
+  created_at      DateTime?    @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?    @default(now()) @updatedAt @db.Timestamp(6)
+  blog_posts      blog_posts[]
+
+  @@index([slug], map: "idx_blog_authors_slug")
+  @@index([is_active], map: "idx_blog_authors_active")
+}
+
+/// Blog categories — separate from marketplace categories, linked via FK
+model blog_categories {
+  id                      Int               @id @default(autoincrement())
+  name                    String            @db.VarChar(200)
+  name_ne                 String?           @db.VarChar(200)
+  slug                    String            @unique @db.VarChar(200)
+  description             String?
+  description_ne          String?
+  parent_id               Int?
+  display_order           Int?              @default(999)
+  is_active               Boolean           @default(true)
+  marketplace_category_id Int?
+  created_at              DateTime?         @default(now()) @db.Timestamp(6)
+  blog_categories         blog_categories?  @relation("blogCategoriesToBlogCategories", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  other_blog_categories   blog_categories[] @relation("blogCategoriesToBlogCategories")
+  marketplace_category    categories?       @relation(fields: [marketplace_category_id], references: [id], onUpdate: NoAction)
+  blog_posts              blog_posts[]
+
+  @@index([slug], map: "idx_blog_categories_slug")
+  @@index([parent_id], map: "idx_blog_categories_parent_id")
+  @@index([marketplace_category_id], map: "idx_blog_categories_marketplace")
+}
+
+/// Blog tags for SEO
+model blog_tags {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar(100)
+  name_ne        String?          @db.VarChar(100)
+  slug           String           @unique @db.VarChar(100)
+  created_at     DateTime?        @default(now()) @db.Timestamp(6)
+  blog_post_tags blog_post_tags[]
+
+  @@index([slug], map: "idx_blog_tags_slug")
+}
+
+/// Blog posts — core content table
+model blog_posts {
+  id                    Int              @id @default(autoincrement())
+  title                 String           @db.VarChar(500)
+  title_ne              String?          @db.VarChar(500)
+  slug                  String           @unique @db.VarChar(500)
+  excerpt               String?          @db.VarChar(1000)
+  excerpt_ne            String?          @db.VarChar(1000)
+  content               String
+  content_ne            String?
+  meta_description      String?          @db.VarChar(320)
+  meta_description_ne   String?          @db.VarChar(320)
+  featured_image        String?          @db.VarChar(500)
+  featured_image_alt    String?          @db.VarChar(300)
+  featured_image_alt_ne String?          @db.VarChar(300)
+  status                String           @default("draft") @db.VarChar(20)
+  author_id             Int
+  category_id           Int
+  reading_time_min      Int?             @default(5)
+  view_count            Int              @default(0)
+  is_featured           Boolean          @default(false)
+  published_at          DateTime?        @db.Timestamp(6)
+  created_at            DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at            DateTime?        @default(now()) @updatedAt @db.Timestamp(6)
+  linked_category_slugs String[]         @default([])
+  blog_authors          blog_authors     @relation(fields: [author_id], references: [id], onUpdate: NoAction)
+  blog_categories       blog_categories  @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  blog_post_tags        blog_post_tags[]
+
+  @@index([slug], map: "idx_blog_posts_slug")
+  @@index([status, published_at(sort: Desc)], map: "idx_blog_posts_status_published")
+  @@index([author_id], map: "idx_blog_posts_author")
+  @@index([category_id], map: "idx_blog_posts_category")
+  @@index([is_featured], map: "idx_blog_posts_featured")
+}
+
+/// Blog post tags — many-to-many junction
+model blog_post_tags {
+  id         Int        @id @default(autoincrement())
+  post_id    Int
+  tag_id     Int
+  blog_posts blog_posts @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  blog_tags  blog_tags  @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([post_id, tag_id])
+  @@index([post_id], map: "idx_blog_post_tags_post")
+  @@index([tag_id], map: "idx_blog_post_tags_tag")
 }

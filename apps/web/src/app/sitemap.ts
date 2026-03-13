@@ -33,6 +33,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   });
 
+  // Fetch published blog posts
+  const blogPosts = await prisma.blog_posts.findMany({
+    where: { status: 'published', published_at: { not: null } },
+    select: { slug: true, updated_at: true },
+    orderBy: { published_at: 'desc' },
+    take: 50000,
+  });
+
+  // Fetch active blog categories and authors
+  const [blogCategories, blogAuthors] = await Promise.all([
+    prisma.blog_categories.findMany({
+      where: { is_active: true },
+      select: { slug: true },
+    }),
+    prisma.blog_authors.findMany({
+      where: { is_active: true },
+      select: { slug: true },
+    }),
+  ]);
+
   // Static pages
   const staticPages = [
     {
@@ -71,5 +91,77 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...categoryPages, ...adPages];
+  // Blog listing page
+  const blogStaticPages = [
+    {
+      url: `${baseUrl}/en/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/ne/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+  ];
+
+  // Blog post pages (both languages)
+  const blogPostPages = blogPosts.flatMap((post) => [
+    {
+      url: `${baseUrl}/en/blog/${post.slug}`,
+      lastModified: post.updated_at || new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/ne/blog/${post.slug}`,
+      lastModified: post.updated_at || new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    },
+  ]);
+
+  // Blog category pages
+  const blogCategoryPages = blogCategories.flatMap((cat) => [
+    {
+      url: `${baseUrl}/en/blog/category/${cat.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/ne/blog/category/${cat.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    },
+  ]);
+
+  // Blog author pages
+  const blogAuthorPages = blogAuthors.flatMap((author) => [
+    {
+      url: `${baseUrl}/en/blog/author/${author.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/ne/blog/author/${author.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    },
+  ]);
+
+  return [
+    ...staticPages,
+    ...categoryPages,
+    ...adPages,
+    ...blogStaticPages,
+    ...blogPostPages,
+    ...blogCategoryPages,
+    ...blogAuthorPages,
+  ];
 }

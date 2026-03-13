@@ -5,8 +5,8 @@
  * ⚠️ CRITICAL: Always use these transformers when converting DB data to API responses!
  */
 
-import type { DbUser, DbAd, DbCategory, DbLocation } from './database';
-import type { User, Ad, Category, Location } from './api';
+import type { DbUser, DbAd, DbCategory, DbLocation, DbBlogAuthor, DbBlogCategory, DbBlogTag, DbBlogPost } from './database';
+import type { User, Ad, Category, Location, BlogAuthor, BlogCategory, BlogTag, BlogPost, BlogPostListItem } from './api';
 
 // ============================================
 // USER TRANSFORMERS
@@ -225,6 +225,96 @@ export function transformDbLocationsToApi(dbLocations: DbLocation[]): Location[]
  * // GOOD:
  * const userId = safeGet(req.user, 'id', 'req.user.id');
  */
+// ============================================
+// BLOG TRANSFORMERS
+// ============================================
+
+export function transformDbBlogAuthorToApi(db: DbBlogAuthor): BlogAuthor {
+  return {
+    id: db.id,
+    name: db.name,
+    nameNe: db.name_ne || undefined,
+    slug: db.slug,
+    avatar: db.avatar || undefined,
+    bio: db.bio || undefined,
+    bioNe: db.bio_ne || undefined,
+    credentials: db.credentials || undefined,
+    credentialsNe: db.credentials_ne || undefined,
+    expertiseAreas: db.expertise_areas || [],
+    socialLinks: (db.social_links as Record<string, string>) || undefined,
+    isActive: db.is_active,
+    createdAt: db.created_at || undefined,
+  };
+}
+
+export function transformDbBlogCategoryToApi(db: DbBlogCategory): BlogCategory {
+  return {
+    id: db.id,
+    name: db.name,
+    nameNe: db.name_ne || undefined,
+    slug: db.slug,
+    description: db.description || undefined,
+    descriptionNe: db.description_ne || undefined,
+    parentId: db.parent_id || undefined,
+    displayOrder: db.display_order || undefined,
+    isActive: db.is_active,
+    marketplaceCategoryId: db.marketplace_category_id || undefined,
+  };
+}
+
+export function transformDbBlogTagToApi(db: DbBlogTag): BlogTag {
+  return {
+    id: db.id,
+    name: db.name,
+    nameNe: db.name_ne || undefined,
+    slug: db.slug,
+  };
+}
+
+export function transformDbBlogPostToApi(db: DbBlogPost): BlogPost {
+  return {
+    id: db.id,
+    title: db.title,
+    titleNe: db.title_ne || undefined,
+    slug: db.slug,
+    excerpt: db.excerpt || undefined,
+    excerptNe: db.excerpt_ne || undefined,
+    content: db.content,
+    contentNe: db.content_ne || undefined,
+    metaDescription: db.meta_description || undefined,
+    metaDescriptionNe: db.meta_description_ne || undefined,
+    featuredImage: db.featured_image || undefined,
+    featuredImageAlt: db.featured_image_alt || undefined,
+    featuredImageAltNe: db.featured_image_alt_ne || undefined,
+    status: db.status,
+    authorId: db.author_id,
+    categoryId: db.category_id,
+    readingTimeMin: db.reading_time_min || undefined,
+    viewCount: db.view_count,
+    isFeatured: db.is_featured,
+    publishedAt: db.published_at || undefined,
+    createdAt: db.created_at || undefined,
+    updatedAt: db.updated_at || undefined,
+    linkedCategorySlugs: db.linked_category_slugs || [],
+  };
+}
+
+export function transformDbBlogPostToListItem(db: DbBlogPost): BlogPostListItem {
+  return {
+    id: db.id,
+    title: db.title,
+    titleNe: db.title_ne || undefined,
+    slug: db.slug,
+    excerpt: db.excerpt || undefined,
+    excerptNe: db.excerpt_ne || undefined,
+    featuredImage: db.featured_image || undefined,
+    featuredImageAlt: db.featured_image_alt || undefined,
+    featuredImageAltNe: db.featured_image_alt_ne || undefined,
+    readingTimeMin: db.reading_time_min || undefined,
+    publishedAt: db.published_at || undefined,
+  };
+}
+
 export function safeGet<T>(
   obj: any,
   key: string,

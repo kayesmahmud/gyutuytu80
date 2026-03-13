@@ -44,6 +44,7 @@ export default function Footer({ lang }: FooterProps) {
                 <li><Link href={`/${lang}/shops`} className="text-sm text-gray-400 hover:text-rose-400">{t('verifiedShops')}</Link></li>
                 <li><Link href={`/${lang}/dashboard`} className="text-sm text-gray-400 hover:text-rose-400">{t('myDashboard')}</Link></li>
                 <li><Link href={`/${lang}/verification`} className="text-sm text-gray-400 hover:text-rose-400">{t('getVerified')}</Link></li>
+                <li><Link href={`/${lang}/blog`} className="text-sm text-gray-400 hover:text-rose-400">{t('blog')}</Link></li>
               </ul>
             </div>
             {/* Help & Support */}
@@ -219,6 +220,15 @@ export default function Footer({ lang }: FooterProps) {
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                   {t('getVerified')}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`/${lang}/blog`}
+                  className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
+                >
+                  <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  {t('blog')}
                 </Link>
               </li>
             </ul>

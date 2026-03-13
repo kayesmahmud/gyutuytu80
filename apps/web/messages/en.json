@@ -86,7 +86,8 @@
     "helpCenter": "Help Center",
     "faq": "FAQ",
     "supportTickets": "Support Tickets",
-    "contactUs": "Contact Us"
+    "contactUs": "Contact Us",
+    "blog": "Blog"
   },
   "footer": {
     "quickLinks": "Quick Links",
@@ -107,7 +108,8 @@
     "termsAndConditions": "Terms & Conditions",
     "downloadOurApp": "Download Our App",
     "companyDescription": "Nepal's leading classifieds marketplace. Buy, sell, and rent across Nepal with ease.",
-    "kathmandu": "Kathmandu, Nepal"
+    "kathmandu": "Kathmandu, Nepal",
+    "blog": "Blog"
   },
   "auth": {
     "signIn": "Sign In",
@@ -138,7 +140,7 @@
     "agreeToTerms": "Please agree to Terms & Conditions",
     "termsAndConditions": "Terms & Conditions",
     "privacyPolicy": "Privacy Policy",
-    "loginFailed": "Login failed",
+    "loginFailed": "Login failed. Please try again.",
     "googleLoginFailed": "Google Login failed",
     "errorOccurred": "An error occurred",
     "pleaseEnterPhoneAndPassword": "Please enter phone and password",
@@ -202,7 +204,6 @@
     "oauthCallbackGenericError": "Error in OAuth callback. Please try again.",
     "oauthGoogleError": "Google login failed. Please try again or use phone login.",
     "oauthDefaultError": "Authentication failed. Please try again.",
-    "loginFailed": "Login failed. Please try again.",
     "failedToConnect": "Failed to connect. Please try again."
   },
   "ads": {
