@@ -16,13 +16,13 @@ const imagePool: Record<string, string[]> = {
     `${BASE}/photo-1492144534655-ae79c964c9d7${PARAMS}`,   // red sports car
     `${BASE}/photo-1449824913935-59a10b8d2000${PARAMS}`,   // city traffic
     `${BASE}/photo-1503376780353-7e6692767b70${PARAMS}`,   // car on road
-    `${BASE}/photo-1558618666-fcd25c85f82e${PARAMS}`,     // motorbike
-    `${BASE}/photo-1568605117036-5fe5e7bab0b0${PARAMS}`,   // car interior
-    `${BASE}/photo-1533473359331-2f2db1c59548${PARAMS}`,   // motorcycle close-up
+    `${BASE}/photo-1583121274602-3e2820c69888${PARAMS}`,   // red sports car
+    `${BASE}/photo-1544636331-e26879cd4d9b${PARAMS}`,     // white car side
+    `${BASE}/photo-1552519507-da3b142c6e3d${PARAMS}`,     // sports car front
     `${BASE}/photo-1485291571150-772bcfc10da5${PARAMS}`,   // highway driving
   ],
   mobiles: [
-    `${BASE}/photo-1511707171634-5f897ff02aa6${PARAMS}`,   // smartphone on desk
+    `${BASE}/photo-1556656793-08538906a9f8${PARAMS}`,   // smartphone on desk
     `${BASE}/photo-1512941937669-90a1b58e7e9c${PARAMS}`,   // phone in hand
     `${BASE}/photo-1601784551446-20c9e07cdbdb${PARAMS}`,   // phones lineup
     `${BASE}/photo-1585060544812-6b45742d762f${PARAMS}`,   // phone store display
@@ -69,7 +69,7 @@ const imagePool: Record<string, string[]> = {
     `${BASE}/photo-1469334031218-e382a71b716b${PARAMS}`,   // fashion model
   ],
   'pets-animals': [
-    `${BASE}/photo-1450778869180-41d0601e0e36${PARAMS}`,   // happy dog
+    `${BASE}/photo-1587300003388-59208cc962cb${PARAMS}`,   // happy dog
     `${BASE}/photo-1514888286974-6c03e2ca1dba${PARAMS}`,   // cat face
     `${BASE}/photo-1425082661705-1834bfd09dca${PARAMS}`,   // golden puppy
     `${BASE}/photo-1573865526739-10659fec78a5${PARAMS}`,   // cat sitting
