@@ -169,6 +169,103 @@ class _ShopScreenState extends State<ShopScreen> {
   Future<void> _pickImage({required bool isCover}) async {
     if (_uploadingImage) return;
 
+    if (isCover) {
+      _showCoverImageGuide();
+      return;
+    }
+
+    _openImagePicker(isCover: false);
+  }
+
+  void _showCoverImageGuide() {
+    final isNe = context.locale.languageCode == 'ne';
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          24 + MediaQuery.of(ctx).viewPadding.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.image, size: 40, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            Text(
+              isNe ? 'कभर फोटो अपलोड गर्नुहोस्' : 'Upload Cover Photo',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.info,
+                    size: 18,
+                    color: Color(0xFF10B981),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      isNe
+                          ? 'सिफारिस गरिएको साइज: 1290 × 552 px'
+                          : 'Recommended size: 1290 × 552 px',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF065F46),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _openImagePicker(isCover: true);
+                },
+                icon: const Icon(LucideIcons.upload, size: 18),
+                label: Text(
+                  isNe ? 'फोटो छान्नुहोस्' : 'Choose Photo',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF43F5E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openImagePicker({required bool isCover}) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -177,9 +274,17 @@ class _ShopScreenState extends State<ShopScreen> {
         _cropImage(pickedFile.path, isCover: isCover);
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'छवि छान्दा त्रुटि: $e' : 'Error picking image: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'छवि छान्दा त्रुटि: $e'
+                  : 'Error picking image: $e',
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -187,13 +292,17 @@ class _ShopScreenState extends State<ShopScreen> {
     CroppedFile? croppedFile = await ImageCropper().cropImage(
       sourcePath: path,
       aspectRatio: isCover
-          ? const CropAspectRatio(ratioX: 3, ratioY: 1)
+          ? const CropAspectRatio(ratioX: 2.34, ratioY: 1)
           : const CropAspectRatio(ratioX: 1, ratioY: 1),
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: isCover
-              ? (context.locale.languageCode == 'ne' ? 'कभर फोटो क्रप गर्नुहोस्' : 'Crop Cover Photo')
-              : (context.locale.languageCode == 'ne' ? 'अवतार क्रप गर्नुहोस्' : 'Crop Avatar'),
+              ? (context.locale.languageCode == 'ne'
+                    ? 'कभर फोटो क्रप गर्नुहोस्'
+                    : 'Crop Cover Photo')
+              : (context.locale.languageCode == 'ne'
+                    ? 'अवतार क्रप गर्नुहोस्'
+                    : 'Crop Avatar'),
           toolbarColor: const Color(0xFFF43F5E),
           toolbarWidgetColor: Colors.white,
           initAspectRatio: isCover
@@ -201,9 +310,15 @@ class _ShopScreenState extends State<ShopScreen> {
               : CropAspectRatioPreset.square,
           lockAspectRatio: true,
         ),
-        IOSUiSettings(title: isCover
-            ? (context.locale.languageCode == 'ne' ? 'कभर फोटो क्रप गर्नुहोस्' : 'Crop Cover Photo')
-            : (context.locale.languageCode == 'ne' ? 'अवतार क्रप गर्नुहोस्' : 'Crop Avatar')),
+        IOSUiSettings(
+          title: isCover
+              ? (context.locale.languageCode == 'ne'
+                    ? 'कभर फोटो क्रप गर्नुहोस्'
+                    : 'Crop Cover Photo')
+              : (context.locale.languageCode == 'ne'
+                    ? 'अवतार क्रप गर्नुहोस्'
+                    : 'Crop Avatar'),
+        ),
       ],
     );
 
@@ -232,9 +347,11 @@ class _ShopScreenState extends State<ShopScreen> {
     if (response.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.locale.languageCode == 'ne'
-              ? 'कभर/अवतार सफलतापूर्वक अपडेट भयो'
-              : '${isCover ? "Cover" : "Avatar"} updated successfully'),
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'कभर/अवतार सफलतापूर्वक अपडेट भयो'
+                : '${isCover ? "Cover" : "Avatar"} updated successfully',
+          ),
         ),
       );
       // Refresh shop data to show new image
@@ -282,7 +399,10 @@ class _ShopScreenState extends State<ShopScreen> {
           const SizedBox(height: 16),
           Text(_error ?? 'An error occurred'),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _fetchShopData, child: Text(l('retry', context.locale.languageCode))),
+          ElevatedButton(
+            onPressed: _fetchShopData,
+            child: Text(l('retry', context.locale.languageCode)),
+          ),
         ],
       ),
     );
@@ -387,32 +507,34 @@ class _ShopScreenState extends State<ShopScreen> {
           // Cover Photo
           Stack(
             children: [
-              Container(
-                height: 180,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: coverUrl == null
-                      ? const LinearGradient(
-                          colors: [Color(0xFFF43F5E), Color(0xFF9333EA)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+              AspectRatio(
+                aspectRatio: 2.34,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: coverUrl == null
+                        ? const LinearGradient(
+                            colors: [Color(0xFFF43F5E), Color(0xFF9333EA)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                  ),
+                  child: coverUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: coverUrl,
+                          fit: BoxFit.cover,
+                          memCacheWidth: 1290,
+                          memCacheHeight: 552,
+                          fadeInDuration: const Duration(milliseconds: 200),
+                          fadeOutDuration: const Duration(milliseconds: 200),
+                          placeholder: (context, url) =>
+                              Container(color: Colors.grey[200]),
+                          errorWidget: (context, url, error) =>
+                              Container(color: Colors.grey[200]),
                         )
                       : null,
                 ),
-                child: coverUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: coverUrl,
-                        fit: BoxFit.cover,
-                        memCacheWidth: 800,
-                        memCacheHeight: 400,
-                        fadeInDuration: const Duration(milliseconds: 200),
-                        fadeOutDuration: const Duration(milliseconds: 200),
-                        placeholder: (context, url) =>
-                            Container(color: Colors.grey[200]),
-                        errorWidget: (context, url, error) =>
-                            Container(color: Colors.grey[200]),
-                      )
-                    : null,
               ),
               if (_isOwner)
                 Positioned(
@@ -568,10 +690,16 @@ class _ShopScreenState extends State<ShopScreen> {
                               ),
                               Text(
                                 _shop!.isBusinessVerified
-                                    ? (context.locale.languageCode == 'ne' ? 'प्रमाणित व्यवसाय' : 'Verified Business')
+                                    ? (context.locale.languageCode == 'ne'
+                                          ? 'प्रमाणित व्यवसाय'
+                                          : 'Verified Business')
                                     : _shop!.individualVerified
-                                    ? (context.locale.languageCode == 'ne' ? 'प्रमाणित व्यक्ति' : 'Verified Individual')
-                                    : (context.locale.languageCode == 'ne' ? 'विक्रेता' : 'Seller'),
+                                    ? (context.locale.languageCode == 'ne'
+                                          ? 'प्रमाणित व्यक्ति'
+                                          : 'Verified Individual')
+                                    : (context.locale.languageCode == 'ne'
+                                          ? 'विक्रेता'
+                                          : 'Seller'),
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   color: Colors.grey[600],
@@ -590,11 +718,24 @@ class _ShopScreenState extends State<ShopScreen> {
                   offset: const Offset(0, -20),
                   child: Row(
                     children: [
-                      _buildStatItem('${_shop!.totalAds}', context.locale.languageCode == 'ne' ? 'विज्ञापनहरू' : 'Active Ads'),
+                      _buildStatItem(
+                        '${_shop!.totalAds}',
+                        context.locale.languageCode == 'ne'
+                            ? 'विज्ञापनहरू'
+                            : 'Active Ads',
+                      ),
                       const SizedBox(width: 24),
-                      _buildStatItem(_formatNumber(_shop!.totalViews), l('views', context.locale.languageCode)),
+                      _buildStatItem(
+                        _formatNumber(_shop!.totalViews),
+                        l('views', context.locale.languageCode),
+                      ),
                       const SizedBox(width: 24),
-                      _buildStatItem(_shop!.memberSince, context.locale.languageCode == 'ne' ? 'सदस्य' : 'Joined'),
+                      _buildStatItem(
+                        _shop!.memberSince,
+                        context.locale.languageCode == 'ne'
+                            ? 'सदस्य'
+                            : 'Joined',
+                      ),
                     ],
                   ),
                 ),
@@ -684,7 +825,9 @@ class _ShopScreenState extends State<ShopScreen> {
           crossAxisSpacing: 12,
         ),
         delegate: SliverChildBuilderDelegate(
-          (context, index) => RepaintBoundary(child: AdCard(ad: _ads[index], heroTagPrefix: 'shop')),
+          (context, index) => RepaintBoundary(
+            child: AdCard(ad: _ads[index], heroTagPrefix: 'shop'),
+          ),
           childCount: _ads.length,
         ),
       ),

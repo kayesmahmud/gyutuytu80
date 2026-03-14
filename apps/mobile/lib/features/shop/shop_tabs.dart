@@ -6,8 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:mobile/core/api/shop_client.dart';
 import 'package:mobile/core/api/ad_client.dart';
+import 'package:mobile/core/api/location_client.dart';
 import 'package:mobile/core/models/models.dart';
-import 'package:mobile/features/post_ad/models/location_models.dart';
 
 class ShopTabs extends StatefulWidget {
   final ShopProfile shop;
@@ -247,6 +247,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
   bool _usePhoneForWhatsApp = false;
   final _whatsappController = TextEditingController();
   final _websiteController = TextEditingController();
+  final _googleMapsController = TextEditingController();
   final _facebookController = TextEditingController();
   final _instagramController = TextEditingController();
   final _tiktokController = TextEditingController();
@@ -262,6 +263,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
   void dispose() {
     _whatsappController.dispose();
     _websiteController.dispose();
+    _googleMapsController.dispose();
     _facebookController.dispose();
     _instagramController.dispose();
     _tiktokController.dispose();
@@ -270,6 +272,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
 
   void _fillControllers() {
     _websiteController.text = widget.shop.businessWebsite ?? '';
+    _googleMapsController.text = widget.shop.googleMapsLink ?? '';
     _facebookController.text = _extractUsername(widget.shop.facebookUrl, 'facebook');
     _instagramController.text = _extractUsername(widget.shop.instagramUrl, 'instagram');
     _tiktokController.text = _extractUsername(widget.shop.tiktokUrl, 'tiktok');
@@ -360,6 +363,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     final data = {
       'businessPhone': whatsappValue,
       'businessWebsite': _websiteController.text,
+      'googleMapsLink': _googleMapsController.text,
       'facebookUrl': _buildSocialUrl(_facebookController.text, 'facebook'),
       'instagramUrl': _buildSocialUrl(_instagramController.text, 'instagram'),
       'tiktokUrl': _buildSocialUrl(_tiktokController.text, 'tiktok'),
@@ -481,6 +485,20 @@ class _ShopContactSectionState extends State<ShopContactSection> {
           ),
           const SizedBox(height: 14),
 
+          // Google Maps
+          _buildLabel(isNe ? 'गुगल म्याप्स लिङ्क' : 'Google Maps Link'),
+          TextField(
+            controller: _googleMapsController,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              hintText: 'https://maps.google.com/...',
+              prefixIcon: const Icon(LucideIcons.mapPin, size: 18),
+              border: const OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            ),
+          ),
+          const SizedBox(height: 14),
+
           // Facebook
           _buildLabel(isNe ? 'फेसबुक' : 'Facebook'),
           _buildPrefixField(prefix: 'fb.com/', controller: _facebookController, hint: 'yourpage'),
@@ -531,6 +549,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     final hasAny = widget.shop.businessPhone != null ||
         widget.shop.phone != null ||
         widget.shop.businessWebsite != null ||
+        (widget.shop.googleMapsLink?.isNotEmpty ?? false) ||
         fbUser.isNotEmpty ||
         igUser.isNotEmpty ||
         ttUser.isNotEmpty;
@@ -557,6 +576,14 @@ class _ShopContactSectionState extends State<ShopContactSection> {
             style:
                 GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic),
           ),
+        if (widget.shop.phone != null)
+          _buildContactTile(
+            icon: LucideIcons.phone,
+            iconColor: const Color(0xFF3B82F6),
+            label: isNe ? 'फोन नम्बर' : 'Phone',
+            value: widget.shop.phone!,
+            onTap: () => _launchUrl('tel:${widget.shop.phone}'),
+          ),
         if (widget.shop.businessPhone != null)
           _buildContactTile(
             icon: LucideIcons.messageCircle,
@@ -564,13 +591,6 @@ class _ShopContactSectionState extends State<ShopContactSection> {
             label: isNe ? 'व्हाट्सएप' : 'WhatsApp',
             value: widget.shop.businessPhone!,
             onTap: () => _launchWhatsApp(widget.shop.businessPhone!),
-          ),
-        if (widget.shop.phone != null)
-          _buildContactTile(
-            icon: LucideIcons.phone,
-            iconColor: const Color(0xFF3B82F6),
-            label: isNe ? 'मोबाइल' : 'Mobile',
-            value: widget.shop.phone!,
           ),
         if (widget.shop.businessWebsite != null)
           _buildContactTile(
@@ -582,6 +602,14 @@ class _ShopContactSectionState extends State<ShopContactSection> {
               final url = widget.shop.businessWebsite!;
               _launchUrl(url.startsWith('http') ? url : 'https://$url');
             },
+          ),
+        if (widget.shop.googleMapsLink?.isNotEmpty ?? false)
+          _buildContactTile(
+            icon: LucideIcons.mapPin,
+            iconColor: const Color(0xFFEA4335),
+            label: isNe ? 'गुगल म्याप्स' : 'Google Maps',
+            value: isNe ? 'नक्सामा हेर्नुहोस्' : 'View on Maps',
+            onTap: () => _launchUrl(widget.shop.googleMapsLink!),
           ),
         if (fbUser.isNotEmpty)
           _buildContactTile(
@@ -907,106 +935,381 @@ class ShopLocationSection extends StatefulWidget {
 class _ShopLocationSectionState extends State<ShopLocationSection> {
   bool _isEditing = false;
   bool _saving = false;
-  bool _loading = false;
+  bool _searching = false;
 
-  // Simplified location picking (Province -> District -> City only for MVP)
-  List<LocationProvince> _provinces = [];
-  LocationProvince? _selectedProvince;
-  LocationDistrict? _selectedDistrict;
-  LocationMunicipality? _selectedMunicipality;
-  
+  final _searchController = TextEditingController();
+  final LocationClient _locationClient = LocationClient();
   final ShopClient _shopClient = ShopClient();
-  final AdClient _adClient = AdClient();
 
-  Future<void> _startEditing() async {
+  List<Location> _searchResults = [];
+  Location? _selectedLocation;
+  List<Location> _ancestryChain = []; // full hierarchy: [selected, parent, grandparent, ...]
+  bool _loadingAncestry = false;
+
+  // Display mode hierarchy
+  List<Location> _displayAncestry = [];
+  bool _loadingDisplayAncestry = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDisplayAncestry();
+  }
+
+  @override
+  void didUpdateWidget(covariant ShopLocationSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.shop.locationId != widget.shop.locationId) {
+      _loadDisplayAncestry();
+    }
+  }
+
+  Future<void> _loadDisplayAncestry() async {
+    final locationId = widget.shop.locationId;
+    if (locationId == null) return;
+
+    setState(() => _loadingDisplayAncestry = true);
+
+    final response = await _locationClient.getLocationById(locationId);
+    if (!mounted) return;
+
+    if (response.success && response.data != null) {
+      final chain = <Location>[response.data!];
+      int? parentId = response.data!.parentId;
+      while (parentId != null) {
+        final parentResponse = await _locationClient.getLocationById(parentId);
+        if (!mounted) return;
+        if (parentResponse.success && parentResponse.data != null) {
+          chain.add(parentResponse.data!);
+          parentId = parentResponse.data!.parentId;
+        } else {
+          break;
+        }
+      }
+      setState(() {
+        _displayAncestry = chain;
+        _loadingDisplayAncestry = false;
+      });
+    } else {
+      setState(() => _loadingDisplayAncestry = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _searchLocations(String query) async {
+    if (query.length < 2) {
+      setState(() => _searchResults = []);
+      return;
+    }
+    setState(() => _searching = true);
+    final results = await _locationClient.searchAllLocations(query);
+    if (mounted) {
+      setState(() {
+        _searchResults = results;
+        _searching = false;
+      });
+    }
+  }
+
+  Future<void> _selectAndLoadAncestry(Location loc) async {
     setState(() {
-      _isEditing = true;
-      _loading = true;
+      _selectedLocation = loc;
+      _searchController.text = loc.name;
+      _searchResults = [];
+      _ancestryChain = [loc];
+      _loadingAncestry = true;
     });
 
-    try {
-      final provinces = await _adClient.getLocationHierarchy();
-      setState(() {
-        _provinces = provinces;
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() => _loading = false);
+    // Walk up parentId chain to build full hierarchy
+    int? parentId = loc.parentId;
+    while (parentId != null) {
+      final response = await _locationClient.getLocationById(parentId);
+      if (!mounted) return;
+      if (response.success && response.data != null) {
+        _ancestryChain.add(response.data!);
+        parentId = response.data!.parentId;
+      } else {
+        break;
+      }
+    }
+    if (mounted) setState(() => _loadingAncestry = false);
+  }
+
+  String _locationTypeLabel(LocationType type, bool isNe) {
+    switch (type) {
+      case LocationType.province:
+        return isNe ? 'प्रदेश' : 'Province';
+      case LocationType.district:
+        return isNe ? 'जिल्ला' : 'District';
+      case LocationType.municipality:
+        return isNe ? 'नगरपालिका' : 'Municipality';
+      case LocationType.area:
+        return isNe ? 'क्षेत्र' : 'Area';
     }
   }
 
   Future<void> _save() async {
-    if (_selectedMunicipality == null) return;
-    
+    if (_selectedLocation == null) return;
+
     setState(() => _saving = true);
-    // API expects locationSlug
-    final response = await _shopClient.updateShopLocation(_selectedMunicipality!.slug);
+    final response = await _shopClient.updateShopLocation(_selectedLocation!.slug);
     setState(() => _saving = false);
 
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
-      setState(() => _isEditing = false);
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'स्थान अपडेट भयो' : 'Location updated')));
+      setState(() {
+        _isEditing = false;
+        _selectedLocation = null;
+        _searchResults = [];
+        _ancestryChain = [];
+        _searchController.clear();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(context.locale.languageCode == 'ne'
+                ? 'स्थान अपडेट भयो'
+                : 'Location updated')));
+      }
     } else {
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.errorMessage)));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(response.errorMessage)));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isNe = context.locale.languageCode == 'ne';
+
     if (_isEditing) {
-      if (_loading) return const Center(child: CircularProgressIndicator());
-      
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DropdownButtonFormField<LocationProvince>(
-            value: _selectedProvince,
-            hint: Text(context.locale.languageCode == 'ne' ? 'प्रदेश छान्नुहोस्' : 'Select Province'),
-            items: _provinces.map((p) => DropdownMenuItem(value: p, child: Text(p.name))).toList(),
-            onChanged: (val) => setState(() {
-              _selectedProvince = val;
-              _selectedDistrict = null;
-              _selectedMunicipality = null;
-            }),
-             decoration: const InputDecoration(border: OutlineInputBorder()),
+          // Search field
+          TextField(
+            controller: _searchController,
+            onChanged: _searchLocations,
+            decoration: InputDecoration(
+              hintText: isNe ? 'स्थान खोज्नुहोस्...' : 'Search location...',
+              prefixIcon: const Icon(LucideIcons.search, size: 18),
+              suffixIcon: _searching
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(LucideIcons.x, size: 18),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchResults = [];
+                              _selectedLocation = null;
+                              _ancestryChain = [];
+                            });
+                          },
+                        )
+                      : null,
+              border: const OutlineInputBorder(),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            ),
           ),
-          const SizedBox(height: 12),
-          if (_selectedProvince != null)
-             DropdownButtonFormField<LocationDistrict>(
-              value: _selectedDistrict,
-              hint: Text(context.locale.languageCode == 'ne' ? 'जिल्ला छान्नुहोस्' : 'Select District'),
-              items: _selectedProvince!.districts.map((d) => DropdownMenuItem(value: d, child: Text(d.name))).toList(),
-              onChanged: (val) => setState(() {
-                _selectedDistrict = val;
-                _selectedMunicipality = null;
-              }),
-               decoration: const InputDecoration(border: OutlineInputBorder()),
+
+          // Selected location with full hierarchy
+          if (_selectedLocation != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF86EFAC)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Selected location name (bold)
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.mapPin,
+                          size: 16, color: Color(0xFF16A34A)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _selectedLocation!.name,
+                          style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF15803D)),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF86EFAC),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _locationTypeLabel(_selectedLocation!.type, isNe),
+                          style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF15803D)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Ancestry chain (parent → grandparent → ...)
+                  if (_loadingAncestry)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 24),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: Color(0xFF16A34A)),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isNe ? 'स्थान लोड हुँदैछ...' : 'Loading hierarchy...',
+                            style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: const Color(0xFF16A34A)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (!_loadingAncestry && _ancestryChain.length > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (int i = 1; i < _ancestryChain.length; i++)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Row(
+                                children: [
+                                  Icon(LucideIcons.cornerDownRight,
+                                      size: 12,
+                                      color: Colors.green[400]),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _ancestryChain[i].name,
+                                    style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: const Color(0xFF16A34A)),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '(${_locationTypeLabel(_ancestryChain[i].type, isNe)})',
+                                    style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        color: Colors.green[400]),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
-          const SizedBox(height: 12),
-           if (_selectedDistrict != null)
-             DropdownButtonFormField<LocationMunicipality>(
-              value: _selectedMunicipality,
-              hint: Text(context.locale.languageCode == 'ne' ? 'शहर छान्नुहोस्' : 'Select City'),
-              items: _selectedDistrict!.municipalities.map((m) => DropdownMenuItem(value: m, child: Text(m.name))).toList(),
-              onChanged: (val) => setState(() => _selectedMunicipality = val),
-               decoration: const InputDecoration(border: OutlineInputBorder()),
+          ],
+
+          // Search results
+          if (_searchResults.isNotEmpty && _selectedLocation == null) ...[
+            const SizedBox(height: 8),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _searchResults.length,
+                separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[200]),
+                itemBuilder: (context, index) {
+                  final loc = _searchResults[index];
+                  return InkWell(
+                    onTap: () => _selectAndLoadAncestry(loc),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.mapPin,
+                              size: 16, color: Colors.grey[500]),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              loc.name,
+                              style: GoogleFonts.inter(fontSize: 14),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              _locationTypeLabel(loc.type, isNe),
+                              style: GoogleFonts.inter(
+                                  fontSize: 10, color: Colors.grey[600]),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-            
+          ],
+
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving ? (context.locale.languageCode == 'ne' ? 'सेभ हुँदैछ...' : 'Saving...') : l('save', context.locale.languageCode)),
+                  onPressed:
+                      _saving || _selectedLocation == null ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF43F5E)),
+                  child: Text(_saving
+                      ? (isNe ? 'सेभ हुँदैछ...' : 'Saving...')
+                      : l('save', context.locale.languageCode)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => setState(() => _isEditing = false),
+                  onPressed: () => setState(() {
+                    _isEditing = false;
+                    _selectedLocation = null;
+                    _searchResults = [];
+                    _ancestryChain = [];
+                    _searchController.clear();
+                  }),
                   child: Text(l('cancel', context.locale.languageCode)),
                 ),
               ),
@@ -1022,23 +1325,113 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l('location', context.locale.languageCode), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(l('location', context.locale.languageCode),
+                style: GoogleFonts.inter(
+                    fontSize: 16, fontWeight: FontWeight.w600)),
             if (widget.isOwner)
               IconButton(
                 icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
-                onPressed: _startEditing,
+                onPressed: () => setState(() => _isEditing = true),
               ),
           ],
         ),
         const SizedBox(height: 12),
-        if (widget.shop.locationFullPath != null)
-          _buildLocationRow(LucideIcons.mapPin, widget.shop.locationFullPath!),
-        if (widget.shop.locationFullPath == null)
-           Text(context.locale.languageCode == 'ne' ? 'स्थान सेट गरिएको छैन।' : 'No location set.', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic)),
+        if (widget.shop.locationId != null) ...[
+          if (_loadingDisplayAncestry)
+            Row(
+              children: [
+                const SizedBox(
+                  width: 16, height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  isNe ? 'स्थान लोड हुँदैछ...' : 'Loading location...',
+                  style: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
+                ),
+              ],
+            )
+          else if (_displayAncestry.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // First item (the selected location) - bold with map pin
+                Row(
+                  children: [
+                    Icon(LucideIcons.mapPin, size: 18, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _displayAncestry[0].name,
+                        style: GoogleFonts.inter(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        _locationTypeLabel(_displayAncestry[0].type, isNe),
+                        style: GoogleFonts.inter(
+                            fontSize: 10, color: Colors.grey[600]),
+                      ),
+                    ),
+                  ],
+                ),
+                // Parent chain
+                if (_displayAncestry.length > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 26),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (int i = 1; i < _displayAncestry.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Row(
+                              children: [
+                                Icon(LucideIcons.cornerDownRight,
+                                    size: 12, color: Colors.grey[400]),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _displayAncestry[i].name,
+                                  style: GoogleFonts.inter(
+                                      fontSize: 12, color: Colors.grey[600]),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '(${_locationTypeLabel(_displayAncestry[i].type, isNe)})',
+                                  style: GoogleFonts.inter(
+                                      fontSize: 10, color: Colors.grey[400]),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            )
+          else
+            _buildLocationRow(
+                LucideIcons.mapPin, widget.shop.locationFullPath ?? ''),
+        ],
+        if (widget.shop.locationId == null)
+          Text(
+            isNe ? 'स्थान सेट गरिएको छैन।' : 'No location set.',
+            style: GoogleFonts.inter(
+                fontSize: 14,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic),
+          ),
       ],
     );
   }
-  
+
   Widget _buildLocationRow(IconData icon, String text) {
     return Row(
       children: [
