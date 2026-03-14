@@ -50,6 +50,13 @@ class NotificationService {
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
 
+  /// Currently active conversation ID — set by chat screen to suppress
+  /// foreground notifications for the conversation the user is already viewing.
+  int? _activeConversationId;
+  void setActiveConversation(int? conversationId) {
+    _activeConversationId = conversationId;
+  }
+
   /// Initialize the notification service
   Future<void> initialize() async {
     try {
@@ -209,8 +216,12 @@ class NotificationService {
     final notification = message.notification;
     final data = message.data;
 
-    if (notification != null) {
-      // Show local notification
+    // Suppress notification if user is currently viewing this conversation
+    final messageConversationId = int.tryParse(data['conversationId'] ?? '');
+    final isActiveConversation =
+        messageConversationId != null && messageConversationId == _activeConversationId;
+
+    if (notification != null && !isActiveConversation) {
       await showLocalNotification(
         title: notification.title ?? 'Thulo Bazaar',
         body: notification.body ?? '',
@@ -221,7 +232,7 @@ class NotificationService {
       );
     }
 
-    // Emit to stream
+    // Always emit to stream (for in-app state updates even if notification is suppressed)
     _notificationController.add(NotificationData(
       title: notification?.title,
       body: notification?.body,
