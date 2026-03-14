@@ -173,10 +173,18 @@ class SearchScreenState extends State<SearchScreen> {
   }
 
   /// Called from HomeScreen category carousel to filter by category
-  void filterByCategory(int categoryId, String categoryName) {
+  void filterByCategory(
+    int categoryId,
+    String categoryName, {
+    int? subcategoryId,
+  }) {
     _searchController.clear();
     _applyFilters(
-      SearchFilters(categoryId: categoryId, categoryName: categoryName),
+      SearchFilters(
+        categoryId: categoryId,
+        subcategoryId: subcategoryId,
+        categoryName: categoryName,
+      ),
     );
   }
 
@@ -283,7 +291,9 @@ class SearchScreenState extends State<SearchScreen> {
                         _buildFilterChip(
                           context,
                           _filters.locationName ??
-                              (context.locale.languageCode == 'ne' ? 'सम्पूर्ण नेपाल' : "All Nepal"),
+                              (context.locale.languageCode == 'ne'
+                                  ? 'सम्पूर्ण नेपाल'
+                                  : "All Nepal"),
                           icon: LucideIcons.mapPin,
                           openSection: "Locations",
                           isActive: _filters.locationId != null,
@@ -291,7 +301,9 @@ class SearchScreenState extends State<SearchScreen> {
                         _buildFilterChip(
                           context,
                           _filters.categoryName ??
-                              (context.locale.languageCode == 'ne' ? 'वर्ग' : "Category"),
+                              (context.locale.languageCode == 'ne'
+                                  ? 'वर्ग'
+                                  : "Category"),
                           icon: LucideIcons.layoutGrid,
                           openSection: "Categories",
                           isActive: _filters.categoryId != null,
@@ -300,16 +312,24 @@ class SearchScreenState extends State<SearchScreen> {
                           context,
                           _filters.condition != null
                               ? (_filters.condition == 'new'
-                                    ? (context.locale.languageCode == 'ne' ? 'नयाँ' : 'Brand New')
-                                    : (context.locale.languageCode == 'ne' ? 'पुरानो' : 'Used'))
-                              : (context.locale.languageCode == 'ne' ? 'अवस्था' : "Condition"),
+                                    ? (context.locale.languageCode == 'ne'
+                                          ? 'नयाँ'
+                                          : 'Brand New')
+                                    : (context.locale.languageCode == 'ne'
+                                          ? 'पुरानो'
+                                          : 'Used'))
+                              : (context.locale.languageCode == 'ne'
+                                    ? 'अवस्था'
+                                    : "Condition"),
                           icon: LucideIcons.tag,
                           openSection: "Condition",
                           isActive: _filters.condition != null,
                         ),
                         _buildFilterChip(
                           context,
-                          context.locale.languageCode == 'ne' ? "क्रमबद्ध" : "Sort by",
+                          context.locale.languageCode == 'ne'
+                              ? "क्रमबद्ध"
+                              : "Sort by",
                           icon: LucideIcons.arrowUpDown,
                           openSection: "Sort By",
                           isActive: _filters.sortBy != null,
@@ -361,7 +381,8 @@ class SearchScreenState extends State<SearchScreen> {
             crossAxisSpacing: 16,
           ),
           itemCount: 6,
-          itemBuilder: (context, index) => AdCard(ad: fakeAds[index], heroTagPrefix: 'search-shimmer'),
+          itemBuilder: (context, index) =>
+              AdCard(ad: fakeAds[index], heroTagPrefix: 'search-shimmer'),
         ),
       );
     }
@@ -452,7 +473,9 @@ class SearchScreenState extends State<SearchScreen> {
           final ad = _ads[index];
           return StaggeredFadeIn(
             index: index,
-            child: RepaintBoundary(child: AdCard(ad: ad, heroTagPrefix: 'search')),
+            child: RepaintBoundary(
+              child: AdCard(ad: ad, heroTagPrefix: 'search'),
+            ),
           );
         },
       ),

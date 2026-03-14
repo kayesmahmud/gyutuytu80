@@ -16,8 +16,17 @@ import 'package:mobile/features/profile/profile_screen.dart';
 
 class MainNavScreen extends StatefulWidget {
   final int initialIndex;
+  final int? initialCategoryId;
+  final String? initialCategoryName;
+  final int? initialSubcategoryId;
 
-  const MainNavScreen({super.key, this.initialIndex = 0});
+  const MainNavScreen({
+    super.key,
+    this.initialIndex = 0,
+    this.initialCategoryId,
+    this.initialCategoryName,
+    this.initialSubcategoryId,
+  });
 
   @override
   State<MainNavScreen> createState() => _MainNavScreenState();
@@ -49,6 +58,16 @@ class _MainNavScreenState extends State<MainNavScreen> {
           context.read<ChatProvider>().disconnect();
         }
       });
+
+      // Apply initial category filter if provided
+      if (widget.initialCategoryId != null &&
+          widget.initialCategoryName != null) {
+        _handleCategoryTap(
+          widget.initialCategoryId!,
+          widget.initialCategoryName!,
+          subcategoryId: widget.initialSubcategoryId,
+        );
+      }
     });
   }
 
@@ -70,20 +89,29 @@ class _MainNavScreenState extends State<MainNavScreen> {
     });
   }
 
-  void _handleCategoryTap(int categoryId, String categoryName) {
+  void _handleCategoryTap(
+    int categoryId,
+    String categoryName, {
+    int? subcategoryId,
+  }) {
     setState(() {
       _visitedTabs.add(1);
       _selectedIndex = 1;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _searchKey.currentState?.filterByCategory(categoryId, categoryName);
+      _searchKey.currentState?.filterByCategory(
+        categoryId,
+        categoryName,
+        subcategoryId: subcategoryId,
+      );
     });
   }
 
   // Convert nav index to screen index (nav 2 is FAB spacer, skip it)
   int _navToScreen(int navIndex) => navIndex > 2 ? navIndex - 1 : navIndex;
   // Convert screen index to nav index
-  int _screenToNav(int screenIndex) => screenIndex >= 2 ? screenIndex + 1 : screenIndex;
+  int _screenToNav(int screenIndex) =>
+      screenIndex >= 2 ? screenIndex + 1 : screenIndex;
 
   void _onItemTapped(int index) {
     if (index == 2) return; // FAB spacer — ignore tap
@@ -138,7 +166,11 @@ class _MainNavScreenState extends State<MainNavScreen> {
                   color: Colors.grey[100],
                   shape: BoxShape.circle,
                 ),
-                child: Icon(LucideIcons.lock, size: 32, color: Colors.grey[600]),
+                child: Icon(
+                  LucideIcons.lock,
+                  size: 32,
+                  color: Colors.grey[600],
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -153,10 +185,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             const SizedBox(height: 8),
             Text(
               'auth.loginToPostAd'.tr(),
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -172,7 +201,9 @@ class _MainNavScreenState extends State<MainNavScreen> {
                           // After successful login, navigate to post ad
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (_) => const PostAdScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const PostAdScreen(),
+                            ),
                           );
                         },
                       ),
@@ -201,10 +232,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 'auth.maybeLater'.tr(),
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
               ),
             ),
           ],
@@ -228,7 +256,11 @@ class _MainNavScreenState extends State<MainNavScreen> {
           index: _selectedIndex,
           children: [
             if (_visitedTabs.contains(0))
-              HomeScreen(onSearch: _handleHomeSearch, onCategoryTap: _handleCategoryTap, onViewAllAds: _handleViewAllAds)
+              HomeScreen(
+                onSearch: _handleHomeSearch,
+                onCategoryTap: _handleCategoryTap,
+                onViewAllAds: _handleViewAllAds,
+              )
             else
               const SizedBox.shrink(),
             if (_visitedTabs.contains(1))
@@ -264,8 +296,14 @@ class _MainNavScreenState extends State<MainNavScreen> {
                 backgroundColor: Colors.white,
                 selectedItemColor: const Color(0xFF10B981),
                 unselectedItemColor: Colors.grey[400],
-                selectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12),
-                unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 12),
+                selectedLabelStyle: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+                unselectedLabelStyle: GoogleFonts.inter(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
                 items: [
                   BottomNavigationBarItem(
                     icon: const Icon(LucideIcons.home),
@@ -296,7 +334,10 @@ class _MainNavScreenState extends State<MainNavScreen> {
                               duration: const Duration(milliseconds: 400),
                               curve: Curves.elasticOut,
                               builder: (context, scale, child) {
-                                return Transform.scale(scale: scale, child: child);
+                                return Transform.scale(
+                                  scale: scale,
+                                  child: child,
+                                );
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(2),
