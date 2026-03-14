@@ -168,13 +168,14 @@ router.patch(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const { businessPhone, businessWebsite, facebookUrl, instagramUrl, tiktokUrl } = req.body;
+    const { businessPhone, businessWebsite, googleMapsLink, facebookUrl, instagramUrl, tiktokUrl } = req.body;
 
     await prisma.users.update({
       where: { id: userId },
       data: {
         business_phone: businessPhone,
         business_website: businessWebsite,
+        google_maps_link: googleMapsLink,
         facebook_url: facebookUrl,
         instagram_url: instagramUrl,
         tiktok_url: tiktokUrl,
@@ -547,6 +548,7 @@ async function getUserProfile(userId: number) {
     businessDescription: user.business_description,
     businessPhone: user.business_phone,
     businessWebsite: user.business_website,
+    googleMapsLink: user.google_maps_link,
     facebookUrl: user.facebook_url,
     instagramUrl: user.instagram_url,
     tiktokUrl: user.tiktok_url,
