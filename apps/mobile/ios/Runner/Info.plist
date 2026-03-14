@@ -53,10 +53,26 @@
 		<string>We need access to your camera to take photos for your ad.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>We need access to your microphone for video recording.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>We need your location to show nearby ads and set your ad location.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>We need your location to show nearby ads and set your ad location.</string>
+		<!-- Apps that url_launcher needs to check/open -->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>https</string>
+			<string>http</string>
+			<string>tel</string>
+			<string>sms</string>
+			<string>mailto</string>
+			<string>whatsapp</string>
+			<string>khalti</string>
+			<string>esewa</string>
+		</array>
 		<!-- Google AdMob App ID (test ID - replace with real ID for production) -->
 		<key>GADApplicationIdentifier</key>
 		<string>ca-app-pub-3940256099942544~1458002511</string>
-		<!-- Google Sign-In URL scheme (reversed iOS client ID) -->
+		<!-- URL schemes for Google Sign-In and payment callbacks -->
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
@@ -65,6 +81,14 @@
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>com.googleusercontent.apps.665688327385-lbpla4ui0ghmpq2k10mmmhj1s7cvgjfd</string>
+				</array>
+			</dict>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.thulobazaar.mobile</string>
 				</array>
 			</dict>
 		</array>
