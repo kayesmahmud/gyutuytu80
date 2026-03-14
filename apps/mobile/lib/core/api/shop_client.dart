@@ -55,12 +55,20 @@ class ShopClient {
         final data = response.data['data'] as Map<String, dynamic>;
         final adsList = data['ads'] as List? ?? [];
         final pagination = data['pagination'] as Map<String, dynamic>?;
+        final seller = data['seller'] as Map<String, dynamic>?;
 
         // Parse ads with proper nested object handling
         final ads = adsList.map((adJson) {
           final ad = adJson as Map<String, dynamic>;
           // Flatten nested category/location objects
           final flattened = Map<String, dynamic>.from(ad);
+
+          // Inject seller info (all ads on shop page belong to same seller)
+          if (seller != null) {
+            flattened['userName'] ??= seller['businessName'] ?? seller['fullName'];
+            flattened['businessVerificationStatus'] ??= seller['businessVerificationStatus'];
+            flattened['individualVerified'] ??= seller['individualVerified'];
+          }
 
           // Handle nested categories object
           if (ad['categories'] is Map) {

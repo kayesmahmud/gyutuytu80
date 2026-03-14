@@ -289,7 +289,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImages() async {
+  void _showImageSourceSheet() {
     if (_selectedImages.length >= _maxImages) {
       ScaffoldMessenger.of(
         context,
@@ -297,6 +297,85 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       return;
     }
 
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(LucideIcons.camera),
+                title: Text(
+                  context.locale.languageCode == 'ne'
+                      ? 'क्यामेराबाट फोटो खिच्नुहोस्'
+                      : 'Take Photo',
+                  style: GoogleFonts.inter(),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickFromCamera();
+                },
+              ),
+              ListTile(
+                leading: const Icon(LucideIcons.image),
+                title: Text(
+                  context.locale.languageCode == 'ne'
+                      ? 'ग्यालेरीबाट छान्नुहोस्'
+                      : 'Choose from Gallery',
+                  style: GoogleFonts.inter(),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImages();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickFromCamera() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1200,
+        imageQuality: 85,
+      );
+      if (image == null) return;
+
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      final size = await image.length();
+      if (size > maxSize) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'छवि ५MB भन्दा ठूलो छ। कृपया ५MB भन्दा सानो छवि अपलोड गर्नुहोस्।'
+                    : 'Image exceeds 5MB. Please upload an image under 5MB.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      setState(() {
+        _selectedImages.add(image);
+      });
+    } catch (e) {
+      debugPrint('Error capturing image: $e');
+    }
+  }
+
+  Future<void> _pickImages() async {
     try {
       final List<XFile> images = await _picker.pickMultiImage();
       if (images.isNotEmpty) {
@@ -986,7 +1065,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           ),
           const SizedBox(height: 12),
           GestureDetector(
-            onTap: _pickImages,
+            onTap: _showImageSourceSheet,
             child: Container(
               height: 140,
               width: double.infinity,
@@ -1032,7 +1111,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                         if (index == _selectedImages.length) {
                           if (_selectedImages.length < 5) {
                             return GestureDetector(
-                              onTap: _pickImages,
+                              onTap: _showImageSourceSheet,
                               child: Container(
                                 width: 100,
                                 margin: const EdgeInsets.only(left: 8),

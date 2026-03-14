@@ -19,6 +19,7 @@ import '../../core/api/message_client.dart';
 import '../../core/models/message.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/chat_provider.dart';
+import '../../core/services/notification_service.dart';
 
 /// Chat Screen - individual conversation view
 class ChatScreen extends StatefulWidget {
@@ -67,6 +68,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _initialize() async {
+    // Suppress push notifications for this conversation while viewing
+    NotificationService().setActiveConversation(widget.conversationId);
+
     final authProvider = context.read<AuthProvider>();
     _currentUserId = authProvider.userId;
 
@@ -205,6 +209,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    // Clear active conversation so notifications resume
+    NotificationService().setActiveConversation(null);
     _typingDebounce?.cancel();
     _messageController.dispose();
     _scrollController.dispose();

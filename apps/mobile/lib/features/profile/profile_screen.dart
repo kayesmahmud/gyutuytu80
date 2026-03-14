@@ -1376,7 +1376,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 // Image
                 Hero(
-                  tag: 'ad-image-${ad.id}',
+                  tag: 'profile-image-${ad.id}',
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Container(

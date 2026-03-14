@@ -821,7 +821,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
             itemBuilder: (context, index) {
               return SizedBox(
                 width: 180,
-                child: AdCard(ad: _relatedAds[index]),
+                child: AdCard(ad: _relatedAds[index], heroTagPrefix: 'related'),
               );
             },
           ),

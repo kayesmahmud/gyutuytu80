@@ -361,7 +361,7 @@ class SearchScreenState extends State<SearchScreen> {
             crossAxisSpacing: 16,
           ),
           itemCount: 6,
-          itemBuilder: (context, index) => AdCard(ad: fakeAds[index]),
+          itemBuilder: (context, index) => AdCard(ad: fakeAds[index], heroTagPrefix: 'search-shimmer'),
         ),
       );
     }
@@ -452,7 +452,7 @@ class SearchScreenState extends State<SearchScreen> {
           final ad = _ads[index];
           return StaggeredFadeIn(
             index: index,
-            child: RepaintBoundary(child: AdCard(ad: ad)),
+            child: RepaintBoundary(child: AdCard(ad: ad, heroTagPrefix: 'search')),
           );
         },
       ),

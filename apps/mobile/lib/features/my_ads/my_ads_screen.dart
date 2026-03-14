@@ -356,7 +356,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                 children: [
                   // Image
                   Hero(
-                    tag: 'ad-image-${ad.id}',
+                    tag: 'myads-image-${ad.id}',
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Container(

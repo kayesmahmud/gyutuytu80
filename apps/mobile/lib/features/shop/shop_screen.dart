@@ -684,7 +684,7 @@ class _ShopScreenState extends State<ShopScreen> {
           crossAxisSpacing: 12,
         ),
         delegate: SliverChildBuilderDelegate(
-          (context, index) => RepaintBoundary(child: AdCard(ad: _ads[index])),
+          (context, index) => RepaintBoundary(child: AdCard(ad: _ads[index], heroTagPrefix: 'shop')),
           childCount: _ads.length,
         ),
       ),

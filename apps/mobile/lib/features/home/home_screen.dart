@@ -493,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
             .map(
               (entry) => StaggeredFadeIn(
                 index: entry.key,
-                child: RepaintBoundary(child: AdCard(ad: entry.value)),
+                child: RepaintBoundary(child: AdCard(ad: entry.value, heroTagPrefix: 'latest')),
               ),
             )
             .toList(),
@@ -562,7 +562,7 @@ class _HomeScreenState extends State<HomeScreen> {
             .map(
               (entry) => StaggeredFadeIn(
                 index: entry.key,
-                child: RepaintBoundary(child: AdCard(ad: entry.value)),
+                child: RepaintBoundary(child: AdCard(ad: entry.value, heroTagPrefix: 'featured')),
               ),
             )
             .toList(),
