@@ -464,7 +464,7 @@ export async function registerWithPhone(
   // Hash password and create user
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const user = await prisma.users.create({
+  let user = await prisma.users.create({
     data: {
       phone: formattedPhone,
       phone_verified: true,
@@ -473,6 +473,18 @@ export async function registerWithPhone(
       role: 'user',
       is_active: true,
     },
+  });
+
+  // Auto-generate shop_slug from name + user ID (same as Google OAuth flow)
+  const baseSlug = fullName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .substring(0, 50);
+  const shopSlug = `${baseSlug}-${user.id}`;
+  user = await prisma.users.update({
+    where: { id: user.id },
+    data: { shop_slug: shopSlug },
   });
 
   // Generate tokens
