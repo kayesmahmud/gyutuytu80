@@ -298,6 +298,38 @@ router.put(
 );
 
 /**
+ * PUT /api/ads/:id/sold
+ * Mark an ad as sold (owner only)
+ */
+router.put(
+  '/:id/sold',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+
+    const ad = await prisma.ads.findFirst({
+      where: { id: parseInt(id), user_id: userId, deleted_at: null },
+    });
+
+    if (!ad) {
+      throw new NotFoundError('Ad not found or you do not have permission');
+    }
+
+    const updated = await prisma.ads.update({
+      where: { id: parseInt(id) },
+      data: { status: 'sold', updated_at: new Date() },
+    });
+
+    res.json({
+      success: true,
+      message: 'Ad marked as sold',
+      data: updated,
+    });
+  })
+);
+
+/**
  * DELETE /api/ads/:id
  * Delete an ad
  */

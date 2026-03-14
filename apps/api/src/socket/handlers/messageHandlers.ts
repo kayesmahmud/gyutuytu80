@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { prisma } from '@thulobazaar/database';
 import type { AuthenticatedSocket, SendMessagePayload } from '../types.js';
+import { sendMessagePushNotification } from '../../services/pushNotification.js';
 
 // Safe callback helper — prevents crashes when client emits without a callback
 function safeCallback(callback: unknown, data: Record<string, unknown>) {
@@ -9,7 +10,11 @@ function safeCallback(callback: unknown, data: Record<string, unknown>) {
   }
 }
 
-export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocket): void {
+export function initializeMessageHandlers(
+  io: Server,
+  socket: AuthenticatedSocket,
+  onlineUsers: Map<number, string>
+): void {
   const userId = socket.userId;
 
   /**
@@ -90,6 +95,34 @@ export function initializeMessageHandlers(io: Server, socket: AuthenticatedSocke
         lastMessage: messageData,
         timestamp: new Date(),
       });
+
+      // Send push notifications to offline participants (fire-and-forget)
+      prisma.conversation_participants
+        .findMany({
+          where: {
+            conversation_id: conversationId,
+            user_id: { not: userId },
+            is_muted: { not: true },
+          },
+          select: { user_id: true },
+        })
+        .then((participants) => {
+          const offlineRecipientIds = participants
+            .map((p) => p.user_id)
+            .filter((uid) => !onlineUsers.has(uid));
+
+          if (offlineRecipientIds.length > 0) {
+            sendMessagePushNotification({
+              senderName: sender?.full_name || 'Someone',
+              senderAvatar: sender?.avatar || null,
+              messageContent: content,
+              messageType: type,
+              conversationId,
+              recipientUserIds: offlineRecipientIds,
+            }).catch((err) => console.error('Push notification error:', err));
+          }
+        })
+        .catch((err) => console.error('Error fetching participants for push:', err));
 
       safeCallback(callback, { success: true, message: messageData });
     } catch (error) {

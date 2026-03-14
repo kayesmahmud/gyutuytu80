@@ -65,7 +65,7 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
     joinUserConversations(socket, userId);
 
     // Initialize event handlers
-    initializeMessageHandlers(io, authSocket);
+    initializeMessageHandlers(io, authSocket, onlineUsers);
     initializeTypingHandlers(io, authSocket);
     initializeConversationHandlers(io, authSocket, onlineUsers);
     initializeSupportHandlers(io, authSocket);
@@ -107,4 +107,11 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
  */
 export function getOnlineUsers(): number[] {
   return Array.from(onlineUsers.keys());
+}
+
+/**
+ * Check if a user is currently connected via Socket.IO
+ */
+export function isUserOnline(userId: number): boolean {
+  return onlineUsers.has(userId);
 }

@@ -4,6 +4,8 @@ import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadMessageImage } from '../middleware/upload.js';
 import { optimizeImage } from '../middleware/optimizeImage.js';
+import { sendMessagePushNotification } from '../services/pushNotification.js';
+import { isUserOnline } from '../socket/index.js';
 
 const router = Router();
 
@@ -425,6 +427,34 @@ router.post(
         timestamp: new Date(),
       });
     }
+
+    // Send push notifications to offline participants (fire-and-forget)
+    prisma.conversation_participants
+      .findMany({
+        where: {
+          conversation_id: conversationId,
+          user_id: { not: userId },
+          is_muted: { not: true },
+        },
+        select: { user_id: true },
+      })
+      .then((participants) => {
+        const offlineRecipientIds = participants
+          .map((p) => p.user_id)
+          .filter((uid) => !isUserOnline(uid));
+
+        if (offlineRecipientIds.length > 0) {
+          sendMessagePushNotification({
+            senderName: message.users.full_name,
+            senderAvatar: message.users.avatar,
+            messageContent: content || '',
+            messageType: type,
+            conversationId,
+            recipientUserIds: offlineRecipientIds,
+          }).catch((err) => console.error('Push notification error:', err));
+        }
+      })
+      .catch((err) => console.error('Error fetching participants for push:', err));
 
     res.status(201).json({
       success: true,
