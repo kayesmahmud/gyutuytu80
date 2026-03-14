@@ -1,17 +1,19 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Wraps a child with a sweeping shimmer highlight effect.
-/// A light gradient slides left-to-right on repeat.
+/// Wraps a child with a traveling border shimmer effect.
+/// A bright highlight sweeps around the border while the
+/// child content stays fully visible and unaffected.
 class ShimmerBadge extends StatefulWidget {
   final Widget child;
+  final Color glowColor;
   final Duration duration;
-  final Duration pauseDuration;
 
   const ShimmerBadge({
     super.key,
     required this.child,
-    this.duration = const Duration(milliseconds: 1500),
-    this.pauseDuration = const Duration(milliseconds: 3000),
+    this.glowColor = const Color(0xFFF59E0B),
+    this.duration = const Duration(milliseconds: 2500),
   });
 
   @override
@@ -25,16 +27,8 @@ class _ShimmerBadgeState extends State<ShimmerBadge>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration);
-    _runLoop();
-  }
-
-  Future<void> _runLoop() async {
-    while (mounted) {
-      await _controller.forward(from: 0);
-      if (!mounted) return;
-      await Future.delayed(widget.pauseDuration);
-    }
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..repeat();
   }
 
   @override
@@ -49,21 +43,13 @@ class _ShimmerBadgeState extends State<ShimmerBadge>
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
-          return ShaderMask(
-            shaderCallback: (bounds) {
-              final dx = _controller.value * 2 - 0.5;
-              return LinearGradient(
-                begin: Alignment(dx - 0.3, 0),
-                end: Alignment(dx + 0.3, 0),
-                colors: const [
-                  Colors.white,
-                  Color(0x66FFFFFF),
-                  Colors.white,
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              ).createShader(bounds);
-            },
-            blendMode: BlendMode.srcATop,
+          return CustomPaint(
+            foregroundPainter: _BorderShimmerPainter(
+              progress: _controller.value,
+              color: widget.glowColor,
+              borderRadius: 4,
+              strokeWidth: 1.5,
+            ),
             child: child,
           );
         },
@@ -71,4 +57,57 @@ class _ShimmerBadgeState extends State<ShimmerBadge>
       ),
     );
   }
+}
+
+class _BorderShimmerPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final double borderRadius;
+  final double strokeWidth;
+
+  _BorderShimmerPainter({
+    required this.progress,
+    required this.color,
+    required this.borderRadius,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
+
+    // Base border: subtle static border
+    final basePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..color = color.withValues(alpha: 0.3);
+    canvas.drawRRect(rrect, basePaint);
+
+    // Animated sweep: a bright arc that travels around the border
+    final sweepPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..shader = SweepGradient(
+        center: Alignment.center,
+        startAngle: 0,
+        endAngle: math.pi * 2,
+        colors: [
+          color.withValues(alpha: 0.0),
+          color.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: 0.9),
+          color,
+          color.withValues(alpha: 0.0),
+          color.withValues(alpha: 0.0),
+        ],
+        stops: const [0.0, 0.35, 0.48, 0.52, 0.65, 1.0],
+        transform: GradientRotation(progress * math.pi * 2),
+      ).createShader(rect);
+
+    canvas.drawRRect(rrect, sweepPaint);
+  }
+
+  @override
+  bool shouldRepaint(_BorderShimmerPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }

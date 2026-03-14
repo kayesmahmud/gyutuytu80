@@ -25,21 +25,27 @@ class PromotionBadge extends StatelessWidget {
     PromotionBadgeSize size = PromotionBadgeSize.small,
   }) {
     // Priority: Urgent > Featured > Sticky
-    if (isUrgent && urgentUntil != null && DateTime.now().isBefore(urgentUntil)) {
+    if (isUrgent &&
+        urgentUntil != null &&
+        DateTime.now().isBefore(urgentUntil)) {
       return PromotionBadge(
         type: PromotionTypeEnum.urgent,
         expiresAt: urgentUntil,
         size: size,
       );
     }
-    if (isFeatured && featuredUntil != null && DateTime.now().isBefore(featuredUntil)) {
+    if (isFeatured &&
+        featuredUntil != null &&
+        DateTime.now().isBefore(featuredUntil)) {
       return PromotionBadge(
         type: PromotionTypeEnum.featured,
         expiresAt: featuredUntil,
         size: size,
       );
     }
-    if (isSticky && stickyUntil != null && DateTime.now().isBefore(stickyUntil)) {
+    if (isSticky &&
+        stickyUntil != null &&
+        DateTime.now().isBefore(stickyUntil)) {
       return PromotionBadge(
         type: PromotionTypeEnum.sticky,
         expiresAt: stickyUntil,
@@ -63,10 +69,7 @@ class PromotionBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!isActive) return const SizedBox.shrink();
 
-    return _AnimatedBadge(
-      type: type,
-      size: size,
-    );
+    return _AnimatedBadge(type: type, size: size);
   }
 }
 
@@ -76,10 +79,7 @@ class _AnimatedBadge extends StatefulWidget {
   final PromotionTypeEnum type;
   final PromotionBadgeSize size;
 
-  const _AnimatedBadge({
-    required this.type,
-    required this.size,
-  });
+  const _AnimatedBadge({required this.type, required this.size});
 
   @override
   State<_AnimatedBadge> createState() => _AnimatedBadgeState();
@@ -100,10 +100,7 @@ class _AnimatedBadgeState extends State<_AnimatedBadge>
         duration: const Duration(milliseconds: 1500),
       );
       _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
-        CurvedAnimation(
-          parent: _animationController!,
-          curve: Curves.easeInOut,
-        ),
+        CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut),
       );
       _animationController!.repeat(reverse: true);
     }
@@ -133,19 +130,14 @@ class _AnimatedBadgeState extends State<_AnimatedBadge>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            widget.type.emoji,
-            style: TextStyle(fontSize: _getEmojiSize()),
-          ),
+          Text(widget.type.emoji, style: TextStyle(fontSize: _getEmojiSize())),
           SizedBox(width: _getSpacing()),
           Text(
             widget.type.displayName.toUpperCase(),
             style: TextStyle(
               fontSize: _getFontSize(),
               fontWeight: FontWeight.bold,
-              color: widget.type == PromotionTypeEnum.featured
-                  ? Colors.black
-                  : Colors.white,
+              color: Colors.white,
               letterSpacing: 0.5,
             ),
           ),
@@ -154,10 +146,7 @@ class _AnimatedBadgeState extends State<_AnimatedBadge>
     );
 
     if (_scaleAnimation != null) {
-      return ScaleTransition(
-        scale: _scaleAnimation!,
-        child: badge,
-      );
+      return ScaleTransition(scale: _scaleAnimation!, child: badge);
     }
 
     return badge;
@@ -257,10 +246,7 @@ class _AnimatedBadgeState extends State<_AnimatedBadge>
 class PromotionInlineBadge extends StatelessWidget {
   final PromotionTypeEnum type;
 
-  const PromotionInlineBadge({
-    super.key,
-    required this.type,
-  });
+  const PromotionInlineBadge({super.key, required this.type});
 
   @override
   Widget build(BuildContext context) {
@@ -273,10 +259,7 @@ class PromotionInlineBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            type.emoji,
-            style: const TextStyle(fontSize: 10),
-          ),
+          Text(type.emoji, style: const TextStyle(fontSize: 10)),
           const SizedBox(width: 3),
           Text(
             type.displayName,

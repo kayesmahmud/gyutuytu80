@@ -19,8 +19,9 @@ import 'shimmer_badge.dart';
 class AdCard extends StatelessWidget {
   final AdWithDetails ad;
   final VoidCallback? onTap;
+  final String? heroTagPrefix;
 
-  const AdCard({super.key, required this.ad, this.onTap});
+  const AdCard({super.key, required this.ad, this.onTap, this.heroTagPrefix});
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +71,7 @@ class AdCard extends StatelessWidget {
                 children: [
                   // Image with Hero animation
                   Hero(
-                    tag: 'ad-image-${ad.id}',
+                    tag: '${heroTagPrefix ?? 'ad'}-image-${ad.id}',
                     child: ClipRRect(
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12),
@@ -146,11 +147,7 @@ class AdCard extends StatelessWidget {
 
                   // Promotion Badge (Top Right) - Priority: Urgent > Featured > Sticky
                   if (_promotionBadge != null)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: _promotionBadge!,
-                    ),
+                    Positioned(top: 8, right: 8, child: _promotionBadge!),
 
                   // Condition Badge (Bottom Right) - NEW/USED
                   // Floating slightly over the edge in design? No, usually "inside" bottom-right.
@@ -351,21 +348,26 @@ class AdCard extends StatelessWidget {
 
     if (isActive(ad.isFeatured, ad.featuredUntil)) {
       return ShimmerBadge(
+        glowColor: const Color(0xFFF59E0B),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.amber,
+            gradient: const LinearGradient(
+              colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.star, color: Colors.black, size: 10),
+              const Icon(LucideIcons.star, color: Colors.white, size: 10),
               const SizedBox(width: 2),
               Text(
                 'common.featured'.tr(),
                 style: GoogleFonts.inter(
-                  color: Colors.black,
+                  color: Colors.white,
                   fontSize: 8,
                   fontWeight: FontWeight.bold,
                 ),
