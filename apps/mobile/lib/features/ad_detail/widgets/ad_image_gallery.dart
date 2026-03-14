@@ -40,68 +40,6 @@ class _AdImageGalleryState extends State<AdImageGallery> {
     super.dispose();
   }
 
-  Widget? get _promotionBadge {
-    final ad = widget.ad;
-    final now = DateTime.now();
-    bool isActive(bool flag, DateTime? until) =>
-        flag && (until == null || now.isBefore(until));
-
-    String label;
-    IconData icon;
-    List<Color> colors;
-    Color textColor;
-
-    if (isActive(ad.isUrgent, ad.urgentUntil)) {
-      label = 'URGENT';
-      icon = LucideIcons.zap;
-      colors = [const Color(0xFFEF4444), const Color(0xFFDC2626)];
-      textColor = Colors.white;
-    } else if (isActive(ad.isFeatured, ad.featuredUntil)) {
-      label = 'FEATURED';
-      icon = LucideIcons.star;
-      colors = [const Color(0xFFF59E0B), const Color(0xFFF97316)];
-      textColor = Colors.black;
-    } else if (isActive(ad.isSticky, ad.stickyUntil)) {
-      label = 'STICKY';
-      icon = LucideIcons.pin;
-      colors = [const Color(0xFF3B82F6), const Color(0xFF2563EB)];
-      textColor = Colors.white;
-    } else {
-      return null;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: colors),
-        borderRadius: BorderRadius.circular(6),
-        boxShadow: [
-          BoxShadow(
-            color: colors.first.withValues(alpha: 0.4),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: textColor, size: 14),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: textColor,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCircleButton({required Widget child, VoidCallback? onTap}) {
     return Material(
       color: Colors.white.withValues(alpha: 0.9),
@@ -236,15 +174,6 @@ class _AdImageGalleryState extends State<AdImageGallery> {
             ),
           ),
         ],
-
-        // Promotion Badge (middle-right)
-        if (_promotionBadge != null)
-          Positioned(
-            top: 0,
-            bottom: 0,
-            right: 16,
-            child: Center(child: _promotionBadge!),
-          ),
 
         // Counter Badge (bottom-left)
         Positioned(

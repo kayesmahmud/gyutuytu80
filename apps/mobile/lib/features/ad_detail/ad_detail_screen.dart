@@ -523,28 +523,32 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                   ),
                                 ),
                               ),
-                            if (ad.categoryName.isNotEmpty)
-                              GestureDetector(
-                                onTap: () {
-                                  // Navigate categories
-                                },
-                                child: Text(
-                                  ad.localizedSubcategoryName(
-                                            context.locale.languageCode,
-                                          ) !=
-                                          null
-                                      ? '${ad.localizedCategoryName(context.locale.languageCode)} > ${ad.localizedSubcategoryName(context.locale.languageCode)}'
-                                      : ad.localizedCategoryName(
-                                          context.locale.languageCode,
-                                        ),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: const Color(0xFF10B981),
-                                  ),
-                                ),
-                              ),
+                            // Promotion badges
+                            ..._buildPromotionBadges(ad),
                           ],
                         ),
+                        if (ad.categoryName.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: () {
+                              // Navigate categories
+                            },
+                            child: Text(
+                              ad.localizedSubcategoryName(
+                                        context.locale.languageCode,
+                                      ) !=
+                                      null
+                                  ? '${ad.localizedCategoryName(context.locale.languageCode)} > ${ad.localizedSubcategoryName(context.locale.languageCode)}'
+                                  : ad.localizedCategoryName(
+                                      context.locale.languageCode,
+                                    ),
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -700,10 +704,6 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
     );
   }
 
-  // Image Gallery extracted to widgets/ad_image_gallery.dart
-
-  // Specifications and Seller Card extracted to widgets/
-
   Widget _buildBoostButton(AdWithDetails ad) {
     final thumbnail = ad.images.isNotEmpty
         ? ApiConfig.getAdImageUrl(ad.images.first)
@@ -828,6 +828,103 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
         ),
       ],
     );
+  }
+
+  List<Widget> _buildPromotionBadges(AdWithDetails ad) {
+    final now = DateTime.now();
+    bool isActive(bool flag, DateTime? until) =>
+        flag && (until == null || now.isBefore(until));
+
+    final badges = <Widget>[];
+
+    if (isActive(ad.isUrgent, ad.urgentUntil)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.zap, color: Colors.white, size: 12),
+              const SizedBox(width: 4),
+              Text(
+                context.locale.languageCode == 'ne' ? 'अत्यावश्यक' : 'URGENT',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (isActive(ad.isFeatured, ad.featuredUntil)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.star, color: Colors.white, size: 12),
+              const SizedBox(width: 4),
+              Text(
+                context.locale.languageCode == 'ne' ? 'विशेष' : 'FEATURED',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (isActive(ad.isSticky, ad.stickyUntil)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.pin, color: Colors.white, size: 12),
+              const SizedBox(width: 4),
+              Text(
+                context.locale.languageCode == 'ne' ? 'स्टिकी' : 'STICKY',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return badges;
   }
 
   // Banners extracted to widgets/ad_detail_banners.dart
