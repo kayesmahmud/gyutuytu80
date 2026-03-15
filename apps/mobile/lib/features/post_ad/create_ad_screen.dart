@@ -123,21 +123,43 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _priceController.text = ad.price.toStringAsFixed(0);
     _priceNegotiable = ad.isNegotiable;
 
-    // Pre-fill existing images
-    _existingImagePaths = ad.images.map(_normalizeImagePath).toList();
+    // Pre-fill existing images — use paths as-is (getAdImageUrl handles them)
+    _existingImagePaths = List<String>.from(ad.images);
 
     // Pre-fill category
+    // The ad has categoryId (parent) and subcategoryId (child)
+    // If subcategoryId exists, categoryId is the parent; otherwise categoryId could be a parent or subcategory
     try {
-      final cat = _categories.firstWhere((c) => c.id == ad.categoryId);
+      // First try: categoryId matches a parent category directly
+      final cat = _categories.firstWhere(
+        (c) => c.id == ad.categoryId,
+        orElse: () {
+          // Second try: categoryId might actually be a subcategory ID
+          // Search all parent categories for a subcategory matching categoryId
+          for (final parent in _categories) {
+            for (final sub in parent.subcategories) {
+              if (sub.id == ad.categoryId) {
+                return parent;
+              }
+            }
+          }
+          throw StateError('Category not found');
+        },
+      );
       _selectedCategory = cat;
-      if (ad.subcategoryId != null) {
-        _selectedSubCategory = cat.subcategories.firstWhere(
-          (s) => s.id == ad.subcategoryId,
-        );
+
+      // Now find subcategory
+      final subId = ad.subcategoryId ?? ad.categoryId;
+      if (subId != cat.id) {
+        try {
+          _selectedSubCategory = cat.subcategories.firstWhere(
+            (s) => s.id == subId,
+          );
+        } catch (_) {}
       }
     } catch (_) {
       log(
-        'Edit: category not found for id ${ad.categoryId}',
+        'Edit: category not found for id ${ad.categoryId}, sub: ${ad.subcategoryId}',
         name: 'CreateAdScreen',
       );
     }
@@ -387,10 +409,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _whatsappController.dispose();
     super.dispose();
   }
-
-  static String _normalizeImagePath(String p) => p
-      .replaceFirst(RegExp(r'^https?://[^/]+/'), '')
-      .replaceFirst(RegExp(r'^/+'), '');
 
   int get _totalImageCount =>
       _existingImagePaths.length + _selectedImages.length;
