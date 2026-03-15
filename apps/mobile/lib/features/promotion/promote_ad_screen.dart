@@ -608,7 +608,7 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
         bgColor = Colors.grey[100]!;
         textColor = Colors.grey[600]!;
         icon = LucideIcons.user;
-        label = locale == 'ne' ? 'व्यक्तिगत विक्रेता (मानक मूल्य)' : 'Individual Seller (Standard Price)';
+        label = locale == 'ne' ? 'विक्रेता (मानक मूल्य)' : 'Seller (Standard Price)';
     }
 
     return Container(

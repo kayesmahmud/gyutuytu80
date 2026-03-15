@@ -537,26 +537,45 @@ class _ProfileScreenState extends State<ProfileScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.purple[50],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        context.locale.languageCode == 'ne'
-                            ? 'व्यापार खाता'
-                            : "Business Account",
-                        style: GoogleFonts.inter(
-                          color: Colors.purple,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                    Builder(builder: (context) {
+                      final bizStatus = _user?['businessVerificationStatus'] as String? ?? '';
+                      final isBusinessVerified = bizStatus == 'approved' || bizStatus == 'verified';
+                      final isIndividualVerified = _user?['individualVerified'] == true;
+                      final String label;
+                      final Color bgColor;
+                      final Color textColor;
+                      if (isBusinessVerified) {
+                        label = context.locale.languageCode == 'ne' ? 'प्रमाणित व्यापार खाता' : 'Verified Business Account';
+                        bgColor = const Color(0xFFFEF3C7);
+                        textColor = const Color(0xFFD97706);
+                      } else if (isIndividualVerified) {
+                        label = context.locale.languageCode == 'ne' ? 'प्रमाणित व्यक्तिगत विक्रेता' : 'Verified Individual Seller';
+                        bgColor = const Color(0xFFDBEAFE);
+                        textColor = const Color(0xFF2563EB);
+                      } else {
+                        label = context.locale.languageCode == 'ne' ? 'विक्रेता' : 'Seller';
+                        bgColor = Colors.grey[100]!;
+                        textColor = Colors.grey[600]!;
+                      }
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                      ),
-                    ),
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          label,
+                          style: GoogleFonts.inter(
+                            color: textColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }),
                     const SizedBox(width: 8),
                     Text(
                       createdAt,

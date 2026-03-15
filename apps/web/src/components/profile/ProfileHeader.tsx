@@ -46,11 +46,13 @@ export function ProfileHeader({
             <p className="text-sm sm:text-base text-gray-500">{email}</p>
             <div className="flex flex-wrap items-center gap-2 mt-1 sm:mt-2">
               <span className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${
-                accountType === 'business'
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'bg-blue-100 text-blue-700'
+                isVerifiedBusiness
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : isVerified
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-100 text-gray-600'
               }`}>
-                {accountType === 'business' ? 'Business' : 'Individual'} Account
+                {isVerifiedBusiness ? 'Verified Business Account' : isVerified ? 'Verified Individual Seller' : 'Seller'}
               </span>
               <span className="text-[10px] sm:text-xs text-gray-500">
                 Member since {new Date(createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}

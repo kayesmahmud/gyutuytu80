@@ -20,7 +20,7 @@ export function AccountTypeBadge({ accountType }: AccountTypeBadgeProps) {
         </span>
       ) : (
         <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-semibold">
-          Individual Seller (Standard Price)
+          Seller (Standard Price)
         </span>
       )}
     </div>

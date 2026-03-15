@@ -85,12 +85,12 @@ export default function UsersListPage() {
 
   const getStatusLabel = (user: UserRow) => {
     if (user.businessVerificationStatus && ['approved', 'verified'].includes(user.businessVerificationStatus)) {
-      return 'Business Verified';
+      return 'Verified Business Account';
     }
     if (user.individualVerified) {
-      return 'Individual Verified';
+      return 'Verified Individual Seller';
     }
-    return 'Regular';
+    return 'Seller';
   };
 
   const exportColumn = (field: 'email' | 'phone') => {
@@ -201,9 +201,9 @@ export default function UsersListPage() {
               className="px-3 py-2 border-2 border-gray-200 rounded-xl text-sm bg-white hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
             >
               <option value="all">All users</option>
-              <option value="regular">Regular</option>
-              <option value="individual">Individual Verified</option>
-              <option value="business">Business Verified</option>
+              <option value="regular">Seller</option>
+              <option value="individual">Verified Individual Seller</option>
+              <option value="business">Verified Business Account</option>
             </select>
           </div>
           <div className="flex flex-wrap gap-3">

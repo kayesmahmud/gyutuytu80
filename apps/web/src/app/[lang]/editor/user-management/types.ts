@@ -32,9 +32,9 @@ export const getUserBadge = (user: User): string => {
 
 export const getUserStatusLabel = (user: User): string => {
   if (user.is_suspended) return '🚫 Suspended';
-  if (user.business_verification_status === 'approved') return '🏢 Business';
-  if (user.individual_verified) return '✓ Individual';
-  return '👤 Regular';
+  if (user.business_verification_status === 'approved') return '🏢 Verified Business Account';
+  if (user.individual_verified) return '✓ Verified Individual Seller';
+  return '👤 Seller';
 };
 
 export const getUserStats = (users: User[]) => ({

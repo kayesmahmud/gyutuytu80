@@ -107,16 +107,13 @@ export async function SellerCard({
             </div>
           )}
           {/* Verification Status Text */}
-          {isVerifiedBusiness && (
-            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              {t('verifiedBusinessAccount')}
-            </div>
-          )}
-          {isVerifiedIndividual && (
-            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              {t('verifiedIndividualSeller')}
-            </div>
-          )}
+          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            {isVerifiedBusiness
+              ? t('verifiedBusinessAccount')
+              : isVerifiedIndividual
+              ? t('verifiedIndividualSeller')
+              : t('seller')}
+          </div>
         </div>
       </div>
 

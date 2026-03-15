@@ -412,6 +412,7 @@
     "noMessages": "अहिलेसम्म कुनै सन्देश छैन"
   },
   "shop": {
+    "seller": "विक्रेता",
     "businessAccount": "व्यापार खाता",
     "individualSeller": "व्यक्तिगत विक्रेता",
     "activeAds": "सक्रिय विज्ञापनहरू",

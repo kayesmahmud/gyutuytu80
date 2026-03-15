@@ -448,9 +448,7 @@ export default function ShopProfileClient({
                 ? t('verifiedBusinessAccount')
                 : individualVerified
                 ? t('verifiedIndividualSeller')
-                : accountType === 'business'
-                ? t('businessAccount')
-                : t('individualSeller')}
+                : t('seller')}
             </p>
 
             {/* Stats */}

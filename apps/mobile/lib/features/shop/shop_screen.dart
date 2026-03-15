@@ -691,12 +691,12 @@ class _ShopScreenState extends State<ShopScreen> {
                               Text(
                                 _shop!.isBusinessVerified
                                     ? (context.locale.languageCode == 'ne'
-                                          ? 'प्रमाणित व्यवसाय'
-                                          : 'Verified Business')
+                                          ? 'प्रमाणित व्यापार खाता'
+                                          : 'Verified Business Account')
                                     : _shop!.individualVerified
                                     ? (context.locale.languageCode == 'ne'
-                                          ? 'प्रमाणित व्यक्ति'
-                                          : 'Verified Individual')
+                                          ? 'प्रमाणित व्यक्तिगत विक्रेता'
+                                          : 'Verified Individual Seller')
                                     : (context.locale.languageCode == 'ne'
                                           ? 'विक्रेता'
                                           : 'Seller'),

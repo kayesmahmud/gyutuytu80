@@ -412,6 +412,7 @@
     "noMessages": "No messages yet"
   },
   "shop": {
+    "seller": "Seller",
     "businessAccount": "Business Account",
     "individualSeller": "Individual Seller",
     "activeAds": "Active Ads",

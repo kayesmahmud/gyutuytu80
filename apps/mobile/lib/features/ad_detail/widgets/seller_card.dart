@@ -82,9 +82,11 @@ class SellerCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    context.locale.languageCode == 'ne'
-                        ? (isBusiness ? "प्रमाणित व्यापार खाता" : (isVerified ? "प्रमाणित व्यक्तिगत विक्रेता" : "विक्रेता"))
-                        : (isBusiness ? "Verified Business Account" : (isVerified ? "Verified Individual Seller" : "Seller")),
+                    isBusiness
+                        ? (context.locale.languageCode == 'ne' ? "प्रमाणित व्यापार खाता" : "Verified Business Account")
+                        : isVerified
+                        ? (context.locale.languageCode == 'ne' ? "प्रमाणित व्यक्तिगत विक्रेता" : "Verified Individual Seller")
+                        : (context.locale.languageCode == 'ne' ? "विक्रेता" : "Seller"),
                     style: GoogleFonts.inter(
                         fontSize: 12, color: const Color(0xFF6B7280)),
                   ),
