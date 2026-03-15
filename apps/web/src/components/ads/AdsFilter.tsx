@@ -187,7 +187,7 @@ export default function AdsFilter({
 
                 {/* Subcategories */}
                 {hasSubcategories && isExpanded && (
-                  <div className="ml-6 space-y-1 mt-1">
+                  <div className="ml-6 space-y-1 mt-1 max-h-48 overflow-y-auto">
                     {cat.subcategories.map((subcat) => (
                       <RadioOption
                         key={subcat.id}
