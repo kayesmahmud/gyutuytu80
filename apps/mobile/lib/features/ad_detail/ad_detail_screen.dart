@@ -672,37 +672,47 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   // 8.5. SELLER INFORMATION CARD
                   SellerCard(ad: ad),
 
-                  // 9. REPORT LINK
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: GestureDetector(
-                      onTap: () => showReportAdSheet(
-                        context,
-                        adId: ad.id,
-                        adTitle: ad.title,
+                  // 9. REPORT LINK (hidden for ad owner)
+                  Builder(builder: (context) {
+                    final isOwner = context.read<AuthProvider>().userId == ad.userId;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            LucideIcons.flag,
-                            color: Color(0xFFEF4444),
-                            size: 16,
+                      child: Opacity(
+                        opacity: isOwner ? 0.4 : 1.0,
+                        child: GestureDetector(
+                          onTap: isOwner
+                              ? null
+                              : () => showReportAdSheet(
+                                    context,
+                                    adId: ad.id,
+                                    adTitle: ad.title,
+                                  ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.flag,
+                                color: isOwner
+                                    ? const Color(0xFF9CA3AF)
+                                    : const Color(0xFFEF4444),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'report.reportThisAd'.tr(),
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF9CA3AF),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'report.reportThisAd'.tr(),
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF6B7280),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
 
                   const SizedBox(height: 16),
 

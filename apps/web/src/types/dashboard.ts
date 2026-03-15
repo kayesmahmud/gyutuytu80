@@ -134,7 +134,7 @@ export interface DashboardUnreadCountResponse {
 // Dashboard Tab Types
 // ============================================
 
-export type DashboardTab = 'active' | 'pending' | 'sold';
+export type DashboardTab = 'active' | 'pending' | 'rejected';
 
 // ============================================
 // Utility Functions

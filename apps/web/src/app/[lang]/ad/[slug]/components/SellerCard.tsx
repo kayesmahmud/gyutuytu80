@@ -121,7 +121,7 @@ export async function SellerCard({
       </div>
 
       {/* Contact buttons — disabled when viewing own ad */}
-      <OwnerGuard sellerId={userId}>
+      <OwnerGuard sellerId={userId} showLabel>
         {/* 1. WhatsApp Button */}
         <AdActions
           adId={adId}

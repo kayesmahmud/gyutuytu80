@@ -268,24 +268,6 @@ class AdClient {
     }
   }
 
-  /// Mark an ad as sold
-  Future<ApiResponse<void>> markAsSold(int adId) async {
-    try {
-      final response = await _dio.put('/ads/$adId/sold');
-
-      if (response.data['success'] == true) {
-        return ApiResponse.success(null);
-      }
-      return ApiResponse.failure(
-        response.data['error'] ?? 'Failed to mark ad as sold',
-      );
-    } on DioException catch (e) {
-      return ApiResponse.failure(
-        e.response?.data?['error'] ?? 'Failed to mark ad as sold',
-      );
-    }
-  }
-
   /// Delete an ad
   Future<ApiResponse<void>> deleteAd(int adId) async {
     try {

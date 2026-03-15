@@ -68,8 +68,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return _allAds.where((ad) => ad.status == AdStatus.pending).toList();
       case 'Rejected':
         return _allAds.where((ad) => ad.status == AdStatus.rejected).toList();
-      case 'Sold':
-        return _allAds.where((ad) => ad.status == AdStatus.sold).toList();
       default:
         return _allAds;
     }
@@ -80,7 +78,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'Active': _allAds.where((a) => a.status == AdStatus.active).length,
       'Pending': _allAds.where((a) => a.status == AdStatus.pending).length,
       'Rejected': _allAds.where((a) => a.status == AdStatus.rejected).length,
-      'Sold': _allAds.where((a) => a.status == AdStatus.sold).length,
     };
   }
 
@@ -127,51 +124,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(response.error ?? 'dashboard.failedToDelete'.tr()),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  Future<void> _markAsSold(AdWithDetails ad) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('dashboard.markAsSold'.tr()),
-        content: Text('dashboard.confirmDelete'.tr(args: [ad.title])),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('common.cancel'.tr()),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: Text('dashboard.markSold'.tr()),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      final response = await _adClient.markAsSold(ad.id);
-      if (response.success) {
-        _fetchAds();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('dashboard.adMarkedSold'.tr()),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.error ?? 'myAds.failedToUpdate'.tr()),
               backgroundColor: Colors.red,
             ),
           );
@@ -509,7 +461,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          // Second row: Rejected, Sold
+          // Second row: Rejected
           Row(
             children: [
               Expanded(
@@ -518,15 +470,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   counts['Rejected'] ?? 0,
                   LucideIcons.x,
                   Colors.red,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildFilterChip(
-                  'Sold',
-                  counts['Sold'] ?? 0,
-                  LucideIcons.check,
-                  Colors.purple,
                 ),
               ),
             ],
@@ -587,8 +530,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return 'dashboard.pendingCount'.tr(args: ['$count']);
       case 'Rejected':
         return 'dashboard.rejectedCount'.tr(args: ['$count']);
-      case 'Sold':
-        return 'dashboard.soldCount'.tr(args: ['$count']);
       default:
         return '$label ($count)';
     }
@@ -849,20 +790,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-
-              // Sold Button (only for active ads)
-              if (isActive) ...[
-                Expanded(
-                  child: _buildActionButton(
-                    icon: LucideIcons.checkCircle,
-                    label: 'dashboard.sold'.tr(),
-                    color: Colors.green,
-                    filled: true,
-                    onTap: () => _markAsSold(ad),
-                  ),
-                ),
-                const SizedBox(width: 10),
-              ],
 
               // Delete Button (outlined)
               Expanded(

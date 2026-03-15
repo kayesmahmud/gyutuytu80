@@ -35,14 +35,12 @@ class _MyAdsScreenState extends State<MyAdsScreen>
     'All',
     'Active',
     'Pending',
-    'Sold',
     'Rejected',
   ];
   static final Map<String, AdStatus?> _statusMap = {
     'All': null,
     'Active': AdStatus.active,
     'Pending': AdStatus.pending,
-    'Sold': AdStatus.sold,
     'Rejected': AdStatus.rejected,
   };
 
@@ -115,7 +113,6 @@ class _MyAdsScreenState extends State<MyAdsScreen>
       'All': _allAds.length,
       'Active': _allAds.where((a) => a.status == AdStatus.active).length,
       'Pending': _allAds.where((a) => a.status == AdStatus.pending).length,
-      'Sold': _allAds.where((a) => a.status == AdStatus.sold).length,
       'Rejected': _allAds.where((a) => a.status == AdStatus.rejected).length,
     };
   }
@@ -249,7 +246,6 @@ class _MyAdsScreenState extends State<MyAdsScreen>
           _buildStatItem('dashboard.total'.tr(), counts['All'] ?? 0, Colors.blue),
           _buildStatItem('myAds.active'.tr(), counts['Active'] ?? 0, Colors.green),
           _buildStatItem('myAds.pending'.tr(), counts['Pending'] ?? 0, Colors.orange),
-          _buildStatItem('myAds.sold'.tr(), counts['Sold'] ?? 0, Colors.purple),
         ],
       ),
     );

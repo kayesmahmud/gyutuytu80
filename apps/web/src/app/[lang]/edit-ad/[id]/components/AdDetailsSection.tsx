@@ -19,7 +19,6 @@ export function AdDetailsSection({ formData, onFormChange }: AdDetailsSectionPro
           className="w-full p-3 rounded-lg border border-gray-300 text-base"
         >
           <option value="active">Active (Visible to buyers)</option>
-          <option value="sold">Sold (Mark as sold)</option>
           <option value="inactive">Inactive (Hidden from listings)</option>
         </select>
       </div>

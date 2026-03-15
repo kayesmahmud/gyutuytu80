@@ -60,7 +60,7 @@ export function ApprovedBanner() {
               <strong>Need to make changes?</strong> You have these options:
               <br />
               • Contact our support team if you need to update critical information
-              <br />• Mark this ad as sold and create a new listing with updated details
+              <br />• Delete this ad and create a new listing with updated details
             </p>
           </div>
         </div>

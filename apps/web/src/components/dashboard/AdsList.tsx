@@ -67,17 +67,6 @@ const TAB_CONFIG: Array<{
       </svg>
     ),
   },
-  {
-    id: 'sold',
-    label: 'Sold',
-    activeGradient: 'from-indigo-500 to-purple-600',
-    activeShadow: 'shadow-indigo-500/30',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-      </svg>
-    ),
-  },
 ];
 
 function getAdCountByStatus(ads: Ad[], status: AdTab): number {

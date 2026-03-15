@@ -19,7 +19,11 @@ class FloatingContactBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final isOwner = authProvider.userId == ad.userId;
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+    final disabledColor = const Color(0xFF9CA3AF);
+
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding + 8),
       decoration: BoxDecoration(
@@ -36,8 +40,8 @@ class FloatingContactBar extends StatelessWidget {
           // Call - dark filled, icon only
           _buildIconBtn(
             LucideIcons.phone,
-            const Color(0xFF374151),
-            () => _launchPhone(ad.userPhone),
+            isOwner ? disabledColor : const Color(0xFF374151),
+            isOwner ? null : () => _launchPhone(ad.userPhone),
           ),
           const SizedBox(width: 10),
           // Chat - blue filled, takes more space
@@ -46,8 +50,8 @@ class FloatingContactBar extends StatelessWidget {
             child: _buildFilledBtn(
               LucideIcons.messageCircle,
               context.locale.languageCode == 'ne' ? 'च्याट' : "Chat",
-              const Color(0xFF2563EB),
-              () => _startChat(context),
+              isOwner ? disabledColor : const Color(0xFF2563EB),
+              isOwner ? null : () => _startChat(context),
             ),
           ),
           const SizedBox(width: 10),
@@ -57,8 +61,8 @@ class FloatingContactBar extends StatelessWidget {
             child: _buildFilledBtn(
               LucideIcons.messageSquare,
               "WhatsApp",
-              const Color(0xFF25D366),
-              () => _launchWhatsApp(ad.userPhone),
+              isOwner ? disabledColor : const Color(0xFF25D366),
+              isOwner ? null : () => _launchWhatsApp(ad.userPhone),
             ),
           ),
         ],
@@ -143,7 +147,7 @@ class FloatingContactBar extends StatelessWidget {
     }
   }
 
-  Widget _buildIconBtn(IconData icon, Color bg, VoidCallback onTap) {
+  Widget _buildIconBtn(IconData icon, Color bg, VoidCallback? onTap) {
     return SizedBox(
       height: 48,
       width: 52,
@@ -152,6 +156,8 @@ class FloatingContactBar extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: bg,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: bg,
+          disabledForegroundColor: Colors.white70,
           elevation: 0,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -163,7 +169,7 @@ class FloatingContactBar extends StatelessWidget {
   }
 
   Widget _buildFilledBtn(
-      IconData icon, String label, Color bg, VoidCallback onTap) {
+      IconData icon, String label, Color bg, VoidCallback? onTap) {
     return SizedBox(
       height: 48,
       child: ElevatedButton.icon(
@@ -175,6 +181,8 @@ class FloatingContactBar extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: bg,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: bg,
+          disabledForegroundColor: Colors.white70,
           elevation: 0,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
