@@ -45,15 +45,28 @@ class SellerCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: ad.userAvatar != null
-                  ? CachedNetworkImageProvider(ApiConfig.getAvatarUrl(ad.userAvatar))
-                  : null,
-              backgroundColor: Colors.grey[200],
-              child: ad.userAvatar == null
-                  ? const Icon(LucideIcons.user, color: Colors.grey)
-                  : null,
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isBusiness
+                      ? const Color(0xFFFBBF24)
+                      : isVerified
+                          ? const Color(0xFF3B82F6)
+                          : Colors.grey[300]!,
+                  width: isBusiness || isVerified ? 3 : 1,
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 26,
+                backgroundImage: ad.userAvatar != null
+                    ? CachedNetworkImageProvider(ApiConfig.getAvatarUrl(ad.userAvatar))
+                    : null,
+                backgroundColor: Colors.grey[200],
+                child: ad.userAvatar == null
+                    ? const Icon(LucideIcons.user, color: Colors.grey)
+                    : null,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

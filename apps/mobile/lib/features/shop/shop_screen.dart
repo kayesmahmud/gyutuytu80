@@ -589,7 +589,14 @@ class _ShopScreenState extends State<ShopScreen> {
                             height: 100,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 4),
+                              border: Border.all(
+                                color: _shop!.isBusinessVerified
+                                    ? const Color(0xFFFBBF24)
+                                    : _shop!.individualVerified
+                                        ? const Color(0xFF3B82F6)
+                                        : Colors.white,
+                                width: 4,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
