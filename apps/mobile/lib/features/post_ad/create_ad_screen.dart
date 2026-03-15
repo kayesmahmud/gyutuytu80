@@ -20,7 +20,9 @@ import 'package:mobile/features/post_ad/services/form_template_service.dart';
 import 'package:mobile/features/post_ad/widgets/dynamic_form_fields.dart';
 
 class CreateAdScreen extends StatefulWidget {
-  const CreateAdScreen({super.key});
+  final String? draftId;
+
+  const CreateAdScreen({super.key, this.draftId});
 
   @override
   State<CreateAdScreen> createState() => _CreateAdScreenState();
@@ -82,11 +84,20 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   void initState() {
     super.initState();
     _whatsappController.text = _verifiedPhone;
-    _loadInitialData();
-    _loadDrafts();
+    _initializeScreen();
     _titleController.addListener(_onFormChanged);
     _descriptionController.addListener(_onFormChanged);
     _priceController.addListener(_onFormChanged);
+  }
+
+  Future<void> _initializeScreen() async {
+    await Future.wait([_loadInitialData(), _loadDrafts()]);
+    if (widget.draftId != null && mounted) {
+      final match = _drafts.where((d) => d.id == widget.draftId);
+      if (match.isNotEmpty) {
+        await _restoreDraft(match.first);
+      }
+    }
   }
 
   Future<void> _loadInitialData() async {
