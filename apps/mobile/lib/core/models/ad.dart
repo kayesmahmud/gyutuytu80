@@ -393,6 +393,7 @@ AdStatus _parseAdStatus(dynamic value) {
   final str = value.toString().toLowerCase();
   switch (str) {
     case 'active':
+    case 'approved':
       return AdStatus.active;
     case 'sold':
       return AdStatus.sold;

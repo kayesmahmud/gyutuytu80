@@ -62,7 +62,7 @@ export function transformAdForList(ad: any) {
     description: ad.description,
     price: ad.price,
     condition: ad.condition,
-    status: ad.status,
+    status: ad.status === 'approved' ? 'active' : ad.status,
     slug: ad.slug,
     viewCount: ad.view_count,
     isFeatured: ad.is_featured,
@@ -134,13 +134,27 @@ export function transformAdForDashboard(ad: any) {
 }
 
 export async function transformAdForDetail(ad: any) {
+  const catName = ad.categories?.categories?.name ?? ad.categories?.name;
+  const catNameNe = ad.categories?.categories?.name_ne ?? ad.categories?.name_ne;
+  const subName = ad.categories?.categories ? ad.categories.name : undefined;
+  const subNameNe = ad.categories?.categories ? ad.categories.name_ne : undefined;
+  const locName = await getLocationHierarchy(ad.location_id);
+
   return {
     ...ad,
-    category_name: ad.categories?.categories?.name ?? ad.categories?.name,
-    category_name_ne: ad.categories?.categories?.name_ne ?? ad.categories?.name_ne,
-    subcategory_name: ad.categories?.categories ? ad.categories.name : undefined,
-    subcategory_name_ne: ad.categories?.categories ? ad.categories.name_ne : undefined,
-    location_name: await getLocationHierarchy(ad.location_id),
+    status: ad.status === 'approved' ? 'active' : ad.status,
+    // snake_case (web compatibility)
+    category_name: catName,
+    category_name_ne: catNameNe,
+    subcategory_name: subName,
+    subcategory_name_ne: subNameNe,
+    location_name: locName,
+    // camelCase (mobile compatibility)
+    categoryName: catName,
+    categoryNameNe: catNameNe,
+    subcategoryName: subName,
+    subcategoryNameNe: subNameNe,
+    locationName: locName,
     userName: ad.users_ads_user_idTousers?.full_name,
     userAvatar: ad.users_ads_user_idTousers?.avatar,
     userPhone: ad.users_ads_user_idTousers?.phone,

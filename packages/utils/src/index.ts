@@ -32,18 +32,19 @@ export const formatDate = (date: Date | string, locale = 'en-US'): string => {
   });
 };
 
-export const formatRelativeTime = (date: Date | string): string => {
+export const formatRelativeTime = (date: Date | string, locale = 'en-US'): string => {
   const now = new Date();
   const past = new Date(date);
   const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+  const isNe = locale === 'ne-NP' || locale === 'ne';
 
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)}w ago`;
+  if (diffInSeconds < 60) return isNe ? 'भर्खरै' : 'Just now';
+  if (diffInSeconds < 3600) { const m = Math.floor(diffInSeconds / 60); return isNe ? `${m} मिनेट अघि` : `${m}m ago`; }
+  if (diffInSeconds < 86400) { const h = Math.floor(diffInSeconds / 3600); return isNe ? `${h} घण्टा अघि` : `${h}h ago`; }
+  if (diffInSeconds < 604800) { const d = Math.floor(diffInSeconds / 86400); return isNe ? `${d} दिन अघि` : `${d}d ago`; }
+  if (diffInSeconds < 2592000) { const w = Math.floor(diffInSeconds / 604800); return isNe ? `${w} हप्ता अघि` : `${w}w ago`; }
 
-  return formatDate(date);
+  return formatDate(date, locale);
 };
 
 export const isExpired = (expiryDate: Date | string): boolean => {
@@ -54,8 +55,10 @@ export const isExpired = (expiryDate: Date | string): boolean => {
 // PRICE UTILITIES
 // ============================================
 
-export const formatPrice = (price: number, currency: string = 'Rs.'): string => {
-  return `${currency} ${Math.round(price).toLocaleString('en-NP')}`;
+export const formatPrice = (price: number | null | undefined, currency: string = 'Rs.', locale = 'en'): string => {
+  if (price == null) return locale === 'ne' ? 'मूल्यको लागि सम्पर्क गर्नुहोस्' : 'Contact for price';
+  if (price === 0) return locale === 'ne' ? 'निःशुल्क' : 'Free';
+  return `${locale === 'ne' ? 'रु.' : currency} ${Math.round(price).toLocaleString('en-NP')}`;
 };
 
 export const formatPriceShort = (price: number): string => {
