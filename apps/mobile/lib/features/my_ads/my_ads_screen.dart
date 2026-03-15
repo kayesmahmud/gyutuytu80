@@ -499,7 +499,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                   Icon(LucideIcons.clock, size: 14, color: Colors.grey[500]),
                   const SizedBox(width: 4),
                   Text(
-                    'Posted ${_formatDate(ad.createdAt)}',
+                    'Posted ${_formatDate(ad.publishedAt)}',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       color: Colors.grey[500],

@@ -471,7 +471,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${localizedTimeAgo(ad.createdAt, context.locale.languageCode)} • ${ad.viewCount} ${l('views', context.locale.languageCode)}',
+                          '${localizedTimeAgo(ad.publishedAt, context.locale.languageCode)} • ${ad.viewCount} ${l('views', context.locale.languageCode)}',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: const Color(0xFF6B7280),

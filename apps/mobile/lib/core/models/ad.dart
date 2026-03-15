@@ -29,6 +29,7 @@ class Ad {
   final bool isNegotiable;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? reviewedAt;
 
   // Promotion fields
   final bool isFeatured;
@@ -65,6 +66,7 @@ class Ad {
     required this.isNegotiable,
     required this.createdAt,
     required this.updatedAt,
+    this.reviewedAt,
     this.isFeatured = false,
     this.isUrgent = false,
     this.isSticky = false,
@@ -98,6 +100,7 @@ class Ad {
         isNegotiable: json['isNegotiable'] as bool? ?? json['is_negotiable'] as bool? ?? false,
         createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
         updatedAt: _parseDateTime(json['updatedAt'] ?? json['updated_at']),
+        reviewedAt: _parseDateTimeNullable(json['reviewedAt'] ?? json['reviewed_at']),
         isFeatured: json['isFeatured'] as bool? ?? json['is_featured'] as bool? ?? false,
         isUrgent: json['isUrgent'] as bool? ?? json['is_urgent'] as bool? ?? false,
         isSticky: json['isSticky'] as bool? ?? json['is_sticky'] as bool? ?? false,
@@ -114,6 +117,10 @@ class Ad {
       rethrow;
     }
   }
+
+  /// Published date = reviewedAt (approval time) or createdAt as fallback.
+  /// Matches web behavior: ad.publishedAt || ad.createdAt
+  DateTime get publishedAt => reviewedAt ?? createdAt;
 
   Map<String, dynamic> toJson() {
     return {

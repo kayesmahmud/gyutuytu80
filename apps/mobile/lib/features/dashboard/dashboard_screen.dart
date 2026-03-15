@@ -726,7 +726,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _formatDate(ad.createdAt),
+                          _formatDate(ad.publishedAt),
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: Colors.grey[500],
