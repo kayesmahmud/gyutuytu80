@@ -53,8 +53,8 @@ export default function PostAdPage({ params }: PostAdPageProps) {
   } = usePostAd(lang);
 
   // Image limits fetched from API settings
-  const [maxImages, setMaxImages] = React.useState(isUserVerified ? 10 : 5);
-  React.useEffect(() => {
+  const [maxImages, setMaxImages] = useState(isUserVerified ? 10 : 5);
+  useEffect(() => {
     fetch('/api/ad-limits', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` } })
       .then(r => r.json())
       .then(d => { if (d.success && d.data?.userImageLimit) setMaxImages(d.data.userImageLimit); })
