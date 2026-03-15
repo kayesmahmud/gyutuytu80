@@ -223,6 +223,18 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
               : (context.locale.languageCode == 'ne' ? 'कुनै विवरण उपलब्ध छैन।' : 'No description available.'),
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700], height: 1.5),
         ),
+        if (widget.shop.businessDescription?.isNotEmpty == true) ...[
+          const SizedBox(height: 16),
+          Text(
+            context.locale.languageCode == 'ne' ? 'व्यवसाय विवरण' : 'Business Description',
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.shop.businessDescription!,
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700], height: 1.5),
+          ),
+        ],
       ],
     );
   }
@@ -409,7 +421,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${isNe ? 'दर्ता नम्बर' : 'Registered'}: ${widget.shop.phone}',
+                      '${isNe ? 'दर्ता नम्बर' : 'Registered'}: ${formatPhone(widget.shop.phone!)}',
                       style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF15803D)),
                     ),
                   ),
@@ -452,8 +464,8 @@ class _ShopContactSectionState extends State<ShopContactSection> {
                     Expanded(
                       child: Text(
                         isNe
-                            ? 'दर्ता नम्बर नै प्रयोग गर्नुहोस् (${widget.shop.phone})'
-                            : 'Same as registered number (${widget.shop.phone})',
+                            ? 'दर्ता नम्बर नै प्रयोग गर्नुहोस् (${formatPhone(widget.shop.phone!)})'
+                            : 'Same as registered number (${formatPhone(widget.shop.phone!)})',
                         style: GoogleFonts.inter(fontSize: 13, color: Colors.black87),
                       ),
                     ),
@@ -581,7 +593,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
             icon: LucideIcons.phone,
             iconColor: const Color(0xFF3B82F6),
             label: isNe ? 'फोन नम्बर' : 'Phone',
-            value: widget.shop.phone!,
+            value: formatPhone(widget.shop.phone!),
             onTap: () => _launchUrl('tel:${widget.shop.phone}'),
           ),
         if (widget.shop.businessPhone != null)
@@ -589,7 +601,7 @@ class _ShopContactSectionState extends State<ShopContactSection> {
             icon: LucideIcons.messageCircle,
             iconColor: const Color(0xFF25D366),
             label: isNe ? 'व्हाट्सएप' : 'WhatsApp',
-            value: widget.shop.businessPhone!,
+            value: formatPhone(widget.shop.businessPhone!),
             onTap: () => _launchWhatsApp(widget.shop.businessPhone!),
           ),
         if (widget.shop.businessWebsite != null)

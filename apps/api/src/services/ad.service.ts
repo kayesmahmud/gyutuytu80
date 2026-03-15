@@ -85,6 +85,8 @@ export function transformAdForList(ad: any) {
     individualVerified: ad.users_ads_user_idTousers?.individual_verified,
     userName: ad.users_ads_user_idTousers?.full_name,
     userAvatar: ad.users_ads_user_idTousers?.avatar,
+    latitude: ad.latitude ? Number(ad.latitude) : null,
+    longitude: ad.longitude ? Number(ad.longitude) : null,
     publishedAt: ad.reviewed_at || ad.created_at,
     reviewedAt: ad.reviewed_at,
     primaryImage: ad.ad_images?.find((img: any) => img.is_primary)?.filename || ad.ad_images?.[0]?.filename,
@@ -143,6 +145,8 @@ export async function transformAdForDetail(ad: any) {
   return {
     ...ad,
     status: ad.status === 'approved' ? 'active' : ad.status,
+    latitude: ad.latitude ? Number(ad.latitude) : null,
+    longitude: ad.longitude ? Number(ad.longitude) : null,
     // snake_case (web compatibility)
     category_name: catName,
     category_name_ne: catNameNe,

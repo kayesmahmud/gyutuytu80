@@ -59,11 +59,11 @@ export default function FeaturedAdsCarousel({ ads, lang }: FeaturedAdsCarouselPr
             {/* Condition Badge on Image */}
             {ad.condition && (
               <div className={`absolute bottom-1.5 right-1.5 rounded-full font-semibold z-10 px-2 py-0.5 text-[10px] ${
-                ad.condition === 'Brand New'
+                ad.condition?.toLowerCase() === 'brand new'
                   ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
                   : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
               }`}>
-                {ad.condition === 'Brand New' ? 'BRAND NEW' : 'USED'}
+                {ad.condition?.toLowerCase() === 'brand new' ? 'BRAND NEW' : 'USED'}
               </div>
             )}
             {ad.primaryImage ? (

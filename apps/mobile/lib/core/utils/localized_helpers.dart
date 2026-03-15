@@ -124,3 +124,23 @@ String l(String key, String locale) {
   if (locale == 'ne') return ne[key] ?? en[key] ?? key;
   return en[key] ?? key;
 }
+
+/// Formats a phone number: 9841234567 → 984-123-4567
+String formatPhone(String phone) {
+  final cleaned = phone.replaceAll(RegExp(r'\D'), '');
+  if (cleaned.length == 10) {
+    return '${cleaned.substring(0, 3)}-${cleaned.substring(3, 6)}-${cleaned.substring(6)}';
+  }
+  return phone;
+}
+
+/// Formats a number with commas and abbreviations:
+/// 1234567 → "1.2M", 12345 → "12.3K", 999 → "999"
+String formatNumber(int number) {
+  if (number >= 1000000) return '${(number / 1000000).toStringAsFixed(1)}M';
+  if (number >= 1000) return '${(number / 1000).toStringAsFixed(1)}K';
+  return number.toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+    (m) => '${m[1]},',
+  );
+}

@@ -344,7 +344,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
           // Business Name
           _buildLabel(lang == 'ne' ? 'व्यापारको नाम' : 'Business Name'),
           TextFormField(
-            decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो व्यापारको नाम लेख्नुहोस्' : 'Enter your business name'),
+            decoration: _inputDecoration(lang == 'ne' ? 'व्यापार लाइसेन्समा भएको नाम जस्ताको तस्तै लेख्नुहोस्' : 'Enter your business name exactly as shown on your trade license'),
             validator: (v) =>
                 v?.isEmpty == true ? (lang == 'ne' ? 'व्यापारको नाम आवश्यक छ' : 'Business name is required') : null,
             onSaved: (v) => _businessName = v ?? '',

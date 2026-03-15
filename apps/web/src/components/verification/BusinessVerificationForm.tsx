@@ -210,7 +210,7 @@ export default function BusinessVerificationForm({
               name="businessName"
               value={formData.businessName}
               onChange={handleInputChange}
-              placeholder="Enter your registered business name"
+              placeholder="Enter your business name exactly as shown on your trade license"
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
             />

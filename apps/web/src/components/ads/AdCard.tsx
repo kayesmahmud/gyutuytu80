@@ -87,11 +87,11 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                 <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl font-bold text-green-600">{formatPrice(ad.price)}</span>
                     {ad.condition && (
-                        <span className={`rounded-full font-semibold px-3 py-1 text-xs ${ad.condition === 'Brand New'
+                        <span className={`rounded-full font-semibold px-3 py-1 text-xs ${ad.condition?.toLowerCase() === 'brand new'
                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
                                 : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                             }`}>
-                            {ad.condition === 'Brand New' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
+                            {ad.condition?.toLowerCase() === 'brand new' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
                         </span>
                     )}
                 </div>
@@ -231,11 +231,11 @@ export default function AdCard({ ad, lang = 'en', variant = 'default' }: AdCardP
             >
                 <div className="relative w-[35%] h-32 bg-gray-100 flex-shrink-0">
                     {ad.condition && (
-                        <div className={`absolute bottom-1.5 right-1.5 rounded-full font-semibold z-10 px-2 py-0.5 text-[10px] ${ad.condition === 'Brand New'
+                        <div className={`absolute bottom-1.5 right-1.5 rounded-full font-semibold z-10 px-2 py-0.5 text-[10px] ${ad.condition?.toLowerCase() === 'brand new'
                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
                                 : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                             }`}>
-                            {ad.condition === 'Brand New' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
+                            {ad.condition?.toLowerCase() === 'brand new' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
                         </div>
                     )}
                     {imageUrl ? (

@@ -85,7 +85,13 @@ class AuthProvider with ChangeNotifier {
       final response = await _authClient.getProfile(); 
       if (kDebugMode) developer.log('API Response: $response', name: 'AuthProvider');
       if (response['success'] == true) {
-        _user = response['data'];
+        final data = response['data'] as Map<String, dynamic>?;
+        final role = data?['role'] as String? ?? 'user';
+        if (role != 'user') {
+          // Editors/admins should use the web dashboard
+          if (kDebugMode) developer.log('Non-user role ($role) logged in, treating as user', name: 'AuthProvider');
+        }
+        _user = data;
         if (kDebugMode) developer.log('Parsed User: $_user', name: 'AuthProvider');
         if (kDebugMode) developer.log('User Name: ${_user?['fullName']}', name: 'AuthProvider');
       }
