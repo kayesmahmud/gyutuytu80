@@ -14,13 +14,16 @@ import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 import 'package:mobile/features/main_nav/main_nav_screen.dart';
+import 'package:mobile/features/post_ad/create_ad_screen.dart';
 import 'package:mobile/features/promotion/promote_ad_screen.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:mobile/core/widgets/count_up_text.dart';
 import 'package:mobile/core/widgets/floating_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String initialFilter;
+
+  const DashboardScreen({super.key, this.initialFilter = 'Active'});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -28,7 +31,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final AdClient _adClient = AdClient();
-  String _selectedFilter = 'Active';
+  late String _selectedFilter;
 
   List<AdWithDetails> _allAds = [];
   bool _isLoading = true;
@@ -37,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter;
     _fetchAds();
   }
 
@@ -54,7 +58,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (response.success) {
           _allAds = response.data;
         } else {
-          _error = response.errorMessage ?? (context.locale.languageCode == 'ne' ? 'विज्ञापन लोड गर्न असफल' : 'Failed to load ads');
+          _error =
+              response.errorMessage ??
+              (context.locale.languageCode == 'ne'
+                  ? 'विज्ञापन लोड गर्न असफल'
+                  : 'Failed to load ads');
         }
       });
     }
@@ -166,18 +174,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             padding: const EdgeInsets.all(16),
                             child: Row(
                               children: [
-                                Container(width: 68, height: 68, color: Colors.white),
+                                Container(
+                                  width: 68,
+                                  height: 68,
+                                  color: Colors.white,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Container(width: 150, height: 14, color: Colors.white),
+                                      Container(
+                                        width: 150,
+                                        height: 14,
+                                        color: Colors.white,
+                                      ),
                                       const SizedBox(height: 8),
-                                      Container(width: 80, height: 12, color: Colors.white),
+                                      Container(
+                                        width: 80,
+                                        height: 12,
+                                        color: Colors.white,
+                                      ),
                                       const SizedBox(height: 8),
-                                      Container(width: 60, height: 12, color: Colors.white),
+                                      Container(
+                                        width: 60,
+                                        height: 12,
+                                        color: Colors.white,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -257,8 +282,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
 
-                            // Filter Chips (2x2 grid)
+                            // Filter Chips
                             _buildFilterChips(counts),
+
+                            // Pending info banner
+                            if (_selectedFilter == 'Pending')
+                              _buildPendingBanner(),
 
                             const SizedBox(height: 8),
                           ],
@@ -436,61 +465,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildFilterChips(Map<String, int> counts) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
+      child: Row(
         children: [
-          // First row: Active, Pending
-          Row(
-            children: [
-              Expanded(
-                child: _buildFilterChip(
-                  'Active',
-                  counts['Active'] ?? 0,
-                  LucideIcons.checkCircle,
-                  Colors.green,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildFilterChip(
-                  'Pending',
-                  counts['Pending'] ?? 0,
-                  LucideIcons.clock,
-                  Colors.orange,
-                ),
-              ),
-            ],
+          Expanded(
+            child: _buildFilterChip(
+              'Active',
+              counts['Active'] ?? 0,
+              Colors.green,
+            ),
           ),
-          const SizedBox(height: 12),
-          // Second row: Rejected
-          Row(
-            children: [
-              Expanded(
-                child: _buildFilterChip(
-                  'Rejected',
-                  counts['Rejected'] ?? 0,
-                  LucideIcons.x,
-                  Colors.red,
-                ),
-              ),
-            ],
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildFilterChip(
+              'Pending',
+              counts['Pending'] ?? 0,
+              Colors.orange,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildFilterChip(
+              'Rejected',
+              counts['Rejected'] ?? 0,
+              Colors.red,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(
-    String label,
-    int count,
-    IconData icon,
-    Color activeColor,
-  ) {
+  Widget _buildFilterChip(String label, int count, Color activeColor) {
     final isSelected = _selectedFilter == label;
 
     return GestureDetector(
       onTap: () => setState(() => _selectedFilter = label),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: isSelected ? activeColor : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
@@ -499,24 +510,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 1,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? Colors.white : Colors.grey[600],
+        child: Center(
+          child: Text(
+            _localizedFilterLabel(label, count),
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : Colors.grey[700],
             ),
-            const SizedBox(width: 8),
-            Text(
-              _localizedFilterLabel(label, count),
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey[700],
-              ),
-            ),
-          ],
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ),
     );
@@ -533,6 +538,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
       default:
         return '$label ($count)';
     }
+  }
+
+  Widget _buildPendingBanner() {
+    final lang = context.locale.languageCode;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.amber.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.amber.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(LucideIcons.clock, size: 20, color: Colors.amber[700]),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                lang == 'ne'
+                    ? 'तपाईंको विज्ञापन समीक्षाको लागि पर्खिरहेको छ। सम्पादकले स्वीकृत गरेपछि यो सक्रिय हुनेछ। तपाईं अझै पनि पेन्डिङ विज्ञापनहरू सम्पादन गर्न सक्नुहुन्छ।'
+                    : 'Your ads are awaiting review. They will go live once an editor approves them. You can still edit pending ads.',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.amber[900],
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildErrorState() {
@@ -562,7 +600,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             FloatingWidget(
-              child: Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
+              child: Icon(
+                LucideIcons.package,
+                size: 64,
+                color: Colors.grey[400],
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -767,6 +809,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
 
           if (isActive) const SizedBox(height: 10),
+
+          // Edit & Resubmit Button (only for pending/rejected ads)
+          if (ad.status == AdStatus.pending ||
+              ad.status == AdStatus.rejected) ...[
+            _buildActionButton(
+              icon: LucideIcons.edit,
+              label: ad.status == AdStatus.rejected
+                  ? (context.locale.languageCode == 'ne'
+                        ? 'सम्पादन र पुन: पेश'
+                        : 'Edit & Resubmit')
+                  : (context.locale.languageCode == 'ne' ? 'सम्पादन' : 'Edit'),
+              color: ad.status == AdStatus.rejected
+                  ? Colors.orange
+                  : Colors.indigo,
+              filled: true,
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CreateAdScreen(existingAd: ad),
+                  ),
+                );
+                if (mounted) _fetchAds();
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
 
           // Action Buttons Row
           Row(
