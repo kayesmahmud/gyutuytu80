@@ -10,9 +10,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dio/dio.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mobile/core/api/ad_client.dart';
+import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/widgets/success_checkmark.dart';
+import 'package:mobile/features/dashboard/dashboard_screen.dart';
+import 'package:mobile/features/my_ads/my_ads_screen.dart';
 import 'package:mobile/features/post_ad/models/ad_draft_model.dart';
 import 'package:mobile/features/post_ad/models/location_models.dart';
 import 'package:mobile/features/post_ad/services/ad_draft_service.dart';
@@ -21,8 +25,11 @@ import 'package:mobile/features/post_ad/widgets/dynamic_form_fields.dart';
 
 class CreateAdScreen extends StatefulWidget {
   final String? draftId;
+  final AdWithDetails? existingAd;
 
-  const CreateAdScreen({super.key, this.draftId});
+  const CreateAdScreen({super.key, this.draftId, this.existingAd});
+
+  bool get isEditMode => existingAd != null;
 
   @override
   State<CreateAdScreen> createState() => _CreateAdScreenState();
@@ -52,6 +59,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   // Images
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedImages = [];
+  List<String> _existingImagePaths =
+      []; // For edit mode: existing image paths to keep
   int _maxImages = 5; // Default, updated from server
 
   // Dynamic Fields
@@ -91,13 +100,93 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   }
 
   Future<void> _initializeScreen() async {
-    await Future.wait([_loadInitialData(), _loadDrafts()]);
-    if (widget.draftId != null && mounted) {
-      final match = _drafts.where((d) => d.id == widget.draftId);
-      if (match.isNotEmpty) {
-        await _restoreDraft(match.first);
+    if (widget.isEditMode) {
+      // Edit mode: load initial data then pre-fill from existing ad
+      await _loadInitialData();
+      if (mounted) _prefillFromExistingAd();
+    } else {
+      // Create mode: load data and drafts
+      await Future.wait([_loadInitialData(), _loadDrafts()]);
+      if (widget.draftId != null && mounted) {
+        final match = _drafts.where((d) => d.id == widget.draftId);
+        if (match.isNotEmpty) {
+          await _restoreDraft(match.first);
+        }
       }
     }
+  }
+
+  void _prefillFromExistingAd() {
+    final ad = widget.existingAd!;
+
+    _titleController.text = ad.title;
+    _descriptionController.text = ad.description;
+    _priceController.text = ad.price.toStringAsFixed(0);
+    _priceNegotiable = ad.isNegotiable;
+
+    // Pre-fill existing images
+    _existingImagePaths = ad.images.map(_normalizeImagePath).toList();
+
+    // Pre-fill category
+    try {
+      final cat = _categories.firstWhere((c) => c.id == ad.categoryId);
+      _selectedCategory = cat;
+      if (ad.subcategoryId != null) {
+        _selectedSubCategory = cat.subcategories.firstWhere(
+          (s) => s.id == ad.subcategoryId,
+        );
+      }
+    } catch (_) {
+      log(
+        'Edit: category not found for id ${ad.categoryId}',
+        name: 'CreateAdScreen',
+      );
+    }
+
+    // Pre-fill location
+    try {
+      for (final prov in _provinces) {
+        for (final dist in prov.districts) {
+          for (final muni in dist.municipalities) {
+            if (muni.id == ad.locationId) {
+              _selectedProvince = prov;
+              _selectedDistrict = dist;
+              _selectedMunicipality = muni;
+              if (ad.areaId != null) {
+                try {
+                  _selectedArea = muni.areas.firstWhere(
+                    (a) => a.id == ad.areaId,
+                  );
+                } catch (_) {}
+              }
+              break;
+            }
+            // Check areas too
+            for (final area in muni.areas) {
+              if (area.id == ad.locationId || area.id == ad.areaId) {
+                _selectedProvince = prov;
+                _selectedDistrict = dist;
+                _selectedMunicipality = muni;
+                _selectedArea = area;
+                break;
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {
+      log(
+        'Edit: location not found for id ${ad.locationId}',
+        name: 'CreateAdScreen',
+      );
+    }
+
+    // Pre-fill custom attributes
+    if (ad.attributes != null) {
+      _attributeValues.addAll(ad.attributes!);
+    }
+
+    setState(() {});
   }
 
   Future<void> _loadInitialData() async {
@@ -130,7 +219,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   }
 
   void _onFormChanged() {
-    _triggerAutoSave();
+    if (!widget.isEditMode) _triggerAutoSave();
   }
 
   void _triggerAutoSave() {
@@ -300,8 +389,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     super.dispose();
   }
 
+  static String _normalizeImagePath(String p) => p
+      .replaceFirst(RegExp(r'^https?://[^/]+/'), '')
+      .replaceFirst(RegExp(r'^/+'), '');
+
+  int get _totalImageCount =>
+      _existingImagePaths.length + _selectedImages.length;
+
   void _showImageSourceSheet() {
-    if (_selectedImages.length >= _maxImages) {
+    if (_totalImageCount >= _maxImages) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('postAd.maxImagesError'.tr())));
@@ -451,7 +547,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       // Actually previously Step 2 had _step2Key, which we are reusing.
       if (!_step2Key.currentState!.validate()) return;
 
-      if (_selectedImages.isEmpty) {
+      if (_selectedImages.isEmpty && _existingImagePaths.isEmpty) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('postAd.addImageError'.tr())));
@@ -493,50 +589,13 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Create FormData
-      final formData = FormData.fromMap({
-        'title': _titleController.text,
-        'description': _descriptionController.text,
-        'price': _priceController.text,
-        'categoryId': _selectedCategory!.id,
-        'subcategoryId': _selectedSubCategory?.id,
-        'locationId': _selectedArea?.id ?? _selectedMunicipality!.id,
-        'province_id': _selectedProvince!.id,
-        'district_id': _selectedDistrict!.id,
-        'city_id': _selectedMunicipality!.id,
-        'area_id': _selectedArea?.id,
-        'attributes': jsonEncode(_attributeValues),
-        'whatsapp_number':
-            _whatsappController.text, // Assuming backend accepts this
-      });
-
-      // Add Images
-      for (var image in _selectedImages) {
-        formData.files.add(
-          MapEntry(
-            'images',
-            await MultipartFile.fromFile(image.path, filename: image.name),
-          ),
-        );
-      }
-
-      final result = await _adClient.createAd(formData);
-
-      if (result.success) {
-        await _deleteDraftAfterPost();
-        if (mounted) {
-          await showSuccessDialog(context, message: 'postAd.adPosted'.tr());
-          if (mounted) Navigator.pop(context);
-        }
+      if (widget.isEditMode) {
+        await _updateExistingAd();
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(result.errorMessage)));
-        }
+        await _createNewAd();
       }
     } catch (e) {
-      debugPrint("🔴 Post Ad Error: $e");
+      debugPrint("🔴 ${widget.isEditMode ? 'Update' : 'Post'} Ad Error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -550,6 +609,104 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _createNewAd() async {
+    final formData = FormData.fromMap({
+      'title': _titleController.text,
+      'description': _descriptionController.text,
+      'price': _priceController.text,
+      'categoryId': _selectedCategory!.id,
+      'subcategoryId': _selectedSubCategory?.id,
+      'locationId': _selectedArea?.id ?? _selectedMunicipality!.id,
+      'province_id': _selectedProvince!.id,
+      'district_id': _selectedDistrict!.id,
+      'city_id': _selectedMunicipality!.id,
+      'area_id': _selectedArea?.id,
+      'attributes': jsonEncode(_attributeValues),
+      'whatsapp_number': _whatsappController.text,
+    });
+
+    for (var image in _selectedImages) {
+      formData.files.add(
+        MapEntry(
+          'images',
+          await MultipartFile.fromFile(image.path, filename: image.name),
+        ),
+      );
+    }
+
+    final result = await _adClient.createAd(formData);
+
+    if (result.success) {
+      await _deleteDraftAfterPost();
+      if (mounted) {
+        await showSuccessDialog(context, message: 'postAd.adPosted'.tr());
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const DashboardScreen(initialFilter: 'Pending'),
+            ),
+          );
+        }
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.errorMessage)));
+      }
+    }
+  }
+
+  Future<void> _updateExistingAd() async {
+    final ad = widget.existingAd!;
+    final isRejected = ad.status == AdStatus.rejected;
+
+    final formData = FormData.fromMap({
+      'title': _titleController.text,
+      'description': _descriptionController.text,
+      'price': _priceController.text,
+      'categoryId': _selectedCategory!.id,
+      'subcategoryId': _selectedSubCategory?.id,
+      'locationId': _selectedArea?.id ?? _selectedMunicipality!.id,
+      'attributes': jsonEncode(_attributeValues),
+      'existingImages': jsonEncode(_existingImagePaths),
+    });
+
+    for (var image in _selectedImages) {
+      formData.files.add(
+        MapEntry(
+          'images',
+          await MultipartFile.fromFile(image.path, filename: image.name),
+        ),
+      );
+    }
+
+    final result = await _adClient.updateAd(ad.id, formData);
+
+    if (result.success && mounted) {
+      final message = isRejected
+          ? (context.locale.languageCode == 'ne'
+                ? 'विज्ञापन पुन: पेश गरियो। समीक्षाको लागि पर्खनुहोस्।'
+                : 'Ad resubmitted for review.')
+          : (context.locale.languageCode == 'ne'
+                ? 'विज्ञापन अपडेट भयो। सम्पादक समीक्षाको लागि पर्खनुहोस्।'
+                : 'Ad updated. Waiting for editor review.');
+
+      await showSuccessDialog(context, message: message);
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MyAdsScreen()),
+        );
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.errorMessage)));
     }
   }
 
@@ -569,7 +726,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'postAd.title'.tr(),
+          widget.isEditMode
+              ? (widget.existingAd!.status == AdStatus.rejected
+                    ? (context.locale.languageCode == 'ne'
+                          ? 'सम्पादन र पुन: पेश'
+                          : 'Edit & Resubmit')
+                    : (context.locale.languageCode == 'ne'
+                          ? 'विज्ञापन सम्पादन'
+                          : 'Edit Ad'))
+              : 'postAd.title'.tr(),
           style: GoogleFonts.inter(
             color: Colors.black,
             fontWeight: FontWeight.w600,
@@ -578,7 +743,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         ),
         centerTitle: true,
         actions: [
-          if (_drafts.isNotEmpty || _currentDraftId != null)
+          if (!widget.isEditMode &&
+              (_drafts.isNotEmpty || _currentDraftId != null))
             Stack(
               alignment: Alignment.center,
               children: [
@@ -622,17 +788,18 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             _buildStepIndicator(),
             const Divider(height: 1),
 
-            // Draft status bar
-            _buildDraftStatusBar(),
+            // Draft status bar (create mode only)
+            if (!widget.isEditMode) _buildDraftStatusBar(),
 
-            // Drafts panel (slides in/out)
-            AnimatedSize(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              child: _showDraftsPanel
-                  ? _buildDraftsPanel()
-                  : const SizedBox.shrink(),
-            ),
+            // Drafts panel (slides in/out, create mode only)
+            if (!widget.isEditMode)
+              AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                child: _showDraftsPanel
+                    ? _buildDraftsPanel()
+                    : const SizedBox.shrink(),
+              ),
 
             // Step Content
             Expanded(
@@ -1088,7 +1255,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   style: BorderStyle.solid,
                 ),
               ),
-              child: _selectedImages.isEmpty
+              child: _totalImageCount == 0
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -1117,10 +1284,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   : ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.all(12),
-                      itemCount: _selectedImages.length + 1,
+                      itemCount: _totalImageCount + 1,
                       itemBuilder: (context, index) {
-                        if (index == _selectedImages.length) {
-                          if (_selectedImages.length < 5) {
+                        // Add button at the end
+                        if (index == _totalImageCount) {
+                          if (_totalImageCount < _maxImages) {
                             return GestureDetector(
                               onTap: _showImageSourceSheet,
                               child: Container(
@@ -1143,6 +1311,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                           }
                           return const SizedBox.shrink();
                         }
+
+                        // Existing images first, then new images
+                        final isExisting = index < _existingImagePaths.length;
+
                         return Stack(
                           children: [
                             Container(
@@ -1150,13 +1322,33 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                               margin: const EdgeInsets.only(right: 8),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: FileImage(
-                                    File(_selectedImages[index].path),
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
                               ),
+                              clipBehavior: Clip.antiAlias,
+                              child: isExisting
+                                  ? CachedNetworkImage(
+                                      imageUrl: ApiConfig.getAdImageUrl(
+                                        _existingImagePaths[index],
+                                      ),
+                                      fit: BoxFit.cover,
+                                      width: 100,
+                                      height: double.infinity,
+                                      placeholder: (_, __) =>
+                                          Container(color: Colors.grey[200]),
+                                      errorWidget: (_, __, ___) => Icon(
+                                        LucideIcons.image,
+                                        color: Colors.grey[400],
+                                      ),
+                                    )
+                                  : Image.file(
+                                      File(
+                                        _selectedImages[index -
+                                                _existingImagePaths.length]
+                                            .path,
+                                      ),
+                                      fit: BoxFit.cover,
+                                      width: 100,
+                                      height: double.infinity,
+                                    ),
                             ),
                             Positioned(
                               right: 4,
@@ -1164,7 +1356,13 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                               child: InkWell(
                                 onTap: () {
                                   setState(() {
-                                    _selectedImages.removeAt(index);
+                                    if (isExisting) {
+                                      _existingImagePaths.removeAt(index);
+                                    } else {
+                                      _selectedImages.removeAt(
+                                        index - _existingImagePaths.length,
+                                      );
+                                    }
                                   });
                                 },
                                 child: Container(
@@ -1556,7 +1754,16 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                     )
                   : Text(
                       _currentStep == _totalSteps - 1
-                          ? 'postAd.postAdNow'.tr()
+                          ? (widget.isEditMode
+                                ? (widget.existingAd!.status ==
+                                          AdStatus.rejected
+                                      ? (context.locale.languageCode == 'ne'
+                                            ? 'पुन: पेश गर्नुहोस्'
+                                            : 'Resubmit')
+                                      : (context.locale.languageCode == 'ne'
+                                            ? 'अपडेट गर्नुहोस्'
+                                            : 'Update Ad'))
+                                : 'postAd.postAdNow'.tr())
                           : 'common.next'.tr(),
                       style: GoogleFonts.inter(
                         color: Colors.white,

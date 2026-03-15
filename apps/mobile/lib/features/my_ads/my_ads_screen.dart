@@ -13,6 +13,7 @@ import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/utils/page_transitions.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
+import 'package:mobile/features/post_ad/create_ad_screen.dart';
 
 class MyAdsScreen extends StatefulWidget {
   const MyAdsScreen({super.key});
@@ -31,12 +32,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
   String? _error;
 
   // Tab filters
-  static const List<String> _tabs = [
-    'All',
-    'Active',
-    'Pending',
-    'Rejected',
-  ];
+  static const List<String> _tabs = ['All', 'Active', 'Pending', 'Rejected'];
   static final Map<String, AdStatus?> _statusMap = {
     'All': null,
     'Active': AdStatus.active,
@@ -243,9 +239,21 @@ class _MyAdsScreenState extends State<MyAdsScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('dashboard.total'.tr(), counts['All'] ?? 0, Colors.blue),
-          _buildStatItem('myAds.active'.tr(), counts['Active'] ?? 0, Colors.green),
-          _buildStatItem('myAds.pending'.tr(), counts['Pending'] ?? 0, Colors.orange),
+          _buildStatItem(
+            'dashboard.total'.tr(),
+            counts['All'] ?? 0,
+            Colors.blue,
+          ),
+          _buildStatItem(
+            'myAds.active'.tr(),
+            counts['Active'] ?? 0,
+            Colors.green,
+          ),
+          _buildStatItem(
+            'myAds.pending'.tr(),
+            counts['Pending'] ?? 0,
+            Colors.orange,
+          ),
         ],
       ),
     );
@@ -297,7 +305,11 @@ class _MyAdsScreenState extends State<MyAdsScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             FloatingWidget(
-              child: Icon(LucideIcons.package, size: 64, color: Colors.grey[400]),
+              child: Icon(
+                LucideIcons.package,
+                size: 64,
+                color: Colors.grey[400],
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -437,7 +449,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                       LucideIcons.moreVertical,
                       color: Colors.grey[600],
                     ),
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       switch (value) {
                         case 'view':
                           Navigator.push(
@@ -449,12 +461,14 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                           );
                           break;
                         case 'edit':
-                          // TODO: Navigate to edit screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('myAds.editComingSoon'.tr()),
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CreateAdScreen(existingAd: ad),
                             ),
                           );
+                          // Refresh ads list when returning
+                          if (mounted) _fetchAds();
                           break;
                         case 'delete':
                           _deleteAd(ad);
@@ -466,8 +480,18 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                         value: 'view',
                         child: Text('myAds.viewAd'.tr()),
                       ),
-                      if (ad.status == AdStatus.active)
-                        PopupMenuItem(value: 'edit', child: Text('myAds.edit'.tr())),
+                      if (ad.status == AdStatus.pending ||
+                          ad.status == AdStatus.rejected)
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Text(
+                            ad.status == AdStatus.rejected
+                                ? (context.locale.languageCode == 'ne'
+                                      ? 'सम्पादन र पुन: पेश'
+                                      : 'Edit & Resubmit')
+                                : 'myAds.edit'.tr(),
+                          ),
+                        ),
                       PopupMenuItem(
                         value: 'delete',
                         child: Text(
@@ -579,7 +603,8 @@ class _MyAdsScreenState extends State<MyAdsScreen>
     final isNe = context.locale.languageCode == 'ne';
     if (diff.inDays == 0) return isNe ? 'आज' : 'Today';
     if (diff.inDays == 1) return isNe ? 'हिजो' : 'Yesterday';
-    if (diff.inDays < 7) return isNe ? '${diff.inDays} दिन अघि' : '${diff.inDays} days ago';
+    if (diff.inDays < 7)
+      return isNe ? '${diff.inDays} दिन अघि' : '${diff.inDays} days ago';
     if (diff.inDays < 30) {
       final w = (diff.inDays / 7).floor();
       return isNe ? '$w हप्ता अघि' : '$w weeks ago';
