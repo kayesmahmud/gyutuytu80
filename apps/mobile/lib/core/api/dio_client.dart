@@ -37,7 +37,22 @@ class DioClient {
         }
         return handler.next(options);
       },
-      onError: (DioException e, handler) {
+      onError: (DioException e, handler) async {
+        if (e.response?.statusCode == 401 &&
+            !e.requestOptions.path.contains('/auth/')) {
+          // Try refreshing the token
+          final newToken = await _tryRefreshToken();
+          if (newToken != null) {
+            // Retry the original request with the new token
+            e.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+            try {
+              final response = await dio.fetch(e.requestOptions);
+              return handler.resolve(response);
+            } catch (retryError) {
+              // Retry failed — pass through
+            }
+          }
+        }
         if (kDebugMode) {
           developer.log(
             'DioError: ${e.message}',
@@ -48,6 +63,41 @@ class DioClient {
         return handler.next(e);
       },
     ));
+  }
+
+  bool _isRefreshing = false;
+
+  Future<String?> _tryRefreshToken() async {
+    if (_isRefreshing) return null;
+    _isRefreshing = true;
+    try {
+      final refreshToken = await _storage.read(key: 'refresh_token');
+      if (refreshToken == null) return null;
+
+      // Use a separate Dio instance to avoid interceptor loop
+      final refreshDio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
+      final response = await refreshDio.post(
+        '/auth/refresh-token',
+        data: {'refreshToken': refreshToken},
+      );
+
+      final data = response.data;
+      if (data['success'] == true && data['data'] != null) {
+        final newToken = data['data']['token'] as String;
+        final newRefresh = data['data']['refreshToken'] as String?;
+        await _storage.write(key: 'auth_token', value: newToken);
+        if (newRefresh != null) {
+          await _storage.write(key: 'refresh_token', value: newRefresh);
+        }
+        developer.log('Token refreshed successfully', name: 'DioClient');
+        return newToken;
+      }
+    } catch (e) {
+      developer.log('Token refresh failed: $e', name: 'DioClient');
+    } finally {
+      _isRefreshing = false;
+    }
+    return null;
   }
 
   /// Call once at app startup (before any API calls) to activate SSL pinning.

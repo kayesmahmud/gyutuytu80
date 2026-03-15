@@ -162,6 +162,7 @@ export async function transformAdForDetail(ad: any) {
     userName: ad.users_ads_user_idTousers?.full_name,
     userAvatar: ad.users_ads_user_idTousers?.avatar,
     userPhone: ad.users_ads_user_idTousers?.phone,
+    googleMapsLink: ad.users_ads_user_idTousers?.google_maps_link,
     userVerified: ad.users_ads_user_idTousers?.business_verification_status === 'verified' || ad.users_ads_user_idTousers?.individual_verified,
     businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status,
     individualVerified: ad.users_ads_user_idTousers?.individual_verified,

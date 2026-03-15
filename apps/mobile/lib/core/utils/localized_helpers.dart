@@ -144,3 +144,30 @@ String formatNumber(int number) {
     (m) => '${m[1]},',
   );
 }
+
+/// Formats distance: < 1km shows meters, >= 1km shows km.
+/// Matches web's formatDistance() in @thulobazaar/utils.
+String formatDistance(double distanceInKm, [String locale = 'en']) {
+  final isNe = locale == 'ne';
+  if (distanceInKm < 1) {
+    final meters = (distanceInKm * 1000).round();
+    return isNe ? '$meters मि. टाढा' : '${meters}m away';
+  }
+  return isNe
+      ? '${distanceInKm.toStringAsFixed(1)} कि.मि. टाढा'
+      : '${distanceInKm.toStringAsFixed(1)}km away';
+}
+
+/// Formats file size: 1048576 → "1 MB".
+/// Matches web's formatFileSize() in @thulobazaar/utils.
+String formatFileSize(int bytes) {
+  if (bytes == 0) return '0 Bytes';
+  const units = ['Bytes', 'KB', 'MB', 'GB'];
+  int i = 0;
+  double size = bytes.toDouble();
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return '${size.toStringAsFixed(size < 10 && i > 0 ? 1 : 0)} ${units[i]}';
+}
