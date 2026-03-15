@@ -7,7 +7,6 @@ export interface EditAdFormData {
   subcategoryId: string;
   locationSlug: string;
   locationName: string;
-  status: string;
 }
 
 export interface Category {

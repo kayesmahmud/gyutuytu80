@@ -10,19 +10,6 @@ interface AdDetailsSectionProps {
 export function AdDetailsSection({ formData, onFormChange }: AdDetailsSectionProps) {
   return (
     <>
-      {/* Ad Status */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900">Ad Status</h2>
-        <select
-          value={formData.status}
-          onChange={(e) => onFormChange({ status: e.target.value })}
-          className="w-full p-3 rounded-lg border border-gray-300 text-base"
-        >
-          <option value="active">Active (Visible to buyers)</option>
-          <option value="inactive">Inactive (Hidden from listings)</option>
-        </select>
-      </div>
-
       {/* Ad Details */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4 text-gray-900">Ad Details</h2>

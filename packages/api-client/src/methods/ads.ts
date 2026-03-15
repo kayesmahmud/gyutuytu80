@@ -137,10 +137,6 @@ export function createAdMethods(client: AxiosInstance) {
       if (data.attributes) {
         formData.append('attributes', JSON.stringify(data.attributes));
       }
-      if (data.status) {
-        formData.append('status', data.status);
-      }
-
       // Append existing images as JSON array (paths to keep)
       if (data.existingImages) {
         formData.append('existingImages', JSON.stringify(data.existingImages));

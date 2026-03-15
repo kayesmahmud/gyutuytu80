@@ -24,7 +24,6 @@ interface EditAdFormData {
   locationName: string;
   condition: string;
   isNegotiable: boolean;
-  status: string;
 }
 
 const INITIAL_FORM_DATA: EditAdFormData = {
@@ -37,7 +36,6 @@ const INITIAL_FORM_DATA: EditAdFormData = {
   locationName: '',
   condition: 'Brand New',
   isNegotiable: false,
-  status: 'active',
 };
 
 const normalizeConditionForForm = (condition?: string) => {
@@ -276,7 +274,6 @@ export function useEditAd(adId: number, lang: string) {
         locationName: locationName,
         condition: (ad.condition || '').toLowerCase() === 'used' ? 'used' : 'new',
         isNegotiable: adCustomFields?.isNegotiable ?? ad.isNegotiable ?? false,
-        status: ad.status || 'active',
       };
       console.log('📊 [useEditAd] Setting formData:', newFormData);
       setFormData(newFormData);
@@ -436,7 +433,6 @@ export function useEditAd(adId: number, lang: string) {
           categoryId: parseInt(formData.categoryId),
           subcategoryId: formData.subcategoryId ? parseInt(formData.subcategoryId) : undefined,
           locationId: locationId,
-          status: formData.status,
           images: images.length > 0 ? images : undefined,
           existingImages: existingImages,
           attributes: {
