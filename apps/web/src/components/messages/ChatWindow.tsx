@@ -13,6 +13,36 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
+// URL regex patterns - only thulobazaar links are clickable
+const URL_SPLIT_REGEX = /(https?:\/\/[^\s]+)/g;
+const THULOBAZAAR_URL_REGEX = /^https?:\/\/(?:www\.)?(?:thulobazaar\.com(?:\.np)?|localhost(?::\d+)?)\//;
+
+/** Renders message text with thulobazaar.com links clickable, other URLs as plain text */
+function LinkifiedText({ text, isOwnMessage }: { text: string; isOwnMessage: boolean }) {
+  const parts = text.split(URL_SPLIT_REGEX);
+  return (
+    <>
+      {parts.map((part, i) =>
+        THULOBAZAAR_URL_REGEX.test(part) ? (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`underline break-all ${
+              isOwnMessage ? 'text-blue-100 hover:text-white' : 'text-blue-600 hover:text-blue-800'
+            }`}
+          >
+            {part}
+          </a>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 interface ChatWindowProps {
   conversation: any;
   messages: any[];
@@ -343,7 +373,9 @@ export default function ChatWindow({
                               isOwnMessage ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              <LinkifiedText text={message.content} isOwnMessage={isOwnMessage} />
+                            </p>
                           </div>
                         )}
                       </div>
@@ -356,7 +388,9 @@ export default function ChatWindow({
                             : 'bg-gray-100 text-gray-900 rounded-tl-sm'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                          <LinkifiedText text={message.content} isOwnMessage={isOwnMessage} />
+                        </p>
                         {message.isEdited && (
                           <p className={`text-xs mt-1 ${isOwnMessage ? 'text-blue-100' : 'text-gray-500'}`}>(edited)</p>
                         )}

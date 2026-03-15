@@ -18,6 +18,8 @@ import '../../core/api/api_config.dart';
 import '../../core/api/message_client.dart';
 import '../../core/utils/localized_helpers.dart';
 import '../../core/models/message.dart';
+import '../../features/ad_detail/ad_detail_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/chat_provider.dart';
 import '../../core/services/notification_service.dart';
@@ -482,6 +484,81 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  /// Regex to match thulobazaar URLs (both .com and .com.np)
+  static final _thulobazaarUrlRegex = RegExp(
+    r'https?://(?:www\.)?thulobazaar\.com(?:\.np)?/[^\s]+',
+  );
+  static final _thulobazaarAdSlugRegex = RegExp(
+    r'https?://(?:www\.)?thulobazaar\.com(?:\.np)?/\w+/ad/([^\s]+)',
+  );
+
+  /// Builds a widget with only thulobazaar.com links clickable.
+  /// External URLs are rendered as plain text for security.
+  Widget _buildLinkifiedText(String text, bool isMe) {
+    final style = GoogleFonts.inter(
+      fontSize: 15,
+      color: isMe ? Colors.white : Colors.black87,
+    );
+    final linkStyle = GoogleFonts.inter(
+      fontSize: 15,
+      color: isMe ? Colors.blue[100] : Colors.blue[700],
+      decoration: TextDecoration.underline,
+      decorationColor: isMe ? Colors.blue[100] : Colors.blue[700],
+    );
+
+    final matches = _thulobazaarUrlRegex.allMatches(text).toList();
+    if (matches.isEmpty) {
+      return Text(text, style: style);
+    }
+
+    final spans = <InlineSpan>[];
+    var lastEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(text: text.substring(lastEnd, match.start), style: style));
+      }
+
+      final url = match.group(0)!;
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.baseline,
+          baseline: TextBaseline.alphabetic,
+          child: GestureDetector(
+            onTap: () => _handleThulobazaarUrl(url),
+            child: Text(url, style: linkStyle),
+          ),
+        ),
+      );
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd), style: style));
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
+  /// Navigates in-app for ad URLs, opens browser for other thulobazaar pages.
+  Future<void> _handleThulobazaarUrl(String url) async {
+    final adMatch = _thulobazaarAdSlugRegex.firstMatch(url);
+    if (adMatch != null) {
+      final slug = adMatch.group(1)!;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => AdDetailScreen(slug: slug)),
+      );
+      return;
+    }
+
+    // Other thulobazaar.com pages (e.g. shop, categories) open in browser
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Widget _buildMessageBubble(Message message, bool isMe) {
     if (message.isDeleted) {
       return Padding(
@@ -566,13 +643,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 )
               else
-                Text(
-                  message.content,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    color: isMe ? Colors.white : Colors.black87,
-                  ),
-                ),
+                _buildLinkifiedText(message.content, isMe),
               const SizedBox(height: 4),
               Padding(
                 padding: isImage ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4) : EdgeInsets.zero,
