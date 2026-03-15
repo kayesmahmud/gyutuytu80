@@ -88,13 +88,25 @@ class _IndividualVerificationFormState
       if (!_formKey.currentState!.validate()) return;
       _formKey.currentState!.save();
 
-      if (_idFront == null || _selfie == null) {
+      if (_idFront == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(context.locale.languageCode == 'ne'
-                    ? 'कृपया आवश्यक कागजातहरू अपलोड गर्नुहोस्'
-                    : 'Please upload required documents')),
+                    ? 'कृपया आफ्नो परिचयपत्रको अगाडिको छवि अपलोड गर्नुहोस्'
+                    : 'Please upload front image of your ID document')),
+          );
+        }
+        return;
+      }
+
+      if (_selfie == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(context.locale.languageCode == 'ne'
+                    ? 'कृपया आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्'
+                    : 'Please upload a selfie holding your ID document')),
           );
         }
         return;
@@ -352,17 +364,26 @@ class _IndividualVerificationFormState
             ),
 
           // Full Name
-          _buildLabel(lang == 'ne' ? 'पूरा नाम (परिचयपत्रमा जस्तो)' : 'Full Name (as on ID)'),
+          _buildLabel(lang == 'ne' ? 'पूरा नाम (परिचयपत्रमा जस्तो) *' : 'Full Name (as on ID document) *'),
           TextFormField(
-            decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो पूरा नाम लेख्नुहोस्' : 'Enter your full name'),
+            decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो पूरा नाम परिचयपत्रमा देखिए जस्तै लेख्नुहोस्' : 'Enter your full name exactly as shown on ID'),
             validator: (v) =>
-                v?.isEmpty == true ? (lang == 'ne' ? 'पूरा नाम आवश्यक छ' : 'Full name is required') : null,
+                v?.isEmpty == true ? (lang == 'ne' ? 'कृपया आफ्नो पूरा नाम लेख्नुहोस्' : 'Please enter your full name') : null,
             onSaved: (v) => _fullName = v ?? '',
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              lang == 'ne'
+                  ? 'यो नाम प्रमाणित गरिनेछ र तपाईंको निलो ब्याजसँग देखाइनेछ'
+                  : 'This name will be verified and displayed with your blue badge',
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            ),
           ),
           const SizedBox(height: 16),
 
           // ID Type
-          _buildLabel(lang == 'ne' ? 'परिचयपत्र प्रकार' : 'ID Document Type'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्र प्रकार *' : 'ID Document Type *'),
           DropdownButtonFormField<String>(
             value: _idType,
             decoration: _inputDecoration(''),
@@ -379,28 +400,37 @@ class _IndividualVerificationFormState
           const SizedBox(height: 16),
 
           // ID Number
-          _buildLabel(lang == 'ne' ? 'परिचयपत्र नम्बर' : 'ID Number'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्र नम्बर *' : 'ID Document Number *'),
           TextFormField(
             decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्' : 'Enter your ID number'),
             validator: (v) =>
-                v?.isEmpty == true ? (lang == 'ne' ? 'परिचयपत्र नम्बर आवश्यक छ' : 'ID number is required') : null,
+                v?.isEmpty == true ? (lang == 'ne' ? 'कृपया आफ्नो परिचयपत्र नम्बर लेख्नुहोस्' : 'Please enter your ID document number') : null,
             onSaved: (v) => _idNumber = v ?? '',
           ),
           const SizedBox(height: 24),
 
           // Documents
-          _buildLabel(lang == 'ne' ? 'परिचयपत्र - अगाडि *' : 'ID Document - Front *'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्र अगाडिको छवि *' : 'ID Front Image *'),
           _buildDocUpload(
               _idFront, 'front', lang == 'ne' ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्' : 'Upload front of your ID'),
+          _buildFileHint(lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
           const SizedBox(height: 12),
 
-          _buildLabel(lang == 'ne' ? 'परिचयपत्र - पछाडि (ऐच्छिक)' : 'ID Document - Back (optional)'),
+          _buildLabel(lang == 'ne'
+              ? 'परिचयपत्र पछाडिको छवि ${_idType != 'passport' ? '*' : ''}'
+              : 'ID Back Image ${_idType != 'passport' ? '*' : ''}'),
           _buildDocUpload(_idBack, 'back', lang == 'ne' ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस्' : 'Upload back of your ID'),
+          _buildFileHint(_idType == 'passport'
+              ? (lang == 'ne' ? 'ऐच्छिक' : 'Optional')
+              : (lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB')),
           const SizedBox(height: 12),
 
-          _buildLabel(lang == 'ne' ? 'परिचयपत्रसहित सेल्फी *' : 'Selfie with ID *'),
+          _buildLabel(lang == 'ne' ? 'परिचयपत्रसहित सेल्फी *' : 'Selfie with ID Document *'),
           _buildDocUpload(
               _selfie, 'selfie', lang == 'ne' ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्' : 'Upload a selfie holding your ID'),
+          _buildFileHint(lang == 'ne'
+              ? 'आफ्नो अनुहारको छेउमा परिचयपत्र समातेको स्पष्ट सेल्फी'
+              : 'Clear selfie holding your ID next to your face'),
           const SizedBox(height: 32),
 
           // Submit button
@@ -426,7 +456,7 @@ class _IndividualVerificationFormState
                     )
                   : Text(
                       widget.isFreeVerification || widget.isResubmission
-                          ? (lang == 'ne' ? 'प्रमाणीकरण पेश गर्नुहोस्' : 'Submit Verification')
+                          ? (lang == 'ne' ? 'प्रमाणीकरणको लागि पेश गर्नुहोस्' : 'Submit for Verification')
                           : (lang == 'ne' ? 'भुक्तानीमा जानुहोस्' : 'Proceed to Payment'),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
@@ -542,7 +572,9 @@ class _IndividualVerificationFormState
                         strokeWidth: 2, color: Colors.white),
                   )
                 : Text(
-                    '${lang == 'ne' ? 'भुक्तानी गर्नुहोस्' : 'Pay'} ${formatLocalizedPrice(widget.price, lang)}',
+                    lang == 'ne'
+                        ? 'भुक्तानी गर्नुहोस् ${formatLocalizedPrice(widget.price, lang)}'
+                        : 'Pay NPR ${widget.price.toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -669,6 +701,16 @@ class _IndividualVerificationFormState
           fontSize: 14,
           color: Colors.black87,
         ),
+      ),
+    );
+  }
+
+  Widget _buildFileHint(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
       ),
     );
   }
