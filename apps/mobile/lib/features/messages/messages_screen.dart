@@ -16,6 +16,7 @@ import '../../core/providers/chat_provider.dart';
 import '../../core/widgets/main_app_bar.dart';
 import '../../core/widgets/main_drawer.dart';
 import '../../core/widgets/login_required_widget.dart';
+import '../../core/utils/localized_helpers.dart';
 import '../../core/utils/page_transitions.dart';
 import '../../core/utils/skeleton_data.dart';
 import '../../core/widgets/staggered_fade_in.dart';
@@ -602,9 +603,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                DateFormat(
-                  'MMMM d, yyyy · h:mm a',
-                ).format(announcement.createdAt),
+                formatNepalTime(announcement.createdAt, 'MMMM d, yyyy · h:mm a'),
                 style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500]),
               ),
               const SizedBox(height: 16),
@@ -619,7 +618,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               if (announcement.readAt != null) ...[
                 const SizedBox(height: 24),
                 Text(
-                  'Read on ${DateFormat('MMM d, yyyy · h:mm a').format(announcement.readAt!)}',
+                  'Read on ${formatNepalTime(announcement.readAt!, 'MMM d, yyyy · h:mm a')}',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: Colors.grey[400],
@@ -818,7 +817,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     if (diff.inDays < 1) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
 
-    return DateFormat('MMM d').format(time);
+    return formatNepalTime(time, 'MMM d');
   }
 }
 

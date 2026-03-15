@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import 'package:mobile/core/api/support_client.dart';
 import 'package:mobile/core/models/support_ticket.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 
 class TicketDetailScreen extends StatefulWidget {
   final int ticketId;
@@ -312,7 +313,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         ? 'support.today'.tr()
         : isYesterday
             ? 'support.yesterday'.tr()
-            : DateFormat('MMM d, yyyy').format(date);
+            : formatNepalTime(date, 'MMM d, yyyy');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -402,7 +403,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                     color: isOwn ? Colors.white : const Color(0xFF1F2937),
                     height: 1.4)),
             const SizedBox(height: 4),
-            Text(DateFormat('h:mm a').format(msg.createdAt),
+            Text(formatNepalTime(msg.createdAt, 'h:mm a'),
                 style: GoogleFonts.inter(
                     fontSize: 11,
                     color: isOwn ? Colors.white70 : Colors.grey[400])),

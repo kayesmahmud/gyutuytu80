@@ -365,7 +365,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                       final session = _sessions[index];
                       final created = DateTime.parse(session['created_at']);
                       // We don't have device info yet, so we show date
-                      final dateStr = DateFormat.yMMMd().add_jm().format(created);
+                      final dateStr = formatNepalTime(created, 'MMM d, yyyy h:mm a');
                       
                       return Card(
                         elevation: 0,

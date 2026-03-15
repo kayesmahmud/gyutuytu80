@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/api/auth_client.dart';
+import '../../core/utils/localized_helpers.dart';
 import '../../core/providers/auth_provider.dart';
 import '../main_nav/main_nav_screen.dart';
 
@@ -346,7 +347,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     if (_recoveryDeadline != null) {
       try {
         final deadline = DateTime.parse(_recoveryDeadline!);
-        deadlineText = DateFormat.yMMMd().format(deadline);
+        deadlineText = formatNepalTime(deadline, 'MMM d, yyyy');
       } catch (_) {
         deadlineText = _recoveryDeadline!;
       }

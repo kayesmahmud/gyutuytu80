@@ -277,7 +277,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   Widget _buildTransactionCard(PaymentTransaction transaction) {
-    final dateFormat = DateFormat('MMM dd, yyyy • hh:mm a');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -316,7 +315,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            dateFormat.format(transaction.createdAt),
+                            formatNepalTime(transaction.createdAt, 'MMM dd, yyyy • hh:mm a'),
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -494,8 +493,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   Widget _buildTransactionDetailsSheet(PaymentTransaction transaction) {
-    final dateFormat = DateFormat('MMMM dd, yyyy • hh:mm a');
-
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -537,7 +534,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   _buildDetailRow('payment.gateway'.tr(), transaction.gateway.displayName),
                   _buildDetailRow(
                     'payment.date'.tr(),
-                    dateFormat.format(transaction.createdAt),
+                    formatNepalTime(transaction.createdAt, 'MMM dd, yyyy • hh:mm a'),
                   ),
                   if (transaction.transactionId != null)
                     _buildDetailRow(

@@ -2,12 +2,33 @@
 // DATE UTILITIES
 // ============================================
 
+export const NEPAL_TZ = 'Asia/Kathmandu';
+
+/** Format a date in Nepal Time with given Intl options */
+export const toNepalDateString = (
+  date: Date | string,
+  options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' },
+  locale = 'en-US'
+): string => {
+  return new Date(date).toLocaleDateString(locale, { ...options, timeZone: NEPAL_TZ });
+};
+
+/** Format time in Nepal Time */
+export const toNepalTimeString = (
+  date: Date | string,
+  options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hour12: true },
+  locale = 'en-US'
+): string => {
+  return new Date(date).toLocaleTimeString(locale, { ...options, timeZone: NEPAL_TZ });
+};
+
 export const formatDate = (date: Date | string): string => {
   const d = new Date(date);
   return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: NEPAL_TZ,
   });
 };
 
@@ -328,7 +349,8 @@ export const formatDateTime = (dateString: string | Date): string => {
   const timeString = date.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
+    timeZone: NEPAL_TZ,
   });
 
   if (diffHours < 1) return 'Just now';
@@ -339,7 +361,8 @@ export const formatDateTime = (dateString: string | Date): string => {
   return `${date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+    timeZone: NEPAL_TZ,
   })} • ${timeString}`;
 };
 
@@ -349,11 +372,13 @@ export const formatFullDateTime = (dateString: string | Date): string => {
   return `${date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: NEPAL_TZ,
   })} at ${date.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
+    timeZone: NEPAL_TZ,
   })}`;
 };
 

@@ -8,6 +8,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:mobile/core/api/support_client.dart';
 import 'package:mobile/core/models/support_ticket.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
+import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:mobile/core/widgets/login_required_widget.dart';
 import 'package:mobile/core/widgets/floating_widget.dart';
 import 'create_ticket_screen.dart';
@@ -446,7 +447,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     if (diff.inHours < 1) return 'support.minutesAgo'.tr(args: ['${diff.inMinutes}']);
     if (diff.inDays < 1) return 'support.hoursAgo'.tr(args: ['${diff.inHours}']);
     if (diff.inDays < 7) return 'support.daysAgo'.tr(args: ['${diff.inDays}']);
-    return DateFormat('MMM d').format(date);
+    return formatNepalTime(date, 'MMM d');
   }
 }
 

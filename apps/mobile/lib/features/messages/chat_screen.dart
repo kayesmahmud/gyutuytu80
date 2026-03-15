@@ -16,6 +16,7 @@ import '../../core/widgets/staggered_fade_in.dart';
 import '../../core/widgets/floating_widget.dart';
 import '../../core/api/api_config.dart';
 import '../../core/api/message_client.dart';
+import '../../core/utils/localized_helpers.dart';
 import '../../core/models/message.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/chat_provider.dart';
@@ -465,7 +466,7 @@ class _ChatScreenState extends State<ChatScreen> {
         date.day == now.day - 1) {
       text = 'messages.yesterday'.tr();
     } else {
-      text = DateFormat('MMMM d, yyyy').format(date);
+      text = formatNepalTime(date, 'MMMM d, yyyy');
     }
 
     return Padding(
@@ -579,7 +580,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      DateFormat('h:mm a').format(message.createdAt),
+                      formatNepalTime(message.createdAt, 'h:mm a'),
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: isMe

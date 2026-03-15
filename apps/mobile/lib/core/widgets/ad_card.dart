@@ -33,9 +33,8 @@ class AdCard extends StatelessWidget {
 
     final isNew = ad.condition?.toLowerCase() == 'brand new';
 
-    // Explicit date format: "Dec 27, 2025 • 12:06 AM"
-    final dateFormat = DateFormat("MMM d, yyyy • h:mm a");
-    final formattedDate = dateFormat.format(ad.createdAt);
+    // Explicit date format in Nepal Time: "Dec 27, 2025 • 12:06 AM"
+    final formattedDate = formatNepalTime(ad.createdAt, "MMM d, yyyy • h:mm a");
 
     return TapScale(
       onTap:

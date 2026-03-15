@@ -1,5 +1,20 @@
 import 'package:intl/intl.dart';
 
+/// Nepal Time offset: UTC+5:45
+const _nepalOffset = Duration(hours: 5, minutes: 45);
+
+/// Converts a UTC DateTime to Nepal Time (UTC+5:45).
+/// If the DateTime is already local (not UTC), it first converts to UTC.
+DateTime toNepalTime(DateTime dt) {
+  final utc = dt.isUtc ? dt : dt.toUtc();
+  return utc.add(_nepalOffset);
+}
+
+/// Formats a DateTime in Nepal Time with the given pattern.
+String formatNepalTime(DateTime dt, String pattern) {
+  return DateFormat(pattern).format(toNepalTime(dt));
+}
+
 /// Formats price with commas and localized currency symbol.
 /// Returns "रु." for Nepali, "Rs." for English.
 String formatLocalizedPrice(double? price, String locale) {
@@ -18,7 +33,7 @@ String formatLocalizedPrice(double? price, String locale) {
 String localizedTimeAgo(DateTime dateTime, String locale) {
   final difference = DateTime.now().difference(dateTime);
   if (difference.inDays > 7) {
-    return DateFormat('MMM d, yyyy').format(dateTime);
+    return formatNepalTime(dateTime, 'MMM d, yyyy');
   } else if (difference.inDays > 0) {
     final d = difference.inDays;
     return locale == 'ne' ? '$d दिन अघि' : '${d}d ago';
