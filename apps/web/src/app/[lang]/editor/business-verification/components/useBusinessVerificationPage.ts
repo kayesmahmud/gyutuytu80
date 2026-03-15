@@ -42,6 +42,7 @@ export function useBusinessVerificationPage(lang: string) {
           businessName: v.businessName || '',
           businessLicense: v.businessLicenseDocument,
           documentType: v.documentType,
+          documentNumber: v.documentNumber,
           paymentReference: v.paymentReference,
           paymentAmount: v.paymentAmount,
           paymentStatus: v.paymentStatus,

@@ -255,6 +255,7 @@ model business_verification_requests {
   duration_days                                           Int?      @default(365)
   payment_status                                          String?   @default("pending") @db.VarChar(20)
   document_type                                           String?   @db.VarChar(20)
+  document_number                                         String?   @db.VarChar(50)
   users_business_verification_requests_reviewed_byTousers users?    @relation("business_verification_requests_reviewed_byTousers", fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_business_verification_requests_user_idTousers     users     @relation("business_verification_requests_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 

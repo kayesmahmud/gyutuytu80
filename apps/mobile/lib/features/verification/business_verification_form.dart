@@ -42,6 +42,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
 
   String _businessName = '';
   String _documentType = '';
+  String _documentNumber = '';
 
   Future<void> _pickDocument() async {
     final picked =
@@ -136,6 +137,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         businessName: _businessName,
         licenseDocument: uploadedFilename,
         documentType: _documentType,
+        documentNumber: _documentNumber,
         durationDays: widget.durationDays,
         paymentStatus: 'free',
       );
@@ -185,6 +187,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         businessName: _businessName,
         licenseDocument: uploadedFilename,
         documentType: _documentType,
+        documentNumber: _documentNumber,
         durationDays: widget.durationDays,
         paymentStatus: 'pending',
         paymentAmount: widget.price,
@@ -371,6 +374,23 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                 : null,
             onChanged: (v) => setState(() => _documentType = v ?? ''),
             onSaved: (v) => _documentType = v ?? '',
+          ),
+          const SizedBox(height: 16),
+
+          // Document Number
+          _buildLabel(_documentType == 'pan_card'
+              ? (lang == 'ne' ? 'प्यान नम्बर *' : 'PAN Number *')
+              : _documentType == 'business_license'
+                  ? (lang == 'ne' ? 'लाइसेन्स नम्बर *' : 'License Number *')
+                  : (lang == 'ne' ? 'कागजात नम्बर *' : 'Document Number *')),
+          TextFormField(
+            decoration: _inputDecoration(_documentType == 'pan_card'
+                ? (lang == 'ne' ? 'आफ्नो प्यान नम्बर लेख्नुहोस्' : 'Enter your PAN number')
+                : (lang == 'ne' ? 'आफ्नो लाइसेन्स नम्बर लेख्नुहोस्' : 'Enter your trade license number')),
+            validator: (v) => v?.isEmpty == true
+                ? (lang == 'ne' ? 'कागजात नम्बर आवश्यक छ' : 'Document number is required')
+                : null,
+            onSaved: (v) => _documentNumber = v ?? '',
           ),
           const SizedBox(height: 24),
 

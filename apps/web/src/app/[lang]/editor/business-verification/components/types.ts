@@ -6,6 +6,7 @@ export interface BusinessVerification {
   businessName: string;
   businessLicense?: string;
   documentType?: string;
+  documentNumber?: string;
   paymentReference?: string;
   paymentAmount?: number;
   paymentStatus?: string;

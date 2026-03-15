@@ -96,6 +96,11 @@ function LicenseDocument({ verification }: { verification: BusinessVerification 
     <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
       <h4 className="text-sm font-semibold text-blue-700 mb-3 flex items-center gap-2">
         <span>📄</span> {verification.documentType === 'pan_card' ? 'Pan Card' : verification.documentType === 'business_license' ? 'Business License' : 'Business License Document'}
+        {verification.documentNumber && (
+          <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-mono rounded">
+            #{verification.documentNumber}
+          </span>
+        )}
       </h4>
       <div className="flex gap-4 items-start">
         <a

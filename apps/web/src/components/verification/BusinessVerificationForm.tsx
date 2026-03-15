@@ -16,6 +16,7 @@ import { validateFile, UPLOAD_CONFIGS, formatFileSize } from '@thulobazaar/uploa
 interface FormData {
   businessName: string;
   documentType: string;
+  documentNumber: string;
   licenseFile: File | null;
 }
 
@@ -31,6 +32,7 @@ interface BusinessVerificationFormProps {
 const initialFormData: FormData = {
   businessName: '',
   documentType: '',
+  documentNumber: '',
   licenseFile: null,
 };
 
@@ -125,6 +127,10 @@ export default function BusinessVerificationForm({
       setError('Please select a document type');
       return false;
     }
+    if (!formData.documentNumber.trim()) {
+      setError(`Please enter your ${formData.documentType === 'pan_card' ? 'PAN number' : 'license number'}`);
+      return false;
+    }
     if (!formData.licenseFile) {
       setError(`Please upload your ${formData.documentType === 'pan_card' ? 'Pan Card' : 'Business License'}`);
       return false;
@@ -137,6 +143,7 @@ export default function BusinessVerificationForm({
     const submitData = new FormData();
     submitData.append('business_name', formData.businessName.trim());
     submitData.append('document_type', formData.documentType);
+    submitData.append('document_number', formData.documentNumber.trim());
     submitData.append('business_license_document', formData.licenseFile!);
 
     return submitData;
@@ -236,6 +243,26 @@ export default function BusinessVerificationForm({
               <option value="business_license">Business License</option>
               <option value="pan_card">Pan Card</option>
             </select>
+          </div>
+
+          {/* Document Number */}
+          <div className="mb-5">
+            <label
+              htmlFor="documentNumber"
+              className="block mb-2 font-semibold text-gray-900 text-sm sm:text-base"
+            >
+              {formData.documentType === 'pan_card' ? 'PAN Number *' : formData.documentType === 'business_license' ? 'License Number *' : 'Document Number *'}
+            </label>
+            <input
+              type="text"
+              id="documentNumber"
+              name="documentNumber"
+              value={formData.documentNumber}
+              onChange={handleInputChange}
+              placeholder={formData.documentType === 'pan_card' ? 'Enter your PAN number' : 'Enter your trade license number'}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            />
           </div>
 
           {/* Document Upload */}
