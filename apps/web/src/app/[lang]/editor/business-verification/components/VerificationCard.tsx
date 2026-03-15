@@ -36,16 +36,8 @@ export function VerificationCard({
           {/* Verification Details */}
           <div className="flex-1 min-w-0">
             <HeaderSection verification={verification} />
-            <BusinessInfoGrid verification={verification} />
             <LicenseDocument verification={verification} />
             <PaymentDurationInfo verification={verification} />
-
-            {verification.businessDescription && (
-              <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                <div className="text-xs font-medium text-purple-700 mb-1">Business Description</div>
-                <div className="text-sm text-gray-900">{verification.businessDescription}</div>
-              </div>
-            )}
 
             {activeTab === 'rejected' && verification.rejectionReason && (
               <RejectionReason reason={verification.rejectionReason} />
@@ -80,13 +72,6 @@ function HeaderSection({ verification }: { verification: BusinessVerification })
             <span>📧</span> {verification.email}
           </span>
         </div>
-        {verification.businessPhone && (
-          <div className="text-sm text-gray-600 mb-2">
-            <span className="flex items-center gap-1">
-              <span>📞</span> {verification.businessPhone}
-            </span>
-          </div>
-        )}
       </div>
       <div className="text-right text-sm text-gray-500">
         <div>User ID: #{verification.userId}</div>
@@ -102,42 +87,6 @@ function HeaderSection({ verification }: { verification: BusinessVerification })
   );
 }
 
-function BusinessInfoGrid({ verification }: { verification: BusinessVerification }) {
-  if (!verification.businessCategory && !verification.businessAddress && !verification.businessWebsite) {
-    return null;
-  }
-
-  return (
-    <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
-      {verification.businessCategory && (
-        <div>
-          <div className="text-xs font-medium text-gray-500 mb-1">Category</div>
-          <div className="text-sm text-gray-900">{verification.businessCategory}</div>
-        </div>
-      )}
-      {verification.businessAddress && (
-        <div>
-          <div className="text-xs font-medium text-gray-500 mb-1">Address</div>
-          <div className="text-sm text-gray-900">{verification.businessAddress}</div>
-        </div>
-      )}
-      {verification.businessWebsite && (
-        <div>
-          <div className="text-xs font-medium text-gray-500 mb-1">Website</div>
-          <a
-            href={verification.businessWebsite}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:underline"
-          >
-            {verification.businessWebsite}
-          </a>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function LicenseDocument({ verification }: { verification: BusinessVerification }) {
   if (!verification.businessLicense) return null;
 
@@ -146,7 +95,7 @@ function LicenseDocument({ verification }: { verification: BusinessVerification 
   return (
     <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
       <h4 className="text-sm font-semibold text-blue-700 mb-3 flex items-center gap-2">
-        <span>📄</span> Business License Document
+        <span>📄</span> {verification.documentType === 'pan_card' ? 'Pan Card' : verification.documentType === 'business_license' ? 'Business License' : 'Business License Document'}
       </h4>
       <div className="flex gap-4 items-start">
         <a

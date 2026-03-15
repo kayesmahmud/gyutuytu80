@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
     const businessWebsite = formData.get('business_website')?.toString();
     const businessPhone = formData.get('business_phone')?.toString();
     const businessAddress = formData.get('business_address')?.toString();
+    const documentType = formData.get('document_type')?.toString();
     const durationDays = parseInt(formData.get('duration_days')?.toString() || '365', 10);
     const paymentAmount = parseFloat(formData.get('payment_amount')?.toString() || '0');
     const paymentReference = formData.get('payment_reference')?.toString();
@@ -378,6 +379,7 @@ export async function POST(request: NextRequest) {
           business_website: businessWebsite || null,
           business_phone: businessPhone || null,
           business_address: businessAddress || null,
+          document_type: documentType || null,
           status: verificationStatus,
           // Keep the original payment info for resubmissions
           rejection_reason: null, // Clear rejection reason
@@ -401,6 +403,7 @@ export async function POST(request: NextRequest) {
           business_website: businessWebsite || null,
           business_phone: businessPhone || null,
           business_address: businessAddress || null,
+          document_type: documentType || null,
           status: verificationStatus,
           duration_days: durationDays,
           payment_amount: paymentAmount,

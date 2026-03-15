@@ -15,11 +15,7 @@ import { validateFile, UPLOAD_CONFIGS, formatFileSize } from '@thulobazaar/uploa
 
 interface FormData {
   businessName: string;
-  businessCategory: string;
-  businessDescription: string;
-  businessWebsite: string;
-  businessPhone: string;
-  businessAddress: string;
+  documentType: string;
   licenseFile: File | null;
 }
 
@@ -34,11 +30,7 @@ interface BusinessVerificationFormProps {
 
 const initialFormData: FormData = {
   businessName: '',
-  businessCategory: '',
-  businessDescription: '',
-  businessWebsite: '',
-  businessPhone: '',
-  businessAddress: '',
+  documentType: '',
   licenseFile: null,
 };
 
@@ -129,8 +121,12 @@ export default function BusinessVerificationForm({
       setError('Please enter your business name');
       return false;
     }
+    if (!formData.documentType) {
+      setError('Please select a document type');
+      return false;
+    }
     if (!formData.licenseFile) {
-      setError('Please upload your business license document');
+      setError(`Please upload your ${formData.documentType === 'pan_card' ? 'Pan Card' : 'Business License'}`);
       return false;
     }
     return true;
@@ -140,23 +136,8 @@ export default function BusinessVerificationForm({
   const buildSubmitData = (): globalThis.FormData => {
     const submitData = new FormData();
     submitData.append('business_name', formData.businessName.trim());
+    submitData.append('document_type', formData.documentType);
     submitData.append('business_license_document', formData.licenseFile!);
-
-    if (formData.businessCategory.trim()) {
-      submitData.append('business_category', formData.businessCategory.trim());
-    }
-    if (formData.businessDescription.trim()) {
-      submitData.append('business_description', formData.businessDescription.trim());
-    }
-    if (formData.businessWebsite.trim()) {
-      submitData.append('business_website', formData.businessWebsite.trim());
-    }
-    if (formData.businessPhone.trim()) {
-      submitData.append('business_phone', formData.businessPhone.trim());
-    }
-    if (formData.businessAddress.trim()) {
-      submitData.append('business_address', formData.businessAddress.trim());
-    }
 
     return submitData;
   };
@@ -235,109 +216,35 @@ export default function BusinessVerificationForm({
             />
           </div>
 
-          {/* Business Category */}
+          {/* Document Type */}
           <div className="mb-5">
             <label
-              htmlFor="businessCategory"
+              htmlFor="documentType"
               className="block mb-2 font-semibold text-gray-900 text-sm sm:text-base"
             >
-              Business Category
+              Document Type *
             </label>
-            <input
-              type="text"
-              id="businessCategory"
-              name="businessCategory"
-              value={formData.businessCategory}
+            <select
+              id="documentType"
+              name="documentType"
+              value={formData.documentType}
               onChange={handleInputChange}
-              placeholder="e.g., Electronics, Clothing, Food & Beverage"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Business Description */}
-          <div className="mb-5">
-            <label
-              htmlFor="businessDescription"
-              className="block mb-2 font-semibold text-gray-900 text-sm sm:text-base"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white"
             >
-              Business Description
-            </label>
-            <textarea
-              id="businessDescription"
-              name="businessDescription"
-              value={formData.businessDescription}
-              onChange={handleInputChange}
-              placeholder="Brief description of your business"
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-            />
+              <option value="">Select document type</option>
+              <option value="business_license">Business License</option>
+              <option value="pan_card">Pan Card</option>
+            </select>
           </div>
 
-          {/* Business Contact Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-            <div>
-              <label
-                htmlFor="businessPhone"
-                className="block mb-2 font-semibold text-gray-900 text-sm"
-              >
-                Business Phone
-              </label>
-              <input
-                type="tel"
-                id="businessPhone"
-                name="businessPhone"
-                value={formData.businessPhone}
-                onChange={handleInputChange}
-                placeholder="+977-..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="businessWebsite"
-                className="block mb-2 font-semibold text-gray-900 text-sm"
-              >
-                Business Website
-              </label>
-              <input
-                type="text"
-                id="businessWebsite"
-                name="businessWebsite"
-                value={formData.businessWebsite}
-                onChange={handleInputChange}
-                placeholder="https://... (optional)"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          {/* Business Address */}
-          <div className="mb-5">
-            <label
-              htmlFor="businessAddress"
-              className="block mb-2 font-semibold text-gray-900 text-sm sm:text-base"
-            >
-              Business Address
-            </label>
-            <textarea
-              id="businessAddress"
-              name="businessAddress"
-              value={formData.businessAddress}
-              onChange={handleInputChange}
-              placeholder="Full business address"
-              rows={2}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Business License Document */}
+          {/* Document Upload */}
           <div className="mb-5">
             <label
               htmlFor="licenseFile"
               className="block mb-2 font-semibold text-gray-900 text-sm sm:text-base"
             >
-              Business License/Registration Document *
+              {formData.documentType === 'pan_card' ? 'Upload Pan Card *' : formData.documentType === 'business_license' ? 'Upload Business License *' : 'Upload Document *'}
             </label>
 
             {/* File Upload Area */}

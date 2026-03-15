@@ -5,11 +5,7 @@ export interface BusinessVerification {
   fullName: string;
   businessName: string;
   businessLicense?: string;
-  businessCategory?: string;
-  businessDescription?: string;
-  businessWebsite?: string;
-  businessPhone?: string;
-  businessAddress?: string;
+  documentType?: string;
   paymentReference?: string;
   paymentAmount?: number;
   paymentStatus?: string;

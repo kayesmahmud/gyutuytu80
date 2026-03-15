@@ -41,11 +41,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
   File? _licenseDocument;
 
   String _businessName = '';
-  String _businessCategory = '';
-  String _businessDescription = '';
-  String _businessWebsite = '';
-  String _businessPhone = '';
-  String _businessAddress = '';
+  String _documentType = '';
 
   Future<void> _pickDocument() async {
     final picked =
@@ -76,13 +72,25 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
       if (!_formKey.currentState!.validate()) return;
       _formKey.currentState!.save();
 
+      if (_documentType.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(context.locale.languageCode == 'ne'
+                    ? 'कृपया कागजातको प्रकार छान्नुहोस्'
+                    : 'Please select a document type')),
+          );
+        }
+        return;
+      }
+
       if (_licenseDocument == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(context.locale.languageCode == 'ne'
-                    ? 'कृपया व्यापार लाइसेन्स कागजात अपलोड गर्नुहोस्'
-                    : 'Please upload business license document')),
+                    ? 'कृपया कागजात अपलोड गर्नुहोस्'
+                    : 'Please upload your document')),
           );
         }
         return;
@@ -127,11 +135,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
       final submitResult = await _client.submitBusinessVerification(
         businessName: _businessName,
         licenseDocument: uploadedFilename,
-        businessCategory: _businessCategory,
-        businessDescription: _businessDescription,
-        businessWebsite: _businessWebsite.isNotEmpty ? _businessWebsite : null,
-        businessPhone: _businessPhone.isNotEmpty ? _businessPhone : null,
-        businessAddress: _businessAddress.isNotEmpty ? _businessAddress : null,
+        documentType: _documentType,
         durationDays: widget.durationDays,
         paymentStatus: 'free',
       );
@@ -180,11 +184,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
       final submitResult = await _client.submitBusinessVerification(
         businessName: _businessName,
         licenseDocument: uploadedFilename,
-        businessCategory: _businessCategory,
-        businessDescription: _businessDescription,
-        businessWebsite: _businessWebsite.isNotEmpty ? _businessWebsite : null,
-        businessPhone: _businessPhone.isNotEmpty ? _businessPhone : null,
-        businessAddress: _businessAddress.isNotEmpty ? _businessAddress : null,
+        documentType: _documentType,
         durationDays: widget.durationDays,
         paymentStatus: 'pending',
         paymentAmount: widget.price,
@@ -351,50 +351,35 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
           ),
           const SizedBox(height: 16),
 
-          // Business Category (optional)
-          _buildLabel(lang == 'ne' ? 'व्यापार वर्ग (ऐच्छिक)' : 'Business Category (optional)'),
-          TextFormField(
-            decoration: _inputDecoration(lang == 'ne' ? 'जस्तै इलेक्ट्रोनिक्स, रेस्टुरेन्ट' : 'e.g. Electronics, Restaurant'),
-            onSaved: (v) => _businessCategory = v ?? '',
-          ),
-          const SizedBox(height: 16),
-
-          // Description (optional)
-          _buildLabel(lang == 'ne' ? 'व्यापार विवरण (ऐच्छिक)' : 'Business Description (optional)'),
-          TextFormField(
-            decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो व्यापारको बारेमा लेख्नुहोस्' : 'Describe your business'),
-            maxLines: 3,
-            onSaved: (v) => _businessDescription = v ?? '',
-          ),
-          const SizedBox(height: 16),
-
-          // Website (optional)
-          _buildLabel(lang == 'ne' ? 'व्यापार वेबसाइट (ऐच्छिक)' : 'Business Website (optional)'),
-          TextFormField(
-            decoration: _inputDecoration('https://yourbusiness.com'),
-            onSaved: (v) => _businessWebsite = v ?? '',
-          ),
-          const SizedBox(height: 16),
-
-          // Phone (optional)
-          _buildLabel(lang == 'ne' ? 'व्यापार फोन (ऐच्छिक)' : 'Business Phone (optional)'),
-          TextFormField(
-            decoration: _inputDecoration('+977-XXXX-XXXXXX'),
-            keyboardType: TextInputType.phone,
-            onSaved: (v) => _businessPhone = v ?? '',
-          ),
-          const SizedBox(height: 16),
-
-          // Address (optional)
-          _buildLabel(lang == 'ne' ? 'व्यापार ठेगाना (ऐच्छिक)' : 'Business Address (optional)'),
-          TextFormField(
-            decoration: _inputDecoration(lang == 'ne' ? 'व्यापार ठेगाना लेख्नुहोस्' : 'Enter business address'),
-            onSaved: (v) => _businessAddress = v ?? '',
+          // Document Type
+          _buildLabel(lang == 'ne' ? 'कागजातको प्रकार *' : 'Document Type *'),
+          DropdownButtonFormField<String>(
+            value: _documentType.isEmpty ? null : _documentType,
+            decoration: _inputDecoration(lang == 'ne' ? 'कागजातको प्रकार छान्नुहोस्' : 'Select document type'),
+            items: [
+              DropdownMenuItem(
+                value: 'business_license',
+                child: Text(lang == 'ne' ? 'व्यापार लाइसेन्स' : 'Business License'),
+              ),
+              DropdownMenuItem(
+                value: 'pan_card',
+                child: Text(lang == 'ne' ? 'प्यान कार्ड' : 'Pan Card'),
+              ),
+            ],
+            validator: (v) => v == null || v.isEmpty
+                ? (lang == 'ne' ? 'कागजातको प्रकार आवश्यक छ' : 'Document type is required')
+                : null,
+            onChanged: (v) => setState(() => _documentType = v ?? ''),
+            onSaved: (v) => _documentType = v ?? '',
           ),
           const SizedBox(height: 24),
 
-          // License Document
-          _buildLabel(lang == 'ne' ? 'व्यापार लाइसेन्स कागजात *' : 'Business License Document *'),
+          // Document Upload
+          _buildLabel(_documentType == 'pan_card'
+              ? (lang == 'ne' ? 'प्यान कार्ड अपलोड गर्नुहोस् *' : 'Upload Pan Card *')
+              : _documentType == 'business_license'
+                  ? (lang == 'ne' ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस् *' : 'Upload Business License *')
+                  : (lang == 'ne' ? 'कागजात अपलोड गर्नुहोस् *' : 'Upload Document *')),
           GestureDetector(
             onTap: _pickDocument,
             child: Container(
@@ -444,9 +429,11 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                               color: Colors.grey[400], size: 28),
                           const SizedBox(height: 8),
                           Text(
-                            lang == 'ne'
-                                ? 'व्यापार लाइसेन्स वा दर्ता अपलोड गर्नुहोस्'
-                                : 'Upload business license or registration',
+                            _documentType == 'pan_card'
+                                ? (lang == 'ne' ? 'प्यान कार्ड अपलोड गर्नुहोस्' : 'Upload your Pan Card')
+                                : _documentType == 'business_license'
+                                    ? (lang == 'ne' ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस्' : 'Upload your Business License')
+                                    : (lang == 'ne' ? 'कागजात अपलोड गर्नुहोस्' : 'Upload your document'),
                             style: TextStyle(
                               color: Colors.grey[500],
                               fontSize: 13,
