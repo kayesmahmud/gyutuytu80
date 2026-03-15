@@ -447,7 +447,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     if (diff.inHours < 1) return 'support.minutesAgo'.tr(args: ['${diff.inMinutes}']);
     if (diff.inDays < 1) return 'support.hoursAgo'.tr(args: ['${diff.inHours}']);
     if (diff.inDays < 7) return 'support.daysAgo'.tr(args: ['${diff.inDays}']);
-    return formatNepalTime(date, 'MMM d');
+    return formatNepalTime(date, 'MMM d', context.locale.languageCode);
   }
 }
 

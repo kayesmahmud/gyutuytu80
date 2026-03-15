@@ -347,7 +347,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     if (_recoveryDeadline != null) {
       try {
         final deadline = DateTime.parse(_recoveryDeadline!);
-        deadlineText = formatNepalTime(deadline, 'MMM d, yyyy');
+        deadlineText = formatNepalTime(deadline, 'MMM d, yyyy', context.locale.languageCode);
       } catch (_) {
         deadlineText = _recoveryDeadline!;
       }

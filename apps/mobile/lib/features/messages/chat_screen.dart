@@ -466,7 +466,7 @@ class _ChatScreenState extends State<ChatScreen> {
         date.day == now.day - 1) {
       text = 'messages.yesterday'.tr();
     } else {
-      text = formatNepalTime(date, 'MMMM d, yyyy');
+      text = formatNepalTime(date, 'MMMM d, yyyy', context.locale.languageCode);
     }
 
     return Padding(
@@ -580,7 +580,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      formatNepalTime(message.createdAt, 'h:mm a'),
+                      formatNepalTime(message.createdAt, 'h:mm a', context.locale.languageCode),
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: isMe

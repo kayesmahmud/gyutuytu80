@@ -418,8 +418,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     final _lang = context.locale.languageCode;
     final String createdAt = _user?['createdAt'] != null
         ? (_lang == 'ne'
-              ? "${formatNepalTime(DateTime.parse(_user!['createdAt']), 'MMM yyyy')} देखि सदस्य"
-              : "Member since ${formatNepalTime(DateTime.parse(_user!['createdAt']), 'MMM yyyy')}")
+              ? "${formatNepalTime(DateTime.parse(_user!['createdAt']), 'MMM yyyy', _lang)} देखि सदस्य"
+              : "Member since ${formatNepalTime(DateTime.parse(_user!['createdAt']), 'MMM yyyy', _lang)}")
         : (_lang == 'ne' ? "२०२५ देखि सदस्य" : "Member since 2025");
 
     return Container(

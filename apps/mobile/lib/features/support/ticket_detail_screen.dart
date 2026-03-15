@@ -313,7 +313,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         ? 'support.today'.tr()
         : isYesterday
             ? 'support.yesterday'.tr()
-            : formatNepalTime(date, 'MMM d, yyyy');
+            : formatNepalTime(date, 'MMM d, yyyy', context.locale.languageCode);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -403,7 +403,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                     color: isOwn ? Colors.white : const Color(0xFF1F2937),
                     height: 1.4)),
             const SizedBox(height: 4),
-            Text(formatNepalTime(msg.createdAt, 'h:mm a'),
+            Text(formatNepalTime(msg.createdAt, 'h:mm a', context.locale.languageCode),
                 style: GoogleFonts.inter(
                     fontSize: 11,
                     color: isOwn ? Colors.white70 : Colors.grey[400])),

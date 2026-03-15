@@ -315,7 +315,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            formatNepalTime(transaction.createdAt, 'MMM dd, yyyy • hh:mm a'),
+                            formatNepalTime(transaction.createdAt, 'MMM dd, yyyy • hh:mm a', context.locale.languageCode),
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -534,7 +534,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   _buildDetailRow('payment.gateway'.tr(), transaction.gateway.displayName),
                   _buildDetailRow(
                     'payment.date'.tr(),
-                    formatNepalTime(transaction.createdAt, 'MMM dd, yyyy • hh:mm a'),
+                    formatNepalTime(transaction.createdAt, 'MMM dd, yyyy • hh:mm a', context.locale.languageCode),
                   ),
                   if (transaction.transactionId != null)
                     _buildDetailRow(

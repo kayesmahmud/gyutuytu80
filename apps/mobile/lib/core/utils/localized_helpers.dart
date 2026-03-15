@@ -11,8 +11,9 @@ DateTime toNepalTime(DateTime dt) {
 }
 
 /// Formats a DateTime in Nepal Time with the given pattern.
-String formatNepalTime(DateTime dt, String pattern) {
-  return DateFormat(pattern).format(toNepalTime(dt));
+/// Pass [locale] ('ne' or 'en') for localized month/day names.
+String formatNepalTime(DateTime dt, String pattern, [String locale = 'en']) {
+  return DateFormat(pattern, locale).format(toNepalTime(dt));
 }
 
 /// Formats price with commas and localized currency symbol.
@@ -33,7 +34,7 @@ String formatLocalizedPrice(double? price, String locale) {
 String localizedTimeAgo(DateTime dateTime, String locale) {
   final difference = DateTime.now().difference(dateTime);
   if (difference.inDays > 7) {
-    return formatNepalTime(dateTime, 'MMM d, yyyy');
+    return formatNepalTime(dateTime, 'MMM d, yyyy', locale);
   } else if (difference.inDays > 0) {
     final d = difference.inDays;
     return locale == 'ne' ? '$d दिन अघि' : '${d}d ago';

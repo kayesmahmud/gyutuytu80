@@ -603,7 +603,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                formatNepalTime(announcement.createdAt, 'MMMM d, yyyy · h:mm a'),
+                formatNepalTime(announcement.createdAt, 'MMMM d, yyyy · h:mm a', context.locale.languageCode),
                 style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500]),
               ),
               const SizedBox(height: 16),
@@ -618,7 +618,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               if (announcement.readAt != null) ...[
                 const SizedBox(height: 24),
                 Text(
-                  'Read on ${formatNepalTime(announcement.readAt!, 'MMM d, yyyy · h:mm a')}',
+                  'Read on ${formatNepalTime(announcement.readAt!, 'MMM d, yyyy · h:mm a', context.locale.languageCode)}',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: Colors.grey[400],
@@ -817,7 +817,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     if (diff.inDays < 1) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
 
-    return formatNepalTime(time, 'MMM d');
+    return formatNepalTime(time, 'MMM d', context.locale.languageCode);
   }
 }
 

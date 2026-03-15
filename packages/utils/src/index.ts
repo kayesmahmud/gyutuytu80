@@ -22,9 +22,9 @@ export const toNepalTimeString = (
   return new Date(date).toLocaleTimeString(locale, { ...options, timeZone: NEPAL_TZ });
 };
 
-export const formatDate = (date: Date | string): string => {
+export const formatDate = (date: Date | string, locale = 'en-US'): string => {
   const d = new Date(date);
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -333,7 +333,7 @@ export function throttle<T extends (...args: any[]) => any>(
 // ENHANCED DATE UTILITIES
 // ============================================
 
-export const formatDateTime = (dateString: string | Date): string => {
+export const formatDateTime = (dateString: string | Date, locale = 'en-US'): string => {
   const date = new Date(dateString);
 
   // Handle invalid dates
@@ -346,19 +346,19 @@ export const formatDateTime = (dateString: string | Date): string => {
   const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  const timeString = date.toLocaleTimeString('en-US', {
+  const timeString = date.toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
     timeZone: NEPAL_TZ,
   });
 
-  if (diffHours < 1) return 'Just now';
-  if (diffHours < 24) return `${diffHours}h ago • ${timeString}`;
-  if (diffDays === 1) return `Yesterday • ${timeString}`;
-  if (diffDays <= 7) return `${diffDays} days ago • ${timeString}`;
+  if (diffHours < 1) return locale === 'ne-NP' ? 'भर्खरै' : 'Just now';
+  if (diffHours < 24) return locale === 'ne-NP' ? `${diffHours} घण्टा अघि • ${timeString}` : `${diffHours}h ago • ${timeString}`;
+  if (diffDays === 1) return locale === 'ne-NP' ? `हिजो • ${timeString}` : `Yesterday • ${timeString}`;
+  if (diffDays <= 7) return locale === 'ne-NP' ? `${diffDays} दिन अघि • ${timeString}` : `${diffDays} days ago • ${timeString}`;
 
-  return `${date.toLocaleDateString('en-US', {
+  return `${date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
@@ -366,15 +366,16 @@ export const formatDateTime = (dateString: string | Date): string => {
   })} • ${timeString}`;
 };
 
-export const formatFullDateTime = (dateString: string | Date): string => {
+export const formatFullDateTime = (dateString: string | Date, locale = 'en-US'): string => {
   const date = new Date(dateString);
+  const connector = locale === 'ne-NP' ? ' मा ' : ' at ';
 
-  return `${date.toLocaleDateString('en-US', {
+  return `${date.toLocaleDateString(locale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     timeZone: NEPAL_TZ,
-  })} at ${date.toLocaleTimeString('en-US', {
+  })}${connector}${date.toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
