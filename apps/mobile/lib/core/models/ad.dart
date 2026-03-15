@@ -45,6 +45,12 @@ class Ad {
   // Condition field (new/used)
   final String? condition;
 
+  // Favorites count
+  final int favoritesCount;
+
+  // Location type (district, municipality, area, etc.)
+  final String? locationType;
+
   Ad({
     required this.id,
     required this.userId,
@@ -75,6 +81,8 @@ class Ad {
     this.stickyUntil,
     this.attributes,
     this.condition,
+    this.favoritesCount = 0,
+    this.locationType,
   });
 
   factory Ad.fromJson(Map<String, dynamic> json) {
@@ -109,6 +117,8 @@ class Ad {
         stickyUntil: _parseDateTimeNullable(json['stickyUntil'] ?? json['sticky_until']),
         attributes: json['attributes'] as Map<String, dynamic>? ?? json['custom_fields'] as Map<String, dynamic>?,
         condition: json['condition'] as String?,
+        favoritesCount: json['favoritesCount'] as int? ?? json['favorites_count'] as int? ?? 0,
+        locationType: json['locationType'] as String? ?? json['location_type'] as String?,
       );
     } catch (e, stack) {
       if (kDebugMode) developer.log('Error parsing Ad.fromJson: $e', name: 'Ad');
@@ -152,6 +162,8 @@ class Ad {
       'stickyUntil': stickyUntil?.toIso8601String(),
       'attributes': attributes,
       'condition': condition,
+      'favoritesCount': favoritesCount,
+      'locationType': locationType,
     };
   }
 
@@ -191,6 +203,8 @@ class Ad {
     DateTime? stickyUntil,
     Map<String, dynamic>? attributes,
     String? condition,
+    int? favoritesCount,
+    String? locationType,
   }) {
     return Ad(
       id: id ?? this.id,
@@ -221,6 +235,8 @@ class Ad {
       stickyUntil: stickyUntil ?? this.stickyUntil,
       attributes: attributes ?? this.attributes,
       condition: condition ?? this.condition,
+      favoritesCount: favoritesCount ?? this.favoritesCount,
+      locationType: locationType ?? this.locationType,
     );
   }
 }
@@ -275,6 +291,8 @@ class AdWithDetails extends Ad {
     super.stickyUntil,
     super.attributes,
     super.condition,
+    super.favoritesCount,
+    super.locationType,
     required this.userName,
     this.userAvatar,
     this.userPhone,
@@ -324,6 +342,8 @@ class AdWithDetails extends Ad {
       stickyUntil: ad.stickyUntil,
       attributes: ad.attributes,
       condition: ad.condition,
+      favoritesCount: ad.favoritesCount,
+      locationType: ad.locationType,
       userName: json['userName'] as String? ?? json['user_name'] as String? ?? json['sellerName'] as String? ?? 'Unknown',
       userAvatar: json['userAvatar'] as String? ?? json['user_avatar'] as String?,
       userPhone: json['userPhone'] as String? ?? json['user_phone'] as String?,

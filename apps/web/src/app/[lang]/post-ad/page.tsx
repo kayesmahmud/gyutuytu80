@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { use } from 'react';
+import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { ImageUpload } from '@/components/forms';
@@ -52,10 +52,14 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     isUserVerified,
   } = usePostAd(lang);
 
-  // Image limits based on verification status (TODO: fetch from settings)
-  const MAX_IMAGES_VERIFIED = 10;
-  const MAX_IMAGES_UNVERIFIED = 5;
-  const maxImages = isUserVerified ? MAX_IMAGES_VERIFIED : MAX_IMAGES_UNVERIFIED;
+  // Image limits fetched from API settings
+  const [maxImages, setMaxImages] = React.useState(isUserVerified ? 10 : 5);
+  React.useEffect(() => {
+    fetch('/api/ad-limits', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` } })
+      .then(r => r.json())
+      .then(d => { if (d.success && d.data?.userImageLimit) setMaxImages(d.data.userImageLimit); })
+      .catch(() => {});
+  }, []);
 
   if (status === 'loading' || loading) {
     return (

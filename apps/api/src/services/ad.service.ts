@@ -142,6 +142,12 @@ export async function transformAdForDetail(ad: any) {
   const subNameNe = ad.categories?.categories ? ad.categories.name_ne : undefined;
   const locName = await getLocationHierarchy(ad.location_id);
 
+  // Get favorites count and location type
+  const favoritesCount = await prisma.user_favorites.count({ where: { ad_id: ad.id } });
+  const locationRecord = ad.location_id
+    ? await prisma.locations.findUnique({ where: { id: ad.location_id }, select: { type: true } })
+    : null;
+
   return {
     ...ad,
     status: ad.status === 'approved' ? 'active' : ad.status,
@@ -171,6 +177,10 @@ export async function transformAdForDetail(ad: any) {
     seller: ad.users_ads_user_idTousers,
     images: ad.ad_images,
     attributes: ad.custom_fields,
+    favoritesCount: favoritesCount,
+    favorites_count: favoritesCount,
+    locationType: locationRecord?.type || null,
+    location_type: locationRecord?.type || null,
   };
 }
 
@@ -339,7 +349,15 @@ function buildAdWhereClause(filters: AdFilters) {
   }
 
   if (filters.condition && filters.condition !== 'all') {
-    where.condition = filters.condition;
+    // Normalize: accept 'new'/'used' (Flutter) or 'Brand New'/'Used' (web)
+    const c = filters.condition.toLowerCase();
+    if (c === 'new' || c === 'brand new') {
+      where.condition = 'Brand New';
+    } else if (c === 'used') {
+      where.condition = 'Used';
+    } else {
+      where.condition = filters.condition;
+    }
   }
 
   if (filters.isFeatured === 'true') {

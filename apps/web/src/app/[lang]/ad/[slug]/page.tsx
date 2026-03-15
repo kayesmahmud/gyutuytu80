@@ -26,7 +26,7 @@ interface AdDetailPageProps {
 }
 
 // Get related ads from same category (excluding current ad)
-const getRelatedAds = cache(async (categoryId: number | null, currentAdId: number, limit = 3) => {
+const getRelatedAds = cache(async (categoryId: number | null, currentAdId: number, limit = 4) => {
   if (!categoryId) return [];
 
   return prisma.ads.findMany({

@@ -202,38 +202,60 @@ class _AdImageGalleryState extends State<AdImageGallery> {
           right: 16,
           child: Row(
             children: [
-              LikeButton(
-                size: 36,
-                isLiked: widget.isFavorite,
-                circleColor: const CircleColor(
-                  start: Color(0xFFFF5252),
-                  end: Color(0xFFFF1744),
-                ),
-                bubblesColor: const BubblesColor(
-                  dotPrimaryColor: Color(0xFFFF5252),
-                  dotSecondaryColor: Color(0xFFFFAB91),
-                ),
-                likeBuilder: (isLiked) {
-                  return Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.9),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LikeButton(
+                    size: 36,
+                    isLiked: widget.isFavorite,
+                    circleColor: const CircleColor(
+                      start: Color(0xFFFF5252),
+                      end: Color(0xFFFF1744),
                     ),
-                    child: Center(
-                      child: Icon(
-                        isLiked ? Icons.favorite : Icons.favorite_border,
-                        color: isLiked ? Colors.red : Colors.black87,
-                        size: 20,
+                    bubblesColor: const BubblesColor(
+                      dotPrimaryColor: Color(0xFFFF5252),
+                      dotSecondaryColor: Color(0xFFFFAB91),
+                    ),
+                    likeBuilder: (isLiked) {
+                      return Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            color: isLiked ? Colors.red : Colors.black87,
+                            size: 20,
+                          ),
+                        ),
+                      );
+                    },
+                    onTap: (isLiked) async {
+                      widget.onToggleFavorite?.call();
+                      return !isLiked;
+                    },
+                  ),
+                  if (widget.ad.favoritesCount > 0)
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${widget.ad.favoritesCount}',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
-                  );
-                },
-                onTap: (isLiked) async {
-                  widget.onToggleFavorite?.call();
-                  return !isLiked;
-                },
+                ],
               ),
               const SizedBox(width: 8),
               _buildCircleButton(

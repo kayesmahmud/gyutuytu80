@@ -5,6 +5,7 @@ import ReportAdButton from '../ReportAdButton';
 import SendMessageButton from '@/components/messages/SendMessageButton';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { MaskedPhoneButton } from './MaskedPhoneButton';
+import { OwnerGuard } from './OwnerGuard';
 import { getTranslations } from 'next-intl/server';
 import type { SellerCardProps } from './types';
 
@@ -19,9 +20,9 @@ export async function SellerCard({
 }: SellerCardProps) {
   const t = await getTranslations('ads');
 
-  const isVerifiedBusiness = seller?.account_type === 'business' && seller?.business_verification_status === 'approved';
+  const isVerifiedBusiness = seller?.account_type === 'business' && (seller?.business_verification_status === 'approved' || seller?.business_verification_status === 'verified');
   const isVerifiedIndividual = seller?.account_type === 'individual' &&
-    (seller?.individual_verified || seller?.business_verification_status === 'verified');
+    (seller?.individual_verified || seller?.business_verification_status === 'approved' || seller?.business_verification_status === 'verified');
 
   const displayName = isVerifiedBusiness && seller?.business_name
     ? seller.business_name
@@ -119,33 +120,36 @@ export async function SellerCard({
         </div>
       </div>
 
-      {/* 1. WhatsApp Button */}
-      <AdActions
-        adId={adId}
-        adTitle={adTitle}
-        adSlug={adSlug}
-        lang={lang}
-        whatsappNumber={seller?.business_phone || seller?.phone || null}
-        phoneNumber={seller?.phone || null}
-        showWhatsAppOnly={true}
-      />
-
-      {/* 2. Phone Number Button (masked until clicked) */}
-      {seller?.phone && (
-        <MaskedPhoneButton phone={seller.phone} />
-      )}
-
-      {/* 3. Send Message Button */}
-      {userId && (
-        <SendMessageButton
-          sellerId={userId}
+      {/* Contact buttons — disabled when viewing own ad */}
+      <OwnerGuard sellerId={userId}>
+        {/* 1. WhatsApp Button */}
+        <AdActions
           adId={adId}
           adTitle={adTitle}
+          adSlug={adSlug}
           lang={lang}
+          whatsappNumber={seller?.business_phone || seller?.phone || null}
+          phoneNumber={seller?.phone || null}
+          showWhatsAppOnly={true}
         />
-      )}
 
-      {/* 4. Share and Bookmark actions */}
+        {/* 2. Phone Number Button (masked until clicked) */}
+        {seller?.phone && (
+          <MaskedPhoneButton phone={seller.phone} />
+        )}
+
+        {/* 3. Send Message Button */}
+        {userId && (
+          <SendMessageButton
+            sellerId={userId}
+            adId={adId}
+            adTitle={adTitle}
+            lang={lang}
+          />
+        )}
+      </OwnerGuard>
+
+      {/* 4. Share and Bookmark actions (always active — owners can share/bookmark too) */}
       <AdActions
         adId={adId}
         adTitle={adTitle}
@@ -157,18 +161,21 @@ export async function SellerCard({
         initialFavoritesCount={favoritesCount}
       />
 
-      <div style={{
-        marginTop: '1.5rem',
-        paddingTop: '1.5rem',
-        borderTop: '1px solid #e5e7eb',
-        textAlign: 'center'
-      }}>
-        <ReportAdButton
-          adId={adId}
-          adTitle={adTitle}
-          lang={lang}
-        />
-      </div>
+      {/* Report — disabled for owner */}
+      <OwnerGuard sellerId={userId}>
+        <div style={{
+          marginTop: '1.5rem',
+          paddingTop: '1.5rem',
+          borderTop: '1px solid #e5e7eb',
+          textAlign: 'center'
+        }}>
+          <ReportAdButton
+            adId={adId}
+            adTitle={adTitle}
+            lang={lang}
+          />
+        </div>
+      </OwnerGuard>
     </div>
   );
 }

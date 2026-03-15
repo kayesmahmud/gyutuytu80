@@ -375,6 +375,13 @@ class ChatProvider extends ChangeNotifier {
     required int participantId,
     int? adId,
   }) async {
+    // Prevent self-messaging
+    if (_currentUserId != null && participantId == _currentUserId) {
+      _error = 'You cannot message yourself';
+      notifyListeners();
+      return null;
+    }
+
     // Check if conversation already exists
     final existing = _conversations.firstWhere(
       (c) => c.otherUserId == participantId && (adId == null || c.adId == adId),

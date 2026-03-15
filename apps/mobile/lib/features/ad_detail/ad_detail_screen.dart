@@ -523,6 +523,18 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                   ),
                                 ),
                               ),
+                            if (ad.isNegotiable)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF59E0B),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  context.locale.languageCode == 'ne' ? 'मोलमोलाई योग्य' : 'Negotiable',
+                                  style: GoogleFonts.inter(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600),
+                                ),
+                              ),
                             // Promotion badges
                             ..._buildPromotionBadges(ad),
                           ],
@@ -616,15 +628,32 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text(
-                                  ad.localizedLocationName(
-                                    context.locale.languageCode,
-                                  ),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: const Color(0xFF374151),
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      ad.localizedLocationName(
+                                        context.locale.languageCode,
+                                      ),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        color: const Color(0xFF374151),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    if (ad.locationType != null && ad.locationType!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: Text(
+                                          ad.locationType!.replaceAll('_', ' ').substring(0, 1).toUpperCase() +
+                                              ad.locationType!.replaceAll('_', ' ').substring(1),
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            color: const Color(0xFF6B7280),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                             ],

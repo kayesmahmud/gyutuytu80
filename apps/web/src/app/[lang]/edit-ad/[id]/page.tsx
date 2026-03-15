@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ImageUpload } from '@/components/forms';
 import DynamicFormFields from '@/components/post-ad/DynamicFormFields';
@@ -50,10 +50,14 @@ export default function EditAdPage({ params }: EditAdPageProps) {
     isUserVerified,
   } = useEditAd(adId, lang);
 
-  // Image limits based on verification status (TODO: fetch from settings)
-  const MAX_IMAGES_VERIFIED = 10;
-  const MAX_IMAGES_UNVERIFIED = 5;
-  const maxImages = isUserVerified ? MAX_IMAGES_VERIFIED : MAX_IMAGES_UNVERIFIED;
+  // Image limits fetched from API settings
+  const [maxImages, setMaxImages] = useState(isUserVerified ? 10 : 5);
+  useEffect(() => {
+    fetch('/api/ad-limits', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` } })
+      .then(r => r.json())
+      .then(d => { if (d.success && d.data?.userImageLimit) setMaxImages(d.data.userImageLimit); })
+      .catch(() => {});
+  }, []);
 
   // Loading state
   if (status === 'loading' || loading) {
@@ -168,7 +172,7 @@ export default function EditAdPage({ params }: EditAdPageProps) {
                   <span className="text-xl">✨</span>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-indigo-900 m-0">
-                      Want to upload up to {MAX_IMAGES_VERIFIED} images?
+                      Want to upload up to 10 images?
                     </p>
                     <p className="text-xs text-indigo-700 mt-1 mb-2">
                       Get verified to unlock more images and build buyer trust

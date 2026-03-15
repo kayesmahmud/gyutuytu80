@@ -33,8 +33,8 @@ export default function ShopCard({ shop, lang }: ShopCardProps) {
   const coverUrl = getCoverUrl(shop.coverPhoto);
 
   // Determine verification badge
-  const isVerifiedBusiness = shop.accountType === 'business' && shop.businessVerificationStatus === 'approved';
-  const isVerifiedIndividual = shop.accountType === 'individual' && shop.individualVerified;
+  const isVerifiedBusiness = shop.accountType === 'business' && (shop.businessVerificationStatus === 'approved' || shop.businessVerificationStatus === 'verified');
+  const isVerifiedIndividual = shop.accountType === 'individual' && (shop.individualVerified || shop.businessVerificationStatus === 'approved' || shop.businessVerificationStatus === 'verified');
 
   // Get description preview
   const description = shop.businessDescription || shop.bio || '';

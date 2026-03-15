@@ -14,11 +14,27 @@ class AdSpecifications extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    // Separate amenities from regular specs (matches web behavior)
+    final filteredKeys = {'isNegotiable', 'amenities', 'condition'};
     final specs = ad.attributes!.entries
-        .where((e) => e.value != null && e.value.toString().isNotEmpty)
+        .where((e) =>
+            e.value != null &&
+            e.value.toString().isNotEmpty &&
+            !filteredKeys.contains(e.key))
         .toList();
 
-    if (specs.isEmpty) return const SizedBox.shrink();
+    // Parse amenities (comma-separated string or list)
+    final amenitiesRaw = ad.attributes!['amenities'];
+    final List<String> amenities;
+    if (amenitiesRaw is String && amenitiesRaw.isNotEmpty) {
+      amenities = amenitiesRaw.split(',').map((a) => a.trim()).where((a) => a.isNotEmpty).toList();
+    } else if (amenitiesRaw is List) {
+      amenities = amenitiesRaw.map((a) => a.toString()).toList();
+    } else {
+      amenities = [];
+    }
+
+    if (specs.isEmpty && amenities.isEmpty) return const SizedBox.shrink();
 
     final isNe = context.locale.languageCode == 'ne';
 
@@ -51,44 +67,97 @@ class AdSpecifications extends StatelessWidget {
             ),
           ),
           const Divider(height: 16, color: Color(0xFFF3F4F6)),
-          ListView.separated(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            itemCount: specs.length,
-            separatorBuilder: (_, __) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Divider(height: 1, color: Colors.grey[100]),
-            ),
-            itemBuilder: (context, index) {
-              final entry = specs[index];
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isNe ? _localizedKey(entry.key) : _formatKey(entry.key),
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Flexible(
-                    child: Text(
-                      isNe ? _localizedValue(entry.value.toString()) : entry.value.toString(),
-                      textAlign: TextAlign.end,
+          if (specs.isNotEmpty)
+            ListView.separated(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              itemCount: specs.length,
+              separatorBuilder: (_, __) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1, color: Colors.grey[100]),
+              ),
+              itemBuilder: (context, index) {
+                final entry = specs[index];
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isNe ? _localizedKey(entry.key) : _formatKey(entry.key),
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF111827),
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF6B7280),
                       ),
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
+                    const SizedBox(width: 16),
+                    Flexible(
+                      child: Text(
+                        isNe ? _localizedValue(entry.value.toString()) : entry.value.toString(),
+                        textAlign: TextAlign.end,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+
+          // Amenities section (matches web SpecificationsSection)
+          if (amenities.isNotEmpty) ...[
+            if (specs.isNotEmpty)
+              Divider(height: 1, color: Colors.grey[200]),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(
+                isNe ? 'सुविधाहरू' : 'Amenities',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1F2937),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: amenities.map((amenity) {
+                  final displayName = isNe ? (_valueMapNe[amenity] ?? amenity) : amenity;
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFDCFCE7),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.check, size: 14, color: Color(0xFF16A34A)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        displayName,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF374151),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
         ],
       ),
     );
