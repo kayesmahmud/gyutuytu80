@@ -16,7 +16,6 @@ import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/widgets/success_checkmark.dart';
 import 'package:mobile/features/dashboard/dashboard_screen.dart';
-import 'package:mobile/features/my_ads/my_ads_screen.dart';
 import 'package:mobile/features/post_ad/models/ad_draft_model.dart';
 import 'package:mobile/features/post_ad/models/location_models.dart';
 import 'package:mobile/features/post_ad/services/ad_draft_service.dart';
@@ -700,7 +699,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MyAdsScreen()),
+          MaterialPageRoute(
+            builder: (_) => DashboardScreen(initialFilter: 'Pending'),
+          ),
         );
       }
     } else if (mounted) {
