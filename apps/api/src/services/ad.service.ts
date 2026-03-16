@@ -132,6 +132,7 @@ export function transformAdForDashboard(ad: any) {
       filePath: img.file_path,
       isPrimary: img.is_primary,
     })) || [],
+    attributes: ad.custom_fields,
   };
 }
 

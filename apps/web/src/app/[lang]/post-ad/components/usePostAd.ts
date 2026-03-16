@@ -434,7 +434,7 @@ export function usePostAd(lang: string) {
             }
           }
 
-          router.push(`/${lang}/dashboard`);
+          router.push(`/${lang}/dashboard?tab=pending`);
         }
       } catch (err: any) {
         console.error('Error creating ad:', err);

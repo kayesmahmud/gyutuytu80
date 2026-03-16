@@ -80,6 +80,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   final String _verifiedPhone =
       "9860887312"; // Mocked for now, should come from user profile
 
+  // Edit mode: track if initial prefill is done (to avoid clearing attributes)
+  bool _editPrefillDone = false;
+
   // Draft State
   String? _currentDraftId;
   bool _isSaving = false;
@@ -207,6 +210,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       _attributeValues.addAll(ad.attributes!);
     }
 
+    _editPrefillDone = true;
     setState(() {});
   }
 
@@ -1156,7 +1160,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               setState(() {
                 _selectedCategory = val;
                 _selectedSubCategory = null;
-                _attributeValues.clear();
+                if (!widget.isEditMode || _editPrefillDone) {
+                  _attributeValues.clear();
+                }
               });
               _onFormChanged();
             },
@@ -1188,7 +1194,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               onChanged: (val) {
                 setState(() {
                   _selectedSubCategory = val;
-                  _attributeValues.clear();
+                  if (!widget.isEditMode || _editPrefillDone) {
+                    _attributeValues.clear();
+                  }
                 });
                 _onFormChanged();
               },

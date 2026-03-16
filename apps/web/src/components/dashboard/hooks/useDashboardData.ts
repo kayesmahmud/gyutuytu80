@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { messagingApi } from '@/lib/messaging';
 import { useToast } from '@/components/ui';
@@ -19,9 +20,11 @@ const DEFAULT_STATS: DashboardStats = {
 export function useDashboardData() {
   const { data: session, status, update: updateSession } = useSession();
   const { success, error: showError } = useToast();
+  const searchParams = useSearchParams();
 
-  // State
-  const [activeTab, setActiveTab] = useState<AdTab>('active');
+  // State — respect ?tab= query param
+  const tabParam = searchParams.get('tab') as AdTab | null;
+  const [activeTab, setActiveTab] = useState<AdTab>(tabParam || 'active');
   const [userAds, setUserAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

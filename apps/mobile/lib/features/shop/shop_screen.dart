@@ -420,28 +420,7 @@ class _ShopScreenState extends State<ShopScreen> {
       child: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // App Bar
-          SliverAppBar(
-            expandedHeight: 0,
-            floating: true,
-            pinned: true,
-            backgroundColor: Colors.white,
-            elevation: 1,
-            leading: IconButton(
-              icon: const Icon(LucideIcons.arrowLeft, color: Colors.black87),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: Text(
-              _shop!.displayName,
-              style: GoogleFonts.inter(
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            ),
-          ),
-
-          // Profile Header
+          // Profile Header with back button overlay
           SliverToBoxAdapter(child: _buildProfileHeader()),
 
           // Tabs & Content
@@ -508,7 +487,7 @@ class _ShopScreenState extends State<ShopScreen> {
           Stack(
             children: [
               AspectRatio(
-                aspectRatio: 2.34,
+                aspectRatio: 2.2,
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -534,6 +513,26 @@ class _ShopScreenState extends State<ShopScreen> {
                               Container(color: Colors.grey[200]),
                         )
                       : null,
+                ),
+              ),
+              // Back button
+              Positioned(
+                left: 12,
+                top: MediaQuery.of(context).padding.top + 8,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.arrowLeft,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
                 ),
               ),
               if (_isOwner)
@@ -672,27 +671,29 @@ class _ShopScreenState extends State<ShopScreen> {
                                     child: Text(
                                       _shop!.displayName,
                                       style: GoogleFonts.inter(
-                                        fontSize: 22,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black87,
                                       ),
-                                      maxLines: 2,
+                                      maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  if (_shop!.isBusinessVerified)
+                                  if (_shop!.isBusinessVerified) ...[
+                                    const SizedBox(width: 6),
                                     Image.asset(
                                       'assets/images/golden-badge.png',
-                                      width: 24,
-                                      height: 24,
-                                    )
-                                  else if (_shop!.individualVerified)
+                                      width: 22,
+                                      height: 22,
+                                    ),
+                                  ] else if (_shop!.individualVerified) ...[
+                                    const SizedBox(width: 6),
                                     Image.asset(
                                       'assets/images/blue-badge.png',
-                                      width: 24,
-                                      height: 24,
+                                      width: 22,
+                                      height: 22,
                                     ),
+                                  ],
                                 ],
                               ),
                               Text(
