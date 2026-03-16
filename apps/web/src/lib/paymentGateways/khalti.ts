@@ -100,6 +100,19 @@ export async function initiateKhaltiPayment(
       body: JSON.stringify(payload),
     });
 
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Khalti initiate returned non-JSON:', response.status, text.substring(0, 200));
+      return {
+        success: false,
+        gateway: 'khalti',
+        transactionId: params.orderId,
+        paymentUrl: '',
+        error: `Khalti API returned non-JSON response (HTTP ${response.status}). Check KHALTI_ENV and credentials.`,
+      };
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -172,6 +185,20 @@ export async function verifyKhaltiPayment(
       },
       body: JSON.stringify({ pidx: params.pidx }),
     });
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Khalti verify returned non-JSON:', response.status, text.substring(0, 200));
+      return {
+        success: false,
+        status: 'failed',
+        transactionId: params.transactionId,
+        amount: 0,
+        gateway: 'khalti',
+        error: `Khalti API returned non-JSON response (HTTP ${response.status}). Check KHALTI_ENV and credentials.`,
+      };
+    }
 
     const data = await response.json();
 
