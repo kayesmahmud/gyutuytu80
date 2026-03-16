@@ -1,11 +1,9 @@
 // Service Worker for Thulo Bazaar PWA
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `thulobazaar-${CACHE_VERSION}`;
 
-// Assets to cache on install
+// Only cache truly static assets (not HTML pages!)
 const STATIC_ASSETS = [
-    '/',
-    '/en',
     '/offline.html',
     '/logo.png',
     '/icons/apple-touch-icon.png',
@@ -21,7 +19,6 @@ self.addEventListener('install', (event) => {
             console.log('[SW] Caching static assets');
             return cache.addAll(STATIC_ASSETS);
         }).then(() => {
-            // Force the waiting service worker to become the active service worker
             return self.skipWaiting();
         })
     );
@@ -42,13 +39,12 @@ self.addEventListener('activate', (event) => {
                 })
             );
         }).then(() => {
-            // Take control of all pages immediately
             return self.clients.claim();
         })
     );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - NETWORK-FIRST for pages, CACHE-FIRST for static assets
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
@@ -58,46 +54,53 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Skip API requests (let them always go to network)
+    // Skip API requests — always go to network
     if (url.pathname.startsWith('/api/')) {
         return;
     }
 
+    // Navigation requests (HTML pages): NETWORK-FIRST
+    // Always try the server first so users get fresh content after deploys
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    // Cache a copy for offline use
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(request, responseToCache);
+                    });
+                    return response;
+                })
+                .catch(() => {
+                    // Network failed — try cache, then offline page
+                    return caches.match(request).then((cached) => {
+                        return cached || caches.match('/offline.html');
+                    });
+                })
+        );
+        return;
+    }
+
+    // Static assets (JS, CSS, images, fonts): STALE-WHILE-REVALIDATE
+    // Serve cached version immediately, update cache in background
     event.respondWith(
         caches.match(request).then((cachedResponse) => {
-            // Return cached response if found
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-
-            // Otherwise fetch from network
-            return fetch(request).then((response) => {
-                // Don't cache non-successful responses
-                if (!response || response.status !== 200 || response.type === 'error') {
-                    return response;
+            const fetchPromise = fetch(request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(request, responseToCache);
+                    });
                 }
-
-                // Clone the response (can only be consumed once)
-                const responseToCache = response.clone();
-
-                // Cache the fetched response for future use
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(request, responseToCache);
-                });
-
-                return response;
+                return networkResponse;
             }).catch(() => {
-                // Network failed, show offline page for navigation requests
-                if (request.mode === 'navigate') {
-                    return caches.match('/offline.html');
-                }
-
-                // For other requests, just let them fail
-                return new Response('Offline', {
-                    status: 503,
-                    statusText: 'Service Unavailable',
-                });
+                // Network failed for static asset — cachedResponse is our only hope
+                return cachedResponse;
             });
+
+            // Return cached immediately if available, otherwise wait for network
+            return cachedResponse || fetchPromise;
         })
     );
 });
