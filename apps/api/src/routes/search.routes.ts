@@ -101,6 +101,7 @@ router.get(
       primary_image: ad.ad_images[0]?.filename,
       // publishedAt = when editor approved (use this for "time ago" display)
       publishedAt: ad.reviewed_at || ad.created_at,
+      reviewedAt: ad.reviewed_at,
     }));
 
     // Short-lived cache — search results change as ads are approved/expired
