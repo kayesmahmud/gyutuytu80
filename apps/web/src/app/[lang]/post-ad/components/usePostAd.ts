@@ -198,12 +198,12 @@ export function usePostAd(lang: string) {
       router.push(`/${lang}/auth/signin`);
       return;
     }
-    // Only load form data once when authenticated
-    if (status === 'authenticated' && !dataLoadedRef.current) {
+    // Only load form data once when authenticated and session is fully populated
+    if (status === 'authenticated' && !dataLoadedRef.current && (session as any)?.backendToken) {
       dataLoadedRef.current = true;
       loadFormData();
     }
-  }, [status, router, lang, loadFormData]);
+  }, [status, session, router, lang, loadFormData]);
 
   // Load subcategories when category changes (but not for user defaults - handled in loadFormData)
   useEffect(() => {

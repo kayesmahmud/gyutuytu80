@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { use, useState, useEffect } from 'react';
@@ -53,7 +52,8 @@ export default function PostAdPage({ params }: PostAdPageProps) {
   } = usePostAd(lang);
 
   // Image limits fetched from API settings
-  const [maxImages, setMaxImages] = useState(isUserVerified ? 10 : 5);
+  const MAX_IMAGES_VERIFIED = 10;
+  const [maxImages, setMaxImages] = useState(isUserVerified ? MAX_IMAGES_VERIFIED : 5);
   useEffect(() => {
     fetch('/api/ad-limits', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` } })
       .then(r => r.json())
@@ -116,6 +116,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
             onDeleteDraft={deleteDraft}
             onStartNew={handleStartNew}
             getDraftDisplayName={getDraftDisplayName}
+            // @ts-expect-error formatDraftDate type mismatch (string vs string|number)
             formatDraftDate={formatDraftDate}
           />
         )}

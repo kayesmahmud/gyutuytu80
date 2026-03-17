@@ -101,30 +101,58 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _priceController.addListener(_onFormChanged);
   }
 
+  // Full ad details fetched for edit mode (dashboard data is incomplete)
+  AdWithDetails? _fullAdDetails;
+
   Future<void> _initializeScreen() async {
-    if (widget.isEditMode) {
-      // Edit mode: load initial data then pre-fill from existing ad
-      await _loadInitialData();
-      if (mounted) _prefillFromExistingAd();
-    } else {
-      // Create mode: load data and drafts
-      await Future.wait([_loadInitialData(), _loadDrafts()]);
-      if (widget.draftId != null && mounted) {
-        final match = _drafts.where((d) => d.id == widget.draftId);
-        if (match.isNotEmpty) {
-          await _restoreDraft(match.first);
+    try {
+      if (widget.isEditMode) {
+        // Edit mode: fetch full ad details (dashboard data lacks attributes etc.)
+        // and load categories/locations in parallel
+        final futures = await Future.wait([
+          _loadInitialData(),
+          _adClient.getAdById(widget.existingAd!.id),
+        ]);
+        final adResponse = futures[1] as ApiResponse<AdWithDetails>;
+        if (adResponse.success && adResponse.data != null) {
+          _fullAdDetails = adResponse.data;
+        }
+        if (mounted) _prefillFromExistingAd();
+      } else {
+        // Create mode: load data and drafts
+        await Future.wait([_loadInitialData(), _loadDrafts()]);
+        if (widget.draftId != null && mounted) {
+          final match = _drafts.where((d) => d.id == widget.draftId);
+          if (match.isNotEmpty) {
+            await _restoreDraft(match.first);
+          }
+        }
+      }
+    } catch (e) {
+      log('Error initializing create ad screen: $e', name: 'CreateAdScreen');
+      // Retry once after a short delay (handles auth token propagation timing)
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        try {
+          await _loadInitialData();
+          if (widget.isEditMode && mounted) _prefillFromExistingAd();
+        } catch (retryError) {
+          log('Retry also failed: $retryError', name: 'CreateAdScreen');
         }
       }
     }
   }
 
   void _prefillFromExistingAd() {
-    final ad = widget.existingAd!;
+    // Use full details from API if available, fallback to dashboard data
+    final ad = _fullAdDetails ?? widget.existingAd!;
 
     _titleController.text = ad.title;
     _descriptionController.text = ad.description;
     _priceController.text = ad.price.toStringAsFixed(0);
-    _priceNegotiable = ad.isNegotiable;
+    // isNegotiable is stored in custom_fields (like web), check there first
+    _priceNegotiable =
+        ad.attributes?['isNegotiable'] as bool? ?? ad.isNegotiable;
 
     // Pre-fill existing images — use paths as-is (getAdImageUrl handles them)
     _existingImagePaths = List<String>.from(ad.images);
@@ -208,6 +236,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     // Pre-fill custom attributes
     if (ad.attributes != null) {
       _attributeValues.addAll(ad.attributes!);
+    }
+    // Condition is stored separately in DB, not in custom_fields — inject it back
+    if (ad.condition != null && !_attributeValues.containsKey('condition')) {
+      _attributeValues['condition'] = ad.condition;
     }
 
     _editPrefillDone = true;
@@ -633,6 +665,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     }
   }
 
+  /// Builds the attributes map including isNegotiable (stored in custom_fields like web)
+  Map<String, dynamic> _buildSubmitAttributes() {
+    return {..._attributeValues, 'isNegotiable': _priceNegotiable};
+  }
+
   Future<void> _createNewAd() async {
     final formData = FormData.fromMap({
       'title': _titleController.text,
@@ -645,7 +682,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       'district_id': _selectedDistrict!.id,
       'city_id': _selectedMunicipality!.id,
       'area_id': _selectedArea?.id,
-      'attributes': jsonEncode(_attributeValues),
+      'attributes': jsonEncode(_buildSubmitAttributes()),
       'whatsapp_number': _whatsappController.text,
     });
 
@@ -693,7 +730,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       'categoryId': _selectedCategory!.id,
       'subcategoryId': _selectedSubCategory?.id,
       'locationId': _selectedArea?.id ?? _selectedMunicipality!.id,
-      'attributes': jsonEncode(_attributeValues),
+      'attributes': jsonEncode(_buildSubmitAttributes()),
       'existingImages': jsonEncode(_existingImagePaths),
     });
 
