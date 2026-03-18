@@ -78,7 +78,7 @@ class SocketService {
         io.OptionBuilder()
             .setTransports(['websocket', 'polling'])
             .setAuth({'token': token})
-            .enableAutoConnect()
+            .disableAutoConnect()
             .enableReconnection()
             .setReconnectionAttempts(_maxReconnectAttempts)
             .setReconnectionDelay(1000)
@@ -86,6 +86,7 @@ class SocketService {
             .build(),
       );
 
+      // Register ALL event listeners BEFORE connecting to avoid race conditions
       _setupEventListeners();
 
       // Wait for connection or error
@@ -117,6 +118,7 @@ class SocketService {
         }
       });
 
+      // Connect AFTER all listeners are registered
       _socket!.connect();
 
       return await completer.future;
@@ -344,13 +346,25 @@ class SocketService {
     });
   }
 
-  /// Join a specific conversation room
+  /// Join a specific conversation room (retries once after connection if not yet connected)
   void joinConversation(int conversationId) {
-    if (!_isConnected || _socket == null) return;
-
-    _socket!.emit('room:join', {
-      'room': 'conversation:$conversationId',
-    });
+    if (_isConnected && _socket != null) {
+      _socket!.emit('room:join', {
+        'room': 'conversation:$conversationId',
+      });
+    } else {
+      // Socket not connected yet — join when connected
+      if (kDebugMode) developer.log('Socket not connected, will join conversation:$conversationId on connect', name: 'SocketService');
+      late final StreamSubscription<bool> sub;
+      sub = connectionStream.listen((connected) {
+        if (connected && _socket != null) {
+          _socket!.emit('room:join', {
+            'room': 'conversation:$conversationId',
+          });
+          sub.cancel();
+        }
+      });
+    }
   }
 
   /// Leave a conversation room

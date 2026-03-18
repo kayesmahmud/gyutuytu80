@@ -79,6 +79,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (_currentUserId != null) {
       final chatProvider = context.read<ChatProvider>();
+      // Ensure socket is in this conversation's room for real-time updates
+      chatProvider.joinConversation(widget.conversationId);
       await chatProvider.loadMessages(widget.conversationId);
       chatProvider.markAsRead(widget.conversationId);
 

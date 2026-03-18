@@ -379,6 +379,11 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  /// Join a conversation's socket room for real-time updates
+  void joinConversation(int conversationId) {
+    _socketService.joinConversation(conversationId);
+  }
+
   /// Create or get conversation with a user
   Future<Conversation?> getOrCreateConversation({
     required int participantId,
