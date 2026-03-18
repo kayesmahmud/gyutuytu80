@@ -100,8 +100,8 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
     // DISCONNECT
     // =====================
 
-    socket.on('disconnect', () => {
-      console.log(`🔌 Socket.IO: User ${userId} disconnected (Socket: ${socket.id})`);
+    socket.on('disconnect', (reason) => {
+      console.log(`🔌 Socket.IO: User ${userId} disconnected (Socket: ${socket.id}, Reason: ${reason})`);
 
       // Remove from online users
       onlineUsers.delete(userId);

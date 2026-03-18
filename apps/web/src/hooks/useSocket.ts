@@ -128,8 +128,6 @@ export function useSocket({ token, autoConnect = true }: UseSocketOptions) {
  */
 export function useMessages(token: string | null) {
   const { socket, connected, error, emit, on, off } = useSocket({ token });
-  const [messages, setMessages] = useState<any[]>([]);
-  const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
 
   // Send message
   const sendMessage = useCallback(
@@ -214,70 +212,10 @@ export function useMessages(token: string | null) {
     [emit]
   );
 
-  // Listen for new messages
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNewMessage = (message: any) => {
-      console.log('📨 New message received:', message);
-      setMessages((prev) => [...prev, message]);
-    };
-
-    const handleMessageEdited = (data: any) => {
-      console.log('✏️ Message edited:', data);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === data.messageId
-            ? { ...msg, content: data.newContent, isEdited: true, editedAt: data.editedAt }
-            : msg
-        )
-      );
-    };
-
-    const handleMessageDeleted = (data: any) => {
-      console.log('🗑️ Message deleted:', data);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === data.messageId
-            ? { ...msg, isDeleted: true, deletedAt: data.deletedAt }
-            : msg
-        )
-      );
-    };
-
-    const handleTypingStart = (data: any) => {
-      setTypingUsers((prev) => new Set(prev).add(data.userId));
-    };
-
-    const handleTypingStop = (data: any) => {
-      setTypingUsers((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(data.userId);
-        return newSet;
-      });
-    };
-
-    on('message:new', handleNewMessage);
-    on('message:edited', handleMessageEdited);
-    on('message:deleted', handleMessageDeleted);
-    on('typing:user-started', handleTypingStart);
-    on('typing:user-stopped', handleTypingStop);
-
-    return () => {
-      off('message:new', handleNewMessage);
-      off('message:edited', handleMessageEdited);
-      off('message:deleted', handleMessageDeleted);
-      off('typing:user-started', handleTypingStart);
-      off('typing:user-stopped', handleTypingStop);
-    };
-  }, [socket, on, off]);
-
   return {
     socket,
     connected,
     error,
-    messages,
-    typingUsers: Array.from(typingUsers),
     sendMessage,
     markAsRead,
     editMessage,

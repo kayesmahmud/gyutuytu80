@@ -26,11 +26,13 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
   // Conversation messages
   const [conversationMessages, setConversationMessages] = useState<any[]>([]);
 
+  // Typing users for current conversation (managed directly via socket.on)
+  const [typingUsers, setTypingUsers] = useState<number[]>([]);
+
   // Socket.IO connection
   const {
     connected,
     error: socketError,
-    typingUsers,
     sendMessage: socketSendMessage,
     markAsRead: socketMarkAsRead,
     startTyping,
@@ -189,6 +191,32 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
     socket.on('message:new', handleNewMessage);
     return () => {
       socket.off('message:new', handleNewMessage);
+    };
+  }, [socket, connected, selectedConversation, currentUserId]);
+
+  // Socket.IO: Listen for typing indicators (direct socket.on — same proven pattern as message:new)
+  useEffect(() => {
+    if (!socket || !connected || !selectedConversation) return;
+
+    const handleTypingStart = (data: { conversationId: number; userId: number }) => {
+      if (data.conversationId !== selectedConversation.id) return;
+      if (data.userId === currentUserId) return;
+      setTypingUsers((prev) => (prev.includes(data.userId) ? prev : [...prev, data.userId]));
+    };
+
+    const handleTypingStop = (data: { conversationId: number; userId: number }) => {
+      if (data.conversationId !== selectedConversation.id) return;
+      setTypingUsers((prev) => prev.filter((id) => id !== data.userId));
+    };
+
+    // Clear typing state when switching conversations
+    setTypingUsers([]);
+
+    socket.on('typing:user-started', handleTypingStart);
+    socket.on('typing:user-stopped', handleTypingStop);
+    return () => {
+      socket.off('typing:user-started', handleTypingStart);
+      socket.off('typing:user-stopped', handleTypingStop);
     };
   }, [socket, connected, selectedConversation, currentUserId]);
 
