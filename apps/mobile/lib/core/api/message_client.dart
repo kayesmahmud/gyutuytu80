@@ -65,12 +65,14 @@ class MessageClient {
   // MESSAGES
   // ==========================================
 
-  /// Get messages for a conversation with pagination
-  Future<ApiResponse<List<Message>>> getMessages(int conversationId, {int page = 1, int limit = 50}) async {
+  /// Get messages for a conversation with cursor-based pagination
+  Future<ApiResponse<List<Message>>> getMessages(int conversationId, {String? before, int limit = 50}) async {
     try {
+      final queryParams = <String, dynamic>{'limit': limit};
+      if (before != null) queryParams['before'] = before;
       final response = await _dio.get(
         '/messages/conversations/$conversationId',
-        queryParameters: {'page': page, 'limit': limit},
+        queryParameters: queryParams,
       );
 
       if (response.data['success'] == true) {

@@ -225,15 +225,15 @@ class SocketService {
       }
     });
 
-    // Online/offline events
-    _socket!.on('user:online', (data) {
-      final userId = data is int ? data : (data['userId'] as int? ?? 0);
-      _userOnlineController.add(userId);
-    });
-
-    _socket!.on('user:offline', (data) {
-      final userId = data is int ? data : (data['userId'] as int? ?? 0);
-      _userOfflineController.add(userId);
+    // Online/offline events — backend emits 'user:status' with {userId, isOnline}
+    _socket!.on('user:status', (data) {
+      final userId = data['userId'] as int? ?? 0;
+      final isOnline = data['isOnline'] as bool? ?? false;
+      if (isOnline) {
+        _userOnlineController.add(userId);
+      } else {
+        _userOfflineController.add(userId);
+      }
     });
 
     // Error events

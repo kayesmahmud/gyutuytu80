@@ -487,7 +487,7 @@ class _ShopScreenState extends State<ShopScreen> {
           Stack(
             children: [
               AspectRatio(
-                aspectRatio: 2.2,
+                aspectRatio: 1290 / 552, // Match recommended cover size
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(

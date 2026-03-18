@@ -15,7 +15,6 @@ class ChatProvider extends ChangeNotifier {
   List<Conversation> _conversations = [];
   Map<int, List<Message>> _messagesByConversation = {};
   final Map<int, bool> _hasMoreMessages = {};
-  final Map<int, int> _messagePages = {};
   static const int _messagesPerPage = 50;
   Set<int> _onlineUsers = {};
   Map<int, Set<int>> _typingUsers = {}; // conversationId -> typing userIds
@@ -83,10 +82,15 @@ class ChatProvider extends ChangeNotifier {
   }
 
   void _setupSocketListeners() {
-    // Connection status
+    // Connection status — re-sync on reconnect to pick up missed messages
     _subscriptions.add(
       _socketService.connectionStream.listen((connected) {
+        final wasDisconnected = !_isConnected;
         _isConnected = connected;
+        if (connected && wasDisconnected) {
+          loadConversations();
+          loadUnreadCount();
+        }
         notifyListeners();
       }),
     );
@@ -262,13 +266,13 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load messages for a conversation (first page)
+  /// Load messages for a conversation (initial load)
   Future<void> loadMessages(int conversationId) async {
-    _messagePages[conversationId] = 1;
-    final response = await _messageClient.getMessages(conversationId, page: 1, limit: _messagesPerPage);
+    final response = await _messageClient.getMessages(conversationId, limit: _messagesPerPage);
 
     if (response.success && response.data != null) {
-      _messagesByConversation[conversationId] = response.data!;
+      // Reverse: API returns [oldest→newest] but reverse ListView needs [newest→oldest]
+      _messagesByConversation[conversationId] = response.data!.reversed.toList();
       _hasMoreMessages[conversationId] = response.data!.length >= _messagesPerPage;
       notifyListeners();
     } else {
@@ -276,17 +280,22 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  /// Load older messages for a conversation (pagination)
+  /// Load older messages for a conversation (cursor-based pagination)
   Future<void> loadMoreMessages(int conversationId) async {
     if (!(_hasMoreMessages[conversationId] ?? true)) return;
 
-    final nextPage = (_messagePages[conversationId] ?? 1) + 1;
-    final response = await _messageClient.getMessages(conversationId, page: nextPage, limit: _messagesPerPage);
+    final messages = _messagesByConversation[conversationId];
+    if (messages == null || messages.isEmpty) return;
+
+    // Last item = oldest message (list is [newest→oldest]), use as cursor
+    final oldestMessage = messages.last;
+    final before = oldestMessage.createdAt.toUtc().toIso8601String();
+
+    final response = await _messageClient.getMessages(conversationId, before: before, limit: _messagesPerPage);
 
     if (response.success && response.data != null) {
-      _messagesByConversation[conversationId] ??= [];
-      _messagesByConversation[conversationId]!.addAll(response.data!);
-      _messagePages[conversationId] = nextPage;
+      // Reverse: older messages appended at end (higher index = top of reversed ListView)
+      _messagesByConversation[conversationId]!.addAll(response.data!.reversed.toList());
       _hasMoreMessages[conversationId] = response.data!.length >= _messagesPerPage;
       notifyListeners();
     }
@@ -405,6 +414,8 @@ class ChatProvider extends ChangeNotifier {
 
     if (response.success && response.data != null) {
       _conversations.insert(0, response.data!);
+      // Join the socket room for real-time messages in this new conversation
+      _socketService.joinConversation(response.data!.id);
       notifyListeners();
       return response.data;
     }

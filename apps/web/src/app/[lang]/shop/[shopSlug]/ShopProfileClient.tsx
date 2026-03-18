@@ -503,7 +503,7 @@ export default function ShopProfileClient({
                 image={cropperModal.imageSrc}
                 crop={crop}
                 zoom={zoom}
-                aspect={cropperModal.type === 'avatar' ? 1 : 4 / 1}
+                aspect={cropperModal.type === 'avatar' ? 1 : 1290 / 552}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}

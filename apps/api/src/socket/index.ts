@@ -71,6 +71,32 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
     initializeSupportHandlers(io, authSocket);
 
     // =====================
+    // DYNAMIC ROOM JOINING
+    // =====================
+
+    socket.on('room:join', async (payload: { room: string }) => {
+      try {
+        const room = payload?.room;
+        if (!room || !room.startsWith('conversation:')) return;
+
+        const convId = parseInt(room.split(':')[1]);
+        if (isNaN(convId)) return;
+
+        // Verify the user is a participant before joining
+        const isMember = await prisma.conversation_participants.findFirst({
+          where: { user_id: userId, conversation_id: convId },
+        });
+
+        if (isMember) {
+          socket.join(room);
+          console.log(`📨 User ${userId} dynamically joined room: ${room}`);
+        }
+      } catch (err) {
+        console.error('Error in room:join:', err);
+      }
+    });
+
+    // =====================
     // DISCONNECT
     // =====================
 

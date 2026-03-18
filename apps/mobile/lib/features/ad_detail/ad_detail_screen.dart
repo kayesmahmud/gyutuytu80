@@ -523,16 +523,26 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                   ),
                                 ),
                               ),
-                            if (ad.isNegotiable)
+                            if (ad.isNegotiable ||
+                                ad.attributes?['isNegotiable'] == true)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF59E0B),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  context.locale.languageCode == 'ne' ? 'मोलमोलाई योग्य' : 'Negotiable',
-                                  style: GoogleFonts.inter(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600),
+                                  context.locale.languageCode == 'ne'
+                                      ? 'मोलमोलाई योग्य'
+                                      : 'Negotiable',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             // Promotion badges
@@ -641,12 +651,18 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    if (ad.locationType != null && ad.locationType!.isNotEmpty)
+                                    if (ad.locationType != null &&
+                                        ad.locationType!.isNotEmpty)
                                       Padding(
                                         padding: const EdgeInsets.only(top: 2),
                                         child: Text(
-                                          ad.locationType!.replaceAll('_', ' ').substring(0, 1).toUpperCase() +
-                                              ad.locationType!.replaceAll('_', ' ').substring(1),
+                                          ad.locationType!
+                                                  .replaceAll('_', ' ')
+                                                  .substring(0, 1)
+                                                  .toUpperCase() +
+                                              ad.locationType!
+                                                  .replaceAll('_', ' ')
+                                                  .substring(1),
                                           style: GoogleFonts.inter(
                                             fontSize: 12,
                                             color: const Color(0xFF6B7280),
@@ -673,46 +689,49 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   SellerCard(ad: ad),
 
                   // 9. REPORT LINK (hidden for ad owner)
-                  Builder(builder: (context) {
-                    final isOwner = context.read<AuthProvider>().userId == ad.userId;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: Opacity(
-                        opacity: isOwner ? 0.4 : 1.0,
-                        child: GestureDetector(
-                          onTap: isOwner
-                              ? null
-                              : () => showReportAdSheet(
+                  Builder(
+                    builder: (context) {
+                      final isOwner =
+                          context.read<AuthProvider>().userId == ad.userId;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Opacity(
+                          opacity: isOwner ? 0.4 : 1.0,
+                          child: GestureDetector(
+                            onTap: isOwner
+                                ? null
+                                : () => showReportAdSheet(
                                     context,
                                     adId: ad.id,
                                     adTitle: ad.title,
                                   ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                LucideIcons.flag,
-                                color: isOwner
-                                    ? const Color(0xFF9CA3AF)
-                                    : const Color(0xFFEF4444),
-                                size: 16,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'report.reportThisAd'.tr(),
-                                style: GoogleFonts.inter(
-                                  color: const Color(0xFF9CA3AF),
-                                  fontSize: 12,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.flag,
+                                  color: isOwner
+                                      ? const Color(0xFF9CA3AF)
+                                      : const Color(0xFFEF4444),
+                                  size: 16,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                Text(
+                                  'report.reportThisAd'.tr(),
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF9CA3AF),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    },
+                  ),
 
                   const SizedBox(height: 16),
 

@@ -69,8 +69,8 @@ export function initializeMessageHandlers(
         createdAt: message.created_at,
       };
 
-      // Broadcast to conversation room
-      io.to(`conversation:${conversationId}`).emit('message:new', messageData);
+      // Broadcast to conversation room (exclude sender — they have optimistic update)
+      socket.to(`conversation:${conversationId}`).emit('message:new', messageData);
 
       // Update last_read_at for sender
       await prisma.conversation_participants.updateMany({

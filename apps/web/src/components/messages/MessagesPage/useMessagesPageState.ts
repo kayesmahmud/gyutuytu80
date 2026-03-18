@@ -82,6 +82,25 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
     loadConversations();
   }, [token, loadConversations]);
 
+  // Re-sync on socket reconnect to pick up missed messages
+  useEffect(() => {
+    if (!socket || !connected || !token) return;
+
+    const handleReconnect = () => {
+      console.log('🔄 Socket reconnected — re-syncing conversations');
+      loadConversations();
+      // Re-fetch active conversation messages if one is selected
+      if (selectedConversation) {
+        handleSelectConversation(selectedConversation);
+      }
+    };
+
+    socket.io.on('reconnect', handleReconnect);
+    return () => {
+      socket.io.off('reconnect', handleReconnect);
+    };
+  }, [socket, connected, token, loadConversations, selectedConversation]);
+
   // Load announcement unread count
   useEffect(() => {
     if (!token) return;
@@ -179,6 +198,11 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
     try {
       setSelectedConversation(conversation);
 
+      // Ensure socket is in this conversation's room (handles new/REST-created conversations)
+      if (socket && connected) {
+        socket.emit('room:join', { room: `conversation:${conversation.id}` });
+      }
+
       const response = await messagingApi.getConversation(token, conversation.id);
       const conversationData = response.data;
       setSelectedConversation(conversationData);
@@ -194,7 +218,7 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
       console.error('Failed to load conversation:', err);
       setError(err.message);
     }
-  }, [token, markAsRead]);
+  }, [token, markAsRead, socket, connected]);
 
   // Send message handler
   const handleSendMessage = useCallback(async (content: string, type: string = 'text', attachmentUrl?: string) => {
