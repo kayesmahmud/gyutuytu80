@@ -59,6 +59,17 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
         pathname: '/**',
       },
+      // Lorem Picsum (blog placeholder images)
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'fastly.picsum.photos',
+        pathname: '/**',
+      },
       // OAuth providers
       {
         protocol: 'https',
