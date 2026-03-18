@@ -417,7 +417,7 @@ export default function ChatWindow({
                   <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                   <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
-                <span className="text-sm">typing...</span>
+                <span className="text-sm">{otherParticipant?.fullName || 'Someone'} is typing...</span>
               </div>
             )}
 
