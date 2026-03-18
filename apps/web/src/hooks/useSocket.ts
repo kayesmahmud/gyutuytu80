@@ -37,10 +37,11 @@ export function useSocket({ token, autoConnect = true }: UseSocketOptions) {
       return;
     }
 
-    // Require explicit backend URL to avoid spamming localhost:5000 when backend isn't running
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    // Build socket URL: use NEXT_PUBLIC_BACKEND_URL, or construct from API hostname (for browser access)
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+      || (process.env.NEXT_PUBLIC_API_HOSTNAME ? `https://${process.env.NEXT_PUBLIC_API_HOSTNAME}` : null);
     if (!backendUrl) {
-      console.warn('⚠️ [useSocket] No NEXT_PUBLIC_BACKEND_URL set, skipping socket connection');
+      console.warn('⚠️ [useSocket] No backend URL set, skipping socket connection');
       return;
     }
 

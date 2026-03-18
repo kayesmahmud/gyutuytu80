@@ -54,7 +54,7 @@ export default function MessagesPage() {
     return <TokenErrorState error={tokenError} />;
   }
 
-  const isRealtimeConfigured = typeof window !== 'undefined' && !!process.env.NEXT_PUBLIC_BACKEND_URL;
+  const isRealtimeConfigured = typeof window !== 'undefined' && !!(process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_HOSTNAME);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
