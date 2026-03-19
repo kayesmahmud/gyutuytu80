@@ -146,6 +146,18 @@ export {
 } from './editors';
 
 // ============================================
+// Notifications Functions
+// ============================================
+export {
+  broadcastNotification,
+  scheduleNotification,
+  getScheduledNotifications,
+  updateScheduledNotification,
+  deleteScheduledNotification,
+} from './notifications';
+export type { ScheduledNotification } from './notifications';
+
+// ============================================
 // Helper utilities
 // ============================================
 export { getBadgeClasses, getTimeAgo, getStatusBadgeVariant, getPriorityBadgeClasses, formatNumber, truncateText } from './editorHelpers';

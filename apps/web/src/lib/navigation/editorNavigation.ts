@@ -96,6 +96,16 @@ export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}
       ],
     },
     {
+      title: 'Communication',
+      items: [
+        {
+          href: `/${lang}/editor/notifications`,
+          icon: 'Bell',
+          label: 'Notifications',
+        },
+      ],
+    },
+    {
       title: 'Tools',
       items: [
         {
