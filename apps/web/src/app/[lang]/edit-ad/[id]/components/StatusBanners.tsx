@@ -9,7 +9,7 @@ export function RejectionBanner({ rejectionReason }: RejectionBannerProps) {
     <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-400 border-l-[6px] border-l-red-600 rounded-xl p-6 mb-8 shadow">
       <div className="flex gap-4 items-start">
         <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-2xl">warning</span>
+          <span className="text-2xl">⚠️</span>
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-3">
@@ -24,7 +24,7 @@ export function RejectionBanner({ rejectionReason }: RejectionBannerProps) {
           </p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex gap-2 items-start">
-              <span className="text-xl flex-shrink-0">info</span>
+              <span className="text-xl flex-shrink-0">ℹ️</span>
               <div className="text-sm text-blue-900">
                 <p className="font-semibold mb-2">What to do next:</p>
                 <ol className="list-decimal ml-4 space-y-1">
@@ -47,7 +47,7 @@ export function ApprovedBanner() {
     <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-400 border-l-[6px] border-l-green-600 rounded-xl p-6 mb-8 shadow">
       <div className="flex gap-4 items-start">
         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-2xl">lock</span>
+          <span className="text-2xl">✅</span>
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-green-900 mb-3">Ad Approved & Published</h3>
