@@ -1,6 +1,4 @@
-# Thulo Bazaar Monorepo
 
-A modern, **production-ready** monorepo for Thulo Bazaar marketplace platform, supporting Web (Next.js), iOS, and Android (React Native) with **60-70% shared code**.
 
 ## ✅ Code Quality
 
