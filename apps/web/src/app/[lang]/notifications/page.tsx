@@ -145,7 +145,8 @@ export default function NotificationsPage() {
       setIsLoading(true);
       const response = await apiClient.getNotifications(pageNum, 20);
       if (response.success && response.data) {
-        const items = response.data.data;
+        // response.data may be the array directly or { data: [...], pagination: {...} }
+        const items = Array.isArray(response.data) ? response.data : response.data.data;
         if (refresh) {
           setNotifications(items);
         } else {
@@ -163,8 +164,10 @@ export default function NotificationsPage() {
   const fetchUnreadCount = useCallback(async () => {
     try {
       const response = await apiClient.getUnreadNotificationCount();
-      if (response.success && response.data) {
-        setUnreadCount(response.data.count || 0);
+      if (response.success) {
+        // API returns { success: true, count: N } directly
+        const count = (response as any).count ?? (response.data as any)?.count ?? 0;
+        setUnreadCount(count);
       }
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
