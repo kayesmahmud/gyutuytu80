@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/core/widgets/app_cached_image.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -623,19 +624,17 @@ class _ChatScreenState extends State<ChatScreen> {
                   onTap: () => _showFullImage(context, message.attachmentUrl!),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: CachedNetworkImage(
+                    child: AppCachedImage(
                       imageUrl: _getFullImageUrl(message.attachmentUrl!),
                       width: 220,
                       fit: BoxFit.cover,
                       memCacheWidth: 440,
-                      fadeInDuration: const Duration(milliseconds: 200),
-                      fadeOutDuration: const Duration(milliseconds: 200),
-                      placeholder: (_, __) => Container(
+                      placeholder: Container(
                         width: 220,
                         height: 160,
                         color: Colors.grey[300],
                       ),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: Container(
                         width: 220,
                         height: 160,
                         color: Colors.grey[300],
@@ -701,7 +700,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           body: Center(
             child: InteractiveViewer(
-              child: CachedNetworkImage(
+              child: AppCachedImage(
                 imageUrl: _getFullImageUrl(url),
                 fit: BoxFit.contain,
               ),

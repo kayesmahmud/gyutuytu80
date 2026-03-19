@@ -8,6 +8,7 @@ import '../../core/models/promotion.dart';
 import '../../core/models/payment.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/utils/localized_helpers.dart';
+import '../../core/widgets/app_cached_image.dart';
 import '../payment/gateway_selector.dart';
 
 /// Promote Ad Screen - allows any user to promote any ad
@@ -342,10 +343,9 @@ class _PromoteAdScreenState extends State<PromoteAdScreen> {
             ),
             clipBehavior: Clip.antiAlias,
             child: widget.adThumbnail != null
-                ? Image.network(
-                    widget.adThumbnail!,
+                ? AppCachedImage(
+                    imageUrl: widget.adThumbnail!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(LucideIcons.image, color: Colors.grey),
                   )
                 : const Icon(LucideIcons.image, color: Colors.grey),
           ),

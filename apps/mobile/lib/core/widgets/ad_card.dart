@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../api/api_config.dart';
@@ -11,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../utils/localized_helpers.dart';
 import '../utils/page_transitions.dart';
 import '../../features/ad_detail/ad_detail_screen.dart';
+import 'app_cached_image.dart';
 import 'tap_scale.dart';
 import 'shimmer_badge.dart';
 
@@ -76,25 +76,11 @@ class AdCard extends StatelessWidget {
                         top: Radius.circular(12),
                       ),
                       child: imageUrl != null
-                          ? CachedNetworkImage(
+                          ? AppCachedImage(
                               imageUrl: imageUrl,
                               width: double.infinity,
                               fit: BoxFit.cover,
                               memCacheWidth: 400,
-                              fadeInDuration: const Duration(milliseconds: 200),
-                              fadeOutDuration: const Duration(
-                                milliseconds: 200,
-                              ),
-                              placeholder: (context, url) =>
-                                  Container(color: Colors.grey[100]),
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey[100],
-                                child: Icon(
-                                  LucideIcons.image,
-                                  size: 40,
-                                  color: Colors.grey[300],
-                                ),
-                              ),
                             )
                           : Container(
                               color: Colors.grey[100],

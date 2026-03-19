@@ -61,6 +61,7 @@ dependencies:
 
   marionette_flutter: any
   easy_localization: ^3.0.8
+  flutter_avif: ^3.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

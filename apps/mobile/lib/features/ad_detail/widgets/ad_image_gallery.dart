@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:like_button/like_button.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
+import 'package:mobile/core/widgets/app_cached_image.dart';
 
 class AdImageGallery extends StatefulWidget {
   final AdWithDetails ad;
@@ -88,15 +88,12 @@ class _AdImageGalleryState extends State<AdImageGallery> {
             });
           },
           itemBuilder: (context, index) {
-            final image = CachedNetworkImage(
+            final image = AppCachedImage(
               imageUrl: images[index],
               fit: BoxFit.cover,
               memCacheWidth: 800,
-              fadeInDuration: const Duration(milliseconds: 200),
-              fadeOutDuration: const Duration(milliseconds: 200),
-              placeholder: (context, url) => Container(color: Colors.grey[200]),
-              errorWidget: (context, url, err) =>
-                  Container(color: Colors.grey[200]),
+              placeholder: Container(color: Colors.grey[200]),
+              errorWidget: Container(color: Colors.grey[200]),
             );
             final zoomable = InteractiveViewer(
               transformationController: _transformController,

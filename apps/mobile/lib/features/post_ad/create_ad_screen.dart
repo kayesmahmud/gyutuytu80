@@ -10,7 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dio/dio.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:mobile/core/widgets/app_cached_image.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
@@ -1389,19 +1389,12 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                               ),
                               clipBehavior: Clip.antiAlias,
                               child: isExisting
-                                  ? CachedNetworkImage(
+                                  ? AppCachedImage(
                                       imageUrl: ApiConfig.getAdImageUrl(
                                         _existingImagePaths[index],
                                       ),
                                       fit: BoxFit.cover,
                                       width: 100,
-                                      height: double.infinity,
-                                      placeholder: (_, __) =>
-                                          Container(color: Colors.grey[200]),
-                                      errorWidget: (_, __, ___) => Icon(
-                                        LucideIcons.image,
-                                        color: Colors.grey[400],
-                                      ),
                                     )
                                   : Image.file(
                                       File(

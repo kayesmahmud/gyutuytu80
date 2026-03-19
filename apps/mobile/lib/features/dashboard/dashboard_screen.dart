@@ -5,7 +5,7 @@ import 'package:mobile/core/utils/localized_helpers.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:mobile/core/widgets/app_cached_image.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
@@ -665,17 +665,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 80,
                   color: Colors.grey[100],
                   child: imageUrl != null
-                      ? CachedNetworkImage(
+                      ? AppCachedImage(
                           imageUrl: imageUrl,
                           fit: BoxFit.cover,
                           memCacheWidth: 200,
-                          memCacheHeight: 200,
-                          fadeInDuration: const Duration(milliseconds: 200),
-                          fadeOutDuration: const Duration(milliseconds: 200),
-                          placeholder: (context, url) =>
-                              Container(color: Colors.grey[100]),
-                          errorWidget: (context, url, error) =>
-                              Icon(LucideIcons.image, color: Colors.grey[400]),
                         )
                       : Icon(LucideIcons.image, color: Colors.grey[400]),
                 ),

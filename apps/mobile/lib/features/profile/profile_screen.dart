@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:mobile/core/widgets/app_cached_image.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
@@ -1403,21 +1404,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                       height: 90,
                       color: Colors.grey[100],
                       child: imageUrl != null
-                          ? CachedNetworkImage(
+                          ? AppCachedImage(
                               imageUrl: imageUrl,
                               fit: BoxFit.cover,
                               memCacheWidth: 200,
-                              memCacheHeight: 200,
-                              fadeInDuration: const Duration(milliseconds: 200),
-                              fadeOutDuration: const Duration(
-                                milliseconds: 200,
-                              ),
-                              placeholder: (context, url) =>
-                                  Container(color: Colors.grey[100]),
-                              errorWidget: (context, url, error) => Icon(
-                                LucideIcons.image,
-                                color: Colors.grey[400],
-                              ),
                             )
                           : Icon(LucideIcons.image, color: Colors.grey[400]),
                     ),
