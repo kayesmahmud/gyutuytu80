@@ -6,6 +6,7 @@
 import { prisma } from '@thulobazaar/database';
 import { initiatePayment, verifyPayment, getAvailableGateways, decodeEsewaCallback } from '../lib/payment/index.js';
 import type { PaymentGateway, PaymentType } from '../lib/payment/types.js';
+import { sendNotification } from './notification.service.js';
 
 // ============================================================================
 // Types
@@ -291,6 +292,19 @@ export async function handlePaymentSuccess(
         await handleBusinessVerificationSuccess(transaction, relatedId);
         break;
     }
+
+    // Notify user of successful payment
+    const paymentLabel = paymentType.replace(/_/g, ' ');
+    sendNotification({
+      recipientUserIds: [transaction.user_id],
+      type: 'payment_confirmed',
+      title: 'Payment Confirmed',
+      body: `Payment of Rs. ${transaction.amount} confirmed for ${paymentLabel}`,
+      data: {
+        route: paymentType === 'ad_promotion' ? '/promotion' : '/verification',
+        paymentType,
+      },
+    }).catch((err) => console.error('Notification error:', err));
   } catch (error) {
     console.error('Error handling payment success:', error);
   }

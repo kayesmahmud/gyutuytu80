@@ -7,6 +7,7 @@
 
 import cron from 'node-cron';
 import { prisma } from '@thulobazaar/database';
+import { sendNotification } from '../services/notification.service.js';
 
 /**
  * Deactivate all expired promotions and clear their flags
@@ -73,6 +74,23 @@ export async function cleanupExpiredPromotions(): Promise<{ deactivated: number 
         console.log(
           `  ✅ Deactivated ${promo.promotion_type} for ad #${promo.ad_id} (expired: ${promo.expires_at.toISOString()})`
         );
+
+        // #19 — Notify the promotion owner
+        // Need to look up user_id since we only selected limited fields
+        const fullPromo = await prisma.ad_promotions.findUnique({
+          where: { id: promo.id },
+          select: { user_id: true, ads: { select: { title: true } } },
+        });
+        if (fullPromo) {
+          sendNotification({
+            recipientUserIds: [fullPromo.user_id],
+            type: 'promotion_expired',
+            title: 'Promotion Ended',
+            body: `The ${promo.promotion_type} promotion on "${fullPromo.ads?.title || 'your ad'}" has ended. Promote again to boost visibility!`,
+            data: { adId: String(promo.ad_id), route: '/promotion' },
+            referenceId: promo.id,
+          }).catch(err => console.error(`❌ [Cron] promotion_expired notif error:`, err));
+        }
       } catch (error) {
         console.error(`  ❌ Failed to deactivate promotion #${promo.id}:`, error);
       }

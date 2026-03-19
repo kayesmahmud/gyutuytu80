@@ -9,7 +9,7 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { apiClient } from '@/lib/api';
-import { User, LayoutDashboard, Store, LogOut } from 'lucide-react';
+import { User, LayoutDashboard, Store, LogOut, Bell } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
@@ -33,6 +33,7 @@ export default function Header({ lang }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Check both user and staff auth
@@ -101,6 +102,25 @@ export default function Header({ lang }: HeaderProps) {
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, [fetchUnreadCount]);
+
+  // Fetch notification unread count
+  const fetchNotificationUnreadCount = useCallback(async () => {
+    if (!isUserAuthenticated || staff) return;
+    try {
+      const response = await apiClient.getUnreadNotificationCount();
+      if (response.success && response.data) {
+        setNotificationUnreadCount(response.data.count || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notification unread count:', error);
+    }
+  }, [isUserAuthenticated, staff]);
+
+  useEffect(() => {
+    fetchNotificationUnreadCount();
+    const interval = setInterval(fetchNotificationUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotificationUnreadCount]);
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
@@ -244,18 +264,33 @@ export default function Header({ lang }: HeaderProps) {
                 </Link>
 
                 {isAuthenticated && (
-                  <Link
-                    href={`/${lang}/messages`}
-                    className={`relative no-underline font-medium text-sm ${pathname?.includes('/messages') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
-                      } transition-colors`}
-                  >
-                    {t('inbox')}
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-3 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </Link>
+                  <>
+                    <Link
+                      href={`/${lang}/messages`}
+                      className={`relative no-underline font-medium text-sm ${pathname?.includes('/messages') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
+                        } transition-colors`}
+                    >
+                      {t('inbox')}
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-2 -right-3 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </Link>
+                    <Link
+                      href={`/${lang}/notifications`}
+                      className={`relative no-underline text-sm ${pathname?.includes('/notifications') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
+                        } transition-colors`}
+                      aria-label="Notifications"
+                    >
+                      <Bell className="w-5 h-5" />
+                      {notificationUnreadCount > 0 && (
+                        <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                          {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                        </span>
+                      )}
+                    </Link>
+                  </>
                 )}
               </>
             )}
@@ -519,6 +554,15 @@ export default function Header({ lang }: HeaderProps) {
                     <Link href={`/${lang}/dashboard`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
                       <LayoutDashboard className="w-5 h-5 text-gray-500" />
                       {t('dashboard')}
+                    </Link>
+                    <Link href={`/${lang}/notifications`} onClick={() => setMobileMenuOpen(false)} className="relative flex items-center gap-3 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
+                      <Bell className="w-5 h-5 text-gray-500" />
+                      {t('notifications') || 'Notifications'}
+                      {notificationUnreadCount > 0 && (
+                        <span className="ml-auto min-w-[20px] h-[20px] bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                          {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+                        </span>
+                      )}
                     </Link>
 
                     {/* My Shop - for all users with shop slug */}

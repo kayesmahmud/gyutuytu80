@@ -3,6 +3,7 @@ import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError, ValidationError } from '../../middleware/errorHandler.js';
 import { authenticateToken } from '../../middleware/auth.js';
 import { logReviewHistory } from '../../utils/responseHelpers.js';
+import { sendNotification } from '../../services/notification.service.js';
 
 const router = Router();
 
@@ -199,6 +200,27 @@ router.put(
     );
 
     console.log(`✅ Ad ${id} status updated to ${status}`);
+
+    // Send push notification to ad owner
+    if (status === 'approved') {
+      sendNotification({
+        recipientUserIds: [ad.user_id],
+        type: 'ad_approved',
+        title: 'Ad Approved!',
+        body: `Your ad "${ad.title}" is now live!`,
+        data: { route: '/ad', adId: String(ad.id) },
+        referenceId: ad.id,
+      }).catch((err) => console.error('Notification error:', err));
+    } else if (status === 'rejected') {
+      sendNotification({
+        recipientUserIds: [ad.user_id],
+        type: 'ad_rejected',
+        title: 'Ad Not Approved',
+        body: `Your ad "${ad.title}" was not approved: ${rejection_reason || 'See details'}`,
+        data: { route: '/ad', adId: String(ad.id) },
+        referenceId: ad.id,
+      }).catch((err) => console.error('Notification error:', err));
+    }
 
     res.json({
       success: true,

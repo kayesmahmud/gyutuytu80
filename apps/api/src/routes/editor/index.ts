@@ -9,6 +9,7 @@ import editorsRoutes from './editors.routes.js';
 import statsRoutes from './stats.routes.js';
 import reportsRoutes from './reports.routes.js';
 import categoriesRoutes from './categories.routes.js';
+import notificationsRoutes from './notifications.routes.js';
 
 const router = Router();
 
@@ -38,5 +39,8 @@ router.use('/', reportsRoutes);
 
 // Categories routes: /categories, /categories/:id
 router.use('/categories', categoriesRoutes);
+
+// Notifications routes: /notifications/broadcast, /notifications/schedule, /notifications/scheduled
+router.use('/notifications', notificationsRoutes);
 
 export default router;

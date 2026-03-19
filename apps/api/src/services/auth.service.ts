@@ -6,6 +6,7 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { prisma } from '@thulobazaar/database';
+import { sendNotification } from './notification.service.js';
 import {
   validateNepaliPhone,
   formatPhoneNumber,
@@ -493,6 +494,15 @@ export async function registerWithPhone(
 
   console.log(`📱 New user registered via phone: ${formattedPhone} (userId: ${user.id})`);
 
+  // Send welcome notification (fire-and-forget)
+  sendNotification({
+    recipientUserIds: [user.id],
+    type: 'welcome',
+    title: 'Welcome to Thulo Bazaar!',
+    body: 'Start browsing or post your first ad today. Happy selling!',
+    data: { route: '/post-ad' },
+  }).catch(err => console.error('Welcome notification error:', err));
+
   return {
     success: true,
     token: accessToken,
@@ -606,6 +616,15 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
       });
 
       console.log(`✅ New Google user created: ${email} (userId: ${user.id})`);
+
+      // Send welcome notification (fire-and-forget)
+      sendNotification({
+        recipientUserIds: [user.id],
+        type: 'welcome',
+        title: 'Welcome to Thulo Bazaar!',
+        body: 'Start browsing or post your first ad today. Happy selling!',
+        data: { route: '/post-ad' },
+      }).catch(err => console.error('Welcome notification error:', err));
     } else {
       // Update existing user with Google info if needed (e.g. if they didn't have googleId linked)
       if (!user.oauth_provider_id) {

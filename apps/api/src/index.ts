@@ -5,6 +5,7 @@ import { initializeSocketIO } from './socket/index.js';
 import { schedulePromotionCleanup } from './jobs/promotionCleanup.js';
 import { scheduleVerificationCleanup } from './jobs/verificationCleanup.js';
 import { scheduleAdExpiry } from './jobs/adExpiry.js';
+import { scheduleNotificationCron } from './jobs/notificationCron.js';
 
 // Validate required environment variables
 validateConfig();
@@ -55,4 +56,5 @@ httpServer.listen(config.PORT, '0.0.0.0', () => {
   schedulePromotionCleanup();
   scheduleVerificationCleanup();
   scheduleAdExpiry();
+  scheduleNotificationCron();
 });

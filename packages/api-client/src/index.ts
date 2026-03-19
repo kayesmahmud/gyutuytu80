@@ -45,6 +45,7 @@ import { createSuperAdminMethods } from './methods/superAdmin';
 import { createEditorMethods } from './methods/editor';
 import { createAdminMethods } from './methods/admin';
 import { createFinancialMethods } from './methods/financial';
+import { createNotificationMethods } from './methods/notifications';
 
 /**
  * Full API Client with all methods
@@ -163,6 +164,13 @@ export class ApiClient extends BaseApiClient {
   updatePromotionPricing: ReturnType<typeof createFinancialMethods>['updatePromotionPricing'];
   createPromotionPricing: ReturnType<typeof createFinancialMethods>['createPromotionPricing'];
   deletePromotionPricing: ReturnType<typeof createFinancialMethods>['deletePromotionPricing'];
+
+  // Notifications
+  getNotifications: ReturnType<typeof createNotificationMethods>['getNotifications'];
+  getUnreadNotificationCount: ReturnType<typeof createNotificationMethods>['getUnreadNotificationCount'];
+  markNotificationRead: ReturnType<typeof createNotificationMethods>['markNotificationRead'];
+  markAllNotificationsRead: ReturnType<typeof createNotificationMethods>['markAllNotificationsRead'];
+  deleteNotification: ReturnType<typeof createNotificationMethods>['deleteNotification'];
 
   constructor(config: ApiClientConfig) {
     super(config);
@@ -292,6 +300,14 @@ export class ApiClient extends BaseApiClient {
     this.updatePromotionPricing = financialMethods.updatePromotionPricing;
     this.createPromotionPricing = financialMethods.createPromotionPricing;
     this.deletePromotionPricing = financialMethods.deletePromotionPricing;
+
+    // Bind notification methods
+    const notificationMethods = createNotificationMethods(this.client);
+    this.getNotifications = notificationMethods.getNotifications;
+    this.getUnreadNotificationCount = notificationMethods.getUnreadNotificationCount;
+    this.markNotificationRead = notificationMethods.markNotificationRead;
+    this.markAllNotificationsRead = notificationMethods.markAllNotificationsRead;
+    this.deleteNotification = notificationMethods.deleteNotification;
   }
 }
 

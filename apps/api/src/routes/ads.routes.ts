@@ -24,6 +24,7 @@ import {
   calculateExpiresAt,
   getBooleanSetting,
 } from '../services/adLimits.service.js';
+import { sendNotification } from '../services/notification.service.js';
 
 const router = Router();
 
@@ -120,6 +121,11 @@ router.get(
     }
 
     await incrementAdViews(ad.id);
+    if (req.user?.userId) {
+      prisma.ad_views.create({
+        data: { ad_id: ad.id, user_id: req.user.userId, ip_address: req.ip },
+      }).catch(() => {});
+    }
     res.json({ success: true, data: ad });
   })
 );
@@ -143,6 +149,11 @@ router.get(
     }
 
     await incrementAdViews(ad.id);
+    if (req.user?.userId) {
+      prisma.ad_views.create({
+        data: { ad_id: ad.id, user_id: req.user.userId, ip_address: req.ip },
+      }).catch(() => {});
+    }
     res.json({ success: true, data: ad });
   })
 );
@@ -284,6 +295,38 @@ router.put(
       condition,
       customFields,
     });
+
+    // Track price changes and notify favorites on price drop
+    const newPrice = price !== undefined ? parseFloat(price) : undefined;
+    if (newPrice && existingAd.price && Number(existingAd.price) !== newPrice) {
+      prisma.ad_price_history.create({
+        data: {
+          ad_id: ad.id,
+          old_price: existingAd.price,
+          new_price: newPrice,
+        },
+      }).catch(err => console.error('Price history error:', err));
+
+      // Notify users who favorited this ad if price dropped
+      if (newPrice < Number(existingAd.price)) {
+        prisma.user_favorites.findMany({
+          where: { ad_id: ad.id },
+          select: { user_id: true },
+        }).then(favUsers => {
+          const recipients = favUsers.map(f => f.user_id).filter(uid => uid !== userId);
+          if (recipients.length > 0) {
+            sendNotification({
+              recipientUserIds: recipients,
+              type: 'price_drop',
+              title: 'Price Drop!',
+              body: `"${ad.title}": Rs. ${Number(existingAd.price).toLocaleString()} → Rs. ${newPrice.toLocaleString()}`,
+              data: { adId: String(ad.id), route: '/ad' },
+              referenceId: ad.id,
+            }).catch(err => console.error('Price drop notification error:', err));
+          }
+        }).catch(() => {});
+      }
+    }
 
     // Update images
     const files = req.files as Express.Multer.File[];

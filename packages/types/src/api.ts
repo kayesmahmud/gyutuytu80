@@ -467,3 +467,53 @@ export interface BlogPostListItem {
   author?: BlogAuthor;
   category?: BlogCategory;
 }
+
+// ============================================
+// NOTIFICATION TYPES
+// ============================================
+
+export type NotificationType =
+  | 'ad_approved'
+  | 'ad_rejected'
+  | 'ad_suspended'
+  | 'ad_unsuspended'
+  | 'verification_approved'
+  | 'verification_rejected'
+  | 'new_inquiry'
+  | 'payment_confirmed'
+  | 'new_message'
+  | 'ad_expiring'
+  | 'ad_expired'
+  | 'verification_expiring'
+  | 'verification_expired'
+  | 'promotion_started'
+  | 'promotion_expiring'
+  | 'promotion_expired'
+  | 'price_drop'
+  | 'unread_messages_reminder'
+  | 'abandoned_bookmark'
+  | 'win_back'
+  | 'weekly_bookmarks'
+  | 'favorite_removed'
+  | 'ad_views_milestone'
+  | 'viewed_not_acted'
+  | 'inquiry_reply'
+  | 'better_deal_nearby'
+  | 'new_ad_area'
+  | 'trending_area'
+  | 'nearby_seller'
+  | 'welcome'
+  | 'announcement';
+
+export interface AppNotification {
+  id: number;
+  userId: number;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: Record<string, unknown> | null;
+  imageUrl: string | null;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+}

@@ -5,8 +5,8 @@
  * ⚠️ CRITICAL: Always use these transformers when converting DB data to API responses!
  */
 
-import type { DbUser, DbAd, DbCategory, DbLocation, DbBlogAuthor, DbBlogCategory, DbBlogTag, DbBlogPost } from './database';
-import type { User, Ad, Category, Location, BlogAuthor, BlogCategory, BlogTag, BlogPost, BlogPostListItem } from './api';
+import type { DbUser, DbAd, DbCategory, DbLocation, DbBlogAuthor, DbBlogCategory, DbBlogTag, DbBlogPost, DbNotification } from './database';
+import type { User, Ad, Category, Location, BlogAuthor, BlogCategory, BlogTag, BlogPost, BlogPostListItem, AppNotification, NotificationType } from './api';
 
 // ============================================
 // USER TRANSFORMERS
@@ -333,4 +333,23 @@ export function safeGet<T>(
   }
 
   return obj[key] as T;
+}
+
+// ============================================
+// NOTIFICATION TRANSFORMERS
+// ============================================
+
+export function transformDbNotificationToApi(db: DbNotification): AppNotification {
+  return {
+    id: db.id,
+    userId: db.user_id,
+    type: db.type as NotificationType,
+    title: db.title,
+    body: db.body,
+    data: db.data,
+    imageUrl: db.image_url,
+    isRead: db.is_read,
+    readAt: db.read_at?.toISOString() ?? null,
+    createdAt: db.created_at.toISOString(),
+  };
 }

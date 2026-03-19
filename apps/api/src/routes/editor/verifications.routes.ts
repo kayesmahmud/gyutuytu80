@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '@thulobazaar/database';
 import { catchAsync } from '../../middleware/errorHandler.js';
 import { authenticateToken } from '../../middleware/auth.js';
+import { sendNotification } from '../../services/notification.service.js';
 
 const router = Router();
 
@@ -157,6 +158,14 @@ router.post(
       });
 
       console.log(`✅ Business verification approved for request ${id} (user ${request.user_id})`);
+
+      sendNotification({
+        recipientUserIds: [request.user_id],
+        type: 'verification_approved',
+        title: 'Business Verified!',
+        body: `Your business "${request.business_name}" is now verified!`,
+        data: { route: '/verification', verificationType: 'business' },
+      }).catch((err) => console.error('Notification error:', err));
     } else {
       const request = await prisma.individual_verification_requests.update({
         where: { id: parseInt(id) },
@@ -181,6 +190,14 @@ router.post(
       });
 
       console.log(`✅ Individual verification approved for request ${id} (user ${request.user_id})`);
+
+      sendNotification({
+        recipientUserIds: [request.user_id],
+        type: 'verification_approved',
+        title: "You're Verified!",
+        body: 'Your identity has been verified. You now have a verified badge!',
+        data: { route: '/verification', verificationType: 'individual' },
+      }).catch((err) => console.error('Notification error:', err));
     }
 
     res.json({
@@ -222,6 +239,14 @@ router.post(
       });
 
       console.log(`❌ Business verification rejected for request ${id} (user ${request.user_id})`);
+
+      sendNotification({
+        recipientUserIds: [request.user_id],
+        type: 'verification_rejected',
+        title: 'Verification Not Approved',
+        body: `Business verification rejected: ${reason || 'See details'}`,
+        data: { route: '/verification', verificationType: 'business' },
+      }).catch((err) => console.error('Notification error:', err));
     } else {
       const request = await prisma.individual_verification_requests.update({
         where: { id: parseInt(id) },
@@ -241,6 +266,14 @@ router.post(
       });
 
       console.log(`❌ Individual verification rejected for request ${id} (user ${request.user_id})`);
+
+      sendNotification({
+        recipientUserIds: [request.user_id],
+        type: 'verification_rejected',
+        title: 'Verification Not Approved',
+        body: `Identity verification rejected: ${reason || 'See details'}`,
+        data: { route: '/verification', verificationType: 'individual' },
+      }).catch((err) => console.error('Notification error:', err));
     }
 
     res.json({

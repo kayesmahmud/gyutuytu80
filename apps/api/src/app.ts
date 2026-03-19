@@ -31,6 +31,7 @@ import supportRoutes from './routes/support.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
 import blogRoutes from './routes/blog.routes.js';
 import notificationRoutes from './routes/notifications.routes.js';
+import notificationCenterRoutes from './routes/notificationCenter.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -196,6 +197,7 @@ export function createApp(): Express {
   app.use('/api/reports', reportsRoutes);
   app.use('/api/blog', blogRoutes);
   app.use('/api/users', notificationRoutes);
+  app.use('/api/notifications', notificationCenterRoutes);
 
   // Public endpoint: Ad configuration for web + mobile
   app.get('/api/ad-config', async (_req, res) => {

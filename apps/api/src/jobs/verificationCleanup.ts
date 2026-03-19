@@ -7,6 +7,7 @@
 
 import cron from 'node-cron';
 import { prisma } from '@thulobazaar/database';
+import { sendNotification } from '../services/notification.service.js';
 
 /**
  * Expire all business verifications that have passed their expiry date
@@ -55,6 +56,15 @@ export async function cleanupExpiredBusinessVerifications(): Promise<{ expired: 
         console.log(
           `  ✅ Expired business verification for user #${user.id} (${user.email}) - ${user.business_name} (expired: ${user.business_verification_expires_at?.toISOString()})`
         );
+
+        // #15 — Notify user
+        sendNotification({
+          recipientUserIds: [user.id],
+          type: 'verification_expired',
+          title: 'Verification Expired',
+          body: `Your business verification${user.business_name ? ` for "${user.business_name}"` : ''} has expired. Renew to restore your verified badge.`,
+          data: { route: '/verification' },
+        }).catch(err => console.error(`❌ [Cron] verification_expired notif error:`, err));
       } catch (error) {
         console.error(`  ❌ Failed to expire verification for user #${user.id}:`, error);
       }
@@ -116,6 +126,15 @@ export async function cleanupExpiredIndividualVerifications(): Promise<{ expired
         console.log(
           `  ✅ Expired individual verification for user #${user.id} (${user.email}) - ${user.full_name} (expired: ${user.individual_verification_expires_at?.toISOString()})`
         );
+
+        // #15 — Notify user
+        sendNotification({
+          recipientUserIds: [user.id],
+          type: 'verification_expired',
+          title: 'Verification Expired',
+          body: 'Your individual verification has expired. Renew to restore your verified badge.',
+          data: { route: '/verification' },
+        }).catch(err => console.error(`❌ [Cron] verification_expired notif error:`, err));
       } catch (error) {
         console.error(`  ❌ Failed to expire verification for user #${user.id}:`, error);
       }

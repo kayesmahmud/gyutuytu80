@@ -9,11 +9,13 @@ import 'core/api/dio_client.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/providers/chat_provider.dart';
+import 'core/providers/notification_provider.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/ad_service.dart';
 import 'core/widgets/connectivity_wrapper.dart';
 import 'features/main_nav/main_nav_screen.dart';
 import 'features/messages/chat_screen.dart';
+import 'features/notifications/notification_screen.dart';
 
 /// Global navigator key for notification navigation
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -74,6 +76,7 @@ void main() async {
         providers: [
           ChangeNotifierProvider(create: (_) => AuthProvider()),
           ChangeNotifierProvider(create: (_) => ChatProvider()),
+          ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ],
         child: const ThuloBazaarApp(),
       ),
@@ -117,6 +120,11 @@ void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
     case '/promotion':
       navigatorKey.currentState?.pushNamed('/promotion', arguments: data);
       break;
+    case '/notifications':
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => const NotificationScreen()),
+      );
+      break;
     default:
       break;
   }
@@ -145,16 +153,21 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
     await Future.delayed(const Duration(seconds: 1));
 
     final authProvider = context.read<AuthProvider>();
+    final notificationProvider = context.read<NotificationProvider>();
+
     if (authProvider.isAuthenticated) {
       NotificationService().registerToken();
+      notificationProvider.initialize();
     }
 
     // Listen for auth changes
     authProvider.addListener(() {
       if (authProvider.isAuthenticated) {
         NotificationService().registerToken();
+        notificationProvider.initialize();
       } else {
         NotificationService().unregisterToken();
+        notificationProvider.reset();
       }
     });
   }

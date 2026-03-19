@@ -237,3 +237,28 @@ export interface DbBlogPost {
   updated_at: Date | null;
   linked_category_slugs: string[];
 }
+
+// ============================================
+// DATABASE NOTIFICATION TYPES
+// ============================================
+
+export interface DbNotification {
+  id: number;
+  user_id: number;
+  type: string;
+  title: string;
+  body: string;
+  data: Record<string, unknown> | null;
+  image_url: string | null;
+  is_read: boolean;
+  read_at: Date | null;
+  created_at: Date;
+}
+
+export interface DbNotificationLog {
+  id: number;
+  user_id: number;
+  notification_type: string;
+  reference_id: number | null;
+  sent_at: Date;
+}

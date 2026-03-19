@@ -21,6 +21,16 @@ import type { AuthenticatedSocket } from './types.js';
 // In-memory store for online users (use Redis in production for multi-server scaling)
 const onlineUsers = new Map<number, string>(); // userId -> socketId
 
+// Module-level io reference for use by notification service
+let ioInstance: Server | null = null;
+
+/**
+ * Get the Socket.IO server instance (for use by services outside of route handlers)
+ */
+export function getIO(): Server | null {
+  return ioInstance;
+}
+
 /**
  * Initialize Socket.IO with JWT authentication
  */
@@ -46,6 +56,9 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
     pingInterval: 25000,
   });
 
+  // Store reference for notification service
+  ioInstance = io;
+
   // Authentication middleware
   io.use(createAuthMiddleware());
 
@@ -57,6 +70,9 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
 
     // Store online user
     onlineUsers.set(userId, socket.id);
+
+    // Join personal notification room
+    socket.join(`user:${userId}`);
 
     // Broadcast user online status to their conversations
     broadcastUserOnlineStatus(io, userId, true);
