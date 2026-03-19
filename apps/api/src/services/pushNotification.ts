@@ -56,7 +56,8 @@ export async function sendMessagePushNotification({
       data: {
         type: 'new_message',
         conversationId: String(conversationId),
-        route: `/messages/${conversationId}`,
+        senderName,
+        route: '/chat',
       },
       android: {
         priority: 'high',

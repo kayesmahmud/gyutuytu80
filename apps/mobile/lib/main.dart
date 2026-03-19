@@ -13,6 +13,7 @@ import 'core/services/notification_service.dart';
 import 'core/services/ad_service.dart';
 import 'core/widgets/connectivity_wrapper.dart';
 import 'features/main_nav/main_nav_screen.dart';
+import 'features/messages/chat_screen.dart';
 
 /// Global navigator key for notification navigation
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -84,22 +85,25 @@ void main() async {
 void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
   if (route == null || navigatorKey.currentState == null) return;
 
-  // Navigate based on route
+  // FCM data values are always strings — parse IDs
+  final conversationId = int.tryParse('${data?['conversationId'] ?? ''}');
+  final adId = int.tryParse('${data?['adId'] ?? ''}');
+
   switch (route) {
-    case '/messages':
-      navigatorKey.currentState?.pushNamed('/messages', arguments: data);
-      break;
     case '/chat':
-      final conversationId = data?['conversationId'] as int?;
       if (conversationId != null) {
-        navigatorKey.currentState?.pushNamed(
-          '/chat',
-          arguments: {'conversationId': conversationId, ...?data},
+        final senderName = data?['senderName'] as String? ?? 'Chat';
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              conversationId: conversationId,
+              recipientName: senderName,
+            ),
+          ),
         );
       }
       break;
     case '/ad':
-      final adId = data?['adId'] as int?;
       if (adId != null) {
         navigatorKey.currentState?.pushNamed(
           '/ad',
@@ -114,7 +118,6 @@ void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
       navigatorKey.currentState?.pushNamed('/promotion', arguments: data);
       break;
     default:
-      // Navigate to default tab based on route
       break;
   }
 }
