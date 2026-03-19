@@ -95,9 +95,10 @@ services:
       - ESEWA_ENV=${ESEWA_ENV:-sandbox}
       - ESEWA_MERCHANT_CODE=${ESEWA_MERCHANT_CODE}
       - ESEWA_SECRET_KEY=${ESEWA_SECRET_KEY}
-      - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
     volumes:
       - uploads-data:/app/uploads
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     depends_on:
       postgres:
         condition: service_healthy

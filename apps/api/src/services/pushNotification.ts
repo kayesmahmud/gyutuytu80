@@ -61,7 +61,7 @@ export async function sendMessagePushNotification({
       android: {
         priority: 'high',
         notification: {
-          channelId: 'thulobazaar_messages',
+          channelId: 'thulobazaar_notifications',
           sound: 'default',
         },
       },
