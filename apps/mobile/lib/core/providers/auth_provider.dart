@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile/core/api/auth_client.dart';
+import 'package:mobile/core/api/dio_client.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthClient _authClient = AuthClient();
@@ -23,6 +24,12 @@ class AuthProvider with ChangeNotifier {
 
   AuthProvider() {
     _init();
+    // Auto-logout when token refresh fails on a 401
+    DioClient.onAuthFailure = () {
+      _isLoggedIn = false;
+      _user = null;
+      notifyListeners();
+    };
   }
 
   Future<void> _init() async {
@@ -105,6 +112,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     await _storage.delete(key: 'auth_token');
+    await _storage.delete(key: 'refresh_token');
     _isLoggedIn = false;
     _user = null;
     notifyListeners();

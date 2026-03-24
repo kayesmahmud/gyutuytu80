@@ -161,10 +161,17 @@ class SocketService {
       _reconnectAttempts++;
     });
 
-    _socket!.onReconnectFailed((_) {
-      if (kDebugMode) developer.log('Reconnect failed after $_maxReconnectAttempts attempts', name: 'SocketService');
-      _error = 'Failed to reconnect';
-      _errorController.add(_error!);
+    _socket!.onReconnectFailed((_) async {
+      if (kDebugMode) developer.log('Reconnect failed after $_maxReconnectAttempts attempts, trying fresh token', name: 'SocketService');
+      // Built-in reconnect uses the original (possibly expired) token.
+      // Try once more with a fresh token from storage.
+      final freshToken = await _storage.read(key: 'auth_token');
+      if (freshToken != null) {
+        await reconnectWithFreshToken();
+      } else {
+        _error = 'Failed to reconnect';
+        _errorController.add(_error!);
+      }
     });
 
     // Message events
@@ -394,6 +401,16 @@ class SocketService {
   /// Reconnect to the server
   Future<bool> reconnect() async {
     disconnect();
+    return connect();
+  }
+
+  /// Reconnect with a fresh token from secure storage.
+  /// Call this after a token refresh to re-establish the socket with the new JWT.
+  Future<bool> reconnectWithFreshToken() async {
+    if (kDebugMode) developer.log('Reconnecting with fresh token...', name: 'SocketService');
+    disconnect();
+    // Small delay to ensure token is written to storage
+    await Future.delayed(const Duration(milliseconds: 200));
     return connect();
   }
 

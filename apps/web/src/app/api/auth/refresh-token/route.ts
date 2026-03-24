@@ -1,25 +1,26 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { prisma } from '@thulobazaar/database';
-import { createToken } from '@/lib/auth';
+import { createToken, authOptions } from '@/lib/auth';
 
 /**
  * POST /api/auth/refresh-token
- * Generate a fresh JWT for the given email.
- * Used by the web app to get a backend token without hitting the external Express server.
+ * Generate a fresh backend JWT for the currently authenticated user.
+ * Requires a valid NextAuth session (session cookie sent automatically).
  */
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    const { email } = await request.json();
+    const session = await getServerSession(authOptions);
 
-    if (!email) {
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { success: false, message: 'Email is required' },
-        { status: 400 }
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
       );
     }
 
     const user = await prisma.users.findFirst({
-      where: { email, is_active: true },
+      where: { email: session.user.email, is_active: true },
       select: {
         id: true,
         email: true,

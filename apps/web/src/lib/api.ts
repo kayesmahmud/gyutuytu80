@@ -18,6 +18,13 @@ export const apiClient = createApiClient({
 
     try {
       const session = await getSession();
+
+      // If the token refresh failed, sign out immediately
+      if ((session as any)?.error === 'RefreshAccessTokenError') {
+        signOut({ redirect: true, callbackUrl: '/en/auth/signin' });
+        return null;
+      }
+
       return session?.user?.backendToken || null;
     } catch (error) {
       console.error('Failed to get session token:', error);
@@ -25,16 +32,23 @@ export const apiClient = createApiClient({
     }
   },
 
-  // Handle unauthorized access - use signOut to properly clear session
-  // This prevents redirect loops by clearing NextAuth session before redirecting
-  onUnauthorized: () => {
+  // Handle unauthorized access — try refreshing the session before signing out
+  onUnauthorized: async () => {
     if (typeof window === 'undefined') return;
-
-    // Don't redirect if already on signin page (prevent loops)
     if (window.location.pathname.includes('/auth/signin')) return;
 
+    // Try refreshing the session (triggers NextAuth jwt callback which attempts token refresh)
+    try {
+      const session = await getSession();
+      if (session?.user?.backendToken && (session as any)?.error !== 'RefreshAccessTokenError') {
+        // Session refreshed successfully — the next request will use the new token
+        return;
+      }
+    } catch {
+      // Refresh failed
+    }
+
     console.log('🔐 [API] Unauthorized - signing out and redirecting to signin');
-    // Use NextAuth signOut to properly clear the session before redirecting
     signOut({ redirect: true, callbackUrl: '/en/auth/signin' });
   },
 });

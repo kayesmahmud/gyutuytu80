@@ -20,8 +20,8 @@ export function useBackendToken() {
       // First, try to get token from session (if NextAuth worked)
       const sessionToken = (session as any)?.backendToken;
       if (sessionToken) {
-        console.log('✅ [useBackendToken] Token found in session');
         setBackendToken(sessionToken);
+        localStorage.setItem('backend_jwt_token', sessionToken);
         setLoading(false);
         return;
       }
@@ -29,36 +29,17 @@ export function useBackendToken() {
       // If no session token, check localStorage cache
       const cachedToken = localStorage.getItem('backend_jwt_token');
       if (cachedToken) {
-        console.log('✅ [useBackendToken] Token found in localStorage cache');
         setBackendToken(cachedToken);
         setLoading(false);
         return;
       }
 
-      // If still no token and user is logged in, fetch from backend
+      // If still no token and user is logged in, fetch via secured API route
+      // (session cookie is sent automatically for same-origin requests)
       if (session?.user?.email) {
-        console.log('🔄 [useBackendToken] Fetching fresh token from backend...');
-
-        // Always try same-origin API route first to avoid cross-origin failures
-        const refreshUrl = '/api/auth/refresh-token';
-        // Optional fallback to explicit backend base if provided
-        const backendBase =
-          process.env.NEXT_PUBLIC_API_URL ||
-          process.env.API_URL ||
-          '';
-        const fallbackUrl = backendBase
-          ? `${backendBase}/api/auth/refresh-token`
-          : null;
-
         try {
-          const response = await fetch(refreshUrl, {
+          const response = await fetch('/api/auth/refresh-token', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: session.user.email,
-            }),
           });
 
           if (response.ok) {
@@ -66,41 +47,17 @@ export function useBackendToken() {
             const token = data.data?.token || data.token;
 
             if (token) {
-              console.log('✅ [useBackendToken] Fresh token fetched successfully');
               setBackendToken(token);
               localStorage.setItem('backend_jwt_token', token);
               setError(null);
               setLoading(false);
               return;
             }
-          } else if (fallbackUrl) {
-            // Try fallback backend (legacy Express) if provided
-            const fallbackResponse = await fetch(fallbackUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: session.user.email }),
-            });
-
-            if (fallbackResponse.ok) {
-              const data = await fallbackResponse.json();
-              const token = data.data?.token || data.token;
-              if (token) {
-                console.log('✅ [useBackendToken] Fresh token fetched via fallback backend');
-                setBackendToken(token);
-                localStorage.setItem('backend_jwt_token', token);
-                setError(null);
-                setLoading(false);
-                return;
-              }
-            } else {
-              const errorText = await fallbackResponse.text();
-              console.warn('⚠️ [useBackendToken] Failed to fetch token from fallback:', fallbackResponse.status, errorText);
-              setError(`Failed to fetch token: ${fallbackResponse.status}`);
-            }
           }
-        } catch (err: any) {
-          console.warn('⚠️ [useBackendToken] Error fetching token:', err);
-          setError(err.message);
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          console.warn('⚠️ [useBackendToken] Error fetching token:', message);
+          setError(message);
         }
       }
 

@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react';
 import { UserAuthProvider } from '@/contexts/UserAuthContext';
 import { StaffAuthProvider } from '@/contexts/StaffAuthContext';
 import { ToastProvider } from '@/components/ui';
+import { SessionGuard } from '@/components/auth/SessionGuard';
 import { ReactNode, useEffect } from 'react';
 import { initConsoleFilter } from '@/lib/utils/client';
 
@@ -23,13 +24,15 @@ export function Providers({ children }: ProvidersProps) {
       refetchOnWindowFocus={false} // Don't refetch when window regains focus
       refetchWhenOffline={false} // Don't try to refetch when offline
     >
-      <UserAuthProvider>
-        <StaffAuthProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </StaffAuthProvider>
-      </UserAuthProvider>
+      <SessionGuard>
+        <UserAuthProvider>
+          <StaffAuthProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </StaffAuthProvider>
+        </UserAuthProvider>
+      </SessionGuard>
     </SessionProvider>
   );
 }

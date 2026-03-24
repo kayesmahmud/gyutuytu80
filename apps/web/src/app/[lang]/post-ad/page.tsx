@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useState, useEffect } from 'react';
+import { getSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { ImageUpload } from '@/components/forms';
@@ -55,10 +56,21 @@ export default function PostAdPage({ params }: PostAdPageProps) {
   const MAX_IMAGES_VERIFIED = 10;
   const [maxImages, setMaxImages] = useState(isUserVerified ? MAX_IMAGES_VERIFIED : 5);
   useEffect(() => {
-    fetch('/api/ad-limits', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` } })
-      .then(r => r.json())
-      .then(d => { if (d.success && d.data?.userImageLimit) setMaxImages(d.data.userImageLimit); })
-      .catch(() => {});
+    const fetchAdLimits = async () => {
+      try {
+        const session = await getSession();
+        const token = session?.user?.backendToken || '';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const r = await fetch(`${apiUrl}/api/ad-limits`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const d = await r.json();
+        if (d.success && d.data?.userImageLimit) setMaxImages(d.data.userImageLimit);
+      } catch {
+        // Silently fall back to defaults
+      }
+    };
+    fetchAdLimits();
   }, []);
 
   if (status === 'loading' || loading) {

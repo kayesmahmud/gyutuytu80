@@ -15,6 +15,9 @@ class DioClient {
   static final DioClient _instance = DioClient._();
   static DioClient get instance => _instance;
 
+  /// Called when token refresh fails on a 401 — listeners should clear auth state.
+  static void Function()? onAuthFailure;
+
   late final Dio dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
@@ -51,6 +54,11 @@ class DioClient {
             } catch (retryError) {
               // Retry failed — pass through
             }
+          } else {
+            // Refresh failed — clear tokens and notify auth failure
+            await _storage.delete(key: 'auth_token');
+            await _storage.delete(key: 'refresh_token');
+            onAuthFailure?.call();
           }
         }
         if (kDebugMode) {

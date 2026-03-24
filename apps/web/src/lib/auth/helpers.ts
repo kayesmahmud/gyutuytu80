@@ -159,6 +159,12 @@ export async function generateRefreshToken(user: { id: number }): Promise<string
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + days);
 
+  // Revoke all existing refresh tokens for this user (matches API-side behavior)
+  await prisma.refresh_tokens.updateMany({
+    where: { user_id: user.id, is_revoked: false },
+    data: { is_revoked: true },
+  });
+
   await prisma.refresh_tokens.create({
     data: {
       user_id: user.id,
