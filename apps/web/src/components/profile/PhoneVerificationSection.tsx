@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { usePhoneVerification } from '@/hooks/usePhoneVerification';
 import { OtpInput } from './OtpInput';
 
@@ -14,6 +15,8 @@ export function PhoneVerificationSection({
   currentPhone,
   onPhoneVerified,
 }: PhoneVerificationSectionProps) {
+  const t = useTranslations('profile');
+  const tc = useTranslations('common');
   const phoneVerification = usePhoneVerification({ onSuccess: onPhoneVerified });
 
   const formatPhoneDisplay = (phone: string | null) => {
@@ -25,8 +28,8 @@ export function PhoneVerificationSection({
   return (
     <div>
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Phone Verification</h3>
-        <p className="text-sm text-gray-500">Verify your phone number to post ads and contact sellers</p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('phoneVerification')}</h3>
+        <p className="text-sm text-gray-500">{t('verifyPhoneToPost')}</p>
       </div>
 
       {phoneVerification.success && (
@@ -43,9 +46,11 @@ export function PhoneVerificationSection({
           phone={currentPhone}
           formatPhoneDisplay={formatPhoneDisplay}
           phoneVerification={phoneVerification}
+          t={t}
+          tc={tc}
         />
       ) : (
-        <PhoneNotVerifiedView phoneVerification={phoneVerification} />
+        <PhoneNotVerifiedView phoneVerification={phoneVerification} t={t} tc={tc} />
       )}
     </div>
   );
@@ -55,10 +60,14 @@ function PhoneVerifiedView({
   phone,
   formatPhoneDisplay,
   phoneVerification,
+  t,
+  tc,
 }: {
   phone: string | null;
   formatPhoneDisplay: (phone: string | null) => string;
   phoneVerification: ReturnType<typeof usePhoneVerification>;
+  t: ReturnType<typeof useTranslations>;
+  tc: ReturnType<typeof useTranslations>;
 }) {
   return (
     <div className="max-w-md">
@@ -75,7 +84,7 @@ function PhoneVerifiedView({
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              Verified
+              {t('verified')}
             </p>
           </div>
         </div>
@@ -83,12 +92,12 @@ function PhoneVerifiedView({
           onClick={phoneVerification.startVerification}
           className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
         >
-          Change
+          {t('change')}
         </button>
       </div>
 
       {phoneVerification.step !== 'idle' && (
-        <PhoneVerificationForm phoneVerification={phoneVerification} />
+        <PhoneVerificationForm phoneVerification={phoneVerification} t={t} tc={tc} />
       )}
     </div>
   );
@@ -96,8 +105,12 @@ function PhoneVerifiedView({
 
 function PhoneNotVerifiedView({
   phoneVerification,
+  t,
+  tc,
 }: {
   phoneVerification: ReturnType<typeof usePhoneVerification>;
+  t: ReturnType<typeof useTranslations>;
+  tc: ReturnType<typeof useTranslations>;
 }) {
   return (
     <div className="max-w-md">
@@ -107,8 +120,8 @@ function PhoneNotVerifiedView({
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           <div>
-            <p className="text-sm font-medium text-amber-800">Phone not verified</p>
-            <p className="text-xs text-amber-700 mt-0.5">Verify your phone to post ads and contact sellers securely.</p>
+            <p className="text-sm font-medium text-amber-800">{t('phoneNotVerified')}</p>
+            <p className="text-xs text-amber-700 mt-0.5">{t('verifyPhoneToPostSecurely')}</p>
           </div>
         </div>
       </div>
@@ -119,7 +132,7 @@ function PhoneNotVerifiedView({
         </div>
       )}
 
-      <PhoneVerificationForm phoneVerification={phoneVerification} showInitialForm />
+      <PhoneVerificationForm phoneVerification={phoneVerification} showInitialForm t={t} tc={tc} />
     </div>
   );
 }
@@ -127,9 +140,13 @@ function PhoneNotVerifiedView({
 function PhoneVerificationForm({
   phoneVerification,
   showInitialForm = false,
+  t,
+  tc,
 }: {
   phoneVerification: ReturnType<typeof usePhoneVerification>;
   showInitialForm?: boolean;
+  t: ReturnType<typeof useTranslations>;
+  tc: ReturnType<typeof useTranslations>;
 }) {
   const showEnterPhone = showInitialForm
     ? phoneVerification.step === 'idle' || phoneVerification.step === 'enter_phone'
@@ -140,7 +157,7 @@ function PhoneVerificationForm({
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
         <div className="space-y-4">
           {!showInitialForm && (
-            <p className="text-sm text-gray-600">Enter your new phone number to verify:</p>
+            <p className="text-sm text-gray-600">{t('enterNewPhoneToVerify')}</p>
           )}
           {phoneVerification.error && !showInitialForm && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
@@ -150,7 +167,7 @@ function PhoneVerificationForm({
           <div>
             {showInitialForm && (
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
+                {t('phoneNumber')}
               </label>
             )}
             <div className="flex gap-2">
@@ -167,11 +184,11 @@ function PhoneVerificationForm({
                 disabled={phoneVerification.isSendingOtp || phoneVerification.phoneToVerify.length < 10 || phoneVerification.cooldown > 0}
                 className="px-4 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
-                {phoneVerification.isSendingOtp ? 'Sending...' : phoneVerification.cooldown > 0 ? `Wait ${phoneVerification.cooldown}s` : 'Send OTP'}
+                {phoneVerification.isSendingOtp ? t('sending') : phoneVerification.cooldown > 0 ? t('waitSeconds', { seconds: phoneVerification.cooldown }) : t('sendOtp')}
               </button>
             </div>
             {showInitialForm && (
-              <p className="text-xs text-gray-500 mt-1.5">Enter your 10-digit Nepali phone number (starting with 97 or 98)</p>
+              <p className="text-xs text-gray-500 mt-1.5">{t('enterNepaliPhone')}</p>
             )}
           </div>
           {!showInitialForm && (
@@ -179,7 +196,7 @@ function PhoneVerificationForm({
               onClick={phoneVerification.cancelVerification}
               className="text-sm text-gray-500 hover:text-gray-700"
             >
-              Cancel
+              {tc('cancel')}
             </button>
           )}
         </div>
@@ -195,7 +212,7 @@ function PhoneVerificationForm({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-              Enter OTP sent to {phoneVerification.phoneToVerify}
+              {t('enterOtpSentTo', { phone: phoneVerification.phoneToVerify })}
             </label>
 
             <OtpInput
@@ -231,10 +248,10 @@ function PhoneVerificationForm({
               {phoneVerification.isVerifying ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Verifying...
+                  {t('verifying')}
                 </span>
               ) : (
-                'Verify OTP'
+                t('verifyOtp')
               )}
             </button>
           </div>
@@ -243,14 +260,14 @@ function PhoneVerificationForm({
               onClick={phoneVerification.changeNumber}
               className="text-sm text-gray-500 hover:text-gray-700"
             >
-              Change number
+              {t('changeNumber')}
             </button>
             <button
               onClick={phoneVerification.sendOtp}
               disabled={phoneVerification.isSendingOtp || phoneVerification.cooldown > 0}
               className="text-sm text-primary hover:text-primary-hover disabled:text-gray-400"
             >
-              {phoneVerification.cooldown > 0 ? `Resend in ${phoneVerification.cooldown}s` : 'Resend OTP'}
+              {phoneVerification.cooldown > 0 ? t('resendIn', { seconds: phoneVerification.cooldown }) : t('resendOtp')}
             </button>
           </div>
         </div>
@@ -260,5 +277,3 @@ function PhoneVerificationForm({
 
   return null;
 }
-
-

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { ProfileEditFormProps } from './types';
 
 export function ProfileEditForm({
@@ -15,19 +16,22 @@ export function ProfileEditForm({
   onCancel,
   onGoToSecurity,
 }: ProfileEditFormProps) {
+  const t = useTranslations('profile');
+  const tc = useTranslations('common');
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Name Field */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Full Name
+            {t('fullName')}
             {isNameLocked && (
               <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-700">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
-                Locked
+                {t('locked')}
               </span>
             )}
           </label>
@@ -42,11 +46,11 @@ export function ProfileEditForm({
                 ? 'bg-gray-50 border-gray-200 text-gray-500 cursor-not-allowed'
                 : 'bg-white border-gray-300 hover:border-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20'
             }`}
-            placeholder="Enter your full name"
+            placeholder={t('enterFullName')}
           />
           {isNameLocked && (
             <p className="mt-1.5 text-xs text-gray-500">
-              Name is locked due to verification status
+              {t('nameLockedReason')}
             </p>
           )}
         </div>
@@ -54,8 +58,8 @@ export function ProfileEditForm({
         {/* Email Field */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email Address
-            <span className="ml-2 text-xs font-normal text-gray-500">(Cannot be changed)</span>
+            {t('emailAddress')}
+            <span className="ml-2 text-xs font-normal text-gray-500">{t('cannotBeChanged')}</span>
           </label>
           {profile.oauthProvider === 'google' && (
             <div className="mb-2 flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
@@ -65,7 +69,7 @@ export function ProfileEditForm({
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              Signed in with Google
+              {t('signedInWithGoogle')}
             </div>
           )}
           <input
@@ -78,7 +82,7 @@ export function ProfileEditForm({
 
         {/* Phone Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('phoneNumber')}</label>
           {profile.phoneVerified && profile.phone ? (
             <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center gap-2">
@@ -86,14 +90,14 @@ export function ProfileEditForm({
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <span className="text-sm text-gray-900">{profile.phone}</span>
-                <span className="text-xs text-green-600 font-medium">Verified</span>
+                <span className="text-xs text-green-600 font-medium">{t('verified')}</span>
               </div>
               <button
                 type="button"
                 onClick={onGoToSecurity}
                 className="text-xs text-primary hover:text-primary-hover font-medium"
               >
-                Change
+                {t('change')}
               </button>
             </div>
           ) : (
@@ -103,8 +107,8 @@ export function ProfileEditForm({
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-800">Phone not verified</p>
-                  <p className="text-xs text-amber-700 mt-0.5">Required to post ads and apply for verification badges</p>
+                  <p className="text-sm font-medium text-amber-800">{t('phoneNotVerified')}</p>
+                  <p className="text-xs text-amber-700 mt-0.5">{t('phoneRequiredMessage')}</p>
                 </div>
               </div>
               <button
@@ -115,7 +119,7 @@ export function ProfileEditForm({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                Verify Phone Number
+                {t('verifyPhoneNumber')}
               </button>
             </div>
           )}
@@ -123,7 +127,7 @@ export function ProfileEditForm({
 
         {/* Location Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('location')}</label>
           {profile.location ? (
             <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="flex items-center gap-2">
@@ -137,7 +141,7 @@ export function ProfileEditForm({
                 href={`/${lang}/shop/${activeShopSlug}`}
                 className="text-xs text-primary hover:text-primary-hover font-medium"
               >
-                Edit in Shop
+                {t('editInShop')}
               </a>
             </div>
           ) : (
@@ -148,12 +152,12 @@ export function ProfileEditForm({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-500">No location set</p>
+                  <p className="text-sm text-gray-500">{t('noLocationSet')}</p>
                   <a
                     href={`/${lang}/shop/${activeShopSlug}`}
                     className="text-xs text-primary hover:text-primary-hover font-medium"
                   >
-                    Set location in your Shop page
+                    {t('setLocationInShop')}
                   </a>
                 </div>
               </div>
@@ -169,8 +173,8 @@ export function ProfileEditForm({
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           <div>
-            <p className="text-sm font-medium text-amber-800">You have unsaved changes</p>
-            <p className="text-xs text-amber-700 mt-0.5">Save your changes before leaving this page.</p>
+            <p className="text-sm font-medium text-amber-800">{t('unsavedChanges')}</p>
+            <p className="text-xs text-amber-700 mt-0.5">{t('saveBeforeLeaving')}</p>
           </div>
         </div>
       )}
@@ -182,7 +186,7 @@ export function ProfileEditForm({
           onClick={onCancel}
           className="px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
         >
-          Cancel
+          {tc('cancel')}
         </button>
         <button
           type="submit"
@@ -192,10 +196,10 @@ export function ProfileEditForm({
           {saving ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Saving...
+              {tc('saving')}
             </>
           ) : (
-            'Save Changes'
+            t('saveChanges')
           )}
         </button>
       </div>

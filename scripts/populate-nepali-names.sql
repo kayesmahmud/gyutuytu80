@@ -56,7 +56,7 @@ UPDATE categories SET name_ne = 'अटो सेवा' WHERE slug = 'auto-serv
 UPDATE categories SET name_ne = 'मर्मत तथा सम्भार' WHERE slug = 'maintenance-repair';
 
 -- Home & Living Subcategories
-UPDATE categories SET name_ne = 'शयनकक्ष फर्निचर' WHERE slug = 'bedroom-furniture';
+UPDATE categories SET name_ne = 'बेडरुम फर्निचर' WHERE slug = 'bedroom-furniture';
 UPDATE categories SET name_ne = 'बैठक कोठा फर्निचर' WHERE slug = 'living-room-furniture';
 UPDATE categories SET name_ne = 'कार्यालय तथा पसल फर्निचर' WHERE slug = 'office-shop-furniture';
 UPDATE categories SET name_ne = 'घरेलु कपडा तथा सजावट' WHERE slug = 'home-textiles-decoration';

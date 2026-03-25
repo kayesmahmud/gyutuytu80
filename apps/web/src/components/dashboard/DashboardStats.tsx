@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { DashboardStats as Stats } from './types';
 
 interface DashboardStatsProps {
@@ -20,6 +21,8 @@ function formatNumber(num: number): string {
 }
 
 export function DashboardStats({ stats, lang, inline = false }: DashboardStatsProps) {
+  const t = useTranslations('dashboard');
+
   // Inline mode: compact cards for header placement
   if (inline) {
     return (
@@ -36,7 +39,7 @@ export function DashboardStats({ stats, lang, inline = false }: DashboardStatsPr
               <div className="text-lg md:text-2xl font-bold text-gray-800" title={stats.totalAds.toLocaleString()}>
                 {formatNumber(stats.totalAds)}
               </div>
-              <div className="text-[10px] md:text-xs text-gray-500 font-medium">Total</div>
+              <div className="text-[10px] md:text-xs text-gray-500 font-medium">{t('total')}</div>
             </div>
           </div>
         </div>
@@ -53,7 +56,7 @@ export function DashboardStats({ stats, lang, inline = false }: DashboardStatsPr
               <div className="text-lg md:text-2xl font-bold text-gray-800" title={stats.activeAds.toLocaleString()}>
                 {formatNumber(stats.activeAds)}
               </div>
-              <div className="text-[10px] md:text-xs text-gray-500 font-medium">Active</div>
+              <div className="text-[10px] md:text-xs text-gray-500 font-medium">{t('active')}</div>
             </div>
           </div>
         </div>
@@ -71,7 +74,7 @@ export function DashboardStats({ stats, lang, inline = false }: DashboardStatsPr
               <div className="text-lg md:text-2xl font-bold text-gray-800" title={stats.totalViews.toLocaleString()}>
                 {formatNumber(stats.totalViews)}
               </div>
-              <div className="text-[10px] md:text-xs text-gray-500 font-medium">Views</div>
+              <div className="text-[10px] md:text-xs text-gray-500 font-medium">{t('views')}</div>
             </div>
           </div>
         </div>
@@ -96,8 +99,8 @@ export function DashboardStats({ stats, lang, inline = false }: DashboardStatsPr
             </div>
           </div>
         </div>
-        <div className="text-[10px] sm:text-sm font-semibold text-gray-600 uppercase tracking-wide text-center sm:text-left">Total Ads</div>
-        <div className="hidden sm:block mt-2 text-xs text-gray-500">All your listings</div>
+        <div className="text-[10px] sm:text-sm font-semibold text-gray-600 uppercase tracking-wide text-center sm:text-left">{t('totalAds')}</div>
+        <div className="hidden sm:block mt-2 text-xs text-gray-500">{t('allListings')}</div>
       </div>
 
       {/* Active Ads Card */}
@@ -114,8 +117,8 @@ export function DashboardStats({ stats, lang, inline = false }: DashboardStatsPr
             </div>
           </div>
         </div>
-        <div className="text-[10px] sm:text-sm font-semibold text-gray-600 uppercase tracking-wide text-center sm:text-left">Active Ads</div>
-        <div className="hidden sm:block mt-2 text-xs text-gray-500">Currently live</div>
+        <div className="text-[10px] sm:text-sm font-semibold text-gray-600 uppercase tracking-wide text-center sm:text-left">{t('activeAds')}</div>
+        <div className="hidden sm:block mt-2 text-xs text-gray-500">{t('currentlyLive')}</div>
       </div>
 
       {/* Total Views Card */}
@@ -133,8 +136,8 @@ export function DashboardStats({ stats, lang, inline = false }: DashboardStatsPr
             </div>
           </div>
         </div>
-        <div className="text-[10px] sm:text-sm font-semibold text-gray-600 uppercase tracking-wide text-center sm:text-left">Total Views</div>
-        <div className="hidden sm:block mt-2 text-xs text-gray-500">People interested</div>
+        <div className="text-[10px] sm:text-sm font-semibold text-gray-600 uppercase tracking-wide text-center sm:text-left">{t('totalViews')}</div>
+        <div className="hidden sm:block mt-2 text-xs text-gray-500">{t('peopleInterested')}</div>
       </div>
     </div>
   );

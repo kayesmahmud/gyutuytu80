@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 
 interface ProfileHeaderProps {
@@ -21,6 +23,14 @@ export function ProfileHeader({
   isVerifiedBusiness,
   createdAt,
 }: ProfileHeaderProps) {
+  const t = useTranslations('profile');
+  const locale = useLocale();
+
+  const formattedDate = new Date(createdAt || Date.now()).toLocaleDateString(
+    locale === 'ne' ? 'ne-NP' : 'en-US',
+    { month: 'short', year: 'numeric' }
+  );
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4 sm:mb-6">
       <div className="h-20 sm:h-32 bg-gradient-to-r from-primary to-pink-500"></div>
@@ -38,7 +48,7 @@ export function ProfileHeader({
               {isVerified && (
                 <img
                   src={isVerifiedBusiness ? '/golden-badge.png' : '/blue-badge.png'}
-                  alt={isVerifiedBusiness ? 'Verified Business' : 'Verified Individual'}
+                  alt={isVerifiedBusiness ? t('verifiedBusinessAccount') : t('verifiedIndividualSeller')}
                   className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0"
                 />
               )}
@@ -52,10 +62,10 @@ export function ProfileHeader({
                   ? 'bg-blue-100 text-blue-700'
                   : 'bg-gray-100 text-gray-600'
               }`}>
-                {isVerifiedBusiness ? 'Verified Business Account' : isVerified ? 'Verified Individual Seller' : 'Seller'}
+                {isVerifiedBusiness ? t('verifiedBusinessAccount') : isVerified ? t('verifiedIndividualSeller') : t('seller')}
               </span>
               <span className="text-[10px] sm:text-xs text-gray-500">
-                Member since {new Date(createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                {t('memberSince', { date: formattedDate })}
               </span>
             </div>
           </div>
