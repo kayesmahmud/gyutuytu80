@@ -52,7 +52,7 @@ const categoryLabels: Record<string, { en: string; ne: string }> = {
   // Home & Living
   'furniture': { en: 'Furniture', ne: 'फर्निचर' },
   'home-textiles': { en: 'Home Textiles', ne: 'घरेलु कपडा' },
-  'home-appliances': { en: 'Home Appliances', ne: 'घरेलु उपकरण' },
+  'home-appliances': { en: 'Home Appliances', ne: 'घरायसी सामग्री' },
   'home-decor': { en: 'Home Décor', ne: 'गृह सजावट' },
   'kitchen-appliances': { en: 'Kitchen Appliances', ne: 'भान्सा उपकरण' },
   'household-items': { en: 'Household Items', ne: 'घरेलु सामान' },

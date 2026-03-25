@@ -141,7 +141,7 @@ async function main() {
     { name: 'House Rental', name_ne: 'घर भाडा', slug: 'house-rental' },
     { name: 'Real Estate', name_ne: 'रियल इस्टेट', slug: 'real-estate' },
     { name: 'TVs', name_ne: 'टिभी', slug: 'tvs' },
-    { name: 'Home Appliances', name_ne: 'घरेलु उपकरण', slug: 'home-appliances' },
+    { name: 'Home Appliances', name_ne: 'घरायसी सामग्री', slug: 'home-appliances' },
     { name: 'Wearables', name_ne: 'वेयरेबल', slug: 'wearables' },
     { name: 'Tablets', name_ne: 'ट्याब्लेट', slug: 'tablets' },
     { name: 'Desktop Computers', name_ne: 'डेस्कटप कम्प्युटर', slug: 'desktop-computers' },

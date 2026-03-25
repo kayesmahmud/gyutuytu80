@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { CascadingLocationFilterProps, SearchResult } from './types';
 import { useCascadingLocationFilter } from './useCascadingLocationFilter';
 import { getLocationTypeLabel, buildFullPath, buildReversedPath } from './helpers';
-import { useLocalizedName } from '@/hooks/useLocalizedName';
 
 export default function CascadingLocationFilter({
   onLocationSelect,
@@ -33,7 +32,6 @@ export default function CascadingLocationFilter({
     selectedLocationName,
   });
 
-  const localizedName = useLocalizedName();
   const searchInputRef = useRef<HTMLDivElement>(null);
 
   // Close autocomplete when clicking outside
@@ -104,7 +102,7 @@ export default function CascadingLocationFilter({
                     selectedLocationSlug === result.slug ? 'bg-indigo-50 text-rose-500 font-semibold' : 'text-gray-800'
                   }`}
                 >
-                  <div className="text-sm font-medium">{localizedName(result.name, result.nameNe)}</div>
+                  <div className="text-sm font-medium">{result.name}</div>
                   <div className="text-xs text-gray-500">{getLocationTypeLabel(result.type)}</div>
                 </button>
               ))
@@ -144,7 +142,7 @@ export default function CascadingLocationFilter({
                   : 'bg-transparent text-gray-800 font-medium hover:bg-gray-50'
               }`}
             >
-              <span>{localizedName(province.name, province.nameNe)}</span>
+              <span>{province.name}</span>
             </button>
           </div>
 
@@ -173,7 +171,7 @@ export default function CascadingLocationFilter({
                           : 'bg-transparent text-gray-600 font-normal hover:bg-gray-50 hover:text-gray-800'
                       }`}
                     >
-                      <span>{localizedName(district.name, district.nameNe)}</span>
+                      <span>{district.name}</span>
                     </button>
                   </div>
 
@@ -207,7 +205,7 @@ export default function CascadingLocationFilter({
                                   : 'bg-transparent text-gray-500 font-normal hover:bg-gray-50 hover:text-gray-800'
                               }`}
                             >
-                              <span>{localizedName(municipality.name, municipality.nameNe)}</span>
+                              <span>{municipality.name}</span>
                             </button>
                           </div>
 
@@ -225,7 +223,7 @@ export default function CascadingLocationFilter({
                                       : 'bg-transparent text-gray-400 font-normal hover:bg-gray-50 hover:text-gray-800'
                                   }`}
                                 >
-                                  <span>{localizedName(area.name, area.nameNe)}</span>
+                                  <span>{area.name}</span>
                                 </button>
                               ))}
                             </div>

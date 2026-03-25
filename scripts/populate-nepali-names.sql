@@ -29,7 +29,7 @@ UPDATE categories SET name_ne = 'स्मार्ट घडी' WHERE slug = '
 UPDATE categories SET name_ne = 'ल्यापटप' WHERE slug = 'laptops';
 UPDATE categories SET name_ne = 'ल्यापटप तथा कम्प्युटर सामान' WHERE slug = 'laptop-computer-accessories';
 UPDATE categories SET name_ne = 'डेस्कटप कम्प्युटर' WHERE slug = 'desktop-computers';
-UPDATE categories SET name_ne = 'घरेलु उपकरण' WHERE slug = 'home-appliances';
+UPDATE categories SET name_ne = 'घरायसी सामग्री' WHERE slug = 'home-appliances';
 UPDATE categories SET name_ne = 'एसी तथा घरेलु इलेक्ट्रोनिक्स' WHERE slug = 'acs-home-electronics';
 UPDATE categories SET name_ne = 'अडियो तथा साउन्ड सिस्टम' WHERE slug = 'audio-sound-systems';
 UPDATE categories SET name_ne = 'टिभी' WHERE slug = 'tvs';
@@ -100,7 +100,7 @@ UPDATE categories SET name_ne = 'थोक बिक्री' WHERE slug = 'who
 
 -- Women's Fashion Subcategories
 UPDATE categories SET name_ne = 'परम्परागत पोशाक' WHERE slug = 'traditional-wear';
-UPDATE categories SET name_ne = 'सौन्दर्य तथा व्यक्तिगत स्याहार' WHERE slug = 'beauty-personal-care';
+UPDATE categories SET name_ne = 'ब्युटी एण्ड पर्सनल केयर' WHERE slug = 'beauty-personal-care';
 UPDATE categories SET name_ne = 'गहना तथा घडी' WHERE slug = 'jewellery-watches';
 UPDATE categories SET name_ne = 'झोला तथा सामान' WHERE slug = 'bags-accessories-women';
 UPDATE categories SET name_ne = 'पश्चिमी पोशाक' WHERE slug = 'western-wear';
@@ -125,7 +125,7 @@ UPDATE categories SET name_ne = 'अन्य व्यापार तथा �
 UPDATE categories SET name_ne = 'कार्यालय सामान तथा स्टेशनरी' WHERE slug = 'office-supplies-stationary';
 UPDATE categories SET name_ne = 'चिकित्सा उपकरण तथा सामान' WHERE slug = 'medical-equipment-supplies';
 UPDATE categories SET name_ne = 'कच्चा पदार्थ तथा औद्योगिक सामान' WHERE slug = 'raw-materials-industrial-supplies';
-UPDATE categories SET name_ne = 'इजाजतपत्र, स्वामित्व तथा टेन्डर' WHERE slug = 'licences-titles-tenders';
+UPDATE categories SET name_ne = 'लाइसेन्स टाइटल्स एण्ड टेन्डर्स' WHERE slug = 'licences-titles-tenders';
 UPDATE categories SET name_ne = 'सुरक्षा' WHERE slug = 'safety-security';
 
 -- Education Subcategories
@@ -145,14 +145,14 @@ UPDATE categories SET name_ne = 'फलफूल तथा तरकारी' W
 UPDATE categories SET name_ne = 'मासु तथा समुद्री खाना' WHERE slug = 'meat-seafood';
 
 -- Jobs Subcategories
-UPDATE categories SET name_ne = 'लेखापाल' WHERE slug = 'accountant';
+UPDATE categories SET name_ne = 'अकाउन्टेन्ट' WHERE slug = 'accountant';
 UPDATE categories SET name_ne = 'ब्यूटिसियन' WHERE slug = 'beautician';
 UPDATE categories SET name_ne = 'व्यापार विश्लेषक' WHERE slug = 'business-analyst';
-UPDATE categories SET name_ne = 'रसोइया' WHERE slug = 'chef';
-UPDATE categories SET name_ne = 'संकलन तथा उठौती एजेन्ट' WHERE slug = 'collection-recovery-agents';
+UPDATE categories SET name_ne = 'सेफ' WHERE slug = 'chef';
+UPDATE categories SET name_ne = 'कोल्लेक्सन & रेकोवेॠ अगेन्त्स' WHERE slug = 'collection-recovery-agents';
 UPDATE categories SET name_ne = 'निर्माण कामदार' WHERE slug = 'construction-worker';
 UPDATE categories SET name_ne = 'सामग्री लेखक' WHERE slug = 'content-writer';
-UPDATE categories SET name_ne = 'परामर्शदाता' WHERE slug = 'counsellor';
+UPDATE categories SET name_ne = 'काउन्सेलर' WHERE slug = 'counsellor';
 UPDATE categories SET name_ne = 'ग्राहक सेवा कार्यकारी' WHERE slug = 'customer-service-executive';
 UPDATE categories SET name_ne = 'ग्राहक सहायता प्रबन्धक' WHERE slug = 'customer-support-manager';
 UPDATE categories SET name_ne = 'डेलिभरी राइडर' WHERE slug = 'delivery-rider';
