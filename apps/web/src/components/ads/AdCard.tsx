@@ -59,6 +59,14 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                         📌 {tc('sticky').toUpperCase()}
                     </div>
                 )}
+                {ad.condition && (
+                    <div className={`absolute bottom-2 right-2 rounded-full font-semibold z-10 px-3 py-1 text-xs ${ad.condition?.toLowerCase() === 'brand new'
+                            ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
+                            : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                        }`}>
+                        {ad.condition?.toLowerCase() === 'brand new' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
+                    </div>
+                )}
                 {imageUrl ? (
                     <Image
                         src={imageUrl}
@@ -86,14 +94,6 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                 )}
                 <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl font-bold text-green-600">{formatPrice(ad.price)}</span>
-                    {ad.condition && (
-                        <span className={`rounded-full font-semibold px-3 py-1 text-xs ${ad.condition?.toLowerCase() === 'brand new'
-                                ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
-                                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                            }`}>
-                            {ad.condition?.toLowerCase() === 'brand new' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
-                        </span>
-                    )}
                 </div>
                 <div className="text-xs text-gray-500">
                     <div className="flex items-center gap-1 mb-1">
