@@ -61,7 +61,7 @@ export default function MessagesPage() {
       {/* Connection status */}
       {isRealtimeConfigured && !connected && socketError && (
         <div className="absolute top-0 left-0 right-0 bg-yellow-100 border-b border-yellow-300 px-4 py-2 text-sm text-yellow-800 text-center z-50">
-          Real-time updates unavailable. Messages will sync on refresh.
+          Reconnecting... Messages will update automatically.
         </div>
       )}
 

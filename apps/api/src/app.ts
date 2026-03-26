@@ -8,6 +8,7 @@ import passport from './config/passport.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { httpLoggerMiddleware } from './lib/logger.js';
 import { prisma } from '@thulobazaar/database';
+import { sendNotification, canSendNotification } from './services/notification.service.js';
 
 // Import routes (will be added as we migrate them)
 import authRoutes from './routes/auth.routes.js';
@@ -351,10 +352,46 @@ export function createApp(): Express {
         timestamp: new Date(),
       });
       console.log(`📡 Broadcasted message ${messageData?.id} to conversation:${conversationId}`);
-      return res.json({ success: true });
     }
 
-    return res.status(500).json({ success: false, message: 'Socket.IO not available' });
+    // Create in-app notifications for recipients (fire-and-forget)
+    if (conversationId && messageData?.senderId) {
+      prisma.conversation_participants
+        .findMany({
+          where: {
+            conversation_id: conversationId,
+            user_id: { not: messageData.senderId },
+            is_muted: { not: true },
+          },
+          select: { user_id: true },
+        })
+        .then(async (participants) => {
+          for (const p of participants) {
+            const canSend = await canSendNotification(p.user_id, 'new_message', conversationId, 5);
+            if (canSend) {
+              const senderName = messageData.sender?.fullName || 'Someone';
+              const content = messageData.content || '';
+              const preview = content.length > 60 ? content.substring(0, 60) + '...' : content;
+              sendNotification({
+                recipientUserIds: [p.user_id],
+                type: 'new_message',
+                title: `New message from ${senderName}`,
+                body: messageData.type === 'image' ? `${senderName} sent an image` : preview,
+                data: {
+                  conversationId: String(conversationId),
+                  senderId: String(messageData.senderId),
+                },
+                imageUrl: messageData.sender?.avatar || null,
+                sendPush: false, // Socket broadcast already handles real-time
+                referenceId: conversationId,
+              }).catch((err: Error) => console.error('In-app notification error:', err));
+            }
+          }
+        })
+        .catch((err: Error) => console.error('Error creating message notifications:', err));
+    }
+
+    return res.json({ success: true });
   });
 
   // 404 handler

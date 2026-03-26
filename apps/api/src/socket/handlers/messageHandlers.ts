@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { prisma } from '@thulobazaar/database';
 import type { AuthenticatedSocket, SendMessagePayload } from '../types.js';
 import { sendMessagePushNotification } from '../../services/pushNotification.js';
+import { sendNotification, canSendNotification } from '../../services/notification.service.js';
 
 // Safe callback helper — prevents crashes when client emits without a callback
 function safeCallback(callback: unknown, data: Record<string, unknown>) {
@@ -96,7 +97,7 @@ export function initializeMessageHandlers(
         timestamp: new Date(),
       });
 
-      // Send push notifications to offline participants (fire-and-forget)
+      // Send push notifications to offline participants AND create in-app notifications
       prisma.conversation_participants
         .findMany({
           where: {
@@ -106,11 +107,11 @@ export function initializeMessageHandlers(
           },
           select: { user_id: true },
         })
-        .then((participants) => {
-          const offlineRecipientIds = participants
-            .map((p) => p.user_id)
-            .filter((uid) => !onlineUsers.has(uid));
+        .then(async (participants) => {
+          const recipientIds = participants.map((p) => p.user_id);
+          const offlineRecipientIds = recipientIds.filter((uid) => !onlineUsers.has(uid));
 
+          // Push notifications for offline users
           if (offlineRecipientIds.length > 0) {
             sendMessagePushNotification({
               senderName: sender?.full_name || 'Someone',
@@ -121,8 +122,30 @@ export function initializeMessageHandlers(
               recipientUserIds: offlineRecipientIds,
             }).catch((err) => console.error('Push notification error:', err));
           }
+
+          // In-app notifications for ALL recipients (rate-limited: 1 per conversation per 5 min)
+          for (const recipientId of recipientIds) {
+            const canSend = await canSendNotification(recipientId, 'new_message', conversationId, 5);
+            if (canSend) {
+              const senderName = sender?.full_name || 'Someone';
+              const preview = content.length > 60 ? content.substring(0, 60) + '...' : content;
+              sendNotification({
+                recipientUserIds: [recipientId],
+                type: 'new_message',
+                title: `New message from ${senderName}`,
+                body: type === 'image' ? `${senderName} sent an image` : preview,
+                data: {
+                  conversationId: String(conversationId),
+                  senderId: String(userId),
+                },
+                imageUrl: sender?.avatar || null,
+                sendPush: false, // Already handled above
+                referenceId: conversationId,
+              }).catch((err) => console.error('In-app notification error:', err));
+            }
+          }
         })
-        .catch((err) => console.error('Error fetching participants for push:', err));
+        .catch((err) => console.error('Error fetching participants for notifications:', err));
 
       safeCallback(callback, { success: true, message: messageData });
     } catch (error) {

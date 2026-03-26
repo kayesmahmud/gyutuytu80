@@ -54,8 +54,8 @@ export function useSocket({ token, autoConnect = true }: UseSocketOptions) {
       transports: ['websocket', 'polling'], // WebSocket preferred, polling fallback
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionDelayMax: 30000, // Cap at 30s between retries
+      reconnectionAttempts: Infinity, // Never give up — keep trying
     });
 
     socketRef.current = socket;

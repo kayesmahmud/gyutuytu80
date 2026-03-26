@@ -238,18 +238,23 @@ export default function NotificationsPage() {
     const data = notification.data as Record<string, string> | null;
     const route = data?.route;
     const adId = data?.adId;
+    const conversationId = data?.conversationId;
 
-    if (route === '/ad' && adId) {
+    if (notification.type === 'new_message' || notification.type === 'inquiry_reply') {
+      // Message notifications → go to messages page
+      if (conversationId) {
+        router.push(`/${lang}/messages?conversation=${conversationId}`);
+      } else {
+        router.push(`/${lang}/messages`);
+      }
+    } else if (route === '/ad' && adId) {
       router.push(`/${lang}/ad/${adId}`);
     } else if (route === '/verification') {
       router.push(`/${lang}/verification`);
     } else if (route === '/promotion') {
       router.push(`/${lang}/dashboard`);
-    } else if (route === '/chat') {
-      const conversationId = data?.conversationId;
-      if (conversationId) {
-        router.push(`/${lang}/messages?conversation=${conversationId}`);
-      }
+    } else if (route === '/chat' && conversationId) {
+      router.push(`/${lang}/messages?conversation=${conversationId}`);
     }
   };
 

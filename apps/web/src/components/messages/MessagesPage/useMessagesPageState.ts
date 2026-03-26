@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useMessages } from '@/hooks/useSocket';
 import { messagingApi, announcementsApi } from '@/lib/messaging';
 import type { Announcement } from '@/types/messaging';
 import type { TabType } from './types';
+
+const POLL_INTERVAL_MS = 10_000; // 10 seconds when socket is down
 
 interface UseMessagesPageStateProps {
   token: string | null;
@@ -219,6 +221,57 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
       socket.off('typing:user-stopped', handleTypingStop);
     };
   }, [socket, connected, selectedConversation, currentUserId]);
+
+  // =====================
+  // POLLING FALLBACK — when socket is down, poll for updates every 10s
+  // =====================
+  const selectedConversationRef = useRef(selectedConversation);
+  selectedConversationRef.current = selectedConversation;
+
+  useEffect(() => {
+    // Only poll when socket is NOT connected
+    if (connected || !token) return;
+
+    console.log('📡 [Polling] Socket disconnected — starting polling fallback');
+
+    const poll = async () => {
+      try {
+        // 1. Refresh conversation list (for sidebar updates)
+        const convResponse = await messagingApi.getConversations(token);
+        if (convResponse.data) {
+          setConversations(convResponse.data);
+        }
+
+        // 2. If a conversation is open, fetch new messages
+        const currentConv = selectedConversationRef.current;
+        if (currentConv) {
+          const msgResponse = await messagingApi.getConversation(token, currentConv.id);
+          if (msgResponse.data?.messages) {
+            setConversationMessages((prev) => {
+              // Merge: keep existing messages, add any new ones from server
+              const existingIds = new Set(prev.map((m: any) => m.id));
+              const newMsgs = msgResponse.data.messages.filter(
+                (m: any) => !existingIds.has(m.id)
+              );
+              if (newMsgs.length === 0) return prev;
+              return [...prev, ...newMsgs];
+            });
+          }
+        }
+      } catch (err) {
+        console.error('📡 [Polling] Error:', err);
+      }
+    };
+
+    // Initial poll immediately
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
+
+    return () => {
+      console.log('📡 [Polling] Stopped (socket reconnected or unmount)');
+      clearInterval(interval);
+    };
+  }, [connected, token]);
 
   // Select conversation handler
   const handleSelectConversation = useCallback(async (conversation: any) => {
