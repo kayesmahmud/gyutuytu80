@@ -37,9 +37,22 @@ export default function BottomNav({ lang }: BottomNavProps) {
 
     useEffect(() => {
         fetchUnreadCount();
-        // Poll for new messages every 30 seconds
         const interval = setInterval(fetchUnreadCount, 30000);
         return () => clearInterval(interval);
+    }, [fetchUnreadCount]);
+
+    // Instant poll when tab becomes visible or window gains focus
+    useEffect(() => {
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') fetchUnreadCount();
+        };
+        const handleFocus = () => fetchUnreadCount();
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleFocus);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, [fetchUnreadCount]);
 
     // Hide on scroll down, show on scroll up (must be before any early returns!)

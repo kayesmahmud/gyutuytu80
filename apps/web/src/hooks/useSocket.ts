@@ -25,15 +25,14 @@ export function useSocket({ token, autoConnect = true }: UseSocketOptions) {
     connected: false,
     error: null,
   });
+  // Track whether a token refresh is in progress to avoid concurrent refreshes
+  const refreshingRef = useRef(false);
 
   // Initialize socket connection
   useEffect(() => {
-    // CRITICAL: Log token status for debugging
     console.log('🔌 [useSocket] Token status:', token ? `Present (${token.substring(0, 20)}...)` : 'NULL/UNDEFINED');
-    console.log('🔌 [useSocket] Auto-connect:', autoConnect);
 
     if (!token || !autoConnect) {
-      console.warn('⚠️ [useSocket] Socket connection skipped - token:', !!token, 'autoConnect:', autoConnect);
       return;
     }
 
@@ -51,11 +50,11 @@ export function useSocket({ token, autoConnect = true }: UseSocketOptions) {
       auth: {
         token,
       },
-      transports: ['websocket', 'polling'], // WebSocket preferred, polling fallback
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 30000, // Cap at 30s between retries
-      reconnectionAttempts: Infinity, // Never give up — keep trying
+      reconnectionDelayMax: 30000,
+      reconnectionAttempts: Infinity,
     });
 
     socketRef.current = socket;
@@ -71,10 +70,36 @@ export function useSocket({ token, autoConnect = true }: UseSocketOptions) {
       setState({ connected: false, error: null });
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('❌ [useSocket] Socket.IO connection error:', error.message);
-      console.error('❌ [useSocket] Error details:', error);
+    socket.on('connect_error', async (error) => {
+      console.error('❌ [useSocket] Connection error:', error.message);
       setState({ connected: false, error: error.message });
+
+      // If the error is about an expired/invalid token, auto-refresh it
+      const isAuthError = error.message.includes('expired')
+        || error.message.includes('Invalid')
+        || error.message.includes('Authentication');
+
+      if (isAuthError && !refreshingRef.current) {
+        refreshingRef.current = true;
+        console.log('🔄 [useSocket] Auth error detected — refreshing token...');
+        try {
+          const res = await fetch('/api/auth/refresh-token', { method: 'POST' });
+          if (res.ok) {
+            const data = await res.json();
+            const newToken = data.data?.token || data.token;
+            if (newToken) {
+              // Update socket auth so the next reconnect attempt uses the fresh token
+              socket.auth = { token: newToken };
+              localStorage.setItem('backend_jwt_token', newToken);
+              console.log('✅ [useSocket] Token refreshed — next reconnect will use new token');
+            }
+          }
+        } catch (e) {
+          console.error('❌ [useSocket] Token refresh failed:', e);
+        } finally {
+          refreshingRef.current = false;
+        }
+      }
     });
 
     socket.on('error', (error) => {
@@ -82,9 +107,33 @@ export function useSocket({ token, autoConnect = true }: UseSocketOptions) {
       setState((prev) => ({ ...prev, error: error.message || 'Socket error' }));
     });
 
+    // Proactive token refresh: refresh every 12 hours to prevent expiry during long sessions
+    const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+    const refreshInterval = setInterval(async () => {
+      if (refreshingRef.current) return;
+      refreshingRef.current = true;
+      try {
+        const res = await fetch('/api/auth/refresh-token', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          const newToken = data.data?.token || data.token;
+          if (newToken) {
+            socket.auth = { token: newToken };
+            localStorage.setItem('backend_jwt_token', newToken);
+            console.log('🔄 [useSocket] Proactive token refresh complete');
+          }
+        }
+      } catch (e) {
+        console.error('❌ [useSocket] Proactive token refresh failed:', e);
+      } finally {
+        refreshingRef.current = false;
+      }
+    }, TWELVE_HOURS_MS);
+
     // Cleanup on unmount
     return () => {
       console.log('🧹 [useSocket] Cleaning up socket connection');
+      clearInterval(refreshInterval);
       socket.disconnect();
       socketRef.current = null;
     };

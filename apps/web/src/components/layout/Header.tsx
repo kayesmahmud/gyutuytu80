@@ -98,10 +98,29 @@ export default function Header({ lang }: HeaderProps) {
 
   useEffect(() => {
     fetchUnreadCount();
-    // Poll for new messages every 30 seconds
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, [fetchUnreadCount]);
+
+  // Instant poll when tab becomes visible or window gains focus
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUnreadCount();
+        fetchNotificationUnreadCount();
+      }
+    };
+    const handleFocus = () => {
+      fetchUnreadCount();
+      fetchNotificationUnreadCount();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchUnreadCount, fetchNotificationUnreadCount]);
 
   // Fetch notification unread count
   const fetchNotificationUnreadCount = useCallback(async () => {
