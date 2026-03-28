@@ -229,8 +229,8 @@ export default function PaymentSuccessPage() {
         {/* Support Note */}
         <p className="text-center text-gray-500 text-sm mt-4 px-4">
           {t('havingIssues')}{' '}
-          <a href="mailto:support@thulobazaar.com" className="text-blue-600 hover:underline">
-            support@thulobazaar.com
+          <a href="mailto:support@thulobazaar.com.np" className="text-blue-600 hover:underline">
+            support@thulobazaar.com.np
           </a>
         </p>
       </div>

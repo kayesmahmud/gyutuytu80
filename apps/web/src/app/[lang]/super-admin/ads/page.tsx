@@ -53,7 +53,7 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
     <DashboardLayout
       lang={params.lang}
       userName={staff?.fullName || 'Admin User'}
-      userEmail={staff?.email || 'admin@thulobazaar.com'}
+      userEmail={staff?.email || 'admin@thulobazaar.com.np'}
       navSections={navSections}
       systemAlert={{ message: 'Storage: 86% used', type: 'warning' }}
       notificationCount={5}

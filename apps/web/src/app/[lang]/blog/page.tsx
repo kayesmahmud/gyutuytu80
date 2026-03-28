@@ -35,6 +35,9 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
       locale: isNe ? 'ne_NP' : 'en_US',
       type: 'website',
     },
+    other: {
+      'application/rss+xml': `${baseUrl}/${lang}/blog/feed.xml`,
+    },
   };
 }
 

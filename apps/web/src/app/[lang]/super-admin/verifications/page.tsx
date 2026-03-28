@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { DashboardLayout } from '@/components/admin';
+import { DashboardLayout, Pagination } from '@/components/admin';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { getSuperAdminNavSections } from '@/lib/navigation';
 import { StatsCards, SearchBar, VerificationTable, SuspendedTable } from './components';
@@ -16,6 +16,7 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
 
   const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
 
   const {
     pendingVerifications,
@@ -24,7 +25,9 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
     suspendedRejected,
     verificationStats,
     loading,
-    loadData,
+    totalPages,
+    loadStats,
+    loadTabData,
   } = useVerifications();
 
   const handleLogout = useCallback(async () => {
@@ -32,16 +35,27 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
     router.push(`/${params.lang}/super-admin/login`);
   }, [logout, router, params.lang]);
 
+  // Load stats once on mount
   useEffect(() => {
     if (authLoading) return;
-
     if (!staff || !isSuperAdmin) {
       router.push(`/${params.lang}/super-admin/login`);
       return;
     }
+    loadStats();
+  }, [authLoading, staff, isSuperAdmin, params.lang, router, loadStats]);
 
-    loadData();
-  }, [authLoading, staff, isSuperAdmin, params.lang, router, loadData]);
+  // Load tab data when tab, page, or search changes
+  useEffect(() => {
+    if (authLoading || !staff || !isSuperAdmin) return;
+    loadTabData(activeTab, page, searchQuery);
+  }, [authLoading, staff, isSuperAdmin, activeTab, page, searchQuery, loadTabData]);
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    setPage(1);
+    setSearchQuery('');
+  };
 
   const navSections = getSuperAdminNavSections(params.lang);
 
@@ -81,7 +95,7 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
     <DashboardLayout
       lang={params.lang}
       userName={staff?.fullName || 'Admin User'}
-      userEmail={staff?.email || 'admin@thulobazaar.com'}
+      userEmail={staff?.email || 'admin@thulobazaar.com.np'}
       navSections={navSections}
       systemAlert={{ message: 'Storage: 86% used', type: 'warning' }}
       notificationCount={5}
@@ -99,10 +113,10 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
       </div>
 
       {/* Stats Cards */}
-      <StatsCards tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <StatsCards tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Search */}
-      <SearchBar value={searchQuery} onChange={setSearchQuery} />
+      <SearchBar value={searchQuery} onChange={(v) => { setSearchQuery(v); setPage(1); }} />
 
       {/* Content based on active tab */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
@@ -117,7 +131,7 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
 
         {activeTab === 'verified-business' && (
           <VerificationTable
-            verifications={filterBySearch(verifiedBusiness, searchQuery)}
+            verifications={verifiedBusiness}
             title="Verified Business Accounts"
             emptyMessage="No verified business accounts"
           />
@@ -125,7 +139,7 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
 
         {activeTab === 'verified-individual' && (
           <VerificationTable
-            verifications={filterBySearch(verifiedIndividual, searchQuery)}
+            verifications={verifiedIndividual}
             title="Verified Individual Accounts"
             emptyMessage="No verified individual accounts"
           />
@@ -134,6 +148,15 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
         {activeTab === 'suspended-rejected' && (
           <SuspendedTable users={filterSuspendedBySearch(suspendedRejected, searchQuery)} />
         )}
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-6">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </DashboardLayout>
   );

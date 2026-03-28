@@ -128,7 +128,7 @@ class FloatingContactBar extends StatelessWidget {
                   : (ad.userName ?? (context.locale.languageCode == 'ne' ? 'विक्रेता' : 'Seller')),
               recipientAvatar: avatarUrl,
               adTitle: ad.title,
-              initialMessage: "Hi, I'm interested in \"${ad.title}\"\nhttps://thulobazaar.com/en/ad/${ad.slug}",
+              initialMessage: "Hi, I'm interested in \"${ad.title}\"\nhttps://thulobazaar.com.np/en/ad/${ad.slug}",
             ),
           ),
         );
@@ -208,7 +208,7 @@ class FloatingContactBar extends StatelessWidget {
   Future<void> _launchWhatsApp(String? phone) async {
     if (phone == null) return;
     final formatted = _formatWhatsAppNumber(phone);
-    final adUrl = 'https://thulobazaar.com/en/ad/${ad.slug}';
+    final adUrl = 'https://thulobazaar.com.np/en/ad/${ad.slug}';
     final message = Uri.encodeComponent("Hi, I'm interested in \"${ad.title}\"\n$adUrl");
     final uri = Uri.parse('whatsapp://send?phone=+$formatted&text=$message');
     if (await canLaunchUrl(uri)) {

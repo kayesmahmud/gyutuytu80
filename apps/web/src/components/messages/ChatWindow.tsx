@@ -17,7 +17,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const URL_SPLIT_REGEX = /(https?:\/\/[^\s]+)/g;
 const THULOBAZAAR_URL_REGEX = /^https?:\/\/(?:www\.)?(?:thulobazaar\.com(?:\.np)?|localhost(?::\d+)?)\//;
 
-/** Renders message text with thulobazaar.com links clickable, other URLs as plain text */
+/** Renders message text with thulobazaar.com.np links clickable, other URLs as plain text */
 function LinkifiedText({ text, isOwnMessage }: { text: string; isOwnMessage: boolean }) {
   const parts = text.split(URL_SPLIT_REGEX);
   return (

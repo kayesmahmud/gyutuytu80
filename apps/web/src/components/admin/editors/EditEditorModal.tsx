@@ -299,7 +299,7 @@ export function EditEditorModal({ isOpen, onClose, onSuccess, editor }: EditEdit
                   ? 'border-rose-300 focus:border-rose-500 focus:ring-4 focus:ring-rose-50'
                   : 'border-gray-200 focus:border-amber-500 focus:ring-4 focus:ring-amber-50'
               }`}
-              placeholder="editor@thulobazaar.com"
+              placeholder="editor@thulobazaar.com.np"
             />
             {errors.email && <p className="text-rose-600 text-sm mt-1">{errors.email}</p>}
           </div>

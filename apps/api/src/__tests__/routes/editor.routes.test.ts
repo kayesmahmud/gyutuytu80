@@ -45,7 +45,7 @@ const app = createApp();
 // Sample editor user data
 const mockEditor = {
   id: 100,
-  email: 'editor@thulobazaar.com',
+  email: 'editor@thulobazaar.com.np',
   password_hash: 'hashed_password',
   full_name: 'Test Editor',
   role: 'editor',
@@ -56,7 +56,7 @@ const mockEditor = {
 
 const mockAdmin = {
   id: 101,
-  email: 'admin@thulobazaar.com',
+  email: 'admin@thulobazaar.com.np',
   password_hash: 'hashed_password',
   full_name: 'Test Admin',
   role: 'admin',
@@ -86,7 +86,7 @@ describe('Editor Routes', () => {
     it('should return 400 when password is missing', async () => {
       const response = await request(app)
         .post('/api/editor/auth/login')
-        .send({ email: 'editor@thulobazaar.com' });
+        .send({ email: 'editor@thulobazaar.com.np' });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -116,7 +116,7 @@ describe('Editor Routes', () => {
 
       const response = await request(app)
         .post('/api/editor/auth/login')
-        .send({ email: 'editor@thulobazaar.com', password: 'wrongpassword' });
+        .send({ email: 'editor@thulobazaar.com.np', password: 'wrongpassword' });
 
       expect(response.status).toBe(401);
     });
@@ -131,7 +131,7 @@ describe('Editor Routes', () => {
 
       const response = await request(app)
         .post('/api/editor/auth/login')
-        .send({ email: 'editor@thulobazaar.com', password: 'test123' });
+        .send({ email: 'editor@thulobazaar.com.np', password: 'test123' });
 
       expect(response.status).toBe(401);
     });
@@ -146,7 +146,7 @@ describe('Editor Routes', () => {
 
       const response = await request(app)
         .post('/api/editor/auth/login')
-        .send({ email: 'editor@thulobazaar.com', password: 'editor123' });
+        .send({ email: 'editor@thulobazaar.com.np', password: 'editor123' });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -164,7 +164,7 @@ describe('Editor Routes', () => {
 
       const response = await request(app)
         .post('/api/editor/auth/login')
-        .send({ email: 'admin@thulobazaar.com', password: 'admin123' });
+        .send({ email: 'admin@thulobazaar.com.np', password: 'admin123' });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -181,7 +181,7 @@ describe('Editor Routes', () => {
 
       await request(app)
         .post('/api/editor/auth/login')
-        .send({ email: 'editor@thulobazaar.com', password: 'editor123' });
+        .send({ email: 'editor@thulobazaar.com.np', password: 'editor123' });
 
       expect(prisma.users.update).toHaveBeenCalledWith(
         expect.objectContaining({

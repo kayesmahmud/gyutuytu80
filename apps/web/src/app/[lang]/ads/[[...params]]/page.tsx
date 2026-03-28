@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { prisma } from '@thulobazaar/database';
 import { AdsFilter, AdsSearchBar, AdsFilterWrapper, AdCard, AdBanner, SortDropdown } from '@/components/ads';
 import { parseAdUrlParams, getFilterIds, generateAdListingMetadata } from '@/lib/urls';
+import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import { getLocationHierarchy } from '@/lib/location';
 import { getRootCategoriesWithChildren } from '@/lib/location';
 import { buildAdsWhereClause, buildAdsOrderBy, standardAdInclude } from '@/lib/ads';
@@ -24,18 +25,24 @@ interface AdsPageProps {
 }
 
 export async function generateMetadata({ params, searchParams }: AdsPageProps): Promise<Metadata> {
-  const { params: urlParams } = await params;
+  const { lang, params: urlParams } = await params;
   const filters = await searchParams;
 
   // Parse URL parameters using helper function
   const parsed = await parseAdUrlParams(urlParams);
 
+  // Build the current path for canonical/hreflang
+  const pathSegments = ['', lang, 'ads', ...(urlParams || [])];
+  const path = pathSegments.join('/');
+
   // Generate metadata based on filters
+  const page = filters.page ? parseInt(filters.page) : 1;
   const metadata = generateAdListingMetadata(
     parsed.locationName,
     parsed.categoryName,
     filters.query || null,
-    0 // Placeholder - will show actual count on page
+    0, // Placeholder - will show actual count on page
+    { lang, path, page }
   );
 
   return metadata;
@@ -149,8 +156,31 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
     }
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+
+  // ItemList JSON-LD for rich results (first 10 ads)
+  const itemListData = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: ads.slice(0, 10).map((ad: any, index: number) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: ad.title,
+      url: `${baseUrl}/${lang}/ad/${ad.slug}`,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Structured data */}
+      <BreadcrumbJsonLd
+        items={breadcrumbs.map(b => ({ name: b.label, url: `${baseUrl}${b.href}` }))}
+      />
+      {/* JSON.stringify produces safe output — no XSS risk from structured data we control */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListData) }}
+      />
       {/* Mobile Filter Carousel + Drawer */}
       <AdsFilterWrapper
         lang={lang}

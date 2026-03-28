@@ -11,7 +11,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'business'; // 'business' | 'individual'
     const search = searchParams.get('search') || '';
-    const limit = parseInt(searchParams.get('limit') || '200', 10);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 200);
+    const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
+    const skip = (page - 1) * limit;
 
     const whereBase: any = {};
     if (search) {
@@ -27,23 +29,25 @@ export async function GET(request: NextRequest) {
     }
 
     if (type === 'individual') {
-      const users = await prisma.users.findMany({
-        where: {
-          ...whereBase,
-          individual_verified: true,
-        },
-        select: {
-          id: true,
-          full_name: true,
-          email: true,
-          phone: true,
-          shop_slug: true,
-          individual_verified_at: true,
-          created_at: true,
-        },
-        orderBy: { individual_verified_at: 'desc' },
-        take: limit,
-      });
+      const where = { ...whereBase, individual_verified: true };
+      const [users, total] = await Promise.all([
+        prisma.users.findMany({
+          where,
+          select: {
+            id: true,
+            full_name: true,
+            email: true,
+            phone: true,
+            shop_slug: true,
+            individual_verified_at: true,
+            created_at: true,
+          },
+          orderBy: { individual_verified_at: 'desc' },
+          take: limit,
+          skip,
+        }),
+        prisma.users.count({ where }),
+      ]);
 
       return NextResponse.json({
         success: true,
@@ -58,30 +62,33 @@ export async function GET(request: NextRequest) {
           status: 'approved',
           created_at: u.individual_verified_at || u.created_at,
         })),
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       });
     }
 
     // Default: business
-    const users = await prisma.users.findMany({
-      where: {
-        ...whereBase,
-        business_verification_status: { in: BUSINESS_STATUSES },
-      },
-      select: {
-        id: true,
-        full_name: true,
-        email: true,
-        phone: true,
-        shop_slug: true,
-        business_name: true,
-        business_category: true,
-        business_verification_status: true,
-        business_verified_at: true,
-        created_at: true,
-      },
-      orderBy: { business_verified_at: 'desc' },
-      take: limit,
-    });
+    const where = { ...whereBase, business_verification_status: { in: BUSINESS_STATUSES } };
+    const [users, total] = await Promise.all([
+      prisma.users.findMany({
+        where,
+        select: {
+          id: true,
+          full_name: true,
+          email: true,
+          phone: true,
+          shop_slug: true,
+          business_name: true,
+          business_category: true,
+          business_verification_status: true,
+          business_verified_at: true,
+          created_at: true,
+        },
+        orderBy: { business_verified_at: 'desc' },
+        take: limit,
+        skip,
+      }),
+      prisma.users.count({ where }),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -98,6 +105,7 @@ export async function GET(request: NextRequest) {
         shop_slug: u.shop_slug,
         created_at: u.business_verified_at || u.created_at,
       })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error: any) {
     console.error('Super admin verification list error:', error);

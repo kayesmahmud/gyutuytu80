@@ -8,6 +8,7 @@ import { getEditorNavSections } from '@/lib/navigation';
 import { ReportTabs, StatsCards, SearchBar, ReportsList } from './components';
 import { useReportedAds } from './useReportedAds';
 import { TABS, type TabStatus } from './types';
+import Pagination from '../ad-management/components/Pagination';
 
 export default function ReportedAdsPage({ params: paramsPromise }: { params: Promise<{ lang: string }> }) {
   const params = use(paramsPromise);
@@ -19,6 +20,7 @@ export default function ReportedAdsPage({ params: paramsPromise }: { params: Pro
     loading,
     actionLoading,
     tabCounts,
+    totalPages,
     loadReportedAds,
     loadTabCounts,
     handleDeleteAd,
@@ -82,7 +84,7 @@ export default function ReportedAdsPage({ params: paramsPromise }: { params: Pro
     <DashboardLayout
       lang={params.lang}
       userName={staff?.fullName || 'Editor User'}
-      userEmail={staff?.email || 'editor@thulobazaar.com'}
+      userEmail={staff?.email || 'editor@thulobazaar.com.np'}
       navSections={getEditorNavSections(params.lang)}
       theme="editor"
       onLogout={handleLogout}
@@ -128,6 +130,13 @@ export default function ReportedAdsPage({ params: paramsPromise }: { params: Pro
           onDeleteAd={(adId, reason) => handleDeleteAd(adId, reason, activeTab)}
           onDismissReport={(reportId) => handleDismissReport(reportId, activeTab)}
           onRestoreAd={(adId, title) => handleRestoreAd(adId, title, activeTab)}
+        />
+
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
         />
       </div>
     </DashboardLayout>

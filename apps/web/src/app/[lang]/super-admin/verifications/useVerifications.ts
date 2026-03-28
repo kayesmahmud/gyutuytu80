@@ -2,7 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
-import type { Verification, SuspendedUser, VerificationStats } from './types';
+import type { Verification, SuspendedUser, VerificationStats, TabType } from './types';
+
+const ITEMS_PER_PAGE = 20;
 
 export function useVerifications() {
   const [pendingVerifications, setPendingVerifications] = useState<Verification[]>([]);
@@ -16,6 +18,7 @@ export function useVerifications() {
     suspendedRejected: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchVerificationStats = async () => {
     const res = await fetch('/api/super-admin/verification-stats', {
@@ -25,98 +28,80 @@ export function useVerifications() {
     return res.json();
   };
 
-  const fetchVerifiedList = async (type: 'business' | 'individual', searchQuery: string) => {
-    const query = searchQuery ? `?type=${type}&search=${encodeURIComponent(searchQuery)}` : `?type=${type}`;
-    const res = await fetch(`/api/super-admin/verification-list${query}`, {
+  const fetchVerifiedList = async (type: 'business' | 'individual', page: number, search: string) => {
+    const params = new URLSearchParams({
+      type,
+      page: String(page),
+      limit: String(ITEMS_PER_PAGE),
+    });
+    if (search) params.set('search', search);
+    const res = await fetch(`/api/super-admin/verification-list?${params}`, {
       credentials: 'include',
     });
     if (!res.ok) throw new Error(`List fetch failed: ${res.status}`);
     return res.json();
   };
 
-  const loadData = useCallback(async (searchQuery: string = '') => {
+  const loadStats = useCallback(async () => {
+    try {
+      const statsRes = await fetchVerificationStats();
+      if (statsRes?.success && statsRes.data) {
+        setVerificationStats(statsRes.data);
+      }
+    } catch (error) {
+      console.error('Failed to load verification stats:', error);
+    }
+  }, []);
+
+  const loadTabData = useCallback(async (tab: TabType, page: number = 1, search: string = '') => {
     try {
       setLoading(true);
-      console.log('🔍 Loading verification data...');
 
-      const results = await Promise.allSettled([
-        fetchVerificationStats(),
-        apiClient.getVerificationsByStatus('pending', 'all'),
-        fetchVerifiedList('business', searchQuery),
-        fetchVerifiedList('individual', searchQuery),
-        apiClient.getSuspendedRejectedUsers({ limit: 100 }),
-      ]);
-
-      // Handle verification stats
-      if (results[0].status === 'fulfilled') {
-        const statsRes = results[0].value as any;
-        if (statsRes?.success && statsRes.data) {
-          setVerificationStats(statsRes.data);
-        }
-      } else {
-        console.error('❌ Verification stats error:', results[0].reason);
-      }
-
-      // Handle pending verifications
-      if (results[1].status === 'fulfilled') {
-        const pendingRes = results[1].value;
-        console.log('✅ Pending:', pendingRes);
+      if (tab === 'pending') {
+        const pendingRes = await apiClient.getVerificationsByStatus('pending', 'all');
         if (pendingRes.success && pendingRes.data) {
-          setPendingVerifications(pendingRes.data.map((item: any) => ({
+          const allPending = pendingRes.data.map((item: any) => ({
             ...item,
             type: item.business_name ? 'business' : 'individual',
-          })));
+          }));
+          // Client-side pagination for pending (Express API doesn't support it yet)
+          const start = (page - 1) * ITEMS_PER_PAGE;
+          setPendingVerifications(allPending.slice(start, start + ITEMS_PER_PAGE));
+          setTotalPages(Math.ceil(allPending.length / ITEMS_PER_PAGE) || 1);
         }
-      } else {
-        console.error('❌ Pending error:', results[1].reason);
-      }
-
-      // Handle business verifications
-      if (results[2].status === 'fulfilled') {
-        const businessRes = results[2].value as any;
-        console.log('✅ Business:', businessRes);
+      } else if (tab === 'verified-business') {
+        const businessRes = await fetchVerifiedList('business', page, search);
         if (businessRes?.success && businessRes.data) {
           setVerifiedBusiness(
-            businessRes.data.map((item: any) => ({
-              ...item,
-              type: 'business',
-            }))
+            businessRes.data.map((item: any) => ({ ...item, type: 'business' }))
           );
+          setTotalPages(businessRes.pagination?.totalPages || 1);
         }
-      } else {
-        console.error('❌ Business error:', results[2].reason);
-      }
-
-      // Handle individual verifications
-      if (results[3].status === 'fulfilled') {
-        const individualRes = results[3].value as any;
-        console.log('✅ Individual:', individualRes);
+      } else if (tab === 'verified-individual') {
+        const individualRes = await fetchVerifiedList('individual', page, search);
         if (individualRes?.success && individualRes.data) {
           setVerifiedIndividual(
-            individualRes.data.map((item: any) => ({
-              ...item,
-              type: 'individual',
-            }))
+            individualRes.data.map((item: any) => ({ ...item, type: 'individual' }))
           );
+          setTotalPages(individualRes.pagination?.totalPages || 1);
         }
-      } else {
-        console.error('❌ Individual error:', results[3].reason);
-      }
-
-      // Handle suspended/rejected users
-      if (results[4].status === 'fulfilled') {
-        const suspendedRes = results[4].value;
-        console.log('✅ Suspended:', suspendedRes);
+      } else if (tab === 'suspended-rejected') {
+        const suspendedRes = await apiClient.getSuspendedRejectedUsers({
+          limit: ITEMS_PER_PAGE,
+          page,
+          search,
+        });
         if (suspendedRes.success && suspendedRes.data) {
           setSuspendedRejected(suspendedRes.data);
+          // If the API returns pagination info, use it
+          const pagination = (suspendedRes as any).pagination;
+          setTotalPages(pagination?.totalPages || 1);
         }
-      } else {
-        console.error('❌ Suspended error:', results[4].reason);
       }
 
       setLoading(false);
     } catch (error) {
-      console.error('❌ Error loading verifications:', error);
+      console.error('Error loading verifications:', error);
       setLoading(false);
     }
   }, []);
@@ -128,6 +113,8 @@ export function useVerifications() {
     suspendedRejected,
     verificationStats,
     loading,
-    loadData,
+    totalPages,
+    loadStats,
+    loadTabData,
   };
 }

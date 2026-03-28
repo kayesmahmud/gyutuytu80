@@ -81,7 +81,7 @@ export type SettingsTab = 'general' | 'ads' | 'users' | 'email' | 'sms' | 'googl
 export const DEFAULT_SETTINGS: SystemSettings = {
   siteName: 'Thulo Bazaar',
   siteDescription: "Nepal's Leading Marketplace",
-  contactEmail: 'support@thulobazaar.com',
+  contactEmail: 'support@thulobazaar.com.np',
   supportPhone: '+977-1-1234567',
   maintenanceMode: false,
   allowRegistration: true,
@@ -98,7 +98,7 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   smtpPort: 587,
   smtpUser: '',
   smtpPass: '',
-  smtpFromEmail: 'noreply@thulobazaar.com',
+  smtpFromEmail: 'noreply@thulobazaar.com.np',
   smtpFromName: 'Thulo Bazaar',
   // SMS
   smsEnabled: true,

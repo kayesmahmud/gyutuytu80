@@ -77,7 +77,7 @@ export default function ResponseTemplatesPage({ params }: { params: Promise<{ la
     <DashboardLayout
       lang={lang}
       userName={staff?.fullName || 'Editor User'}
-      userEmail={staff?.email || 'editor@thulobazaar.com'}
+      userEmail={staff?.email || 'editor@thulobazaar.com.np'}
       navSections={getEditorNavSections(lang)}
       theme="editor"
       onLogout={handleLogout}

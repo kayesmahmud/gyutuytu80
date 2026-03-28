@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const statusParam = searchParams.get('status') || 'pending';
     const typeParam = searchParams.get('type') || 'all';
+    const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
+    const skip = (page - 1) * limit;
 
     // Build status filter
     let statusFilter: any = {};
@@ -33,69 +36,98 @@ export async function GET(request: NextRequest) {
       statusFilter = { status: 'pending' };
     }
 
+    // Count totals for pagination
+    let businessCount = 0;
+    let individualCount = 0;
+    if (typeParam === 'all' || typeParam === 'business') {
+      businessCount = await prisma.business_verification_requests.count({ where: statusFilter });
+    }
+    if (typeParam === 'all' || typeParam === 'individual') {
+      individualCount = await prisma.individual_verification_requests.count({ where: statusFilter });
+    }
+    const total = businessCount + individualCount;
+    const totalPages = Math.ceil(total / limit);
+
+    // For combined queries, we need to figure out which records to fetch
+    // based on the page/limit across both tables (sorted by created_at desc)
+    // Strategy: fetch from both tables with pagination applied to the combined result
+    // For simplicity with two tables, fetch enough from each to cover the page window
+    const businessSelect = {
+      id: true,
+      user_id: true,
+      business_name: true,
+      business_license_document: true,
+      business_category: true,
+      business_description: true,
+      business_website: true,
+      business_phone: true,
+      business_address: true,
+      document_type: true,
+      document_number: true,
+      status: true,
+      created_at: true,
+      duration_days: true,
+      payment_amount: true,
+      payment_reference: true,
+      payment_status: true,
+      rejection_reason: true,
+      users_business_verification_requests_user_idTousers: {
+        select: {
+          email: true,
+          full_name: true,
+        },
+      },
+    };
+
+    const individualSelect = {
+      id: true,
+      user_id: true,
+      full_name: true,
+      id_document_type: true,
+      id_document_number: true,
+      id_document_front: true,
+      id_document_back: true,
+      selfie_with_id: true,
+      status: true,
+      created_at: true,
+      duration_days: true,
+      payment_amount: true,
+      payment_reference: true,
+      payment_status: true,
+      rejection_reason: true,
+      users_individual_verification_requests_user_idTousers: {
+        select: {
+          email: true,
+        },
+      },
+    };
+
     // Get business verifications (if requested)
     let businessVerifications: any[] = [];
     if (typeParam === 'all' || typeParam === 'business') {
+      // When combining two tables, fetch up to skip+limit from each to ensure correct pagination
+      const fetchLimit = typeParam === 'all' ? skip + limit : limit;
+      const fetchSkip = typeParam === 'all' ? 0 : skip;
       businessVerifications = await prisma.business_verification_requests.findMany({
         where: statusFilter,
-        select: {
-          id: true,
-          user_id: true,
-          business_name: true,
-          business_license_document: true,
-          business_category: true,
-          business_description: true,
-          business_website: true,
-          business_phone: true,
-          business_address: true,
-          document_type: true,
-          document_number: true,
-          status: true,
-          created_at: true,
-          duration_days: true,
-          payment_amount: true,
-          payment_reference: true,
-          payment_status: true,
-          rejection_reason: true,
-          users_business_verification_requests_user_idTousers: {
-            select: {
-              email: true,
-              full_name: true,
-            },
-          },
-        },
+        select: businessSelect,
         orderBy: { created_at: 'desc' },
+        take: fetchLimit,
+        skip: fetchSkip,
       });
     }
 
     // Get individual verifications (if requested)
     let individualVerifications: any[] = [];
     if (typeParam === 'all' || typeParam === 'individual') {
+      const fetchLimit = typeParam === 'all' ? skip + limit : limit;
+      const fetchSkip = typeParam === 'all' ? 0 : skip;
       individualVerifications = await prisma.individual_verification_requests.findMany({
         where: statusFilter,
-        select: {
-          id: true,
-          user_id: true,
-          full_name: true,
-          id_document_type: true,
-          id_document_number: true,
-          id_document_front: true,
-          id_document_back: true,
-          selfie_with_id: true,
-          status: true,
-          created_at: true,
-          duration_days: true,
-          payment_amount: true,
-          payment_reference: true,
-          payment_status: true,
-          rejection_reason: true,
-          users_individual_verification_requests_user_idTousers: {
-            select: {
-              email: true,
-            },
-          },
-        },
+        select: individualSelect,
         orderBy: { created_at: 'desc' },
+        take: fetchLimit,
+        skip: fetchSkip,
       });
     }
 
@@ -154,10 +186,21 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    // Apply pagination to the combined result when querying both types
+    const paginatedData = typeParam === 'all'
+      ? allVerifications.slice(skip, skip + limit)
+      : allVerifications;
+
     return NextResponse.json(
       {
         success: true,
-        data: allVerifications,
+        data: paginatedData,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+        },
       },
       { status: 200 }
     );

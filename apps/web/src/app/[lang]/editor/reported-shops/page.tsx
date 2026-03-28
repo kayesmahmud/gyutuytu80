@@ -55,7 +55,7 @@ export default function ReportedShopsPage({ params: paramsPromise }: { params: P
     <DashboardLayout
       lang={lang}
       userName={staff?.fullName || 'Editor User'}
-      userEmail={staff?.email || 'editor@thulobazaar.com'}
+      userEmail={staff?.email || 'editor@thulobazaar.com.np'}
       navSections={getEditorNavSections(lang)}
       theme="editor"
       onLogout={handleLogout}

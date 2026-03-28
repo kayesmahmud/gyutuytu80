@@ -83,7 +83,7 @@ export default function SuperAdminLoginForm({ lang }: SuperAdminLoginFormProps) 
             type="email"
             required
             className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
-            placeholder="admin@thulobazaar.com"
+            placeholder="admin@thulobazaar.com.np"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             disabled={isLoading}

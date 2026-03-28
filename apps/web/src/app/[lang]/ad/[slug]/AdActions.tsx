@@ -43,7 +43,7 @@ export default function AdActions({
   // Get the ad URL for sharing
   const adUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/${lang}/ad/${adSlug}`
-    : `https://thulobazaar.com/${lang}/ad/${adSlug}`;
+    : `https://thulobazaar.com.np/${lang}/ad/${adSlug}`;
 
   const checkFavoriteStatus = useCallback(async () => {
     try {

@@ -90,7 +90,7 @@ npx artillery report report.json
 
 ```bash
 # Production
-npx artillery run artillery/smoke-test.yml --target https://thulobazaar.com
+npx artillery run artillery/smoke-test.yml --target https://thulobazaar.com.np
 
 # Staging
 npx artillery run artillery/load-test.yml --target https://staging.thulobazaar.com

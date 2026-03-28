@@ -47,7 +47,7 @@ export default function EditorDashboard({ params }: { params: Promise<{ lang: st
     <DashboardLayout
       lang={lang}
       userName={staff?.fullName || 'Editor User'}
-      userEmail={staff?.email || 'editor@thulobazaar.com'}
+      userEmail={staff?.email || 'editor@thulobazaar.com.np'}
       navSections={navSections}
       systemAlert={systemAlert ?? undefined}
       notificationCount={notificationCount}

@@ -7,6 +7,7 @@ import ShopsPagination from './ShopsPagination';
 import { Breadcrumb } from '@/components/ui';
 import { getRootCategoriesWithChildren, getLocationHierarchy } from '@/lib/location';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 
 interface ShopsPageProps {
   params: Promise<{ lang: string }>;
@@ -17,12 +18,39 @@ interface ShopsPageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: ShopsPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: ShopsPageProps): Promise<Metadata> {
   const { lang } = await params;
+  const filters = await searchParams;
   const t = await getTranslations({ locale: lang, namespace: 'metadata' });
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+  const page = filters.page ? parseInt(filters.page) : 1;
+  const pageSuffix = page > 1 ? `?page=${page}` : '';
+  const title = page > 1 ? `${t('shopsTitle')} - Page ${page}` : t('shopsTitle');
+  const description = t('shopsDescription');
+
   return {
-    title: t('shopsTitle'),
-    description: t('shopsDescription'),
+    title,
+    description,
+    openGraph: {
+      title: t('shopsTitle'),
+      description,
+      url: `${baseUrl}/${lang}/shops${pageSuffix}`,
+      siteName: 'Thulo Bazaar',
+      locale: lang === 'ne' ? 'ne_NP' : 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: t('shopsTitle'),
+      description,
+    },
+    alternates: {
+      canonical: `${baseUrl}/${lang}/shops${pageSuffix}`,
+      languages: {
+        en: `${baseUrl}/en/shops${pageSuffix}`,
+        ne: `${baseUrl}/ne/shops${pageSuffix}`,
+      },
+    },
   };
 }
 
@@ -210,8 +238,16 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
     { label: tc('allShops'), current: true },
   ];
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: tc('home'), url: `${baseUrl}/${lang}` },
+          { name: tc('allShops'), url: `${baseUrl}/${lang}/shops` },
+        ]}
+      />
       {/* Breadcrumb */}
       <Breadcrumb items={breadcrumbItems} />
 

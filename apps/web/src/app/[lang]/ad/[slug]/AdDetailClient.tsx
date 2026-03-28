@@ -7,9 +7,10 @@ import { useTranslations } from 'next-intl';
 interface AdDetailClientProps {
   images: string[];
   lang: string;
+  adTitle?: string;
 }
 
-export default function AdDetailClient({ images, lang }: AdDetailClientProps) {
+export default function AdDetailClient({ images, lang, adTitle }: AdDetailClientProps) {
   const t = useTranslations('ads');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -64,7 +65,7 @@ export default function AdDetailClient({ images, lang }: AdDetailClientProps) {
           ) : (
             <Image
               src={displayImages[selectedImageIndex] || '/placeholder-ad.png'}
-              alt={`Image ${selectedImageIndex + 1}`}
+              alt={`${adTitle || 'Ad'} - Photo ${selectedImageIndex + 1}`}
               fill
               unoptimized
               sizes="(min-width: 1024px) 800px, (min-width: 640px) 600px, 100vw"
@@ -130,7 +131,7 @@ export default function AdDetailClient({ images, lang }: AdDetailClientProps) {
               ) : (
                 <Image
                   src={image}
-                  alt={`Thumbnail ${index + 1}`}
+                  alt={`${adTitle || 'Ad'} - Thumbnail ${index + 1}`}
                   width={100}
                   height={100}
                   unoptimized

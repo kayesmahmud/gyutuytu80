@@ -63,7 +63,7 @@ class ContactScreen extends StatelessWidget {
               iconBg: const Color(0xFFDBEAFE),
               title: 'contact.email'.tr(),
               value: 'contact.emailAddress'.tr(),
-              onTap: () => _launchUrl('mailto:support@thulobazaar.com'),
+              onTap: () => _launchUrl('mailto:support@thulobazaar.com.np'),
             ),
             _ContactCard(
               icon: LucideIcons.phone,

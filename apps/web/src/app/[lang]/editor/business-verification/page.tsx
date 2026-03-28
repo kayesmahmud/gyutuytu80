@@ -63,7 +63,7 @@ export default function BusinessVerificationPage({
     <DashboardLayout
       lang={params.lang}
       userName={staff?.fullName || 'Editor User'}
-      userEmail={staff?.email || 'editor@thulobazaar.com'}
+      userEmail={staff?.email || 'editor@thulobazaar.com.np'}
       navSections={getEditorNavSections(params.lang)}
       theme="editor"
       onLogout={handleLogout}

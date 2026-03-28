@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/admin';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { getVerifications } from '@/lib/editorApi';
 import { getEditorNavSections } from '@/lib/navigation';
+import Pagination from '../ad-management/components/Pagination';
 
 interface Verification {
   id: number;
@@ -40,21 +41,28 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'business' | 'individual'>('all');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const handleLogout = useCallback(async () => {
     await logout();
     router.push(`/${params.lang}/editor/login`);
   }, [logout, router, params.lang]);
 
-  const loadVerifications = useCallback(async () => {
+  const loadVerifications = useCallback(async (currentPage: number = 1, status: string = 'all', type: string = 'all') => {
     try {
       setLoading(true);
 
-      // Fetch ALL verifications (pending, approved, rejected)
-      const response = await getVerifications('all', 'all');
+      const response = await getVerifications(
+        status as 'all' | 'pending' | 'approved' | 'rejected',
+        type as 'all' | 'business' | 'individual',
+        undefined,
+        currentPage,
+        ITEMS_PER_PAGE
+      );
 
       if (response.success && response.data) {
-        // API returns camelCase, map to our interface
         const allVerifications = response.data.map((v: any) => ({
           id: v.id,
           userId: v.userId,
@@ -70,13 +78,13 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
           reviewedAt: v.reviewedAt,
           rejectionReason: v.rejectionReason,
           type: v.type,
-          // Payment and duration fields
           durationDays: v.durationDays,
           paymentAmount: v.paymentAmount,
           paymentStatus: v.paymentStatus,
         }));
 
         setVerifications(allVerifications);
+        setTotalPages(response.pagination?.totalPages || 1);
       }
     } catch (error) {
       console.error('Error loading verifications:', error);
@@ -93,17 +101,22 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
       return;
     }
 
-    loadVerifications();
-  }, [authLoading, staff, isEditor, params.lang, router, loadVerifications]);
+    loadVerifications(page, activeTab, typeFilter);
+  }, [authLoading, staff, isEditor, params.lang, router, loadVerifications, page, activeTab, typeFilter]);
 
+  // Reset page when filters change
+  const handleTabChange = (tab: 'all' | 'pending' | 'approved' | 'rejected') => {
+    setActiveTab(tab);
+    setPage(1);
+  };
+
+  const handleTypeFilterChange = (type: 'all' | 'business' | 'individual') => {
+    setTypeFilter(type);
+    setPage(1);
+  };
+
+  // Client-side search filtering (search is applied to the current page's data)
   const filteredVerifications = verifications.filter((v) => {
-    // Status filter
-    if (activeTab !== 'all' && v.status !== activeTab) return false;
-
-    // Type filter
-    if (typeFilter !== 'all' && v.type !== typeFilter) return false;
-
-    // Search filter
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       return (
@@ -112,16 +125,8 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
         v.businessName?.toLowerCase().includes(search)
       );
     }
-
     return true;
   });
-
-  const stats = {
-    all: verifications.length,
-    pending: verifications.filter(v => v.status === 'pending').length,
-    approved: verifications.filter(v => v.status === 'approved').length,
-    rejected: verifications.filter(v => v.status === 'rejected').length,
-  };
 
   if (authLoading || loading) {
     return (
@@ -145,7 +150,7 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
     <DashboardLayout
       lang={params.lang}
       userName={staff?.fullName || 'Editor User'}
-      userEmail={staff?.email || 'editor@thulobazaar.com'}
+      userEmail={staff?.email || 'editor@thulobazaar.com.np'}
       navSections={getEditorNavSections(params.lang)}
       theme="editor"
       onLogout={handleLogout}
@@ -168,14 +173,14 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
             {(['all', 'pending', 'approved', 'rejected'] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
                   activeTab === tab
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)} ({stats[tab]})
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
@@ -184,7 +189,7 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
           <div className="flex gap-4 flex-wrap items-center">
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as 'all' | 'business' | 'individual')}
+              onChange={(e) => handleTypeFilterChange(e.target.value as 'all' | 'business' | 'individual')}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               <option value="all">All Types</option>
@@ -330,25 +335,12 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
           )}
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg p-6 shadow-sm border-l-4 border-gray-400">
-            <div className="text-sm font-medium text-gray-600 mb-1">Total</div>
-            <div className="text-3xl font-bold text-gray-900">{stats.all}</div>
-          </div>
-          <div className="bg-yellow-50 rounded-lg p-6 shadow-sm border-l-4 border-yellow-400">
-            <div className="text-sm font-medium text-yellow-800 mb-1">Pending</div>
-            <div className="text-3xl font-bold text-yellow-900">{stats.pending}</div>
-          </div>
-          <div className="bg-green-50 rounded-lg p-6 shadow-sm border-l-4 border-green-400">
-            <div className="text-sm font-medium text-green-800 mb-1">Approved</div>
-            <div className="text-3xl font-bold text-green-900">{stats.approved}</div>
-          </div>
-          <div className="bg-red-50 rounded-lg p-6 shadow-sm border-l-4 border-red-400">
-            <div className="text-sm font-medium text-red-800 mb-1">Rejected</div>
-            <div className="text-3xl font-bold text-red-900">{stats.rejected}</div>
-          </div>
-        </div>
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </DashboardLayout>
   );

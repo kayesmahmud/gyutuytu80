@@ -28,7 +28,7 @@ export default function VerificationPricingPage({ params: paramsPromise }: { par
   const layoutProps = {
     lang: params.lang,
     userName: staff?.fullName || 'Super Admin',
-    userEmail: staff?.email || 'admin@thulobazaar.com',
+    userEmail: staff?.email || 'admin@thulobazaar.com.np',
     navSections,
     theme: 'superadmin' as const,
     onLogout: handleLogout,

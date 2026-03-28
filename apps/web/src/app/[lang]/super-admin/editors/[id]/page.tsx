@@ -73,7 +73,7 @@ export default function EditorDetailPage({ params: paramsPromise }: { params: Pr
       <DashboardLayout
         lang={lang}
         userName={staff?.fullName || 'Admin User'}
-        userEmail={staff?.email || 'admin@thulobazaar.com'}
+        userEmail={staff?.email || 'admin@thulobazaar.com.np'}
         navSections={navSections}
         theme="superadmin"
         onLogout={handleLogout}
@@ -97,7 +97,7 @@ export default function EditorDetailPage({ params: paramsPromise }: { params: Pr
     <DashboardLayout
       lang={lang}
       userName={staff?.fullName || 'Admin User'}
-      userEmail={staff?.email || 'admin@thulobazaar.com'}
+      userEmail={staff?.email || 'admin@thulobazaar.com.np'}
       navSections={navSections}
       theme="superadmin"
       onLogout={handleLogout}

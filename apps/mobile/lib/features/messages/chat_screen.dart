@@ -495,7 +495,7 @@ class _ChatScreenState extends State<ChatScreen> {
     r'https?://(?:www\.)?thulobazaar\.com(?:\.np)?/\w+/ad/([^\s]+)',
   );
 
-  /// Builds a widget with only thulobazaar.com links clickable.
+  /// Builds a widget with only thulobazaar.com.np links clickable.
   /// External URLs are rendered as plain text for security.
   Widget _buildLinkifiedText(String text, bool isMe) {
     final style = GoogleFonts.inter(
@@ -555,7 +555,7 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    // Other thulobazaar.com pages (e.g. shop, categories) open in browser
+    // Other thulobazaar.com.np pages (e.g. shop, categories) open in browser
     final uri = Uri.tryParse(url);
     if (uri != null && await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

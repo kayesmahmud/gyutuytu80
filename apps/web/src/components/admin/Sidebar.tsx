@@ -93,7 +93,7 @@ const iconMap: Record<string, LucideIcon> = {
 export function Sidebar({
   lang,
   userName = 'Editor User',
-  userEmail = 'editor@thulobazaar.com',
+  userEmail = 'editor@thulobazaar.com.np',
   userAvatar,
   isCollapsed = false,
   navSections,

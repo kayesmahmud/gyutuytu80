@@ -18,9 +18,11 @@ import type {
 export async function getVerifications(
   status: VerificationStatus = 'pending',
   type: VerificationType = 'all',
-  token?: string
+  token?: string,
+  page?: number,
+  limit?: number
 ): Promise<ApiResponse<Verification[]>> {
-  const queryString = buildQueryString({ status, type });
+  const queryString = buildQueryString({ status, type, page, limit });
   return apiRequest<ApiResponse<Verification[]>>(`/api/admin/verifications${queryString}`, {
     token,
     useRelativeUrl: true,

@@ -88,7 +88,7 @@ export default function SuperAdminDashboard() {
     <DashboardLayout
       lang={lang}
       userName={staff?.fullName || 'Admin User'}
-      userEmail={staff?.email || 'admin@thulobazaar.com'}
+      userEmail={staff?.email || 'admin@thulobazaar.com.np'}
       navSections={navSections}
       theme="superadmin"
       onLogout={handleLogout}

@@ -99,7 +99,7 @@ export function EditSuperAdminModal({ isOpen, onClose, onSuccess, superAdmin }: 
                   ? 'border-rose-300 focus:border-rose-500 focus:ring-4 focus:ring-rose-50'
                   : 'border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50'
               }`}
-              placeholder="superadmin@thulobazaar.com"
+              placeholder="superadmin@thulobazaar.com.np"
             />
             {errors.email && <p className="text-rose-600 text-sm mt-1">{errors.email}</p>}
           </div>

@@ -12,7 +12,7 @@ interface SiteSettings {
 const DEFAULT_SETTINGS: SiteSettings = {
   siteName: 'Thulo Bazaar',
   siteDescription: "Nepal's Leading Marketplace",
-  contactEmail: 'support@thulobazaar.com',
+  contactEmail: 'support@thulobazaar.com.np',
   supportPhone: '+977-1-1234567',
 };
 

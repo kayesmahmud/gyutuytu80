@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { cache } from 'react';
+import { cache, Suspense } from 'react';
 import { formatPrice, formatRelativeTime } from '@thulobazaar/utils';
 import { prisma } from '@thulobazaar/database';
 import { notFound } from 'next/navigation';
@@ -19,6 +19,7 @@ import {
 } from './components';
 import { getImageUrl } from '@/lib/images/imageUrl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { AdJsonLd } from '@/components/seo/AdJsonLd';
 
 interface AdDetailPageProps {
   params: Promise<{ lang: string; slug: string }>;
@@ -158,7 +159,7 @@ const getAdBySlug = cache(async (slug: string) => {
 
 export async function generateMetadata({ params }: AdDetailPageProps): Promise<Metadata> {
   const { slug, lang } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
 
   try {
     const ad = await getAdBySlug(slug);
@@ -190,6 +191,24 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
           title: ad.title,
           description,
           images: [imageUrl],
+        },
+        alternates: {
+          canonical: `${baseUrl}/${lang}/ad/${slug}`,
+          languages: {
+            en: `${baseUrl}/en/ad/${slug}`,
+            ne: `${baseUrl}/ne/ad/${slug}`,
+          },
+        },
+        appLinks: {
+          android: {
+            package: 'com.thulobazaar.mobile',
+            url: `${baseUrl}/${lang}/ad/${slug}`,
+            app_name: 'Thulo Bazaar',
+          },
+          web: {
+            url: `${baseUrl}/${lang}/ad/${slug}`,
+            should_fallback: true,
+          },
         },
       };
     }
@@ -291,8 +310,28 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
     path: ''
   });
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+  const sellerName = ad.users_ads_user_idTousers?.business_name || ad.users_ads_user_idTousers?.full_name || 'Seller';
+  const sellerType = ad.users_ads_user_idTousers?.account_type === 'business' ? 'Organization' as const : 'Person' as const;
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <AdJsonLd
+        name={ad.title}
+        description={ad.description || ''}
+        images={images.filter(Boolean)}
+        price={ad.price ? parseFloat(ad.price.toString()) : 0}
+        condition={ad.condition || 'used'}
+        url={`${baseUrl}/${lang}/ad/${slug}`}
+        sellerName={sellerName}
+        sellerType={sellerType}
+        category={fullCategory || undefined}
+        location={fullLocation || undefined}
+        breadcrumbItems={breadcrumbItems.filter(b => b.path).map(b => ({
+          name: b.label,
+          url: `${baseUrl}${b.path}`,
+        }))}
+      />
       <Breadcrumb items={breadcrumbItems} />
       <PromotionSuccessToast promoted={search.promoted === 'true'} txnId={search.txnId} />
 
@@ -316,7 +355,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
             </div>
 
             {/* Image Gallery */}
-            <AdDetailClient images={images} lang={lang} />
+            <AdDetailClient images={images} lang={lang} adTitle={ad.title} />
 
             {/* Ad Details */}
             <div className="bg-white rounded-xl p-4 sm:p-6 md:p-8 mb-4 md:mb-6 shadow-sm">
@@ -381,11 +420,13 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
               }} />
             </div>
 
-            {/* Related Ads */}
+            {/* Related Ads — deferred for better LCP */}
             {relatedAds.length > 0 && (
-              <div className="mt-8">
-                <RelatedAds ads={relatedAds} lang={lang} />
-              </div>
+              <Suspense fallback={null}>
+                <div className="mt-8">
+                  <RelatedAds ads={relatedAds} lang={lang} />
+                </div>
+              </Suspense>
             )}
 
             {/* Bottom Banner */}

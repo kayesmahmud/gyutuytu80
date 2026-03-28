@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
     await requireSuperAdmin(request);
 
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '500', 10), 2000);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 10000);
+    const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
+    const skip = (page - 1) * limit;
     const status = searchParams.get('status') || 'all'; // all | regular | individual | business
     const search = searchParams.get('search') || '';
 
@@ -39,20 +41,24 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const users = await prisma.users.findMany({
-      where,
-      select: {
-        id: true,
-        full_name: true,
-        email: true,
-        phone: true,
-        business_verification_status: true,
-        individual_verified: true,
-        created_at: true,
-      },
-      orderBy: { created_at: 'desc' },
-      take: limit,
-    });
+    const [users, total] = await Promise.all([
+      prisma.users.findMany({
+        where,
+        select: {
+          id: true,
+          full_name: true,
+          email: true,
+          phone: true,
+          business_verification_status: true,
+          individual_verified: true,
+          created_at: true,
+        },
+        orderBy: { created_at: 'desc' },
+        take: limit,
+        skip,
+      }),
+      prisma.users.count({ where }),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -65,6 +71,12 @@ export async function GET(request: NextRequest) {
         individualVerified: u.individual_verified,
         createdAt: u.created_at,
       })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error: any) {
     console.error('Super-admin users list error:', error);

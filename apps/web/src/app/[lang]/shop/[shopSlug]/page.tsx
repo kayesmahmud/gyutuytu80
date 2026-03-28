@@ -9,6 +9,8 @@ import ReportShopButton from './ReportShopButton';
 import ShopAdCard from './ShopAdCard';
 import { getShopProfile, buildShopMetadata } from '@/lib/shops';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { ShopJsonLd } from '@/components/seo/ShopJsonLd';
+import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 
 interface ShopProfilePageProps {
   params: Promise<{ lang: string; shopSlug: string }>;
@@ -20,7 +22,7 @@ export async function generateMetadata({ params }: ShopProfilePageProps): Promis
   try {
     const shop = await getShopProfile(shopSlug);
     if (shop) {
-      return buildShopMetadata(shop);
+      return buildShopMetadata(shop, lang);
     }
   } catch (error) {
     console.error('Error fetching shop metadata:', error);
@@ -86,8 +88,24 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
     featuredAds: ads.filter(ad => ad.is_featured).length,
   };
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: `${baseUrl}/${lang}` },
+          { name: 'Shops', url: `${baseUrl}/${lang}/shops` },
+          { name: shop.businessName || shop.fullName, url: `${baseUrl}/${lang}/shop/${shopSlug}` },
+        ]}
+      />
+      <ShopJsonLd
+        name={shop.businessName || shop.fullName}
+        description={shop.businessDescription || shop.bio || `Shop profile for ${shop.businessName || shop.fullName}`}
+        url={`${baseUrl}/${lang}/shop/${shopSlug}`}
+        image={shop.avatar || undefined}
+        location={shop.locationFullPath || shop.location?.name || undefined}
+      />
       {/* Breadcrumb - Hidden visually but kept for SEO */}
       <nav aria-label="Breadcrumb" className="sr-only">
         <ol itemScope itemType="https://schema.org/BreadcrumbList">

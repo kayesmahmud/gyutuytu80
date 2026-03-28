@@ -1,14 +1,29 @@
 /**
  * 404 Not Found Page
- * Next.js 15 Best Practice: Provide custom 404 page
+ * Enhanced with popular categories and search functionality
  */
 
+import { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: '404 - Page Not Found | Thulo Bazaar',
+  robots: { index: false, follow: true },
+};
+
+const POPULAR_CATEGORIES = [
+  { name: 'Mobiles', slug: 'mobiles', icon: '📱' },
+  { name: 'Electronics', slug: 'electronics', icon: '💻' },
+  { name: 'Vehicles', slug: 'vehicles', icon: '🚗' },
+  { name: 'Property', slug: 'property', icon: '🏠' },
+  { name: 'Jobs', slug: 'jobs', icon: '💼' },
+  { name: 'Services', slug: 'services', icon: '🔧' },
+];
 
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] p-8 text-center bg-gray-50">
-      <div className="max-w-md">
+      <div className="max-w-lg">
         <h1 className="text-8xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
           404
         </h1>
@@ -19,8 +34,43 @@ export default function NotFound() {
 
         <p className="text-gray-600 mb-8 text-lg">
           Sorry, we couldn&apos;t find the page you&apos;re looking for.
-          The page might have been moved or deleted.
+          It might have been moved or deleted.
         </p>
+
+        {/* Search Bar */}
+        <form action="/en/ads" method="get" className="mb-8">
+          <div className="flex gap-2 max-w-md mx-auto">
+            <input
+              type="text"
+              name="query"
+              placeholder="Search for ads..."
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            />
+            <button
+              type="submit"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+
+        {/* Popular Categories */}
+        <div className="mb-8">
+          <p className="text-sm text-gray-500 mb-3">Or browse popular categories:</p>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {POPULAR_CATEGORIES.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/en/ads/${cat.slug}`}
+                className="flex flex-col items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow no-underline text-gray-700 hover:text-indigo-600"
+              >
+                <span className="text-2xl mb-1">{cat.icon}</span>
+                <span className="text-xs font-medium">{cat.name}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
 
         <div className="flex gap-3 justify-center flex-wrap">
           <Link
@@ -33,7 +83,7 @@ export default function NotFound() {
             href="/en/ads"
             className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors no-underline"
           >
-            Search Ads
+            Browse All Ads
           </Link>
         </div>
       </div>

@@ -63,7 +63,8 @@ export function generateAdListingMetadata(
   locationName: string | null,
   categoryName: string | null,
   searchQuery: string | null,
-  totalAds: number
+  totalAds: number,
+  options?: { lang?: string; path?: string; page?: number }
 ) {
   let title = '';
   let description = '';
@@ -100,8 +101,37 @@ export function generateAdListingMetadata(
     }
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+  const lang = options?.lang || 'en';
+  const path = options?.path || `/${lang}/ads`;
+  const page = options?.page || 1;
+  const pageSuffix = page > 1 ? `?page=${page}` : '';
+  const url = `${baseUrl}${path}${pageSuffix}`;
+  const otherLang = lang === 'en' ? 'ne' : 'en';
+  const otherPath = path.replace(`/${lang}/`, `/${otherLang}/`);
+
   return {
-    title,
+    title: page > 1 ? `${title} - Page ${page}` : title,
     description,
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'Thulo Bazaar',
+      locale: lang === 'ne' ? 'ne_NP' : 'en_US',
+      type: 'website' as const,
+    },
+    twitter: {
+      card: 'summary' as const,
+      title,
+      description,
+    },
+    alternates: {
+      canonical: url,
+      languages: {
+        en: `${baseUrl}${lang === 'en' ? path : otherPath}${pageSuffix}`,
+        ne: `${baseUrl}${lang === 'ne' ? path : otherPath}${pageSuffix}`,
+      },
+    },
   };
 }

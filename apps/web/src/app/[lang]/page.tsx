@@ -19,15 +19,35 @@ export async function generateMetadata({ params }: HomePageProps): Promise<Metad
   const { lang } = await params;
   const t = await getTranslations({ locale: lang, namespace: 'metadata' });
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+  const title = t('homeTitle');
+  const description = t('homeDescription');
+
   return {
-    title: t('homeTitle'),
-    description: t('homeDescription'),
+    title,
+    description,
     keywords: 'Nepal classifieds, buy sell Nepal, online marketplace Nepal, free ads Nepal, Thulo Bazaar',
     openGraph: {
-      title: t('homeTitle'),
+      title,
       description: t('siteDescription'),
       type: 'website',
       siteName: 'Thulo Bazaar',
+      url: `${baseUrl}/${lang}`,
+      locale: lang === 'ne' ? 'ne_NP' : 'en_US',
+      images: [{ url: `${baseUrl}/logo.png`, width: 512, height: 512, alt: 'Thulo Bazaar' }],
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+      images: [`${baseUrl}/logo.png`],
+    },
+    alternates: {
+      canonical: `${baseUrl}/${lang}`,
+      languages: {
+        en: `${baseUrl}/en`,
+        ne: `${baseUrl}/ne`,
+      },
     },
   };
 }

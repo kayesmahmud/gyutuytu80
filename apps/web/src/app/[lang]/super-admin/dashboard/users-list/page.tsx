@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { DashboardLayout } from '@/components/admin';
+import { DashboardLayout, Pagination } from '@/components/admin';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { apiClient } from '@/lib/api'; // kept for other methods if needed
 import { getSuperAdminNavSections } from '@/lib/navigation';
@@ -26,7 +26,11 @@ export default function UsersListPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'regular' | 'individual' | 'business'>('all');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const navSections = useMemo(() => getSuperAdminNavSections(lang), [lang]);
 
@@ -38,7 +42,12 @@ export default function UsersListPage() {
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({ limit: '1000', status: statusFilter });
+      const params = new URLSearchParams({
+        limit: String(ITEMS_PER_PAGE),
+        page: String(page),
+        status: statusFilter,
+        ...(debouncedSearch && { search: debouncedSearch }),
+      });
       const res = await fetch(`/api/super-admin/users?${params}`, {
         credentials: 'include',
       });
@@ -55,13 +64,14 @@ export default function UsersListPage() {
             individualVerified: Boolean(u.individualVerified ?? u.individual_verified),
           }))
         );
+        setTotalPages(json.pagination?.totalPages || 1);
       }
     } catch (error) {
       console.error('Failed to load users:', error);
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, page, debouncedSearch]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -72,16 +82,16 @@ export default function UsersListPage() {
     loadUsers();
   }, [authLoading, staff, isSuperAdmin, router, lang, loadUsers]);
 
-  const filteredUsers = useMemo(() => {
-    if (!search) return users;
-    const q = search.toLowerCase();
-    return users.filter(
-      (u) =>
-        u.fullName.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        (u.phone || '').toLowerCase().includes(q)
-    );
-  }, [users, search]);
+  const filteredUsers = users;
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const getStatusLabel = (user: UserRow) => {
     if (user.businessVerificationStatus && ['approved', 'verified'].includes(user.businessVerificationStatus)) {
@@ -93,10 +103,33 @@ export default function UsersListPage() {
     return 'Seller';
   };
 
-  const exportColumn = (field: 'email' | 'phone') => {
+  // Fetch all users for CSV export (bypasses pagination)
+  const fetchAllUsersForExport = async (): Promise<UserRow[]> => {
+    const params = new URLSearchParams({
+      limit: '10000',
+      page: '1',
+      status: statusFilter,
+      ...(debouncedSearch && { search: debouncedSearch }),
+    });
+    const res = await fetch(`/api/super-admin/users?${params}`, { credentials: 'include' });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!json.success || !json.data) return [];
+    return json.data.map((u: any) => ({
+      id: u.id,
+      fullName: u.fullName || u.full_name || '',
+      email: u.email || '',
+      phone: u.phone || null,
+      businessVerificationStatus: u.businessVerificationStatus || null,
+      individualVerified: Boolean(u.individualVerified),
+    }));
+  };
+
+  const exportColumn = async (field: 'email' | 'phone') => {
+    const allUsers = await fetchAllUsersForExport();
     const uniqueValues = Array.from(
       new Set(
-        filteredUsers
+        allUsers
           .map((u) => (u[field] || '').trim())
           .filter((v) => v)
       )
@@ -115,9 +148,10 @@ export default function UsersListPage() {
     URL.revokeObjectURL(url);
   };
 
-  const exportFullCsv = () => {
+  const exportFullCsv = async () => {
+    const allUsers = await fetchAllUsersForExport();
     const header = ['user_id', 'name', 'email', 'phone', 'status'];
-    const rows = filteredUsers.map((u) => [
+    const rows = allUsers.map((u) => [
       u.id,
       u.fullName || '',
       u.email || '',
@@ -163,7 +197,7 @@ export default function UsersListPage() {
     <DashboardLayout
       lang={lang}
       userName={staff?.fullName || 'Admin User'}
-      userEmail={staff?.email || 'admin@thulobazaar.com'}
+      userEmail={staff?.email || 'admin@thulobazaar.com.np'}
       navSections={navSections}
       theme="superadmin"
       onLogout={handleLogout}
@@ -197,7 +231,7 @@ export default function UsersListPage() {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) => { setStatusFilter(e.target.value as any); setPage(1); }}
               className="px-3 py-2 border-2 border-gray-200 rounded-xl text-sm bg-white hover:border-indigo-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
             >
               <option value="all">All users</option>
@@ -265,6 +299,15 @@ export default function UsersListPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-6">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </div>
     </DashboardLayout>
   );

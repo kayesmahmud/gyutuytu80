@@ -57,7 +57,7 @@ export default function EditorsManagementPage({ params: paramsPromise }: { param
     <DashboardLayout
       lang={params.lang}
       userName={staff?.fullName || 'Admin User'}
-      userEmail={staff?.email || 'admin@thulobazaar.com'}
+      userEmail={staff?.email || 'admin@thulobazaar.com.np'}
       navSections={navSections}
       theme="superadmin"
       onLogout={handleLogout}

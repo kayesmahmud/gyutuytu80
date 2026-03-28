@@ -92,7 +92,7 @@ export const testUsers = {
 export const testEditors = {
   editor: {
     id: 100,
-    email: 'editor@thulobazaar.com',
+    email: 'editor@thulobazaar.com.np',
     password: 'editor123',
     password_hash: '$2b$10$test_hash',
     full_name: 'Test Editor',
@@ -103,7 +103,7 @@ export const testEditors = {
 
   admin: {
     id: 101,
-    email: 'admin@thulobazaar.com',
+    email: 'admin@thulobazaar.com.np',
     password: 'admin123',
     password_hash: '$2b$10$test_hash',
     full_name: 'Test Admin',

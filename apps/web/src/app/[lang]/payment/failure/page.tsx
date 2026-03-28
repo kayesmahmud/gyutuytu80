@@ -227,7 +227,7 @@ export default function PaymentFailurePage() {
             {t('refundNotice')}
           </p>
           <a
-            href="mailto:support@thulobazaar.com"
+            href="mailto:support@thulobazaar.com.np"
             className="inline-flex items-center gap-1.5 mt-3 text-blue-600 text-sm font-medium hover:text-blue-700"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

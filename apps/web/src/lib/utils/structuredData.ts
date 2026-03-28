@@ -88,7 +88,7 @@ interface WebsiteStructuredDataProps {
   name: string;
   url: string;
   description: string;
-  searchUrl: string; // e.g., "https://thulobazaar.com/search?q={search_term_string}"
+  searchUrl: string; // e.g., "https://thulobazaar.com.np/search?q={search_term_string}"
 }
 
 export function generateWebsiteStructuredData(props: WebsiteStructuredDataProps) {

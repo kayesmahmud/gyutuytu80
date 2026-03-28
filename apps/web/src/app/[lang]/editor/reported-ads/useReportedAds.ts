@@ -9,6 +9,7 @@ export function useReportedAds() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [tabCounts, setTabCounts] = useState<TabCounts>({ pending: 0, resolved: 0, dismissed: 0, restored: 0 });
+  const [totalPages, setTotalPages] = useState(1);
 
   const loadReportedAds = useCallback(async (status: TabStatus, page: number = 1) => {
     try {
@@ -16,13 +17,15 @@ export function useReportedAds() {
       const response = await getReportedAds<ReportedAd>(undefined, {
         status,
         page,
-        limit: 50,
+        limit: 20,
       });
 
       if (response.success && Array.isArray(response.data)) {
         setReports(response.data);
+        setTotalPages(response.pagination?.totalPages || 1);
       } else {
         setReports([]);
+        setTotalPages(1);
       }
     } catch (error) {
       console.error('Error loading reported ads:', error);
@@ -152,6 +155,7 @@ export function useReportedAds() {
     loading,
     actionLoading,
     tabCounts,
+    totalPages,
     loadReportedAds,
     loadTabCounts,
     handleDeleteAd,

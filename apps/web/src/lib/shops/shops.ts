@@ -263,13 +263,38 @@ export async function getShopProfile(shopSlug: string): Promise<ShopProfile | nu
   return shopById ? await transformShop(shopById) : null;
 }
 
-export function buildShopMetadata(shop: ShopProfile) {
+export function buildShopMetadata(shop: ShopProfile, lang?: string) {
   const displayName = shop.businessName || shop.fullName;
   const description =
     shop.businessDescription || shop.bio || `Shop profile for ${displayName}. Search products and contact the seller.`;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+  const shopSlug = shop.shopSlug;
+  const currentLang = lang || 'en';
+  const title = `${displayName} - Shop | Thulo Bazaar`;
+  const desc = description.substring(0, 160);
 
   return {
-    title: `${displayName} - Shop | Thulo Bazaar`,
-    description: description.substring(0, 160),
+    title,
+    description: desc,
+    openGraph: {
+      title,
+      description: desc,
+      url: `${baseUrl}/${currentLang}/shop/${shopSlug}`,
+      siteName: 'Thulo Bazaar',
+      locale: currentLang === 'ne' ? 'ne_NP' : 'en_US',
+      type: 'website' as const,
+    },
+    twitter: {
+      card: 'summary' as const,
+      title,
+      description: desc,
+    },
+    alternates: {
+      canonical: `${baseUrl}/${currentLang}/shop/${shopSlug}`,
+      languages: {
+        en: `${baseUrl}/en/shop/${shopSlug}`,
+        ne: `${baseUrl}/ne/shop/${shopSlug}`,
+      },
+    },
   };
 }

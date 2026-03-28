@@ -6,10 +6,9 @@ import { X } from 'lucide-react';
 
 type MobileOS = 'ios' | 'android' | 'other';
 
-// Placeholder URLs - update these when apps are published
 const STORE_URLS = {
-  appStore: 'https://apps.apple.com/app/thulobazaar/id_PLACEHOLDER_',
-  playStore: 'https://play.google.com/store/apps/details?id=com.thulobazaar.app',
+  appStore: '', // TODO: Add Apple App Store URL when published
+  playStore: 'https://play.google.com/store/apps/details?id=com.thulobazaar.mobile',
 };
 
 const DISMISSAL_KEY = 'app-store-banner-dismissed';

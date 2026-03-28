@@ -63,7 +63,7 @@ export default function PromotionPricingPage({ params: paramsPromise }: { params
       <DashboardLayout
         lang={params.lang}
         userName={staff?.fullName || 'Super Admin'}
-        userEmail={staff?.email || 'admin@thulobazaar.com'}
+        userEmail={staff?.email || 'admin@thulobazaar.com.np'}
         navSections={navSections}
         theme="superadmin"
         onLogout={handleLogout}
@@ -82,7 +82,7 @@ export default function PromotionPricingPage({ params: paramsPromise }: { params
     <DashboardLayout
       lang={params.lang}
       userName={staff?.fullName || 'Super Admin'}
-      userEmail={staff?.email || 'admin@thulobazaar.com'}
+      userEmail={staff?.email || 'admin@thulobazaar.com.np'}
       navSections={navSections}
       theme="superadmin"
       onLogout={handleLogout}
