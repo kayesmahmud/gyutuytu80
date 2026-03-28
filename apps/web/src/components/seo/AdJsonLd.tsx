@@ -1,0 +1,68 @@
+import {
+  generateProductStructuredData,
+  generateBreadcrumbStructuredData,
+} from '@/lib/utils/structuredData';
+
+interface AdJsonLdProps {
+  name: string;
+  description: string;
+  images: string[];
+  price: number;
+  currency?: string;
+  condition: 'new' | 'used' | 'refurbished' | string;
+  url: string;
+  sellerName: string;
+  sellerType?: 'Person' | 'Organization';
+  category?: string;
+  location?: string;
+  breadcrumbItems: { name: string; url: string }[];
+}
+
+function mapCondition(condition: string): 'NewCondition' | 'UsedCondition' | 'RefurbishedCondition' {
+  switch (condition?.toLowerCase()) {
+    case 'new':
+    case 'brand new':
+      return 'NewCondition';
+    case 'refurbished':
+      return 'RefurbishedCondition';
+    default:
+      return 'UsedCondition';
+  }
+}
+
+export function AdJsonLd(props: AdJsonLdProps) {
+  const productData = generateProductStructuredData({
+    name: props.name,
+    description: props.description,
+    image: props.images,
+    price: props.price,
+    currency: props.currency || 'NPR',
+    condition: mapCondition(props.condition),
+    availability: 'InStock',
+    url: props.url,
+    seller: {
+      name: props.sellerName,
+      type: props.sellerType || 'Person',
+    },
+    category: props.category,
+    location: props.location,
+  });
+
+  const breadcrumbData = generateBreadcrumbStructuredData({
+    items: props.breadcrumbItems,
+  });
+
+  // JSON.stringify produces safe output — no XSS risk from structured data we control
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+      />
+    </>
+  );
+}
