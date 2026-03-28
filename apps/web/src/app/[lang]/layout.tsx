@@ -10,10 +10,11 @@ import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
 import AppStoreBanner from '@/components/pwa/AppStoreBanner';
+import { GlobalJsonLd } from '@/components/seo/GlobalJsonLd';
 
-// Layout renders per-request; individual pages control their own caching strategy.
-// Pages using searchParams or auth auto-opt into dynamic rendering.
-// Static/semi-static pages should set: export const revalidate = N
+// Force dynamic rendering for all pages — Prisma, next-intl, and auth contexts
+// don't work during static prerendering in the Docker build environment.
+export const dynamic = 'force-dynamic';
 
 // Viewport configuration (separate from metadata in Next.js 15+)
 export const viewport: Viewport = {
@@ -23,6 +24,10 @@ export const viewport: Viewport = {
   userScalable: false,
   themeColor: '#6366f1',
 };
+
+// App store constants — update Apple ID when published
+const APP_STORE_ID = ''; // TODO: Add Apple App Store ID (e.g., '1234567890')
+const PLAY_STORE_ID = 'com.thulobazaar.mobile';
 
 const supportedLanguages = ['en', 'ne'] as const;
 type SupportedLanguage = typeof supportedLanguages[number];
@@ -54,6 +59,8 @@ export async function generateMetadata({
     // Fall back to defaults
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+
   return {
     title: `${siteName} - Buy & Sell Everything`,
     description: lang === 'ne'
@@ -69,6 +76,44 @@ export async function generateMetadata({
       icon: '/favicon.ico',
       shortcut: '/favicon.ico',
       apple: '/icons/apple-touch-icon.png',
+    },
+    alternates: {
+      canonical: `${baseUrl}/${lang}`,
+      languages: {
+        en: `${baseUrl}/en`,
+        ne: `${baseUrl}/ne`,
+      },
+    },
+    openGraph: {
+      siteName,
+      locale: lang === 'ne' ? 'ne_NP' : 'en_US',
+      type: 'website',
+    },
+    // Native app metadata
+    ...(APP_STORE_ID && {
+      itunes: {
+        appId: APP_STORE_ID,
+        appArgument: `${baseUrl}/${lang}`,
+      },
+    }),
+    appLinks: {
+      ios: APP_STORE_ID ? {
+        app_store_id: APP_STORE_ID,
+        url: `${baseUrl}/${lang}`,
+        app_name: 'Thulo Bazaar',
+      } : undefined,
+      android: {
+        package: PLAY_STORE_ID,
+        url: `${baseUrl}/${lang}`,
+        app_name: 'Thulo Bazaar',
+      },
+      web: {
+        url: `${baseUrl}/${lang}`,
+        should_fallback: true,
+      },
+    },
+    other: {
+      'google-play-app': `app-id=${PLAY_STORE_ID}`,
     },
   };
 }
@@ -109,6 +154,7 @@ export default async function LanguageLayout({
           <InstallPrompt />      {/* Desktop PWA install */}
           <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
           <GoogleAdSense />
+          <GlobalJsonLd lang={lang} />
           <Header lang={lang} />
           <div className="pb-20 lg:pb-0">
             {children}
