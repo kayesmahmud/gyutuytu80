@@ -48,11 +48,11 @@ export function GlobalJsonLd({ lang }: { lang: string }) {
     image: `${BASE_URL}/logo.png`,
     url: `${BASE_URL}/${lang}`,
     installUrl: PLAY_STORE_URL,
-    ...(APP_STORE_URL && { additionalProperty: {
+    ...(APP_STORE_URL ? { additionalProperty: {
       '@type': 'PropertyValue',
       name: 'App Store URL',
       value: APP_STORE_URL,
-    }}),
+    }} : {}),
     author: {
       '@type': 'Organization',
       name: 'Thulo Bazaar',

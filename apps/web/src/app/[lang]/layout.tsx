@@ -90,12 +90,12 @@ export async function generateMetadata({
       type: 'website',
     },
     // Native app metadata
-    ...(APP_STORE_ID && {
+    ...(APP_STORE_ID ? {
       itunes: {
         appId: APP_STORE_ID,
         appArgument: `${baseUrl}/${lang}`,
       },
-    }),
+    } : {}),
     appLinks: {
       ios: APP_STORE_ID ? {
         app_store_id: APP_STORE_ID,
