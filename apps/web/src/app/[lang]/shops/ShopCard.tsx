@@ -80,27 +80,25 @@ export default function ShopCard({ shop, lang }: ShopCardProps) {
           </div>
         </div>
 
-        {/* Verification Badge */}
-        {(isVerifiedBusiness || isVerifiedIndividual) && (
-          <div className="absolute top-2 right-2">
-            <Image
-              src={isVerifiedBusiness ? '/golden-badge.png' : '/blue-badge.png'}
-              alt={isVerifiedBusiness ? 'Verified Business' : 'Verified Seller'}
-              title={isVerifiedBusiness ? 'Verified Business' : 'Verified Seller'}
-              width={24}
-              height={24}
-            />
-          </div>
-        )}
       </div>
 
       {/* Content Section */}
       <div className="pt-12 px-4 pb-4">
         {/* Shop Name */}
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-1.5 mb-1">
           <h3 className="text-lg font-semibold text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap">
             {shop.displayName}
           </h3>
+          {(isVerifiedBusiness || isVerifiedIndividual) && (
+            <Image
+              src={isVerifiedBusiness ? '/golden-badge.png' : '/blue-badge.png'}
+              alt={isVerifiedBusiness ? 'Verified Business' : 'Verified Seller'}
+              title={isVerifiedBusiness ? 'Verified Business' : 'Verified Seller'}
+              width={20}
+              height={20}
+              className="flex-shrink-0"
+            />
+          )}
         </div>
 
         {/* Category */}

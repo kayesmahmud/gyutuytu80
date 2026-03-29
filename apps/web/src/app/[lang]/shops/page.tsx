@@ -190,25 +190,8 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
 
   const totalPages = Math.ceil(totalShops / shopsPerPage);
 
-  // Define custom order for categories
-  const categoryOrder = ['Mobile', 'Electronics', 'Vehicles', 'Home & Living', 'Property'];
-
-  const categories = rootCategories
-    .map((category) => ({
-      ...category,
-      icon: category.icon || '📁',
-    }))
-    .sort((a, b) => {
-      const aIndex = categoryOrder.indexOf(a.name);
-      const bIndex = categoryOrder.indexOf(b.name);
-
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex;
-      }
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
-      return a.name.localeCompare(b.name);
-    });
+  // Use DB display_order (already sorted by getRootCategoriesWithChildren)
+  const categories = rootCategories;
 
   // Transform shops data
   const transformedShops = shops.map((shop) => ({
