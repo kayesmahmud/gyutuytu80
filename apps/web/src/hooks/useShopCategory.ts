@@ -43,41 +43,43 @@ export function useShopCategory({ initialCategoryId, initialSubcategoryId }: Use
 
   // Fetch subcategories when parent category changes
   useEffect(() => {
+    if (!selectedCategoryId) {
+      setSubcategories([]);
+      return;
+    }
+
+    let cancelled = false;
+
     const fetchSubcategories = async () => {
-      if (!selectedCategoryId) {
-        setSubcategories([]);
-        return;
-      }
       setLoadingSubcategories(true);
       try {
         const res = await fetch(`/api/categories/${selectedCategoryId}/subcategories`);
         const data = await res.json();
-        if (data.success && data.data) {
+        if (!cancelled && data.success && data.data) {
           setSubcategories(data.data);
         }
       } catch (error) {
-        console.error('Error fetching subcategories:', error);
+        if (!cancelled) console.error('Error fetching subcategories:', error);
       } finally {
-        setLoadingSubcategories(false);
+        if (!cancelled) setLoadingSubcategories(false);
       }
     };
-    if (isEditing && selectedCategoryId) {
-      fetchSubcategories();
-    }
-  }, [selectedCategoryId, isEditing]);
 
-  // Set initial values when editing starts
-  useEffect(() => {
-    if (isEditing) {
-      setSelectedCategoryId(initialCategoryId);
-      setSelectedSubcategoryId(initialSubcategoryId);
-    }
-  }, [isEditing, initialCategoryId, initialSubcategoryId]);
+    fetchSubcategories();
+    return () => { cancelled = true; };
+  }, [selectedCategoryId]);
+
+  const startEditing = () => {
+    setSelectedCategoryId(initialCategoryId);
+    setSelectedSubcategoryId(initialSubcategoryId);
+    setIsEditing(true);
+  };
 
   const handleCategoryChange = (catId: string) => {
     const id = catId ? parseInt(catId, 10) : null;
     setSelectedCategoryId(id);
     setSelectedSubcategoryId(null);
+    setSubcategories([]);
   };
 
   const handleSubcategoryChange = (subId: string) => {
@@ -133,7 +135,7 @@ export function useShopCategory({ initialCategoryId, initialSubcategoryId }: Use
 
   return {
     isEditing,
-    setIsEditing,
+    startEditing,
     selectedCategoryId,
     selectedSubcategoryId,
     saving,

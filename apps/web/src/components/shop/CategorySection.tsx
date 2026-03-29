@@ -27,7 +27,7 @@ export function CategorySection({
   const tc = useTranslations('common');
   const {
     isEditing,
-    setIsEditing,
+    startEditing,
     selectedCategoryId,
     selectedSubcategoryId,
     saving,
@@ -47,7 +47,7 @@ export function CategorySection({
         <h2 className="text-lg sm:text-xl font-semibold">{t('categories')}</h2>
         {!isEditing && isOwner && (
           <button
-            onClick={() => setIsEditing(true)}
+            onClick={startEditing}
             className="text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             {tc('edit')}

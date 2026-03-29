@@ -91,13 +91,16 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { categoryId, subcategoryId } = body;
 
-    let finalCategoryId: number | undefined = undefined;
-    let finalSubcategoryId: number | undefined = undefined;
+    // Parse IDs — null means "clear this field"
+    const finalCategoryId = categoryId
+      ? (typeof categoryId === 'string' ? parseInt(categoryId) : categoryId)
+      : null;
+    const finalSubcategoryId = subcategoryId
+      ? (typeof subcategoryId === 'string' ? parseInt(subcategoryId) : subcategoryId)
+      : null;
 
     // Validate category if provided
-    if (categoryId) {
-      finalCategoryId = typeof categoryId === 'string' ? parseInt(categoryId) : categoryId;
-
+    if (finalCategoryId) {
       const category = await prisma.categories.findUnique({
         where: { id: finalCategoryId },
         select: { id: true, parent_id: true },
@@ -110,7 +113,6 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      // Ensure this is a parent category (no parent_id)
       if (category.parent_id !== null) {
         return NextResponse.json(
           { success: false, message: 'Please select a main category, not a subcategory' },
@@ -120,9 +122,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate subcategory if provided
-    if (subcategoryId) {
-      finalSubcategoryId = typeof subcategoryId === 'string' ? parseInt(subcategoryId) : subcategoryId;
-
+    if (finalSubcategoryId) {
       const subcategory = await prisma.categories.findUnique({
         where: { id: finalSubcategoryId },
         select: { id: true, parent_id: true },
@@ -135,7 +135,6 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      // Ensure subcategory belongs to the selected category
       if (finalCategoryId && subcategory.parent_id !== finalCategoryId) {
         return NextResponse.json(
           { success: false, message: 'Subcategory does not belong to the selected category' },
@@ -144,12 +143,13 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Update user's default category and subcategory
+    // If no category, also clear subcategory
+    // Use null (not undefined) so Prisma actually clears the field
     await prisma.users.update({
       where: { id: userId },
       data: {
         default_category_id: finalCategoryId,
-        default_subcategory_id: finalSubcategoryId,
+        default_subcategory_id: finalCategoryId ? finalSubcategoryId : null,
       },
     });
 
