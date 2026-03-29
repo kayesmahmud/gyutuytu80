@@ -102,6 +102,19 @@ export default function Header({ lang }: HeaderProps) {
     return () => clearInterval(interval);
   }, [fetchUnreadCount]);
 
+  // Fetch notification unread count
+  const fetchNotificationUnreadCount = useCallback(async () => {
+    if (!isUserAuthenticated || staff) return;
+    try {
+      const response = await apiClient.getUnreadNotificationCount();
+      if (response.success && response.data) {
+        setNotificationUnreadCount(response.data.count || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notification unread count:', error);
+    }
+  }, [isUserAuthenticated, staff]);
+
   // Instant poll when tab becomes visible or window gains focus
   useEffect(() => {
     const handleVisibility = () => {
@@ -121,19 +134,6 @@ export default function Header({ lang }: HeaderProps) {
       window.removeEventListener('focus', handleFocus);
     };
   }, [fetchUnreadCount, fetchNotificationUnreadCount]);
-
-  // Fetch notification unread count
-  const fetchNotificationUnreadCount = useCallback(async () => {
-    if (!isUserAuthenticated || staff) return;
-    try {
-      const response = await apiClient.getUnreadNotificationCount();
-      if (response.success && response.data) {
-        setNotificationUnreadCount(response.data.count || 0);
-      }
-    } catch (error) {
-      console.error('Failed to fetch notification unread count:', error);
-    }
-  }, [isUserAuthenticated, staff]);
 
   useEffect(() => {
     fetchNotificationUnreadCount();
