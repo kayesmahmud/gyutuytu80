@@ -5,7 +5,7 @@
 
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { prisma } from '@thulobazaar/database';
+import { prisma, Prisma } from '@thulobazaar/database';
 import { sendNotification } from './notification.service.js';
 import {
   validateNepaliPhone,
@@ -849,17 +849,18 @@ export async function disable2FA(userId: number, password: string, code: string)
   const isPasswordValid = await bcrypt.compare(password, user.password_hash);
   if (!isPasswordValid) return { success: false, error: 'Invalid password' };
 
-  // Verify TOTP code
-  if (!user.two_factor_secret) return { success: false, error: '2FA secret not found' };
-  const isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
-  if (!isValid) return { success: false, error: 'Invalid 2FA code' };
+  // Verify TOTP code (skip if secret is missing — corrupted state, password alone suffices)
+  if (user.two_factor_secret) {
+    const isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
+    if (!isValid) return { success: false, error: 'Invalid 2FA code' };
+  }
 
   await prisma.users.update({
     where: { id: userId },
     data: {
       two_factor_enabled: false,
       two_factor_secret: null,
-      two_factor_backup_codes: null as any,
+      two_factor_backup_codes: Prisma.DbNull,
     },
   });
 
@@ -884,8 +885,14 @@ export async function verify2FALogin(tempToken: string, code: string): Promise<L
     return { success: false, error: 'User not found or 2FA not configured' };
   }
 
-  // Try TOTP first
-  let isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
+  // Try TOTP first (wrap in try-catch — verifySync throws for non-6-digit codes
+  // like backup codes, instead of returning {valid: false})
+  let isValid = false;
+  try {
+    isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
+  } catch {
+    // Not a valid TOTP format — fall through to backup code check
+  }
 
   // If TOTP fails, try backup codes
   if (!isValid && user.two_factor_backup_codes) {

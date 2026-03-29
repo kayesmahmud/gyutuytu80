@@ -16,6 +16,8 @@ import 'core/widgets/connectivity_wrapper.dart';
 import 'features/main_nav/main_nav_screen.dart';
 import 'features/messages/chat_screen.dart';
 import 'features/notifications/notification_screen.dart';
+import 'features/ad_detail/ad_detail_screen.dart';
+import 'features/verification/verification_screen.dart';
 
 /// Global navigator key for notification navigation
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -84,19 +86,30 @@ void main() async {
   );
 }
 
+/// Pending notification data when navigator isn't ready (terminated state)
+Map<String, dynamic>? _pendingNotification;
+
 /// Handle notification taps and navigate
 void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
-  if (route == null || navigatorKey.currentState == null) return;
+  if (route == null) return;
+
+  // Navigator not ready yet — store for later
+  if (navigatorKey.currentState == null) {
+    _pendingNotification = {'route': route, ...?data};
+    return;
+  }
 
   // FCM data values are always strings — parse IDs
   final conversationId = int.tryParse('${data?['conversationId'] ?? ''}');
   final adId = int.tryParse('${data?['adId'] ?? ''}');
 
+  final navigator = navigatorKey.currentState!;
+
   switch (route) {
     case '/chat':
       if (conversationId != null) {
         final senderName = data?['senderName'] as String? ?? 'Chat';
-        navigatorKey.currentState?.push(
+        navigator.push(
           MaterialPageRoute(
             builder: (_) => ChatScreen(
               conversationId: conversationId,
@@ -108,26 +121,37 @@ void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
       break;
     case '/ad':
       if (adId != null) {
-        navigatorKey.currentState?.pushNamed(
-          '/ad',
-          arguments: {'adId': adId, ...?data},
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => AdDetailScreen(adId: adId),
+          ),
         );
       }
       break;
     case '/verification':
-      navigatorKey.currentState?.pushNamed('/verification', arguments: data);
-      break;
-    case '/promotion':
-      navigatorKey.currentState?.pushNamed('/promotion', arguments: data);
+      navigator.push(
+        MaterialPageRoute(
+          builder: (_) => const VerificationScreen(),
+        ),
+      );
       break;
     case '/notifications':
-      navigatorKey.currentState?.push(
+      navigator.push(
         MaterialPageRoute(builder: (_) => const NotificationScreen()),
       );
       break;
     default:
       break;
   }
+}
+
+/// Process any pending notification that arrived before the navigator was ready
+void _processPendingNotification() {
+  if (_pendingNotification == null) return;
+  final data = Map<String, dynamic>.from(_pendingNotification!);
+  _pendingNotification = null;
+  final route = data.remove('route') as String?;
+  _handleNotificationTap(route, data);
 }
 
 class ThuloBazaarApp extends StatefulWidget {
@@ -158,6 +182,8 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
     if (authProvider.isAuthenticated) {
       NotificationService().registerToken();
       notificationProvider.initialize();
+      // Process any notification that arrived before navigator/auth was ready
+      _processPendingNotification();
     }
 
     // Listen for auth changes
@@ -165,6 +191,8 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
       if (authProvider.isAuthenticated) {
         NotificationService().registerToken();
         notificationProvider.initialize();
+        // Process any pending notification after login
+        _processPendingNotification();
       } else {
         NotificationService().unregisterToken();
         notificationProvider.reset();

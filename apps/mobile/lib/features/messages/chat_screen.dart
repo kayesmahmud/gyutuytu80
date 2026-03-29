@@ -78,6 +78,12 @@ class _ChatScreenState extends State<ChatScreen> {
     final authProvider = context.read<AuthProvider>();
     _currentUserId = authProvider.userId;
 
+    // When opened from a push notification (terminated state), auth may not
+    // be ready yet. Wait for it to become available.
+    if (_currentUserId == null) {
+      await _waitForAuth(authProvider);
+    }
+
     if (_currentUserId != null) {
       final chatProvider = context.read<ChatProvider>();
       // Ensure socket is in this conversation's room for real-time updates
@@ -91,6 +97,16 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() {});
         _scrollToBottom();
       }
+    }
+  }
+
+  /// Wait for auth to become available (up to 5 seconds)
+  Future<void> _waitForAuth(AuthProvider authProvider) async {
+    for (int i = 0; i < 10; i++) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      _currentUserId = authProvider.userId;
+      if (_currentUserId != null) return;
     }
   }
 

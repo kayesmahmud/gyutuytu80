@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers/notification_provider.dart';
 import '../../core/models/notification_item.dart';
+import '../../features/ad_detail/ad_detail_screen.dart';
+import '../../features/messages/chat_screen.dart';
+import '../../features/verification/verification_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -231,15 +234,33 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final adId = notification.adId;
 
     if (route == '/ad' && adId != null) {
-      Navigator.pushNamed(context, '/ad-detail', arguments: {'adId': int.tryParse(adId)});
+      final parsedAdId = int.tryParse(adId);
+      if (parsedAdId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => AdDetailScreen(adId: parsedAdId)),
+        );
+      }
     } else if (route == '/verification') {
-      Navigator.pushNamed(context, '/verification');
-    } else if (route == '/promotion') {
-      Navigator.pushNamed(context, '/promotion');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const VerificationScreen()),
+      );
     } else if (route == '/chat') {
-      final conversationId = notification.data?['conversationId'] as String?;
+      final conversationId = int.tryParse(
+        notification.data?['conversationId']?.toString() ?? '',
+      );
+      final senderName = notification.data?['senderName'] as String? ?? 'Chat';
       if (conversationId != null) {
-        Navigator.pushNamed(context, '/chat', arguments: {'conversationId': int.tryParse(conversationId)});
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              conversationId: conversationId,
+              recipientName: senderName,
+            ),
+          ),
+        );
       }
     }
   }
