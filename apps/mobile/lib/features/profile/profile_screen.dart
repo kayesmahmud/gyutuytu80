@@ -15,6 +15,7 @@ import 'package:mobile/features/auth/signin_screen.dart';
 import 'package:mobile/features/profile/security_settings_screen.dart';
 import 'package:mobile/features/profile/phone_verification_screen.dart';
 import 'package:mobile/features/verification/verification_screen.dart';
+import 'package:mobile/features/profile/delete_account_screen.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import '../../core/api/auth_client.dart';
 import '../../core/api/api_config.dart';
@@ -1179,15 +1180,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                     : 'Permanently delete your account and data',
               ),
               onTap: () {
-                // TODO: Implement account deletion
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      context.locale.languageCode == 'ne'
-                          ? 'खाता हटाउने सुविधा चाँडै आउँदैछ'
-                          : 'Account deletion coming soon',
-                    ),
-                  ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DeleteAccountScreen()),
                 );
               },
             ),
