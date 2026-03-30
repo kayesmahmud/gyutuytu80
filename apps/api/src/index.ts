@@ -6,6 +6,7 @@ import { schedulePromotionCleanup } from './jobs/promotionCleanup.js';
 import { scheduleVerificationCleanup } from './jobs/verificationCleanup.js';
 import { scheduleAdExpiry } from './jobs/adExpiry.js';
 import { scheduleNotificationCron } from './jobs/notificationCron.js';
+import { scheduleAccountPurge } from './jobs/accountPurge.js';
 
 // Validate required environment variables
 validateConfig();
@@ -57,4 +58,5 @@ httpServer.listen(config.PORT, '0.0.0.0', () => {
   scheduleVerificationCleanup();
   scheduleAdExpiry();
   scheduleNotificationCron();
+  scheduleAccountPurge();
 });

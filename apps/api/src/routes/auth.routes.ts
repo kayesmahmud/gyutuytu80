@@ -23,6 +23,7 @@ import {
   verify2FALogin,
   requestAccountDeletion,
   confirmAccountDeletion,
+  cancelAccountDeletion,
   type OtpPurposeType,
 } from '../services/auth.service.js';
 import { getBooleanSetting } from '../services/adLimits.service.js';
@@ -168,6 +169,10 @@ router.post(
       token: result.token,
       refreshToken: result.refreshToken,
       user: result.user,
+      ...(result.accountPendingDeletion && {
+        accountPendingDeletion: true,
+        deletionDate: result.deletionDate,
+      }),
     });
   })
 );
@@ -302,6 +307,10 @@ router.post(
       token: result.token,
       refreshToken: result.refreshToken,
       user: result.user,
+      ...(result.accountPendingDeletion && {
+        accountPendingDeletion: true,
+        deletionDate: result.deletionDate,
+      }),
     });
   })
 );
@@ -599,6 +608,10 @@ router.post(
       token: result.token,
       refreshToken: result.refreshToken,
       user: result.user,
+      ...(result.accountPendingDeletion && {
+        accountPendingDeletion: true,
+        deletionDate: result.deletionDate,
+      }),
     });
   })
 );
@@ -657,6 +670,22 @@ router.post(
       message: 'Account scheduled for deletion',
       data: { recoveryDeadline: result.recoveryDeadline },
     });
+  })
+);
+
+/**
+ * POST /api/auth/account/cancel-deletion
+ * Cancel pending account deletion (reactivate account within 30-day recovery window)
+ */
+router.post(
+  '/account/cancel-deletion',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const result = await cancelAccountDeletion(req.user!.userId);
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+    res.json({ success: true, message: 'Account deletion cancelled. Your account has been reactivated.' });
   })
 );
 

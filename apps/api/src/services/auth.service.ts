@@ -64,6 +64,8 @@ export interface LoginResult {
   refreshToken?: string;
   requires2FA?: boolean;
   tempToken?: string;
+  accountPendingDeletion?: boolean;
+  deletionDate?: string;
   user?: {
     id: number;
     email: string | null;
@@ -379,18 +381,8 @@ export async function loginWithPhone(phone: string, password: string): Promise<L
     return { success: false, error: 'Invalid password' };
   }
 
-  // Reactivate account if within recovery window
-  if (user.deleted_at && user.deletion_requested_at) {
-    await prisma.users.update({
-      where: { id: user.id },
-      data: {
-        deleted_at: null,
-        deletion_requested_at: null,
-        is_active: true,
-      },
-    });
-    console.log(`🔄 Account reactivated for ${formattedPhone} (userId: ${user.id})`);
-  }
+  // Track if account is pending deletion (don't reactivate yet — let client decide)
+  const isPendingDeletion = !!(user.deleted_at && user.deletion_requested_at);
 
   // Check if 2FA is enabled
   if (user.two_factor_enabled && user.two_factor_secret) {
@@ -412,12 +404,16 @@ export async function loginWithPhone(phone: string, password: string): Promise<L
   const accessToken = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user);
 
-  console.log(`📱 Phone login successful for ${formattedPhone} (userId: ${user.id})`);
+  console.log(`📱 Phone login successful for ${formattedPhone} (userId: ${user.id})${isPendingDeletion ? ' [pending deletion]' : ''}`);
 
   return {
     success: true,
     token: accessToken,
     refreshToken,
+    ...(isPendingDeletion && {
+      accountPendingDeletion: true,
+      deletionDate: user.deletion_requested_at!.toISOString(),
+    }),
     user: {
       id: user.id,
       email: user.email,
@@ -644,16 +640,13 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
     }
 
     // Account deletion recovery for Google login
+    let isPendingDeletion = false;
     if (user.deleted_at && user.deletion_requested_at) {
       const daysSinceDeletion = (Date.now() - user.deletion_requested_at.getTime()) / (1000 * 60 * 60 * 24);
       if (daysSinceDeletion >= RECOVERY_DAYS) {
         return { success: false, error: 'This account has been permanently deleted.' };
       }
-      await prisma.users.update({
-        where: { id: user.id },
-        data: { deleted_at: null, deletion_requested_at: null, is_active: true },
-      });
-      console.log(`🔄 Account reactivated via Google login (userId: ${user.id})`);
+      isPendingDeletion = true;
     } else if (!user.is_active) {
       return { success: false, error: 'Your account has been deactivated.' };
     }
@@ -662,10 +655,16 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
     const accessToken = generateAccessToken(user);
     const refreshToken = await generateRefreshToken(user);
 
+    console.log(`📱 Google login successful (userId: ${user.id})${isPendingDeletion ? ' [pending deletion]' : ''}`);
+
     return {
       success: true,
       token: accessToken,
       refreshToken,
+      ...(isPendingDeletion && {
+        accountPendingDeletion: true,
+        deletionDate: user.deletion_requested_at!.toISOString(),
+      }),
       user: {
         id: user.id,
         email: user.email,
@@ -917,6 +916,9 @@ export async function verify2FALogin(tempToken: string, code: string): Promise<L
     return { success: false, error: 'Invalid verification code' };
   }
 
+  // Check if account is pending deletion (don't reactivate — let client decide)
+  const isPendingDeletion = !!(user.deleted_at && user.deletion_requested_at);
+
   // Update last login
   await prisma.users.update({
     where: { id: user.id },
@@ -931,6 +933,10 @@ export async function verify2FALogin(tempToken: string, code: string): Promise<L
     success: true,
     token: accessToken,
     refreshToken,
+    ...(isPendingDeletion && {
+      accountPendingDeletion: true,
+      deletionDate: user.deletion_requested_at!.toISOString(),
+    }),
     user: {
       id: user.id,
       email: user.email,
@@ -1079,4 +1085,38 @@ export async function confirmAccountDeletion(userId: number, otp: string) {
   ]);
 
   return { success: true, recoveryDeadline: recoveryDeadline.toISOString() };
+}
+
+/**
+ * Cancel account deletion — reactivates the account within the 30-day recovery window.
+ * Called when a user logs in and chooses "Keep my account".
+ */
+export async function cancelAccountDeletion(userId: number): Promise<{ success: boolean; error?: string }> {
+  const user = await prisma.users.findUnique({ where: { id: userId } });
+
+  if (!user) {
+    return { success: false, error: 'User not found' };
+  }
+
+  if (!user.deleted_at || !user.deletion_requested_at) {
+    return { success: false, error: 'Account is not pending deletion' };
+  }
+
+  const daysSinceDeletion = (Date.now() - user.deletion_requested_at.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceDeletion >= RECOVERY_DAYS) {
+    return { success: false, error: 'Recovery window has expired. Account has been permanently deleted.' };
+  }
+
+  await prisma.users.update({
+    where: { id: userId },
+    data: {
+      deleted_at: null,
+      deletion_requested_at: null,
+      is_active: true,
+    },
+  });
+
+  console.log(`🔄 Account deletion cancelled by user (userId: ${userId})`);
+
+  return { success: true };
 }

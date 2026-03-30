@@ -300,6 +300,16 @@ class AuthClient {
     }
   }
 
+  // Cancel pending account deletion (reactivate account)
+  Future<Map<String, dynamic>> cancelAccountDeletion() async {
+    try {
+      final response = await _dio.post('/auth/account/cancel-deletion');
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
   // ==========================================
   // HELPERS
   // ==========================================

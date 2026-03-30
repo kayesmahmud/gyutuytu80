@@ -80,6 +80,134 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
+  /// Shows the account recovery dialog when a pending-deletion user logs in.
+  /// Returns true if the user chose to keep their account, false otherwise.
+  Future<bool> _showAccountRecoveryDialog(String token, String? deletionDate) async {
+    final lang = context.locale.languageCode;
+
+    // Calculate days remaining
+    String daysRemaining = '';
+    if (deletionDate != null) {
+      final deletionRequested = DateTime.tryParse(deletionDate);
+      if (deletionRequested != null) {
+        final deadline = deletionRequested.add(const Duration(days: 30));
+        final remaining = deadline.difference(DateTime.now()).inDays;
+        daysRemaining = remaining > 0 ? '$remaining' : '0';
+      }
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.orange.shade50,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(LucideIcons.alertTriangle, color: Colors.orange.shade700, size: 32),
+        ),
+        title: Text(
+          lang == 'ne' ? 'तपाईंको खाता मेटिने क्रममा छ' : 'Your Account Is Scheduled for Deletion',
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              lang == 'ne'
+                  ? 'तपाईंले आफ्नो खाता मेटाउन अनुरोध गर्नुभएको थियो।${daysRemaining.isNotEmpty ? ' तपाईंसँग $daysRemaining दिन बाँकी छ।' : ''} के तपाईं आफ्नो खाता राख्न चाहनुहुन्छ?'
+                  : 'You previously requested to delete your account.${daysRemaining.isNotEmpty ? ' You have $daysRemaining days remaining before permanent deletion.' : ''} Would you like to keep your account?',
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  elevation: 0,
+                ),
+                child: Text(
+                  lang == 'ne' ? 'मेरो खाता राख्नुहोस्' : 'Keep My Account',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: Text(
+                  lang == 'ne' ? 'मेटाउने प्रक्रिया जारी राख्नुहोस्' : 'Continue with Deletion',
+                  style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true) {
+      // User wants to keep account — cancel deletion
+      final authClient = AuthClient();
+      final cancelResult = await authClient.cancelAccountDeletion();
+      if (cancelResult['success'] == true) {
+        return true;
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(cancelResult['message'] ?? (lang == 'ne' ? 'त्रुटि भयो' : 'Failed to cancel deletion'))),
+          );
+        }
+        return false;
+      }
+    }
+
+    // User chose to continue with deletion — log out
+    if (mounted) {
+      await context.read<AuthProvider>().logout();
+    }
+    return false;
+  }
+
+  /// Handles post-login flow: checks for pending deletion, then proceeds to app
+  Future<void> _proceedAfterLogin(String token, Map<String, dynamic> result) async {
+    if (result['accountPendingDeletion'] == true) {
+      // Log in first so the cancel-deletion endpoint has a valid token
+      await context.read<AuthProvider>().login(token);
+      if (!mounted) return;
+
+      final keepAccount = await _showAccountRecoveryDialog(token, result['deletionDate']?.toString());
+      if (!keepAccount || !mounted) return;
+    } else {
+      await context.read<AuthProvider>().login(token);
+    }
+
+    if (!mounted) return;
+    if (widget.onSuccess != null) {
+      widget.onSuccess!();
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   void _handleGoogleLogin() async {
     setState(() => _isLoading = true);
     try {
@@ -94,27 +222,13 @@ class _SignInScreenState extends State<SignInScreen> {
 
       if (idToken == null) throw Exception("Failed to get Google ID Token");
 
-      // Use AuthProvider
-      final authClient = AuthClient(); // Helper to key token
+      final authClient = AuthClient();
       final result = await authClient.googleLogin(idToken);
 
       if (!mounted) return;
 
       if (result['success'] == true) {
-        final token = result['token'];
-        await context.read<AuthProvider>().login(token);
-
-        if (mounted) {
-          if (widget.onSuccess != null) {
-            widget.onSuccess!();
-          } else {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const MainNavScreen()),
-              (route) => false,
-            );
-          }
-        }
+        await _proceedAfterLogin(result['token'], result);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -178,23 +292,8 @@ class _SignInScreenState extends State<SignInScreen> {
           return;
         }
 
-        final token = result['token'];
-        // Save credentials if "Remember me" is checked
         await _saveCredentials(rawPhone);
-        // Update Global State
-        await context.read<AuthProvider>().login(token);
-
-        if (mounted) {
-          if (widget.onSuccess != null) {
-            widget.onSuccess!();
-          } else {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const MainNavScreen()),
-              (route) => false,
-            );
-          }
-        }
+        await _proceedAfterLogin(result['token'], result);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
