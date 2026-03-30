@@ -3,6 +3,7 @@ import { prisma } from '@thulobazaar/database';
 import type { AuthenticatedSocket, SendMessagePayload } from '../types.js';
 import { sendMessagePushNotification } from '../../services/pushNotification.js';
 import { sendNotification, canSendNotification } from '../../services/notification.service.js';
+import { censorProfanity } from '../../utils/profanityFilter.js';
 
 // Safe callback helper — prevents crashes when client emits without a callback
 function safeCallback(callback: unknown, data: Record<string, unknown>) {
@@ -37,12 +38,15 @@ export function initializeMessageHandlers(
         return safeCallback(callback, { error: 'Not a member of this conversation' });
       }
 
+      // Server-side profanity censoring (safety net)
+      const sanitizedContent = censorProfanity(content);
+
       // Insert message into database
       const message = await prisma.messages.create({
         data: {
           conversation_id: conversationId,
           sender_id: userId,
-          content,
+          content: sanitizedContent,
           type,
           attachment_url: attachmentUrl || null,
         },
@@ -202,10 +206,12 @@ export function initializeMessageHandlers(
         return safeCallback(callback, { error: 'Message not found or unauthorized' });
       }
 
+      const sanitizedNewContent = censorProfanity(newContent);
+
       await prisma.messages.update({
         where: { id: messageId },
         data: {
-          content: newContent,
+          content: sanitizedNewContent,
           is_edited: true,
           edited_at: new Date(),
         },
@@ -213,7 +219,7 @@ export function initializeMessageHandlers(
 
       io.to(`conversation:${message.conversation_id}`).emit('message:edited', {
         messageId,
-        newContent,
+        newContent: sanitizedNewContent,
         editedAt: new Date(),
       });
 

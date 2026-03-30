@@ -6,6 +6,7 @@ import { uploadMessageImage } from '../middleware/upload.js';
 import { optimizeImage } from '../middleware/optimizeImage.js';
 import { sendMessagePushNotification } from '../services/pushNotification.js';
 import { isUserOnline } from '../socket/index.js';
+import { containsProfanity, getDetectedWords, censorProfanity } from '../utils/profanityFilter.js';
 
 const router = Router();
 
@@ -323,6 +324,24 @@ router.get(
 );
 
 /**
+ * POST /api/messages/check-profanity
+ * Check if text contains profanity (for client-side pre-validation)
+ */
+router.post(
+  '/check-profanity',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const { text } = req.body;
+    if (!text || typeof text !== 'string') {
+      return res.json({ success: true, data: { hasProfanity: false, words: [] } });
+    }
+    const hasProfanity = containsProfanity(text);
+    const words = hasProfanity ? getDetectedWords(text) : [];
+    res.json({ success: true, data: { hasProfanity, words } });
+  })
+);
+
+/**
  * POST /api/messages/upload
  * Upload image for messaging
  */
@@ -382,11 +401,14 @@ router.post(
       return res.status(403).json({ success: false, message: 'Not a member of this conversation' });
     }
 
+    // Server-side profanity censoring (safety net)
+    const sanitizedContent = content ? censorProfanity(content) : '';
+
     const message = await prisma.messages.create({
       data: {
         conversation_id: conversationId,
         sender_id: userId,
-        content: content || '',
+        content: sanitizedContent,
         type,
         attachment_url: attachmentUrl || null,
       },
