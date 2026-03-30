@@ -18,6 +18,7 @@ import '../../core/widgets/floating_widget.dart';
 import '../../core/api/api_config.dart';
 import '../../core/api/message_client.dart';
 import '../../core/utils/localized_helpers.dart';
+import '../../core/utils/profanity_check.dart';
 import '../../core/models/message.dart';
 import '../../features/ad_detail/ad_detail_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -141,6 +142,33 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+
+    // Client-side profanity check — block and warn
+    final profanityResult = checkProfanity(text);
+    if (profanityResult.hasProfanity && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Your message contains inappropriate language. Please rephrase to send.',
+                  style: GoogleFonts.inter(fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
 
     _messageController.clear();
     _isTyping = false;
