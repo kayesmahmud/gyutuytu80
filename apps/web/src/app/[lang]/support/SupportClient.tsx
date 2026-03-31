@@ -45,6 +45,8 @@ export default function SupportClient() {
     setIsInternal,
     macros,
     handleSubmitCsat,
+    profanityWarning,
+    setProfanityWarning,
   } = useSupportClient();
 
   // Auth check
@@ -130,6 +132,8 @@ export default function SupportClient() {
               setIsInternal={setIsInternal}
               macros={macros}
               onSubmitCsat={(score, comment) => handleSubmitCsat(selectedTicket!.id, score, comment)}
+              profanityWarning={profanityWarning}
+              onDismissProfanityWarning={() => setProfanityWarning(null)}
             />
           </div>
 

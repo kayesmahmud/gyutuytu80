@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, RefObject } from 'react';
 import { useSession } from 'next-auth/react';
 import { useBackendToken } from '@/hooks/useBackendToken';
+import { checkProfanity } from '@/utils/profanityCheck';
 import { useSupportSocket } from '@/hooks/useSupportSocket';
 import type { Ticket, TicketDetail, NewTicketData } from './types';
 
@@ -47,6 +48,8 @@ export interface UseSupportClientReturn {
   setIsInternal: (isInternal: boolean) => void;
   macros: { id: number; title: string; content: string; }[];
   handleSubmitCsat: (ticketId: number, score: number, comment?: string) => Promise<void>;
+  profanityWarning: string | null;
+  setProfanityWarning: (warning: string | null) => void;
 }
 
 export function useSupportClient(): UseSupportClientReturn {
@@ -370,9 +373,20 @@ export function useSupportClient(): UseSupportClientReturn {
     }
   };
 
+  const [profanityWarning, setProfanityWarning] = useState<string | null>(null);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageInput.trim() || !selectedTicket) return;
+
+    // Client-side profanity check
+    const { hasProfanity } = checkProfanity(messageInput.trim());
+    if (hasProfanity) {
+      setProfanityWarning('Please use respectful language. Offensive words are not allowed on Thulo Bazaar.');
+      setTimeout(() => setProfanityWarning(null), 5000);
+      return;
+    }
+    setProfanityWarning(null);
 
     try {
       setSendingMessage(true);
@@ -487,5 +501,7 @@ export function useSupportClient(): UseSupportClientReturn {
     setIsInternal,
     macros,
     handleSubmitCsat,
+    profanityWarning,
+    setProfanityWarning,
   };
 }

@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { prisma } from '@thulobazaar/database';
 import type { AuthenticatedSocket } from '../types.js';
+import { censorProfanity } from '../../utils/profanityFilter.js';
 
 export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocket): void {
   const userId = socket.userId;
@@ -76,11 +77,14 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
 
       const actualIsInternal = isStaff ? isInternal : false;
 
+      // Server-side profanity censoring (safety net)
+      const sanitizedContent = censorProfanity(content.trim());
+
       const message = await prisma.support_messages.create({
         data: {
           ticket_id: ticketId,
           sender_id: userId,
-          content: content.trim(),
+          content: sanitizedContent,
           type: 'text',
           is_internal: actualIsInternal,
         },

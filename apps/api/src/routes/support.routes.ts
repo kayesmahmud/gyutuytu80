@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '@thulobazaar/database';
 import { catchAsync } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { censorProfanity } from '../utils/profanityFilter.js';
 
 const router = Router();
 
@@ -136,7 +137,7 @@ router.post(
         support_messages: {
           create: {
             sender_id: userId,
-            content: message.trim(),
+            content: censorProfanity(message.trim()),
             type: 'text',
           },
         },
@@ -360,7 +361,7 @@ router.post(
       data: {
         ticket_id: ticketId,
         sender_id: userId,
-        content: content.trim(),
+        content: censorProfanity(content.trim()),
         type: 'text',
       },
       select: {

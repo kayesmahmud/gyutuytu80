@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
+import { checkProfanity } from '@/utils/profanityCheck';
 import { useSupportSocket } from '@/hooks/useSupportSocket';
 import type { SupportTicket, TicketDetail, StatusFilter, PriorityFilter, TicketStats } from './types';
 
@@ -220,8 +221,19 @@ export function useSupportChatPage(lang: string) {
     loadTicketDetail(ticket.id);
   };
 
+  const [profanityWarning, setProfanityWarning] = useState<string | null>(null);
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedTicket) return;
+
+    // Client-side profanity check
+    const { hasProfanity } = checkProfanity(newMessage.trim());
+    if (hasProfanity) {
+      setProfanityWarning('Please use respectful language. Offensive words are not allowed on Thulo Bazaar.');
+      setTimeout(() => setProfanityWarning(null), 5000);
+      return;
+    }
+    setProfanityWarning(null);
 
     try {
       setSendingMessage(true);
@@ -368,5 +380,7 @@ export function useSupportChatPage(lang: string) {
     handleSendMessage,
     handleUpdateTicket,
     handleMessageInputChange,
+    profanityWarning,
+    setProfanityWarning,
   };
 }

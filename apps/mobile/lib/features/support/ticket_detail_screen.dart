@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:mobile/core/api/support_client.dart';
 import 'package:mobile/core/models/support_ticket.dart';
 import 'package:mobile/core/utils/localized_helpers.dart';
+import 'package:mobile/core/utils/profanity_check.dart';
 
 class TicketDetailScreen extends StatefulWidget {
   final int ticketId;
@@ -79,6 +80,44 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   Future<void> _sendMessage() async {
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
+
+    // Client-side profanity check
+    final profanityResult = checkProfanity(content);
+    if (profanityResult.hasProfanity && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Please use respectful language. Offensive words are not allowed on Thulo Bazaar.',
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Thulo Bazaar promotes respectful communication between users and customer support team.',
+                style: GoogleFonts.inter(fontSize: 11, color: Colors.red.shade100),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSending = true);
     _messageController.clear();

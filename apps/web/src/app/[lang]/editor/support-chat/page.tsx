@@ -46,6 +46,8 @@ export default function SupportChatPage({ params: paramsPromise }: { params: Pro
     handleSendMessage,
     handleUpdateTicket,
     handleMessageInputChange,
+    profanityWarning,
+    setProfanityWarning,
   } = useSupportChatPage(params.lang);
 
   if (authLoading) {
@@ -133,6 +135,8 @@ export default function SupportChatPage({ params: paramsPromise }: { params: Pro
             onUpdateTicket={handleUpdateTicket}
             onMessageInputChange={handleMessageInputChange}
             onSendMessage={handleSendMessage}
+            profanityWarning={profanityWarning}
+            onDismissProfanityWarning={() => setProfanityWarning(null)}
           />
         </div>
       </div>

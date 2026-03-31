@@ -19,6 +19,8 @@ interface ChatAreaProps {
   onUpdateTicket: (updates: { status?: string; priority?: string; assignedTo?: number | null }) => void;
   onMessageInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSendMessage: () => void;
+  profanityWarning?: string | null;
+  onDismissProfanityWarning?: () => void;
 }
 
 export function ChatArea({
@@ -35,6 +37,8 @@ export function ChatArea({
   onUpdateTicket,
   onMessageInputChange,
   onSendMessage,
+  profanityWarning,
+  onDismissProfanityWarning,
 }: ChatAreaProps) {
   if (!selectedTicket) {
     return (
@@ -77,6 +81,26 @@ export function ChatArea({
       {/* CSAT Feedback Banner for closed/resolved tickets */}
       {(selectedTicket.status === 'closed' || selectedTicket.status === 'resolved') && (
         <CsatBanner ticket={selectedTicket} />
+      )}
+
+      {/* Profanity Warning */}
+      {profanityWarning && (
+        <div className="bg-red-50 border-t border-red-300 px-4 py-3 flex items-start space-x-3">
+          <svg className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800">{profanityWarning}</p>
+            <p className="text-xs text-red-600 mt-1">
+              Thulo Bazaar promotes respectful communication between users and customer support team.
+            </p>
+          </div>
+          <button onClick={onDismissProfanityWarning} className="text-red-400 hover:text-red-600 flex-shrink-0">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       )}
 
       {/* Message Input */}
