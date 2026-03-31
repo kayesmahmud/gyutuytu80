@@ -110,18 +110,6 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           _recoveryDeadline = result['data']?['recoveryDeadline'];
           _step = _DeleteStep.success;
         });
-        // Auto-logout after 3 seconds
-        Future.delayed(const Duration(seconds: 3), () async {
-          if (!mounted) return;
-          await context.read<AuthProvider>().logout();
-          if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const MainNavScreen()),
-              (route) => false,
-            );
-          }
-        });
       } else {
         setState(() {
           _error = result['message'] ?? 'Deletion failed';
@@ -392,10 +380,31 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        Text(
-          lang == 'ne' ? 'तपाईंलाई स्वचालित रूपमा लगआउट गरिनेछ...' : 'You will be logged out automatically...',
-          style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () async {
+              await context.read<AuthProvider>().logout();
+              if (mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MainNavScreen()),
+                  (route) => false,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+            child: Text(
+              lang == 'ne' ? 'ठीक छ' : 'OK',
+              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+          ),
         ),
       ],
     );
