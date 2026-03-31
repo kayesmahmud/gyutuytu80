@@ -27,13 +27,14 @@ const NEPALI_WORDS = [
   'gand', 'gaand',
   'tatto', 'taatto',
   'phokcha', 'fokcha',
-  'kukur ko chora', 'kukurko chora',
+  'randi ko chora', 'kukurko chora',
   'sungurni', 'sungur ko', 'sungurko',
   'hijada', 'hijra', 'hijda',
   'bhenchod',
   'chhada', 'chada',
   'haram', 'harami',
   'randiko',
+  'jatha', 'jathi', 'jaatha', 'jaathi',
 ];
 
 // ─── Hindi (Romanized) ───────────────────────────────────────
@@ -81,7 +82,7 @@ const DEVANAGARI_WORDS = [
   'साली', 'साला', 'चुतिया', 'मादरचोद',
   'भोस्डी', 'गान्ड', 'टट्टो', 'फोक्चा',
   'हिजडा', 'छाडा', 'हरामी', 'भेनचोद',
-  'सुँगुर्नी', 'रण्डीको',
+  'सुँगुर्नी', 'रण्डीको', 'जाठा', 'जाठी',
   // Hindi Devanagari
   'बहनचोद', 'बेहनचोद',
   'मदरचोद',

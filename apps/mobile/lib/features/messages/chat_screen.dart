@@ -148,15 +148,26 @@ class _ChatScreenState extends State<ChatScreen> {
     if (profanityResult.hasProfanity && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Your message contains inappropriate language. Please rephrase to send.',
-                  style: GoogleFonts.inter(fontSize: 13),
-                ),
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Please use respectful language. Offensive words are not allowed on Thulo Bazaar.',
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Thulo Bazaar promotes respectful communication between buyers and sellers.',
+                style: GoogleFonts.inter(fontSize: 11, color: Colors.red.shade100),
               ),
             ],
           ),

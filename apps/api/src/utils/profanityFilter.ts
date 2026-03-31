@@ -45,6 +45,7 @@ const NEPALI_PROFANE_WORDS: string[] = [
   'chhada', 'chada',
   'haram', 'harami',
   'kukhuri', 'randiko',
+  'jatha', 'jathi', 'jaatha', 'jaathi',
 ];
 
 /**
@@ -76,6 +77,7 @@ const NEPALI_DEVANAGARI_PROFANE: string[] = [
   // Additional Nepali Devanagari
   'हिजडा', 'छाडा', 'हरामी',
   'भेनचोद', 'सुँगुर्नी', 'रण्डीको',
+  'जाठा', 'जाठी',
 ];
 
 /**

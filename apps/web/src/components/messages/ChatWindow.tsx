@@ -187,7 +187,7 @@ export default function ChatWindow({
       const { hasProfanity } = checkProfanity(hasText);
       if (hasProfanity) {
         setProfanityWarning(
-          'Your message contains inappropriate language. Please rephrase to send.'
+          'Please use respectful language. Offensive words are not allowed on Thulo Bazaar.'
         );
         // Auto-dismiss after 5 seconds
         setTimeout(() => setProfanityWarning(null), 5000);
