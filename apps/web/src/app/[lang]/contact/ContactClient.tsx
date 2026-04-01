@@ -92,6 +92,26 @@ export default function ContactClient() {
         <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
           {/* Contact Information */}
           <div className="md:col-span-1 space-y-4 md:space-y-6">
+            {/* Business Identity Card */}
+            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 text-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Thulo Bazar ठुलो बजार <span className="text-base align-top">®</span>
+              </h2>
+              <p className="text-sm text-gray-600 mt-2">
+                Buy, sell &amp; grow online. Safe, trusted &amp; build your business.
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                किनबेच गर्नुहोस् र अनलाइन बढ्नुहोस्। सुरक्षित, विश्वसनीय र आफ्नो व्यापार बनाउनुहोस्।
+              </p>
+              <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500 flex flex-wrap justify-center gap-x-2 gap-y-1">
+                <span>Reg. No.: 376895</span>
+                <span>|</span>
+                <span>PAN: 622462125</span>
+                <span>|</span>
+                <span>Ind. &amp; Com. Office No.: 4731</span>
+              </div>
+            </div>
+
             {/* Quick Contact Cards */}
             <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">{t('getInTouch')}</h2>
