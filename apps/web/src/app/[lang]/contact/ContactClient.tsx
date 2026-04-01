@@ -93,22 +93,25 @@ export default function ContactClient() {
           {/* Contact Information */}
           <div className="md:col-span-1 space-y-4 md:space-y-6">
             {/* Business Identity Card */}
-            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 text-center">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Thulo Bazar ठुलो बजार <span className="text-base align-top">®</span>
+            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center">
+                Thulo Bazaar Private Limited
               </h2>
-              <p className="text-sm text-gray-600 mt-2">
-                Buy, sell &amp; grow online. Safe, trusted &amp; build your business.
+              <p className="text-sm text-gray-600 mt-3">
+                Tokha Municipality - 10, Pragati Marg, Kathmandu, Nepal
               </p>
-              <p className="text-sm text-gray-600 mt-1">
-                किनबेच गर्नुहोस् र अनलाइन बढ्नुहोस्। सुरक्षित, विश्वसनीय र आफ्नो व्यापार बनाउनुहोस्।
-              </p>
-              <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500 flex flex-wrap justify-center gap-x-2 gap-y-1">
-                <span>Reg. No.: 376895</span>
-                <span>|</span>
-                <span>PAN: 622462125</span>
-                <span>|</span>
-                <span>Ind. &amp; Com. Office No.: 4731</span>
+              <div className="mt-3 space-y-1 text-sm text-gray-600">
+                <p>PAN No.: 622462125</p>
+                <p>Ind. &amp; Com. Office No.: 4731</p>
+                <p>DOC Reg. No.: .......</p>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600">
+                <p className="font-medium text-gray-700">Complaint Handling:</p>
+                <p>
+                  <a href="tel:9851369333" className="text-blue-600 hover:underline">9851369333</a>
+                  {' '}or{' '}
+                  <a href="mailto:support@thulobazaar.com.np" className="text-blue-600 hover:underline">support@thulobazaar.com.np</a>
+                </p>
               </div>
             </div>
 
