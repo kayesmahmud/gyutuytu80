@@ -360,13 +360,13 @@ export default function Footer({ lang }: FooterProps) {
                 {t('termsOfService')}
               </Link>
               <Link
-                href={`/${lang}/support/contact`}
+                href={`/${lang}/contact`}
                 className="text-gray-400 hover:text-rose-400 transition-colors duration-200"
               >
                 {t('contact')}
               </Link>
               <Link
-                href={`/${lang}/support/faq`}
+                href={`/${lang}/faq`}
                 className="text-gray-400 hover:text-rose-400 transition-colors duration-200"
               >
                 {t('faq')}
