@@ -18,6 +18,11 @@ import {
   getPaymentHistory,
   markTransactionCanceled,
 } from '../services/payment.service.js';
+import {
+  getTransactionForReceipt,
+  getUserForReceipt,
+  generateReceiptPDF,
+} from '../services/receipt.service.js';
 
 const router = Router();
 
@@ -356,6 +361,56 @@ router.get('/history', authenticateToken, async (req: Request, res: Response) =>
     res.status(500).json({
       success: false,
       message: 'Failed to get payment history',
+    });
+  }
+});
+
+/**
+ * GET /api/payments/:transactionId/receipt
+ * Download PDF receipt for a payment
+ */
+router.get('/:transactionId/receipt', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { transactionId } = req.params;
+    const userId = req.user!.userId;
+
+    const transaction = await getTransactionForReceipt(transactionId, userId);
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found',
+      });
+    }
+
+    if (transaction.status !== 'verified') {
+      return res.status(400).json({
+        success: false,
+        message: 'Receipt is only available for verified payments',
+      });
+    }
+
+    const user = await getUserForReceipt(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const filename = `receipt-${transactionId}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const pdfDoc = generateReceiptPDF(transaction, user);
+    pdfDoc.pipe(res);
+  } catch (error) {
+    console.error('Receipt generation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate receipt',
     });
   }
 });

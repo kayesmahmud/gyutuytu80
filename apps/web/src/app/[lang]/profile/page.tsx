@@ -10,6 +10,7 @@ import {
   SecurityTab,
   ShopTab,
   SavedAdsTab,
+  BillingTab,
 } from '@/components/profile';
 import { useProfilePage, ProfileEditForm } from './components';
 
@@ -187,6 +188,10 @@ export default function ProfilePage() {
                 lang={lang}
                 onSuccess={handleShopSuccess}
               />
+            )}
+
+            {activeTab === 'billing' && (
+              <BillingTab lang={lang} />
             )}
 
             {activeTab === 'saved' && (

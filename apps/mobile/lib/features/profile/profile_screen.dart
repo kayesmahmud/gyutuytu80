@@ -16,6 +16,7 @@ import 'package:mobile/features/profile/security_settings_screen.dart';
 import 'package:mobile/features/profile/phone_verification_screen.dart';
 import 'package:mobile/features/verification/verification_screen.dart';
 import 'package:mobile/features/profile/delete_account_screen.dart';
+import 'package:mobile/features/payment/payment_history_screen.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import '../../core/api/auth_client.dart';
 import '../../core/api/api_config.dart';
@@ -1144,6 +1145,32 @@ class _ProfileScreenState extends State<ProfileScreen>
                       context,
                       MaterialPageRoute(
                         builder: (_) => const VerificationScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(
+                    LucideIcons.receipt,
+                    color: AppTheme.primary,
+                  ),
+                  title: Text(
+                    context.locale.languageCode == 'ne'
+                        ? 'बिलिङ'
+                        : 'Billing',
+                  ),
+                  subtitle: Text(
+                    context.locale.languageCode == 'ne'
+                        ? 'भुक्तानी इतिहास र रसिदहरू'
+                        : 'Payment history & receipts',
+                  ),
+                  trailing: const Icon(LucideIcons.chevronRight),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PaymentHistoryScreen(),
                       ),
                     );
                   },

@@ -192,6 +192,32 @@ class PaymentClient {
   }
 
   // ==========================================
+  // RECEIPT DOWNLOAD
+  // ==========================================
+
+  /// Download receipt PDF for a verified payment
+  /// Returns the file path where the PDF was saved
+  Future<ApiResponse<String>> downloadReceipt(String transactionId, String savePath) async {
+    try {
+      final response = await _dio.download(
+        '/payments/$transactionId/receipt',
+        savePath,
+      );
+      if (response.statusCode == 200) {
+        return ApiResponse.success(savePath);
+      }
+      return ApiResponse.failure('Failed to download receipt');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        return ApiResponse.failure('Receipt only available for verified payments');
+      }
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to download receipt',
+      );
+    }
+  }
+
+  // ==========================================
   // HELPERS
   // ==========================================
 

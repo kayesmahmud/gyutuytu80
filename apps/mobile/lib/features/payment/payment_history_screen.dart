@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 import '../../core/api/payment_client.dart';
 import '../../core/models/models.dart';
 import '../../core/models/payment.dart';
@@ -483,6 +486,59 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     );
   }
 
+  Future<void> _downloadReceipt(PaymentTransaction transaction) async {
+    if (transaction.transactionId == null) return;
+
+    Navigator.pop(context); // Close bottom sheet
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.locale.languageCode == 'ne'
+              ? 'रसिद डाउनलोड हुँदैछ...'
+              : 'Downloading receipt...',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    final dir = await getApplicationDocumentsDirectory();
+    final filePath = '${dir.path}/receipt-${transaction.transactionId}.pdf';
+
+    final response = await _paymentClient.downloadReceipt(
+      transaction.transactionId!,
+      filePath,
+    );
+
+    if (!mounted) return;
+
+    if (response.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'रसिद डाउनलोड भयो'
+                : 'Receipt downloaded',
+          ),
+          action: SnackBarAction(
+            label: context.locale.languageCode == 'ne' ? 'खोल्नुहोस्' : 'Open',
+            onPressed: () => OpenFilex.open(filePath),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.errorMessage ??
+              (context.locale.languageCode == 'ne'
+                  ? 'रसिद डाउनलोड गर्न असफल'
+                  : 'Failed to download receipt')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _showTransactionDetails(PaymentTransaction transaction) {
     showModalBottomSheet(
       context: context,
@@ -547,6 +603,32 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       transaction.gatewayTransactionId!,
                     ),
                   const SizedBox(height: 24),
+                  if (transaction.status == PaymentStatus.verified ||
+                      transaction.status == PaymentStatus.completed)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _downloadReceipt(transaction),
+                        icon: const Icon(LucideIcons.download, size: 18),
+                        label: Text(
+                          context.locale.languageCode == 'ne'
+                              ? 'रसिद डाउनलोड गर्नुहोस्'
+                              : 'Download Receipt',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC143C),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  if (transaction.status == PaymentStatus.verified ||
+                      transaction.status == PaymentStatus.completed)
+                    const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

@@ -46,6 +46,7 @@ import { createEditorMethods } from './methods/editor';
 import { createAdminMethods } from './methods/admin';
 import { createFinancialMethods } from './methods/financial';
 import { createNotificationMethods } from './methods/notifications';
+import { createBillingMethods } from './methods/billing';
 
 /**
  * Full API Client with all methods
@@ -164,6 +165,11 @@ export class ApiClient extends BaseApiClient {
   updatePromotionPricing: ReturnType<typeof createFinancialMethods>['updatePromotionPricing'];
   createPromotionPricing: ReturnType<typeof createFinancialMethods>['createPromotionPricing'];
   deletePromotionPricing: ReturnType<typeof createFinancialMethods>['deletePromotionPricing'];
+
+  // Billing
+  getPaymentHistory: ReturnType<typeof createBillingMethods>['getPaymentHistory'];
+  getReceiptUrl: ReturnType<typeof createBillingMethods>['getReceiptUrl'];
+  downloadReceipt: ReturnType<typeof createBillingMethods>['downloadReceipt'];
 
   // Notifications
   getNotifications: ReturnType<typeof createNotificationMethods>['getNotifications'];
@@ -300,6 +306,12 @@ export class ApiClient extends BaseApiClient {
     this.updatePromotionPricing = financialMethods.updatePromotionPricing;
     this.createPromotionPricing = financialMethods.createPromotionPricing;
     this.deletePromotionPricing = financialMethods.deletePromotionPricing;
+
+    // Bind billing methods
+    const billingMethods = createBillingMethods(this.client);
+    this.getPaymentHistory = billingMethods.getPaymentHistory;
+    this.getReceiptUrl = billingMethods.getReceiptUrl;
+    this.downloadReceipt = billingMethods.downloadReceipt;
 
     // Bind notification methods
     const notificationMethods = createNotificationMethods(this.client);

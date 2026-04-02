@@ -4,3 +4,4 @@ export type { TabType } from './ProfileTabs';
 export { SecurityTab } from './SecurityTab';
 export { ShopTab } from './ShopTab';
 export { SavedAdsTab } from './SavedAdsTab';
+export { BillingTab } from './BillingTab';

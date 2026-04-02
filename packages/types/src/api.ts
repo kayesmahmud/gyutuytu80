@@ -277,17 +277,29 @@ export interface PromotionPlan {
   isActive: boolean;
 }
 
+export type PaymentStatus = 'pending' | 'verified' | 'failed' | 'canceled';
+export type PaymentGateway = 'khalti' | 'esewa';
+export type PaymentType = 'ad_promotion' | 'individual_verification' | 'business_verification';
+
 export interface PaymentTransaction {
-  id: number;
-  userId: number;
-  adId: number;
-  promotionPlanId: number;
-  amount: number;
-  paymentMethod: 'esewa' | 'khalti' | 'card';
   transactionId: string;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
-  createdAt: Date;
-  updatedAt: Date;
+  paymentType: PaymentType;
+  gateway: PaymentGateway;
+  amount: number;
+  status: PaymentStatus;
+  referenceId: string | null;
+  createdAt: string;
+  verifiedAt: string | null;
+}
+
+export interface PaymentHistoryResponse {
+  data: PaymentTransaction[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 // ============================================
