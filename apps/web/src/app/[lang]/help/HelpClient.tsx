@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface FAQItem {
   question: string;
@@ -28,6 +28,7 @@ const FAQ_CATEGORY_DEFS: FAQCategory[] = [
 
 export default function HelpClient() {
   const t = useTranslations('help');
+  const locale = useLocale();
 
   // Build translated FAQ categories from definition keys
   const FAQ_CATEGORIES = FAQ_CATEGORY_DEFS.map((def) => ({
@@ -139,7 +140,7 @@ export default function HelpClient() {
                 {t('clearSearch')}
               </button>
               <Link
-                href="/contact"
+                href={`/${locale}/contact`}
                 className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
                 {t('contactSupport')}
@@ -219,7 +220,7 @@ export default function HelpClient() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/support"
+              href={`/${locale}/support`}
               className="px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,7 +229,7 @@ export default function HelpClient() {
               {t('openSupportTicket')}
             </Link>
             <Link
-              href="/contact"
+              href={`/${locale}/contact`}
               className="px-8 py-4 bg-white/20 text-white rounded-xl font-semibold hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface FAQSectionDef {
   titleKey: string;
@@ -21,6 +21,7 @@ const FAQ_SECTION_DEFS: FAQSectionDef[] = [
 
 export default function FAQClient() {
   const t = useTranslations('faq');
+  const locale = useLocale();
   const [expandedSection, setExpandedSection] = useState<number>(0);
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
 
@@ -116,13 +117,13 @@ export default function FAQClient() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/help"
+              href={`/${locale}/help`}
               className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               {t('visitHelpCenter')}
             </Link>
             <Link
-              href="/contact"
+              href={`/${locale}/contact`}
               className="px-6 py-3 bg-white/20 text-white rounded-lg font-semibold hover:bg-white/30 transition-colors"
             >
               {t('contactUs')}
