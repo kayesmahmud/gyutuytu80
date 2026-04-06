@@ -103,7 +103,7 @@ export default function ContactClient() {
               <div className="mt-3 space-y-1 text-sm text-gray-600">
                 <p>PAN No.: 622462125</p>
                 <p>Ind. &amp; Com. Office No.: 4731</p>
-                <p>DOC Reg. No.: .......</p>
+                <p>DOC Reg. No.: 001-310</p>
               </div>
               <div className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600">
                 <p className="font-medium text-gray-700">Complaint Handling:</p>
