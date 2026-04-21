@@ -65,6 +65,7 @@ export interface Ad {
   longitude?: number;
   googleMapsLink?: string;
   viewCount: number;
+  condition?: string;
   isNegotiable: boolean;
   createdAt: Date;
   updatedAt: Date;

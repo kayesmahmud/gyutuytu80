@@ -275,7 +275,7 @@ export function usePostAd(lang: string) {
         subcategoryId: draft.subcategoryId,
         locationSlug: draft.locationSlug,
         locationName: draft.locationName,
-        condition: draft.condition || 'new',
+        condition: draft.condition || 'Brand New',
         isNegotiable: draft.isNegotiable || false,
       });
 

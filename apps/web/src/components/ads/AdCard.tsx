@@ -135,11 +135,11 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
                     <div className="absolute top-1.5 left-1.5 bg-blue-500 text-white rounded font-semibold z-10 px-2 py-0.5 text-[10px]">📌</div>
                 )}
                 {ad.condition && (
-                    <div className={`absolute bottom-1.5 right-1.5 rounded-full font-semibold z-10 px-2 py-0.5 text-[10px] ${ad.condition === 'new'
+                    <div className={`absolute bottom-1.5 right-1.5 rounded-full font-semibold z-10 px-2 py-0.5 text-[10px] ${ad.condition?.toLowerCase() === 'brand new'
                             ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white'
                             : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                         }`}>
-                        {ad.condition === 'new' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
+                        {ad.condition?.toLowerCase() === 'brand new' ? t('brandNew').toUpperCase() : t('used').toUpperCase()}
                     </div>
                 )}
                 {imageUrl ? (

@@ -173,7 +173,7 @@ class SearchFilters {
   final bool? isNegotiable;
   final String? sortBy; // 'date', 'price', 'views'
   final String? sortOrder; // 'asc', 'desc'
-  final String? condition; // 'new', 'used'
+  final String? condition; // 'Brand New', 'Used'
 
   // Display names for UI (not sent to API)
   final String? categoryName;

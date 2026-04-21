@@ -18,7 +18,7 @@ interface AdsPageProps {
     page?: string;
     minPrice?: string;
     maxPrice?: string;
-    condition?: 'new' | 'used';
+    condition?: 'Brand New' | 'Used';
     sortBy?: 'newest' | 'oldest' | 'price_asc' | 'price_desc';
     userId?: string;
   }>;

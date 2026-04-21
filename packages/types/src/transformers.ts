@@ -95,7 +95,8 @@ export function transformDbAdToApi(dbAd: DbAd, images: string[] = []): Ad {
     latitude: dbAd.latitude ? Number(dbAd.latitude) : undefined,
     longitude: dbAd.longitude ? Number(dbAd.longitude) : undefined,
     viewCount: dbAd.view_count || 0,
-    isNegotiable: false, // No is_negotiable field in DB; condition is only "Brand New" or "Used"
+    condition: dbAd.condition || undefined,
+    isNegotiable: false,
     createdAt: dbAd.created_at,
     updatedAt: dbAd.updated_at,
 

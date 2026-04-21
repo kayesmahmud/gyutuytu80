@@ -29,7 +29,7 @@ interface MobileFilterDrawerProps {
   selectedLocationName?: string;
   minPrice?: string;
   maxPrice?: string;
-  condition?: 'new' | 'used';
+  condition?: 'Brand New' | 'Used';
   searchQuery?: string;
   sortBy?: string;
   // External control props

@@ -28,6 +28,6 @@ export const INITIAL_FORM_DATA: PostAdFormData = {
   subcategoryId: '',
   locationSlug: '',
   locationName: '',
-  condition: 'new',
+  condition: 'Brand New',
   isNegotiable: false,
 };

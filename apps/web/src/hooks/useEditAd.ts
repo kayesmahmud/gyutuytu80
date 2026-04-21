@@ -231,7 +231,7 @@ export function useEditAd(adId: number, lang: string) {
       }
 
       if (!extractedCustomFields.condition) {
-        extractedCustomFields.condition = 'new';
+        extractedCustomFields.condition = 'Brand New';
       }
 
       const normalizedCondition = normalizeConditionForForm(extractedCustomFields.condition);
@@ -272,7 +272,7 @@ export function useEditAd(adId: number, lang: string) {
         subcategoryId: subcategoryId,
         locationSlug: locationSlug,
         locationName: locationName,
-        condition: (ad.condition || '').toLowerCase() === 'used' ? 'used' : 'new',
+        condition: (ad.condition || '').toLowerCase() === 'used' ? 'Used' : 'Brand New',
         isNegotiable: adCustomFields?.isNegotiable ?? ad.isNegotiable ?? false,
       };
       console.log('📊 [useEditAd] Setting formData:', newFormData);

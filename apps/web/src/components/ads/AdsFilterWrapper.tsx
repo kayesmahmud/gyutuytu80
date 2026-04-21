@@ -27,7 +27,7 @@ interface AdsFilterWrapperProps {
   selectedLocationName?: string;
   minPrice?: string;
   maxPrice?: string;
-  condition?: 'new' | 'used';
+  condition?: 'Brand New' | 'Used';
   sortBy?: string;
   searchQuery?: string;
 }

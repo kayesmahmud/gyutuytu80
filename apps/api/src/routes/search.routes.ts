@@ -61,7 +61,12 @@ router.get(
     }
 
     if (condition && condition !== 'all') {
-      where.condition = condition;
+      const c = (condition as string).toLowerCase();
+      if (c === 'new' || c === 'brand new') {
+        where.condition = 'Brand New';
+      } else {
+        where.condition = 'Used';
+      }
     }
 
     const [ads, total] = await Promise.all([

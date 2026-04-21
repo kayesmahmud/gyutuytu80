@@ -239,7 +239,7 @@ export default function SavedAds({ lang }: SavedAdsProps) {
                     </span>
                     {ad.condition && (
                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase ${
-                        ad.condition === 'new'
+                        ad.condition?.toLowerCase() === 'brand new'
                           ? 'bg-green-100 text-green-700'
                           : 'bg-blue-100 text-blue-700'
                       }`}>

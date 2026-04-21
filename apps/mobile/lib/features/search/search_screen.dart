@@ -311,7 +311,7 @@ class SearchScreenState extends State<SearchScreen> {
                         _buildFilterChip(
                           context,
                           _filters.condition != null
-                              ? (_filters.condition == 'new'
+                              ? (_filters.condition?.toLowerCase() == 'brand new'
                                     ? (context.locale.languageCode == 'ne'
                                           ? 'नयाँ'
                                           : 'Brand New')

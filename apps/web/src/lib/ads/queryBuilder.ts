@@ -9,7 +9,7 @@ export interface AdsFilterOptions {
   locationIds?: number[];
   minPrice?: number;
   maxPrice?: number;
-  condition?: 'new' | 'used';
+  condition?: 'Brand New' | 'Used';
   searchQuery?: string;
   status?: string;
   userId?: number;
@@ -86,9 +86,14 @@ export function buildAdsWhereClause(options: AdsFilterOptions) {
     if (maxPrice !== undefined) where.price.lte = maxPrice;
   }
 
-  // Condition filter
+  // Condition filter (normalize to DB values)
   if (condition) {
-    where.condition = condition;
+    const c = condition.toLowerCase();
+    if (c === 'new' || c === 'brand new') {
+      where.condition = 'Brand New';
+    } else {
+      where.condition = 'Used';
+    }
   }
 
   return where;
