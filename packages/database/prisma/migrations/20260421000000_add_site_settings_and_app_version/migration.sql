@@ -21,6 +21,6 @@ VALUES
   ('app_min_version', '1.0.0', 'Minimum required version (force update if below)'),
   ('app_grace_period_days', '7', 'Days of soft prompt before force update'),
   ('app_release_date', '2026-04-21', 'Date when latest version was released'),
-  ('app_store_url_android', 'https://play.google.com/store/apps/details?id=com.thulobazaar.app', 'Play Store URL'),
+  ('app_store_url_android', 'https://play.google.com/store/apps/details?id=com.thulobazaar.mobile', 'Play Store URL'),
   ('app_store_url_ios', '', 'App Store URL')
 ON CONFLICT ("setting_key") DO NOTHING;
