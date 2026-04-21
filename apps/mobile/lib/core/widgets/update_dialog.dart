@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -5,6 +7,8 @@ import '../theme/app_theme.dart';
 
 /// App update dialogs — soft prompt (dismissible) and force update (blocking).
 class UpdateDialog {
+  static String get _storeName => Platform.isIOS ? 'App Store' : 'Play Store';
+
   /// Soft prompt: dismissible bottom sheet shown during grace period.
   static void showSoftPrompt(BuildContext context, {
     required String storeUrl,
@@ -39,8 +43,8 @@ class UpdateDialog {
                 color: AppTheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
-                Icons.system_update_rounded,
+              child: Icon(
+                Platform.isIOS ? Icons.apple_rounded : Icons.system_update_rounded,
                 size: 36,
                 color: AppTheme.primary,
               ),
@@ -69,19 +73,27 @@ class UpdateDialog {
             SizedBox(
               width: double.infinity,
               height: 48,
-              child: ElevatedButton(
-                onPressed: () => _openStore(storeUrl),
+              child: ElevatedButton.icon(
+                onPressed: storeUrl.isNotEmpty ? () => _openStore(storeUrl) : null,
+                icon: Icon(
+                  Platform.isIOS ? Icons.apple_rounded : Icons.open_in_new_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  storeUrl.isNotEmpty
+                      ? 'Update on $_storeName'
+                      : 'Update coming soon',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  disabledForegroundColor: Colors.grey.shade500,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 0,
-                ),
-                child: const Text(
-                  'Update Now',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -129,8 +141,8 @@ class UpdateDialog {
                         color: AppTheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Icon(
-                        Icons.system_update_rounded,
+                      child: Icon(
+                        Platform.isIOS ? Icons.apple_rounded : Icons.system_update_rounded,
                         size: 52,
                         color: AppTheme.primary,
                       ),
@@ -168,22 +180,41 @@ class UpdateDialog {
                     SizedBox(
                       width: double.infinity,
                       height: 52,
-                      child: ElevatedButton(
-                        onPressed: () => _openStore(storeUrl),
+                      child: ElevatedButton.icon(
+                        onPressed: storeUrl.isNotEmpty ? () => _openStore(storeUrl) : null,
+                        icon: Icon(
+                          Platform.isIOS ? Icons.apple_rounded : Icons.open_in_new_rounded,
+                          size: 20,
+                        ),
+                        label: Text(
+                          storeUrl.isNotEmpty
+                              ? 'Update on $_storeName'
+                              : 'Update coming soon',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.grey.shade300,
+                          disabledForegroundColor: Colors.grey.shade500,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'Update Now',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                        ),
                       ),
                     ),
+                    if (storeUrl.isEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Please check back later or visit the $_storeName manually.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
