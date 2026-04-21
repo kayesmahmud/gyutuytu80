@@ -12,6 +12,8 @@ import 'core/providers/chat_provider.dart';
 import 'core/providers/notification_provider.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/ad_service.dart';
+import 'core/services/version_check_service.dart';
+import 'core/widgets/update_dialog.dart';
 import 'core/widgets/connectivity_wrapper.dart';
 import 'features/main_nav/main_nav_screen.dart';
 import 'features/messages/chat_screen.dart';
@@ -167,6 +169,33 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
     super.initState();
     // Register FCM token when user is logged in
     _registerNotificationToken();
+    // Check for app updates
+    _checkForAppUpdate();
+  }
+
+  Future<void> _checkForAppUpdate() async {
+    // Wait for navigator to be ready
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final result = await VersionCheckService.checkForUpdate();
+      if (!mounted) return;
+      final ctx = navigatorKey.currentContext;
+      if (ctx == null) return;
+
+      switch (result.type) {
+        case UpdateType.softPrompt:
+          UpdateDialog.showSoftPrompt(ctx,
+            storeUrl: result.storeUrl,
+            latestVersion: result.latestVersion,
+          );
+        case UpdateType.forceUpdate:
+          UpdateDialog.showForceScreen(ctx,
+            storeUrl: result.storeUrl,
+            latestVersion: result.latestVersion,
+          );
+        case UpdateType.none:
+          break;
+      }
+    });
   }
 
   Future<void> _registerNotificationToken() async {

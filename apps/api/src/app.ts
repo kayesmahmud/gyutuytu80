@@ -289,6 +289,39 @@ export function createApp(): Express {
     }
   });
 
+  // Public endpoint: App version check (for Flutter force/soft update)
+  app.get('/api/app/version', async (_req, res) => {
+    try {
+      const keys = [
+        'app_latest_version',
+        'app_min_version',
+        'app_grace_period_days',
+        'app_release_date',
+        'app_store_url_android',
+        'app_store_url_ios',
+      ];
+      const settings = await prisma.site_settings.findMany({
+        where: { setting_key: { in: keys } },
+        select: { setting_key: true, setting_value: true },
+      });
+      const map = Object.fromEntries(settings.map(s => [s.setting_key, s.setting_value]));
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.json({
+        success: true,
+        latestVersion: map.app_latest_version || '1.0.0',
+        minVersion: map.app_min_version || '1.0.0',
+        gracePeriodDays: parseInt(map.app_grace_period_days || '7', 10),
+        releaseDate: map.app_release_date || null,
+        storeUrls: {
+          android: map.app_store_url_android || '',
+          ios: map.app_store_url_ios || '',
+        },
+      });
+    } catch {
+      res.json({ success: true, latestVersion: '1.0.0', minVersion: '1.0.0', gracePeriodDays: 7, releaseDate: null, storeUrls: { android: '', ios: '' } });
+    }
+  });
+
   // Public endpoint: Ad limits for web + mobile
   app.get('/api/ad-limits', async (req, res) => {
     try {
