@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:mobile/core/services/ad_service.dart';
 
 /// A reusable inline adaptive banner ad widget.
 ///
@@ -46,6 +47,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   }
 
   void _loadAd() {
+    // Don't attempt to load if ad unit ID is empty (ads disabled)
+    if (widget.adUnitId.isEmpty) return;
+
     final screenWidth = MediaQuery.sizeOf(context).width;
     final adWidth = (screenWidth - widget.padding.horizontal).truncate();
 
@@ -88,6 +92,11 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // In release mode, hide if ads are disabled via admin panel
+    if (!kDebugMode && !AdService.adsEnabled) {
+      return const SizedBox.shrink();
+    }
+
     // Real ad loaded — show it
     if (_isLoaded && _bannerAd != null) {
       return Padding(

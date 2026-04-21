@@ -101,6 +101,9 @@ export function useSettingsPage(lang: string) {
           admobAppIdIos: db.admob_app_id_ios || prev.admobAppIdIos,
           admobBannerAndroid: db.admob_banner_android || prev.admobBannerAndroid,
           admobBannerIos: db.admob_banner_ios || prev.admobBannerIos,
+          admobInterstitialAndroid: db.admob_interstitial_android || prev.admobInterstitialAndroid,
+          admobInterstitialIos: db.admob_interstitial_ios || prev.admobInterstitialIos,
+          admobInterstitialInterval: db.admob_interstitial_interval ? parseInt(db.admob_interstitial_interval) : prev.admobInterstitialInterval,
         }));
       }
     } catch (err) {

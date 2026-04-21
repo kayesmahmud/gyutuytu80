@@ -1,44 +1,29 @@
 'use client';
 
 import Script from 'next/script';
-import { adsConfig } from '@/lib/ads/client';
+
+interface GoogleAdSenseProps {
+  enabled: boolean;
+  clientId: string;
+}
 
 /**
  * GoogleAdSense Script Loader
  *
- * This component loads the Google AdSense script globally.
- * It should be placed in the root layout (layout.tsx) inside <head>.
+ * Loads the Google AdSense script globally when ads are enabled
+ * and a valid client ID is provided from the admin panel.
  *
- * The script only loads when:
- * - NEXT_PUBLIC_ADS_ENABLED=true
- * - NODE_ENV=production
- * - Valid NEXT_PUBLIC_ADSENSE_CLIENT_ID is provided
- *
- * Usage in layout.tsx:
- * ```tsx
- * import GoogleAdSense from '@/components/ads/GoogleAdSense';
- *
- * export default function Layout({ children }) {
- *   return (
- *     <html>
- *       <head>
- *         <GoogleAdSense />
- *       </head>
- *       <body>{children}</body>
- *     </html>
- *   );
- * }
- * ```
+ * When ads are disabled (no client ID or toggle off), returns null
+ * so no AdSense script is loaded — Google sees a clean site.
  */
-export default function GoogleAdSense() {
-  // Only load in production with valid client ID
-  if (!adsConfig.enabled || !adsConfig.clientId) {
+export default function GoogleAdSense({ enabled, clientId }: GoogleAdSenseProps) {
+  if (!enabled || !clientId) {
     return null;
   }
 
   // Next.js Script types miss HTML attributes with React 19
   const scriptProps = {
-    src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsConfig.clientId}`,
+    src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}`,
     crossOrigin: 'anonymous',
     strategy: 'afterInteractive' as const,
     onError: (e: unknown) => {

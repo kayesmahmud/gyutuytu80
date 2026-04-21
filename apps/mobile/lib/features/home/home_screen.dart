@@ -150,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _isLoading ? SkeletonData.fakeAds(4) : _displayLatestAds,
                 ),
 
-                if (!_isLoading)
+                if (!_isLoading && AdService.adsEnabled)
                   AdBannerWidget(adUnitId: AdService.homeBannerTopId),
 
                 const SizedBox(height: 24),

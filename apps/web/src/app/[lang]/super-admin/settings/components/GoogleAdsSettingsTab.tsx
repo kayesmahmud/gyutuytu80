@@ -331,6 +331,60 @@ export function GoogleAdsSettingsTab({ settings, updateSettings }: GoogleAdsSett
           </div>
         </div>
 
+        {/* Interstitial Ads */}
+        <CollapsibleSection title="Interstitial Ads (Full-Screen)">
+          <p className="text-sm text-gray-600 mb-3">
+            Full-screen ads shown during screen transitions (e.g. ad card → ad detail).
+            These are shown with frequency capping to avoid annoying users.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Android Interstitial Ad Unit ID
+              </label>
+              <input
+                type="text"
+                value={settings.admobInterstitialAndroid}
+                onChange={(e) => updateSettings({ admobInterstitialAndroid: e.target.value })}
+                placeholder="ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-mono"
+              />
+              <p className="text-xs text-gray-500 mt-1">Interstitial ad unit ID for Android</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                iOS Interstitial Ad Unit ID
+              </label>
+              <input
+                type="text"
+                value={settings.admobInterstitialIos}
+                onChange={(e) => updateSettings({ admobInterstitialIos: e.target.value })}
+                placeholder="ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-mono"
+              />
+              <p className="text-xs text-gray-500 mt-1">Interstitial ad unit ID for iOS</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Show Every N Clicks
+              </label>
+              <input
+                type="number"
+                min={2}
+                max={20}
+                value={settings.admobInterstitialInterval}
+                onChange={(e) => updateSettings({ admobInterstitialInterval: parseInt(e.target.value) || 5 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Show interstitial ad every N ad detail views (default: 5). First view in session always shows an ad.
+              </p>
+            </div>
+          </div>
+        </CollapsibleSection>
+
         <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
           <strong>Note:</strong> AdMob App IDs in AndroidManifest.xml and Info.plist are set at build time.
           The ad unit IDs configured here are fetched at runtime by the mobile app.

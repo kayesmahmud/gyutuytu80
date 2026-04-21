@@ -138,6 +138,9 @@ export async function POST(request: NextRequest) {
       admob_app_id_ios: 'string',
       admob_banner_android: 'string',
       admob_banner_ios: 'string',
+      admob_interstitial_android: 'string',
+      admob_interstitial_ios: 'string',
+      admob_interstitial_interval: 'number',
     };
 
     // Upsert all settings

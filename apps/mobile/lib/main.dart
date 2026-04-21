@@ -12,6 +12,7 @@ import 'core/providers/chat_provider.dart';
 import 'core/providers/notification_provider.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/ad_service.dart';
+import 'core/services/interstitial_ad_service.dart';
 import 'core/services/version_check_service.dart';
 import 'core/widgets/update_dialog.dart';
 import 'core/widgets/connectivity_wrapper.dart';
@@ -54,7 +55,10 @@ void main() async {
   // Initialize Google Mobile Ads SDK + fetch remote config
   try {
     await AdService.initialize();
-    AdService.fetchConfig(); // Non-blocking — fetches in background
+    AdService.fetchConfig().then((_) {
+      // Preload interstitial after config is fetched
+      InterstitialAdService.preload();
+    }); // Non-blocking — fetches in background
   } catch (e) {
     debugPrint('⚠️ AdMob init failed: $e');
   }

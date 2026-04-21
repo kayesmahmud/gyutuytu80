@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { adsConfig, AdSize, AdSlot } from '@/lib/ads/client';
+import { useAdConfig } from '@/contexts/AdConfigContext';
+import { adSizes, type AdSize, type AdSlot } from '@/lib/ads/client';
 
 interface AdBannerProps {
   /** Ad slot name from adsConfig.slots */
@@ -26,19 +27,10 @@ declare global {
  *
  * Features:
  * - Shows placeholder in development mode
- * - Renders real AdSense ads in production (when enabled)
+ * - Renders real AdSense ads in production (when enabled via admin panel)
  * - Type-safe slot and size props from centralized config
  * - Prevents duplicate ad pushes
- *
- * Usage:
- * ```tsx
- * <AdBanner slot="adDetailTop" size="leaderboard" />
- * <AdBanner slot="adDetailLeft" size="skyscraper" />
- * ```
- *
- * Enable/Disable:
- * - Set NEXT_PUBLIC_ADS_ENABLED=true/false in .env.local
- * - Set NEXT_PUBLIC_ADSENSE_CLIENT_ID in .env.local
+ * - Controlled by Super Admin > Settings > Google Ads toggle
  */
 export default function AdBanner({ slot, size, className = '', autoExpand = false }: AdBannerProps) {
   const adRef = useRef<HTMLModElement>(null);
@@ -46,10 +38,11 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
   const isAdPushed = useRef(false);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
 
-  const sizeConfig = adsConfig.getSize(size);
-  const slotId = adsConfig.getSlotId(slot);
-  const isProduction = adsConfig.enabled;
-  const showPlaceholder = adsConfig.showPlaceholder;
+  const adConfig = useAdConfig();
+  const sizeConfig = adSizes[size];
+  const slotId = adConfig.slots[slot] || '';
+  const isProduction = adConfig.enabled && Boolean(adConfig.clientId);
+  const showPlaceholder = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
     // Only push ad once and only in production
@@ -80,7 +73,6 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          // Ad content has been added
           setIsAdLoaded(true);
           observer.disconnect();
           break;
@@ -118,25 +110,25 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
   // Dummy ad data for different sizes (defined outside conditional for hooks)
   const dummyAds: Record<string, { bg: string; title: string; subtitle: string; cta: string; accent: string }[]> = {
     leaderboard: [
-      { bg: 'from-blue-600 to-blue-800', title: '🎉 MEGA SALE', subtitle: 'Up to 70% OFF on Electronics', cta: 'Shop Now', accent: 'bg-yellow-400 text-black' },
-      { bg: 'from-purple-600 to-pink-600', title: '✨ New Arrivals', subtitle: 'Fashion Collection 2025', cta: 'Explore', accent: 'bg-white text-purple-600' },
-      { bg: 'from-green-600 to-emerald-700', title: '🏠 Dream Home', subtitle: 'Best Property Deals in Nepal', cta: 'View Listings', accent: 'bg-yellow-400 text-green-800' },
+      { bg: 'from-blue-600 to-blue-800', title: 'MEGA SALE', subtitle: 'Up to 70% OFF on Electronics', cta: 'Shop Now', accent: 'bg-yellow-400 text-black' },
+      { bg: 'from-purple-600 to-pink-600', title: 'New Arrivals', subtitle: 'Fashion Collection 2025', cta: 'Explore', accent: 'bg-white text-purple-600' },
+      { bg: 'from-green-600 to-emerald-700', title: 'Dream Home', subtitle: 'Best Property Deals in Nepal', cta: 'View Listings', accent: 'bg-yellow-400 text-green-800' },
     ],
     mobileBanner: [
-      { bg: 'from-orange-500 to-red-600', title: '🔥 Flash Sale', subtitle: 'Limited Time Only', cta: 'Buy Now', accent: 'bg-white text-red-600' },
-      { bg: 'from-teal-500 to-cyan-600', title: '📱 Tech Deals', subtitle: 'Smartphones & More', cta: 'Shop', accent: 'bg-yellow-300 text-teal-800' },
+      { bg: 'from-orange-500 to-red-600', title: 'Flash Sale', subtitle: 'Limited Time Only', cta: 'Buy Now', accent: 'bg-white text-red-600' },
+      { bg: 'from-teal-500 to-cyan-600', title: 'Tech Deals', subtitle: 'Smartphones & More', cta: 'Shop', accent: 'bg-yellow-300 text-teal-800' },
     ],
     skyscraper: [
-      { bg: 'from-indigo-600 to-violet-700', title: '🚗', subtitle: 'Find Your Perfect Car', cta: 'Browse Cars', accent: 'bg-yellow-400 text-indigo-800' },
-      { bg: 'from-rose-500 to-pink-600', title: '💼', subtitle: 'Job Opportunities', cta: 'Apply Now', accent: 'bg-white text-rose-600' },
+      { bg: 'from-indigo-600 to-violet-700', title: 'Cars', subtitle: 'Find Your Perfect Car', cta: 'Browse Cars', accent: 'bg-yellow-400 text-indigo-800' },
+      { bg: 'from-rose-500 to-pink-600', title: 'Jobs', subtitle: 'Job Opportunities', cta: 'Apply Now', accent: 'bg-white text-rose-600' },
     ],
     mediumRectangle: [
-      { bg: 'from-amber-500 to-orange-600', title: '🎁 Special Offer', subtitle: 'Free Delivery on Orders Above Rs. 1000', cta: 'Order Now', accent: 'bg-white text-orange-600' },
-      { bg: 'from-cyan-600 to-blue-700', title: '💻 Work From Home', subtitle: 'Best Laptops & Accessories', cta: 'Shop Now', accent: 'bg-yellow-400 text-cyan-800' },
+      { bg: 'from-amber-500 to-orange-600', title: 'Special Offer', subtitle: 'Free Delivery on Orders Above Rs. 1000', cta: 'Order Now', accent: 'bg-white text-orange-600' },
+      { bg: 'from-cyan-600 to-blue-700', title: 'Work From Home', subtitle: 'Best Laptops & Accessories', cta: 'Shop Now', accent: 'bg-yellow-400 text-cyan-800' },
     ],
     largeRectangle: [
-      { bg: 'from-slate-700 to-slate-900', title: '⭐ Premium Membership', subtitle: 'Get exclusive benefits and priority listing', cta: 'Join Now', accent: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900' },
-      { bg: 'from-emerald-500 to-teal-600', title: '🏪 Sell Your Items', subtitle: 'Reach millions of buyers', cta: 'Post Ad Free', accent: 'bg-white text-emerald-700' },
+      { bg: 'from-slate-700 to-slate-900', title: 'Premium Membership', subtitle: 'Get exclusive benefits and priority listing', cta: 'Join Now', accent: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900' },
+      { bg: 'from-emerald-500 to-teal-600', title: 'Sell Your Items', subtitle: 'Reach millions of buyers', cta: 'Post Ad Free', accent: 'bg-white text-emerald-700' },
     ],
   };
 
@@ -145,11 +137,9 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
   const ads = dummyAds[sizeKey] ?? dummyAds.mediumRectangle ?? [];
 
   // Use state for random ad index to avoid hydration mismatch
-  // Initialize to 0 for consistent SSR, then randomize on client
   const [adIndex, setAdIndex] = useState(0);
 
   useEffect(() => {
-    // Randomize ad selection only on client after hydration
     if (showPlaceholder && ads.length > 1) {
       setAdIndex(Math.floor(Math.random() * ads.length));
     }
@@ -205,7 +195,6 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
   }
 
   // Production: Google AdSense
-  // If autoExpand is true, container starts collapsed and expands with animation when ad loads
   if (autoExpand) {
     return (
       <div
@@ -224,7 +213,7 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
             width: sizeConfig.width,
             height: sizeConfig.height,
           }}
-          data-ad-client={adsConfig.clientId}
+          data-ad-client={adConfig.clientId}
           data-ad-slot={slotId}
         />
       </div>
@@ -241,7 +230,7 @@ export default function AdBanner({ slot, size, className = '', autoExpand = fals
         width: sizeConfig.width,
         height: sizeConfig.height,
       }}
-      data-ad-client={adsConfig.clientId}
+      data-ad-client={adConfig.clientId}
       data-ad-slot={slotId}
     />
   );

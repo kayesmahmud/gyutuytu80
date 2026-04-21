@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../api/api_config.dart';
 import '../models/models.dart';
+import '../services/interstitial_ad_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/localized_helpers.dart';
 import '../utils/page_transitions.dart';
@@ -39,7 +40,10 @@ class AdCard extends StatelessWidget {
     return TapScale(
       onTap:
           onTap ??
-          () {
+          () async {
+            // Show interstitial ad with frequency capping before navigating
+            await InterstitialAdService.maybeShowAd();
+            if (!context.mounted) return;
             Navigator.push(
               context,
               FadeScaleRoute(

@@ -74,6 +74,9 @@ export interface SystemSettings {
   admobAppIdIos: string;
   admobBannerAndroid: string;
   admobBannerIos: string;
+  admobInterstitialAndroid: string;
+  admobInterstitialIos: string;
+  admobInterstitialInterval: number;
 }
 
 export type SettingsTab = 'general' | 'ads' | 'users' | 'email' | 'sms' | 'google-ads';
@@ -160,6 +163,9 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   admobAppIdIos: '',
   admobBannerAndroid: '',
   admobBannerIos: '',
+  admobInterstitialAndroid: '',
+  admobInterstitialIos: '',
+  admobInterstitialInterval: 5,
 };
 
 export const SETTINGS_TABS = [

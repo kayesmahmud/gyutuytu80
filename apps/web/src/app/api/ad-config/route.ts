@@ -47,6 +47,9 @@ export async function GET() {
             'admob_app_id_ios',
             'admob_banner_android',
             'admob_banner_ios',
+            'admob_interstitial_android',
+            'admob_interstitial_ios',
+            'admob_interstitial_interval',
           ],
         },
       },
@@ -94,11 +97,14 @@ export async function GET() {
         android: {
           appId: map.admob_app_id_android || '',
           bannerUnitId: map.admob_banner_android || '',
+          interstitialUnitId: map.admob_interstitial_android || '',
         },
         ios: {
           appId: map.admob_app_id_ios || '',
           bannerUnitId: map.admob_banner_ios || '',
+          interstitialUnitId: map.admob_interstitial_ios || '',
         },
+        interstitialInterval: parseInt(map.admob_interstitial_interval || '5') || 5,
       },
     };
 

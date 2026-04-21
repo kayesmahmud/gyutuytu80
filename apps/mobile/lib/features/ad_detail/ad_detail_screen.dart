@@ -739,7 +739,8 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   if (_relatedAds.isNotEmpty) _buildRelatedAds(),
 
                   // 13. AD BANNER
-                  AdBannerWidget(adUnitId: AdService.adDetailBannerId),
+                  if (AdService.adsEnabled)
+                    AdBannerWidget(adUnitId: AdService.adDetailBannerId),
 
                   // 14. BOTTOM PADDING
                   const SizedBox(height: 120),

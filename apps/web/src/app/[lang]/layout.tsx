@@ -7,6 +7,7 @@ import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext';
 import { MaintenanceGate } from '@/components/MaintenanceGate';
 import { prisma } from '@thulobazaar/database';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
+import { AdConfigProvider, type AdConfig } from '@/contexts/AdConfigContext';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
 import AppStoreBanner from '@/components/pwa/AppStoreBanner';
@@ -135,33 +136,89 @@ export default async function LanguageLayout({
   // Enable next-intl for this locale
   setRequestLocale(lang);
 
-  // Fetch messages and maintenance mode in parallel
-  const [messages, maintenanceSetting] = await Promise.all([
+  // Fetch messages, maintenance mode, and ad config in parallel
+  const [messages, maintenanceSetting, adSettings] = await Promise.all([
     getMessages(),
     prisma.site_settings.findUnique({
       where: { setting_key: 'maintenance_mode' },
       select: { setting_value: true },
     }).catch(() => null),
+    prisma.site_settings.findMany({
+      where: {
+        setting_key: {
+          in: [
+            'google_ads_enabled', 'adsense_client_id',
+            'ad_slot_home_hero_banner', 'ad_slot_home_hero_banner_mobile',
+            'ad_slot_home_left', 'ad_slot_home_right', 'ad_slot_home_in_feed', 'ad_slot_home_bottom',
+            'ad_slot_ad_detail_top', 'ad_slot_ad_detail_top_mobile',
+            'ad_slot_ad_detail_left', 'ad_slot_ad_detail_right', 'ad_slot_ad_detail_bottom',
+            'ad_slot_ads_listing_top', 'ad_slot_ads_listing_top_mobile',
+            'ad_slot_ads_listing_sidebar', 'ad_slot_ads_listing_in_feed', 'ad_slot_ads_listing_bottom',
+            'ad_slot_search_top', 'ad_slot_search_top_mobile',
+            'ad_slot_search_sidebar', 'ad_slot_search_in_results', 'ad_slot_search_bottom',
+            'ad_slot_dashboard_sidebar', 'ad_slot_profile_sidebar',
+          ],
+        },
+      },
+      select: { setting_key: true, setting_value: true },
+    }).catch(() => []),
   ]);
 
   const isMaintenanceMode = maintenanceSetting?.setting_value === 'true';
 
+  // Build ad config from DB settings
+  const adMap: Record<string, string> = {};
+  for (const s of adSettings) {
+    adMap[s.setting_key] = s.setting_value || '';
+  }
+  const adConfig: AdConfig = {
+    enabled: adMap.google_ads_enabled === 'true',
+    clientId: adMap.adsense_client_id || '',
+    slots: {
+      homeHeroBanner: adMap.ad_slot_home_hero_banner || '',
+      homeHeroBannerMobile: adMap.ad_slot_home_hero_banner_mobile || '',
+      homeLeft: adMap.ad_slot_home_left || '',
+      homeRight: adMap.ad_slot_home_right || '',
+      homeInFeed: adMap.ad_slot_home_in_feed || '',
+      homeBottom: adMap.ad_slot_home_bottom || '',
+      adDetailTop: adMap.ad_slot_ad_detail_top || '',
+      adDetailTopMobile: adMap.ad_slot_ad_detail_top_mobile || '',
+      adDetailLeft: adMap.ad_slot_ad_detail_left || '',
+      adDetailRight: adMap.ad_slot_ad_detail_right || '',
+      adDetailBottom: adMap.ad_slot_ad_detail_bottom || '',
+      adsListingTop: adMap.ad_slot_ads_listing_top || '',
+      adsListingTopMobile: adMap.ad_slot_ads_listing_top_mobile || '',
+      adsListingSidebar: adMap.ad_slot_ads_listing_sidebar || '',
+      adsListingInFeed: adMap.ad_slot_ads_listing_in_feed || '',
+      adsListingBottom: adMap.ad_slot_ads_listing_bottom || '',
+      searchTop: adMap.ad_slot_search_top || '',
+      searchTopMobile: adMap.ad_slot_search_top_mobile || '',
+      searchSidebar: adMap.ad_slot_search_sidebar || '',
+      searchInResults: adMap.ad_slot_search_in_results || '',
+      searchBottom: adMap.ad_slot_search_bottom || '',
+      dashboardSidebar: adMap.ad_slot_dashboard_sidebar || '',
+      profileSidebar: adMap.ad_slot_profile_sidebar || '',
+    },
+  };
+
   return (
     <NextIntlClientProvider messages={messages}>
       <SiteSettingsProvider>
-        <MaintenanceGate isMaintenanceMode={isMaintenanceMode} lang={lang}>
-          <ServiceWorkerRegister />
-          <InstallPrompt />      {/* Desktop PWA install */}
-          <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
-          <GoogleAdSense />
-          <GlobalJsonLd lang={lang} />
-          <Header lang={lang} />
-          <div className="pb-20 lg:pb-0">
-            {children}
-          </div>
-          <Footer lang={lang} />
-          <BottomNav lang={lang} />
-        </MaintenanceGate>
+        <AdConfigProvider config={adConfig}>
+          <MaintenanceGate isMaintenanceMode={isMaintenanceMode} lang={lang}>
+            <ServiceWorkerRegister />
+            <InstallPrompt />      {/* Desktop PWA install */}
+            <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
+            <GoogleAdSense enabled={adConfig.enabled} clientId={adConfig.clientId} />
+            <GlobalJsonLd lang={lang} />
+            <Header lang={lang} />
+            <div className="pb-20 lg:pb-0">
+              {children}
+            </div>
+            <Footer lang={lang} />
+            <BottomNav lang={lang} />
+          </MaintenanceGate>
+        </AdConfigProvider>
       </SiteSettingsProvider>
     </NextIntlClientProvider>
   );
