@@ -451,7 +451,23 @@
     "supportTeam": "Support Team",
     "typeMessage": "Type a message...",
     "ticketResolved": "This ticket has been resolved",
-    "ticketClosed": "This ticket is closed"
+    "ticketClosed": "This ticket is closed",
+
+    "rateExperience": "Rate your experience",
+    "csatCommentHint": "Tell us more (optional)",
+    "submitFeedback": "Submit feedback",
+    "feedbackReceived": "Thanks for your feedback",
+    "feedbackSubmittedHigh": "Thanks! Glad we could help.",
+    "feedbackSubmittedGood": "Thanks for your feedback!",
+    "feedbackSubmittedLow": "Thanks for the honest feedback — we'll do better.",
+    "csatChipHelpful": "Very helpful",
+    "csatChipQuick": "Quick response",
+    "csatChipSolved": "Solved my issue",
+    "csatChipFriendly": "Friendly support",
+    "csatChipSlow": "Took too long",
+    "csatChipUnresolved": "Didn't solve my issue",
+    "csatChipConfusing": "Confusing answers",
+    "csatChipNeedMore": "Need better support"
   },
 
   "drawer": {

@@ -156,17 +156,35 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
     setState(() => _isSubmittingCsat = false);
 
-    if (response.hasData) {
+    // Note: use `success` (not `hasData`) — submitCsat is a void endpoint
+    // and always returns null data, which would make `hasData` false even
+    // on a successful 200, incorrectly triggering the error branch.
+    if (response.success) {
       setState(() {
         _ticket = _ticket?.copyWith(
           csatScore: _selectedStar,
           csatComment: comment.isNotEmpty ? comment : null,
         );
       });
+      // Score-aware confirmation: avoid sending a chipper "thanks!" to a 1-star rater.
+      final messageKey = _selectedStar >= 5
+          ? 'support.feedbackSubmittedHigh'
+          : _selectedStar == 4
+              ? 'support.feedbackSubmittedGood'
+              : 'support.feedbackSubmittedLow';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('support.feedbackSubmitted'.tr()),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded,
+                  color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(child: Text(messageKey.tr())),
+            ],
+          ),
           backgroundColor: const Color(0xFF16A34A),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
         ),
       );
     } else {
@@ -177,6 +195,23 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         ),
       );
     }
+  }
+
+  List<String> _csatChipKeysForScore(int score) {
+    if (score >= 4) {
+      return const [
+        'support.csatChipHelpful',
+        'support.csatChipQuick',
+        'support.csatChipSolved',
+        'support.csatChipFriendly',
+      ];
+    }
+    return const [
+      'support.csatChipSlow',
+      'support.csatChipUnresolved',
+      'support.csatChipConfusing',
+      'support.csatChipNeedMore',
+    ];
   }
 
   @override
@@ -622,8 +657,49 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           ),
           if (_selectedStar > 0) ...[
             const SizedBox(height: 12),
+            // Quick-pick chips: positive set for 4–5★, constructive set for 1–3★.
+            // Tapping a chip fills the comment field; tapping again clears it.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: _csatChipKeysForScore(_selectedStar).map((key) {
+                final label = key.tr();
+                final isSelected = _csatCommentController.text == label;
+                return ChoiceChip(
+                  label: Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF374151),
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFFE11D48),
+                  backgroundColor: Colors.grey[100],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFFE11D48)
+                          : Colors.grey[300]!,
+                    ),
+                  ),
+                  showCheckmark: false,
+                  onSelected: (selected) {
+                    setState(() {
+                      _csatCommentController.text = selected ? label : '';
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: _csatCommentController,
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'support.csatCommentHint'.tr(),
                 hintStyle: GoogleFonts.inter(

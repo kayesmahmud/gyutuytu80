@@ -409,7 +409,23 @@
     "supportTeam": "सहयोग टोली",
     "typeMessage": "सन्देश लेख्नुहोस्...",
     "ticketResolved": "यो टिकट समाधान भइसकेको छ",
-    "ticketClosed": "यो टिकट बन्द छ"
+    "ticketClosed": "यो टिकट बन्द छ",
+
+    "rateExperience": "तपाईंको अनुभवको मूल्याङ्कन गर्नुहोस्",
+    "csatCommentHint": "थप बताउनुहोस् (वैकल्पिक)",
+    "submitFeedback": "प्रतिक्रिया पेश गर्नुहोस्",
+    "feedbackReceived": "तपाईंको प्रतिक्रियाको लागि धन्यवाद",
+    "feedbackSubmittedHigh": "धन्यवाद! हामी मद्दत गर्न सक्दा खुसी छौं।",
+    "feedbackSubmittedGood": "तपाईंको प्रतिक्रियाको लागि धन्यवाद!",
+    "feedbackSubmittedLow": "इमानदार प्रतिक्रियाको लागि धन्यवाद — हामी अझ राम्रो गर्नेछौं।",
+    "csatChipHelpful": "धेरै सहयोगी",
+    "csatChipQuick": "छिटो जवाफ",
+    "csatChipSolved": "समस्या समाधान भयो",
+    "csatChipFriendly": "मित्रवत सहयोग",
+    "csatChipSlow": "धेरै समय लाग्यो",
+    "csatChipUnresolved": "समस्या समाधान भएन",
+    "csatChipConfusing": "अस्पष्ट जवाफहरू",
+    "csatChipNeedMore": "अझ राम्रो सहयोग चाहिन्छ"
   },
 
   "drawer": {
