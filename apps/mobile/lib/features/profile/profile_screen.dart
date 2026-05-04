@@ -639,23 +639,69 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildPersonalInfoTab() {
+    final bizStatus = _user?['businessVerificationStatus'] as String? ?? '';
+    final isBusinessVerified =
+        bizStatus == 'approved' || bizStatus == 'verified';
+    final isIndividualVerified = _user?['individualVerified'] == true;
+    final isNameLocked = isBusinessVerified || isIndividualVerified;
+    final isNepali = context.locale.languageCode == 'ne';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Full Name
-          Text(
-            context.locale.languageCode == 'ne' ? 'पूरा नाम' : "Full Name",
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
-            ),
+          Row(
+            children: [
+              Text(
+                isNepali ? 'पूरा नाम' : "Full Name",
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+              if (isNameLocked) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        LucideIcons.lock,
+                        size: 10,
+                        color: Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isNepali ? 'लक' : 'Locked',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _nameController,
+            enabled: !isNameLocked,
             decoration: InputDecoration(
+              filled: isNameLocked,
+              fillColor: isNameLocked ? Colors.grey[50] : null,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 14,
@@ -668,8 +714,27 @@ class _ProfileScreenState extends State<ProfileScreen>
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey[300]!),
               ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+            ),
+            style: GoogleFonts.inter(
+              color: isNameLocked ? Colors.grey[500] : AppTheme.textDark,
             ),
           ),
+          if (isNameLocked) ...[
+            const SizedBox(height: 6),
+            Text(
+              isNepali
+                  ? 'तपाईंको खाता प्रमाणित भएकाले नाम परिवर्तन गर्न मिल्दैन। प्रमाणीकरण समाप्त भएपछि वा रद्द गरेपछि मात्र परिवर्तन गर्न सकिनेछ।'
+                  : 'Your name cannot be changed because your account is verified. You can edit it after your verification expires or is revoked.',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
           // Email Address
