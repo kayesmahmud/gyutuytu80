@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { Shield, Database, Cookie, Users, Lock, Trash2, Baby, RefreshCw, Mail } from 'lucide-react';
+import { Shield, Database, Cookie, Users, Lock, Trash2, Baby, RefreshCw, Mail, Smartphone } from 'lucide-react';
 
 export default function PrivacyPolicyClient() {
   const t = useTranslations('privacyPolicy');
@@ -77,6 +77,7 @@ export default function PrivacyPolicyClient() {
             <li>{t('thirdPartyGoogle')}</li>
             <li>{t('thirdPartyFirebase')}</li>
             <li>{t('thirdPartySMS')}</li>
+            <li>{t('thirdPartyAdMob')}</li>
           </ul>
           <p className="text-gray-500 text-sm italic">{t('thirdPartyNote')}</p>
         </div>
@@ -92,6 +93,40 @@ export default function PrivacyPolicyClient() {
           <div>
             <h4 className="font-semibold text-gray-800 mb-1">{t('dataDeletionProcess')}</h4>
             <p className="text-gray-600">{t('dataDeletionProcessDesc')}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'mobile-app',
+      icon: <Smartphone className="w-5 h-5" />,
+      title: t('mobileAppPermissions'),
+      content: (
+        <div className="space-y-4">
+          <p className="text-gray-600">{t('mobileAppPermissionsDesc')}</p>
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-1">{t('mobilePermCamera')}</h4>
+            <p className="text-gray-600">{t('mobilePermCameraDesc')}</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-1">{t('mobilePermPhotos')}</h4>
+            <p className="text-gray-600">{t('mobilePermPhotosDesc')}</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-1">{t('mobilePermLocation')}</h4>
+            <p className="text-gray-600">{t('mobilePermLocationDesc')}</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-1">{t('mobilePermNotifications')}</h4>
+            <p className="text-gray-600">{t('mobilePermNotificationsDesc')}</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-1">{t('mobilePermStorage')}</h4>
+            <p className="text-gray-600">{t('mobilePermStorageDesc')}</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-1">{t('mobileDeviceIdentifiers')}</h4>
+            <p className="text-gray-600">{t('mobileDeviceIdentifiersDesc')}</p>
           </div>
         </div>
       ),
