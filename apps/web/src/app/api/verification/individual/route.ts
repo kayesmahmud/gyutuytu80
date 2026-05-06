@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
         where: { id: userId },
         select: {
           account_type: true,
+          phone_verified: true,
           business_verification_status: true,
           business_verification_expires_at: true,
           individual_verified: true,
@@ -68,6 +69,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: 'User not found' },
         { status: 404 }
+      );
+    }
+
+    // Phone verification is required before any verification submission
+    if (!user.phone_verified) {
+      return NextResponse.json(
+        { success: false, message: 'Please verify your phone number before applying for verification.' },
+        { status: 400 }
       );
     }
 
@@ -257,19 +266,47 @@ export async function POST(request: NextRequest) {
     if (isFreeVerification) {
       // For resubmissions, skip free verification check (user already paid previously)
       if (!isResubmission) {
-        // Verify free verification is actually enabled
-        const freeVerificationSetting = await prisma.site_settings.findUnique({
-          where: { setting_key: 'free_verification_enabled' },
+        // Verify free verification is enabled, type is allowed, duration matches, user is first-timer
+        const freeSettings = await prisma.site_settings.findMany({
+          where: {
+            setting_key: { in: ['free_verification_enabled', 'free_verification_duration_days', 'free_verification_types'] },
+          },
         });
+        const settingsMap: Record<string, string | null> = {};
+        freeSettings.forEach((s) => { settingsMap[s.setting_key] = s.setting_value; });
 
-        const freeVerificationEnabled = freeVerificationSetting?.setting_value === 'true';
-
-        if (!freeVerificationEnabled) {
+        if (settingsMap['free_verification_enabled'] !== 'true') {
           return NextResponse.json(
-            {
-              success: false,
-              message: 'Free verification promotion is not currently available',
-            },
+            { success: false, message: 'Free verification promotion is not currently available' },
+            { status: 400 }
+          );
+        }
+
+        const allowedTypes: string[] = JSON.parse(settingsMap['free_verification_types'] || '[]');
+        if (!allowedTypes.includes('individual')) {
+          return NextResponse.json(
+            { success: false, message: 'Free verification is not available for individual accounts' },
+            { status: 400 }
+          );
+        }
+
+        const freeDurationDays = parseInt(settingsMap['free_verification_duration_days'] || '30', 10);
+        if (durationDays !== freeDurationDays) {
+          return NextResponse.json(
+            { success: false, message: `Free verification duration must be ${freeDurationDays} days` },
+            { status: 400 }
+          );
+        }
+
+        // First-time-only: reject if user has EVER held a successful verification (active or expired)
+        const hasBeenVerifiedBefore =
+          user.individual_verified === true ||
+          user.individual_verification_expires_at !== null ||
+          user.business_verification_status === 'approved' ||
+          user.business_verification_expires_at !== null;
+        if (hasBeenVerifiedBefore) {
+          return NextResponse.json(
+            { success: false, message: 'Free verification is only available for first-time users' },
             { status: 400 }
           );
         }

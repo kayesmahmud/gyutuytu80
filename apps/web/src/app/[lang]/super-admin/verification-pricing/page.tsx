@@ -3,7 +3,7 @@
 import { use } from 'react';
 import { DashboardLayout } from '@/components/admin';
 import { useVerificationPricing } from './useVerificationPricing';
-import { StatsCards, PricingTable, InfoCard } from './components';
+import { StatsCards, PricingTable, InfoCard, FreeVerificationToggle } from './components';
 
 export default function VerificationPricingPage({ params: paramsPromise }: { params: Promise<{ lang: string }> }) {
   const params = use(paramsPromise);
@@ -23,6 +23,9 @@ export default function VerificationPricingPage({ params: paramsPromise }: { par
     handleCancelEdit,
     handleSaveEdit,
     setEditForm,
+    freeSettings,
+    freeSaving,
+    handleSaveFreeSettings,
   } = useVerificationPricing(params.lang);
 
   const layoutProps = {
@@ -55,6 +58,13 @@ export default function VerificationPricingPage({ params: paramsPromise }: { par
           <h1 className="text-2xl font-bold text-gray-800">Verification Pricing Management</h1>
           <p className="text-gray-600 mt-1">Manage pricing for user verification (Individual & Business)</p>
         </div>
+
+        {/* Free Verification Toggle (launch promo) */}
+        <FreeVerificationToggle
+          settings={freeSettings}
+          saving={freeSaving}
+          onSave={handleSaveFreeSettings}
+        />
 
         {/* Stats */}
         <StatsCards

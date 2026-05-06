@@ -5,4 +5,5 @@ export * from './Banners';
 export * from './BenefitsGrid';
 export * from './VerificationStatusCard';
 export * from './DurationSelector';
+export * from './OfferCards';
 export * from './FaqSection';

@@ -12,6 +12,12 @@ export interface EditForm {
   isActive: boolean;
 }
 
+export interface FreeVerificationSettings {
+  enabled: boolean;
+  durationDays: number;
+  types: string[]; // 'individual' | 'business'
+}
+
 export const DURATION_LABELS: Record<number, string> = {
   30: '1 Month',
   90: '3 Months',

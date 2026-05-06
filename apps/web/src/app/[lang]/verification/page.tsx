@@ -15,6 +15,7 @@ import {
   BenefitsGrid,
   VerificationStatusCard,
   DurationSelector,
+  OfferCards,
   FaqSection,
 } from './components';
 import { VerificationBanner } from '@/components/dashboard/VerificationBanner';
@@ -117,12 +118,16 @@ export default function VerificationPage({ params }: VerificationPageProps) {
     isResubmission,
     resubmissionDuration,
     isFreeVerification,
+    selectedOffer,
+    showOfferCards,
     handleTypeSelect,
     handleDurationSelect,
     handleProceedToForm,
     handleFormSuccess,
     handleFormCancel,
     handleClearSelection,
+    handleSelectFreeOffer,
+    handleSelectPaidOffer,
   } = useVerificationPage(lang);
 
   if (status === 'loading' || loading) {
@@ -194,13 +199,24 @@ export default function VerificationPage({ params }: VerificationPageProps) {
           />
         </div>
 
-        {/* Duration Selection */}
-        {selectedType && !showForm && pricing && (
+        {/* Offer Cards (Free + Paid) — shown when user is eligible and hasn't picked yet */}
+        {showOfferCards && selectedType && pricing && (
+          <OfferCards
+            selectedType={selectedType}
+            pricing={pricing}
+            onSelectFree={handleSelectFreeOffer}
+            onSelectPaid={handleSelectPaidOffer}
+            onClear={handleClearSelection}
+          />
+        )}
+
+        {/* Duration Selection — shown when paid path chosen, or when not eligible for free */}
+        {selectedType && !showForm && !showOfferCards && selectedOffer === 'paid' && pricing && (
           <DurationSelector
             selectedType={selectedType}
             selectedDuration={selectedDuration}
             pricing={pricing}
-            isFreeVerification={isFreeVerification || false}
+            isFreeVerification={false}
             onDurationSelect={handleDurationSelect}
             onProceed={handleProceedToForm}
             onClear={handleClearSelection}

@@ -4,8 +4,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { getSuperAdminNavSections } from '@/lib/navigation';
-import type { VerificationPricing, EditForm } from './types';
+import type { VerificationPricing, EditForm, FreeVerificationSettings } from './types';
 import { DEFAULT_EDIT_FORM } from './types';
+
+const DEFAULT_FREE_SETTINGS: FreeVerificationSettings = {
+  enabled: false,
+  durationDays: 30,
+  types: ['individual', 'business'],
+};
 
 export interface UseVerificationPricingReturn {
   // Auth & nav
@@ -27,6 +33,11 @@ export interface UseVerificationPricingReturn {
   handleCancelEdit: () => void;
   handleSaveEdit: (id: number) => Promise<void>;
   setEditForm: React.Dispatch<React.SetStateAction<EditForm>>;
+
+  // Free verification toggle
+  freeSettings: FreeVerificationSettings;
+  freeSaving: boolean;
+  handleSaveFreeSettings: (next: FreeVerificationSettings) => Promise<void>;
 }
 
 export function useVerificationPricing(lang: string): UseVerificationPricingReturn {
@@ -38,6 +49,8 @@ export function useVerificationPricing(lang: string): UseVerificationPricingRetu
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<EditForm>(DEFAULT_EDIT_FORM);
   const [saving, setSaving] = useState(false);
+  const [freeSettings, setFreeSettings] = useState<FreeVerificationSettings>(DEFAULT_FREE_SETTINGS);
+  const [freeSaving, setFreeSaving] = useState(false);
 
   const handleLogout = useCallback(async () => {
     await logout();
@@ -59,6 +72,13 @@ export function useVerificationPricing(lang: string): UseVerificationPricingRetu
 
       if (data.success) {
         setPricings(data.data.pricings);
+        if (data.data.freeVerification) {
+          setFreeSettings({
+            enabled: !!data.data.freeVerification.enabled,
+            durationDays: data.data.freeVerification.durationDays || 30,
+            types: data.data.freeVerification.types || ['individual', 'business'],
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading verification pricing:', error);
@@ -66,6 +86,43 @@ export function useVerificationPricing(lang: string): UseVerificationPricingRetu
       setLoading(false);
     }
   }, []);
+
+  const handleSaveFreeSettings = useCallback(
+    async (next: FreeVerificationSettings) => {
+      try {
+        setFreeSaving(true);
+        const token = localStorage.getItem('editorToken');
+        const updates: Array<{ settingKey: string; value: unknown }> = [
+          { settingKey: 'free_verification_enabled', value: next.enabled },
+          { settingKey: 'free_verification_duration_days', value: next.durationDays },
+          { settingKey: 'free_verification_types', value: next.types },
+        ];
+
+        for (const update of updates) {
+          const res = await fetch('/api/admin/site-settings', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(update),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || `Failed to save ${update.settingKey}`);
+          }
+        }
+
+        setFreeSettings(next);
+      } catch (error) {
+        console.error('Error saving free verification settings:', error);
+        alert(`Failed to save: ${error instanceof Error ? error.message : 'unknown error'}`);
+      } finally {
+        setFreeSaving(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -151,5 +208,8 @@ export function useVerificationPricing(lang: string): UseVerificationPricingRetu
     handleCancelEdit,
     handleSaveEdit,
     setEditForm,
+    freeSettings,
+    freeSaving,
+    handleSaveFreeSettings,
   };
 }

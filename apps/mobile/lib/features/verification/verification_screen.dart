@@ -12,6 +12,7 @@ import '../profile/profile_screen.dart';
 import 'verification_widgets.dart';
 import 'individual_verification_form.dart';
 import 'business_verification_form.dart';
+import 'widgets/offer_cards.dart';
 
 class VerificationScreen extends StatefulWidget {
   const VerificationScreen({Key? key}) : super(key: key);
@@ -38,6 +39,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
   // Inline duration selector state
   String? _selectedType; // 'individual' | 'business' | null
   PricingOption? _selectedDuration;
+  // 'free' | 'paid' | null. When eligible-for-free, user picks; otherwise auto-set to 'paid'.
+  String? _selectedOffer;
 
   @override
   void initState() {
@@ -86,8 +89,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   // --- Convenience getters ---
   IndividualVerificationStatus? get _ind =>
       _statusResponse?.individualVerification;
-  BusinessVerificationStatus? get _biz =>
-      _statusResponse?.businessVerification;
+  BusinessVerificationStatus? get _biz => _statusResponse?.businessVerification;
 
   String get _individualStatus => _ind?.status ?? 'unverified';
   String get _businessStatus => _biz?.status ?? 'unverified';
@@ -103,9 +105,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
     if (!_isPhoneVerified) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(context.locale.languageCode == 'ne'
+          content: Text(
+            context.locale.languageCode == 'ne'
                 ? 'कृपया पहिले आफ्नो फोन नम्बर प्रमाणित गर्नुहोस्'
-                : 'Please verify your phone number first')),
+                : 'Please verify your phone number first',
+          ),
+        ),
       );
       return;
     }
@@ -117,7 +122,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
     if (status == 'verified' || status == 'pending') return;
 
     // Block if the OTHER verification type is active or pending
-    final otherStatus = type == 'individual' ? _businessStatus : _individualStatus;
+    final otherStatus = type == 'individual'
+        ? _businessStatus
+        : _individualStatus;
     if (otherStatus == 'verified' || otherStatus == 'pending') {
       final lang = context.locale.languageCode;
       final otherLabel = type == 'individual'
@@ -128,11 +135,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
           content: Text(
             otherStatus == 'verified'
                 ? (lang == 'ne'
-                    ? 'तपाईंसँग पहिले नै सक्रिय $otherLabel प्रमाणीकरण छ। कृपया म्याद सकिएपछि आवेदन दिनुहोस्।'
-                    : 'You already have an active $otherLabel verification. Wait for it to expire before applying.')
+                      ? 'तपाईंसँग पहिले नै सक्रिय $otherLabel प्रमाणीकरण छ। कृपया म्याद सकिएपछि आवेदन दिनुहोस्।'
+                      : 'You already have an active $otherLabel verification. Wait for it to expire before applying.')
                 : (lang == 'ne'
-                    ? 'तपाईंसँग पहिले नै लंबित $otherLabel प्रमाणीकरण अनुरोध छ।'
-                    : 'You already have a pending $otherLabel verification request.'),
+                      ? 'तपाईंसँग पहिले नै लंबित $otherLabel प्रमाणीकरण अनुरोध छ।'
+                      : 'You already have a pending $otherLabel verification request.'),
           ),
         ),
       );
@@ -151,16 +158,65 @@ class _VerificationScreenState extends State<VerificationScreen> {
       return;
     }
 
-    // Toggle inline duration selector
+    // Toggle inline picker (offer cards or duration selector)
     setState(() {
       if (_selectedType == type) {
         _selectedType = null;
         _selectedDuration = null;
+        _selectedOffer = null;
       } else {
         _selectedType = type;
         _selectedDuration = null;
+        // If user is NOT eligible for free, skip OfferCards and go straight to paid duration selector.
+        final eligibleForFree =
+            _pricing != null &&
+            _pricing!.freeVerification.enabled &&
+            _pricing!.freeVerification.isEligible &&
+            _pricing!.freeVerification.types.contains(type);
+        _selectedOffer = eligibleForFree ? null : 'paid';
       }
     });
+  }
+
+  void _onSelectFreeOffer() {
+    if (_selectedType == null || _pricing == null) return;
+    final options = _selectedType == 'individual'
+        ? _pricing!.individual
+        : _pricing!.business;
+    PricingOption? freeOption;
+    for (final opt in options) {
+      if (opt.durationDays == _pricing!.freeVerification.durationDays) {
+        freeOption = opt;
+        break;
+      }
+    }
+    if (freeOption == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'निःशुल्क प्रमाणीकरण मूल्य कन्फिगर गरिएको छैन। समर्थनलाई सम्पर्क गर्नुहोस्।'
+                : 'Free verification pricing is not configured. Contact support.',
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _selectedOffer = 'free';
+      _selectedDuration = freeOption;
+    });
+    _navigateToForm(
+      type: _selectedType!,
+      durationDays: freeOption.durationDays,
+      price: 0,
+      isFree: true,
+      isResubmission: false,
+    );
+  }
+
+  void _onSelectPaidOffer() {
+    setState(() => _selectedOffer = 'paid');
   }
 
   void _onProceed() {
@@ -204,6 +260,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     if (result == true) {
       _selectedType = null;
       _selectedDuration = null;
+      _selectedOffer = null;
       _loadData();
     }
   }
@@ -212,8 +269,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Widget _buildDurationSelector(String type) {
     if (_pricing == null) return const SizedBox.shrink();
 
-    final options =
-        type == 'individual' ? _pricing!.individual : _pricing!.business;
+    final options = type == 'individual'
+        ? _pricing!.individual
+        : _pricing!.business;
 
     if (options.isEmpty) return const SizedBox.shrink();
 
@@ -236,7 +294,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    context.locale.languageCode == 'ne' ? 'अवधि छान्नुहोस्' : 'Select Duration',
+                    context.locale.languageCode == 'ne'
+                        ? 'अवधि छान्नुहोस्'
+                        : 'Select Duration',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -255,7 +315,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       color: Colors.grey.shade200,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(LucideIcons.x, size: 18, color: Colors.grey[600]),
+                    child: Icon(
+                      LucideIcons.x,
+                      size: 18,
+                      color: Colors.grey[600],
+                    ),
                   ),
                 ),
               ],
@@ -268,17 +332,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Colors.purple.shade400,
-                      Colors.indigo.shade400,
-                    ],
+                    colors: [Colors.purple.shade400, Colors.indigo.shade400],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    Text(_pricing!.campaign!.bannerEmoji ?? '🎉',
-                        style: const TextStyle(fontSize: 24)),
+                    Text(
+                      _pricing!.campaign!.bannerEmoji ?? '🎉',
+                      style: const TextStyle(fontSize: 24),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -340,10 +403,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Colors.indigo.shade50,
-                      Colors.purple.shade50,
-                    ],
+                    colors: [Colors.indigo.shade50, Colors.purple.shade50],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -354,7 +414,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            context.locale.languageCode == 'ne' ? 'छानिएको योजना:' : 'Selected Plan:',
+                            context.locale.languageCode == 'ne'
+                                ? 'छानिएको योजना:'
+                                : 'Selected Plan:',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -370,8 +432,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           ),
                           Text(
                             _selectedDuration!.finalPrice <= 0
-                                ? (context.locale.languageCode == 'ne' ? 'निःशुल्क' : 'FREE')
-                                : formatLocalizedPrice(_selectedDuration!.finalPrice, context.locale.languageCode),
+                                ? (context.locale.languageCode == 'ne'
+                                      ? 'निःशुल्क'
+                                      : 'FREE')
+                                : formatLocalizedPrice(
+                                    _selectedDuration!.finalPrice,
+                                    context.locale.languageCode,
+                                  ),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
@@ -417,22 +484,42 @@ class _VerificationScreenState extends State<VerificationScreen> {
     // Rejection reasons
     final lang = context.locale.languageCode;
     if (_individualStatus == 'rejected' && _individualRejectionReason != null) {
-      strips.add(_buildRejectionStrip(lang == 'ne' ? 'व्यक्तिगत' : 'Individual', _individualRejectionReason!));
+      strips.add(
+        _buildRejectionStrip(
+          lang == 'ne' ? 'व्यक्तिगत' : 'Individual',
+          _individualRejectionReason!,
+        ),
+      );
     }
     if (_businessStatus == 'rejected' && _businessRejectionReason != null) {
-      strips.add(_buildRejectionStrip(lang == 'ne' ? 'व्यापार' : 'Business', _businessRejectionReason!));
+      strips.add(
+        _buildRejectionStrip(
+          lang == 'ne' ? 'व्यापार' : 'Business',
+          _businessRejectionReason!,
+        ),
+      );
     }
 
     // Expiry warnings
     if (_individualStatus == 'verified' &&
         (_ind?.isExpiringSoon ?? false) &&
         _individualDaysRemaining != null) {
-      strips.add(_buildExpiryStrip(lang == 'ne' ? 'व्यक्तिगत' : 'Individual', _individualDaysRemaining!));
+      strips.add(
+        _buildExpiryStrip(
+          lang == 'ne' ? 'व्यक्तिगत' : 'Individual',
+          _individualDaysRemaining!,
+        ),
+      );
     }
     if (_businessStatus == 'verified' &&
         (_biz?.isExpiringSoon ?? false) &&
         _businessDaysRemaining != null) {
-      strips.add(_buildExpiryStrip(lang == 'ne' ? 'व्यापार' : 'Business', _businessDaysRemaining!));
+      strips.add(
+        _buildExpiryStrip(
+          lang == 'ne' ? 'व्यापार' : 'Business',
+          _businessDaysRemaining!,
+        ),
+      );
     }
 
     return strips;
@@ -527,7 +614,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ),
         body: LoginRequiredWidget(
           icon: LucideIcons.badgeCheck,
-          title: context.locale.languageCode == 'ne' ? 'प्रमाणित हुन लगइन गर्नुहोस्' : 'Login to Get Verified',
+          title: context.locale.languageCode == 'ne'
+              ? 'प्रमाणित हुन लगइन गर्नुहोस्'
+              : 'Login to Get Verified',
           subtitle: context.locale.languageCode == 'ne'
               ? 'आफ्नो खाता प्रमाणित गर्न\nर किनमेलकर्ताहरूसँग विश्वास बनाउन साइन इन गर्नुहोस्'
               : 'Sign in to verify your account\nand build trust with buyers',
@@ -549,164 +638,189 @@ class _VerificationScreenState extends State<VerificationScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _buildErrorState()
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Phone verification warning
-                        if (!_isPhoneVerified) ...[
-                          GestureDetector(
-                            onTap: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const ProfileScreen()),
-                              );
-                              _loadData();
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 16),
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.shade50,
-                                borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: Colors.orange.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(LucideIcons.smartphone,
-                                      color: Colors.orange.shade700, size: 22),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          context.locale.languageCode == 'ne'
-                                              ? 'फोन प्रमाणीकरण आवश्यक'
-                                              : 'Phone Verification Required',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.orange.shade900,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _phone != null
-                                              ? (context.locale.languageCode == 'ne'
-                                                  ? 'तपाईंको फोन $_phone प्रमाणित भएको छैन। प्रमाणित गर्न ट्याप गर्नुहोस्।'
-                                                  : 'Your phone $_phone is not verified. Tap to verify.')
-                                              : (context.locale.languageCode == 'ne'
-                                                  ? 'प्रमाणीकरणको लागि आफ्नो फोन नम्बर प्रमाणित गर्नुहोस्।'
-                                                  : 'Verify your phone number to apply for verification.'),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.orange.shade700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(LucideIcons.arrowRight,
-                                      color: Colors.orange.shade600, size: 18),
-                                ],
-                              ),
+          ? _buildErrorState()
+          : RefreshIndicator(
+              onRefresh: _loadData,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Phone verification warning
+                    if (!_isPhoneVerified) ...[
+                      GestureDetector(
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProfileScreen(),
                             ),
+                          );
+                          _loadData();
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.shade200),
                           ),
-                        ],
-
-                        // Campaign banner (if active)
-                        if (_pricing?.campaign != null)
-                          CampaignBanner(campaign: _pricing!.campaign!),
-
-                        // Dynamic status banner
-                        VerificationStatusBanner(
-                          individualStatus: _individualStatus,
-                          businessStatus: _businessStatus,
-                          individualName: _ind?.fullName,
-                          businessName: _biz?.businessName,
-                          individualRejectionReason: _individualRejectionReason,
-                          businessRejectionReason: _businessRejectionReason,
-                          individualCreatedAt: _ind?.request?.createdAt,
-                          businessCreatedAt: _biz?.request?.createdAt,
-                          individualDaysRemaining: _individualDaysRemaining,
-                          businessDaysRemaining: _businessDaysRemaining,
-                        ),
-
-                        // Side-by-side verification tiles
-                        IntrinsicHeight(
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(
-                                child: VerificationStatusCard(
-                                  type: 'individual',
-                                  title: context.locale.languageCode == 'ne'
-                                      ? 'व्यक्तिगत प्रमाणीकरण'
-                                      : 'Individual Verification',
-                                  subtitle: context.locale.languageCode == 'ne'
-                                      ? 'सरकारी परिचयपत्रले आफ्नो व्यक्तिगत पहिचान प्रमाणित गर्नुहोस्'
-                                      : 'Verify your personal identity with a government-issued ID',
-                                  status: _individualStatus,
-                                  isSelected: _selectedType == 'individual',
-                                  rejectionReason: _individualRejectionReason,
-                                  daysRemaining: _individualDaysRemaining,
-                                  isExpiringSoon:
-                                      _ind?.isExpiringSoon ?? false,
-                                  expiresAt: _individualExpiresAt,
-                                  onTap: () => _onCardTap('individual'),
-                                ),
+                              Icon(
+                                LucideIcons.smartphone,
+                                color: Colors.orange.shade700,
+                                size: 22,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: VerificationStatusCard(
-                                  type: 'business',
-                                  title: context.locale.languageCode == 'ne'
-                                      ? 'व्यापार प्रमाणीकरण'
-                                      : 'Business Verification',
-                                  subtitle: context.locale.languageCode == 'ne'
-                                      ? 'दर्ता कागजातहरूले आफ्नो व्यापार प्रमाणित गर्नुहोस्'
-                                      : 'Verify your business with registration documents',
-                                  status: _businessStatus,
-                                  isSelected: _selectedType == 'business',
-                                  rejectionReason: _businessRejectionReason,
-                                  daysRemaining: _businessDaysRemaining,
-                                  isExpiringSoon:
-                                      _biz?.isExpiringSoon ?? false,
-                                  expiresAt: _businessExpiresAt,
-                                  onTap: () => _onCardTap('business'),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      context.locale.languageCode == 'ne'
+                                          ? 'फोन प्रमाणीकरण आवश्यक'
+                                          : 'Phone Verification Required',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange.shade900,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _phone != null
+                                          ? (context.locale.languageCode == 'ne'
+                                                ? 'तपाईंको फोन $_phone प्रमाणित भएको छैन। प्रमाणित गर्न ट्याप गर्नुहोस्।'
+                                                : 'Your phone $_phone is not verified. Tap to verify.')
+                                          : (context.locale.languageCode == 'ne'
+                                                ? 'प्रमाणीकरणको लागि आफ्नो फोन नम्बर प्रमाणित गर्नुहोस्।'
+                                                : 'Verify your phone number to apply for verification.'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.orange.shade700,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              Icon(
+                                LucideIcons.arrowRight,
+                                color: Colors.orange.shade600,
+                                size: 18,
                               ),
                             ],
                           ),
                         ),
+                      ),
+                    ],
 
-                        // Detail strips (rejection reasons, expiry warnings)
-                        ..._buildDetailStrips(),
+                    // Campaign banner (if active)
+                    if (_pricing?.campaign != null)
+                      CampaignBanner(campaign: _pricing!.campaign!),
 
-                        const SizedBox(height: 12),
-
-                        // Duration selector (full width, for selected type)
-                        if (_selectedType != null)
-                          _buildDurationSelector(_selectedType!),
-
-                        const SizedBox(height: 24),
-
-                        // FAQ Section
-                        const FaqSection(),
-
-                        const SizedBox(height: 40),
-                      ],
+                    // Dynamic status banner
+                    VerificationStatusBanner(
+                      individualStatus: _individualStatus,
+                      businessStatus: _businessStatus,
+                      individualName: _ind?.fullName,
+                      businessName: _biz?.businessName,
+                      individualRejectionReason: _individualRejectionReason,
+                      businessRejectionReason: _businessRejectionReason,
+                      individualCreatedAt: _ind?.request?.createdAt,
+                      businessCreatedAt: _biz?.request?.createdAt,
+                      individualDaysRemaining: _individualDaysRemaining,
+                      businessDaysRemaining: _businessDaysRemaining,
                     ),
-                  ),
+
+                    // Side-by-side verification tiles
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: VerificationStatusCard(
+                              type: 'individual',
+                              title: context.locale.languageCode == 'ne'
+                                  ? 'व्यक्तिगत प्रमाणीकरण'
+                                  : 'Individual Verification',
+                              subtitle: context.locale.languageCode == 'ne'
+                                  ? 'सरकारी परिचयपत्रले आफ्नो व्यक्तिगत पहिचान प्रमाणित गर्नुहोस्'
+                                  : 'Verify your personal identity with a government-issued ID',
+                              status: _individualStatus,
+                              isSelected: _selectedType == 'individual',
+                              rejectionReason: _individualRejectionReason,
+                              daysRemaining: _individualDaysRemaining,
+                              isExpiringSoon: _ind?.isExpiringSoon ?? false,
+                              expiresAt: _individualExpiresAt,
+                              onTap: () => _onCardTap('individual'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: VerificationStatusCard(
+                              type: 'business',
+                              title: context.locale.languageCode == 'ne'
+                                  ? 'व्यापार प्रमाणीकरण'
+                                  : 'Business Verification',
+                              subtitle: context.locale.languageCode == 'ne'
+                                  ? 'दर्ता कागजातहरूले आफ्नो व्यापार प्रमाणित गर्नुहोस्'
+                                  : 'Verify your business with registration documents',
+                              status: _businessStatus,
+                              isSelected: _selectedType == 'business',
+                              rejectionReason: _businessRejectionReason,
+                              daysRemaining: _businessDaysRemaining,
+                              isExpiringSoon: _biz?.isExpiringSoon ?? false,
+                              expiresAt: _businessExpiresAt,
+                              onTap: () => _onCardTap('business'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Detail strips (rejection reasons, expiry warnings)
+                    ..._buildDetailStrips(),
+
+                    const SizedBox(height: 12),
+
+                    // Offer Cards (Free + Paid) — eligible first-time users only
+                    if (_selectedType != null &&
+                        _selectedOffer == null &&
+                        _pricing != null &&
+                        _pricing!.freeVerification.enabled &&
+                        _pricing!.freeVerification.isEligible &&
+                        _pricing!.freeVerification.types.contains(
+                          _selectedType,
+                        ))
+                      OfferCards(
+                        selectedType: _selectedType!,
+                        freeDurationDays:
+                            _pricing!.freeVerification.durationDays,
+                        onSelectFree: _onSelectFreeOffer,
+                        onSelectPaid: _onSelectPaidOffer,
+                        onClear: () => setState(() {
+                          _selectedType = null;
+                          _selectedDuration = null;
+                          _selectedOffer = null;
+                        }),
+                      ),
+
+                    // Duration selector (full width, for selected type — paid path only)
+                    if (_selectedType != null && _selectedOffer == 'paid')
+                      _buildDurationSelector(_selectedType!),
+
+                    const SizedBox(height: 24),
+
+                    // FAQ Section
+                    const FaqSection(),
+
+                    const SizedBox(height: 40),
+                  ],
                 ),
+              ),
+            ),
     );
   }
 
@@ -717,8 +831,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(LucideIcons.alertTriangle,
-                size: 48, color: Colors.red.shade300),
+            Icon(
+              LucideIcons.alertTriangle,
+              size: 48,
+              color: Colors.red.shade300,
+            ),
             const SizedBox(height: 16),
             Text(
               context.locale.languageCode == 'ne'
@@ -732,7 +849,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? (context.locale.languageCode == 'ne' ? 'अज्ञात त्रुटि' : 'Unknown error'),
+              _error ??
+                  (context.locale.languageCode == 'ne'
+                      ? 'अज्ञात त्रुटि'
+                      : 'Unknown error'),
               style: TextStyle(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
@@ -744,8 +864,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo,
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -793,15 +915,15 @@ class _DurationOptionCard extends StatelessWidget {
           color: isSelected
               ? null
               : hasCampaign
-                  ? Colors.purple.shade50
-                  : Colors.white,
+              ? Colors.purple.shade50
+              : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? Colors.transparent
                 : hasCampaign
-                    ? Colors.purple.shade300
-                    : Colors.grey.shade200,
+                ? Colors.purple.shade300
+                : Colors.grey.shade200,
             width: 2,
           ),
           boxShadow: isSelected
@@ -822,8 +944,10 @@ class _DurationOptionCard extends StatelessWidget {
                 top: 0,
                 right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.green.shade400, Colors.green.shade600],
@@ -845,14 +969,13 @@ class _DurationOptionCard extends StatelessWidget {
                 top: 0,
                 right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        Colors.purple.shade400,
-                        Colors.indigo.shade600,
-                      ],
+                      colors: [Colors.purple.shade400, Colors.indigo.shade600],
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -871,8 +994,10 @@ class _DurationOptionCard extends StatelessWidget {
                 top: 0,
                 right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.amber.shade400, Colors.orange.shade500],
@@ -880,7 +1005,9 @@ class _DurationOptionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    context.locale.languageCode == 'ne' ? 'लोकप्रिय' : 'POPULAR',
+                    context.locale.languageCode == 'ne'
+                        ? 'लोकप्रिय'
+                        : 'POPULAR',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -915,7 +1042,10 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     if (option.price > 0)
                       Text(
-                        formatLocalizedPrice(option.price, context.locale.languageCode),
+                        formatLocalizedPrice(
+                          option.price,
+                          context.locale.languageCode,
+                        ),
                         style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration.lineThrough,
@@ -927,7 +1057,10 @@ class _DurationOptionCard extends StatelessWidget {
                   ] else ...[
                     if (option.discountPercentage > 0) ...[
                       Text(
-                        formatLocalizedPrice(option.finalPrice, context.locale.languageCode),
+                        formatLocalizedPrice(
+                          option.finalPrice,
+                          context.locale.languageCode,
+                        ),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -935,7 +1068,10 @@ class _DurationOptionCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        formatLocalizedPrice(option.price, context.locale.languageCode),
+                        formatLocalizedPrice(
+                          option.price,
+                          context.locale.languageCode,
+                        ),
                         style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration.lineThrough,
@@ -946,7 +1082,10 @@ class _DurationOptionCard extends StatelessWidget {
                       ),
                     ] else
                       Text(
-                        formatLocalizedPrice(option.price, context.locale.languageCode),
+                        formatLocalizedPrice(
+                          option.price,
+                          context.locale.languageCode,
+                        ),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -958,13 +1097,15 @@ class _DurationOptionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? Colors.white.withValues(alpha: 0.2)
                             : hasCampaign
-                                ? Colors.purple.shade100
-                                : Colors.green.shade100,
+                            ? Colors.purple.shade100
+                            : Colors.green.shade100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -977,8 +1118,8 @@ class _DurationOptionCard extends StatelessWidget {
                           color: isSelected
                               ? Colors.white
                               : hasCampaign
-                                  ? Colors.purple.shade700
-                                  : Colors.green.shade700,
+                              ? Colors.purple.shade700
+                              : Colors.green.shade700,
                         ),
                       ),
                     ),

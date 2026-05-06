@@ -26,6 +26,8 @@ export function useVerificationPage(lang: string) {
   const [showForm, setShowForm] = useState(false);
   const [isResubmission, setIsResubmission] = useState(false);
   const [resubmissionDuration, setResubmissionDuration] = useState<number | null>(null);
+  // 'free' | 'paid' | null. When eligible for free, user picks. Otherwise auto-set to 'paid'.
+  const [selectedOffer, setSelectedOffer] = useState<'free' | 'paid' | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -122,6 +124,7 @@ export function useVerificationPage(lang: string) {
     setShowForm(false);
     setIsResubmission(false);
     setResubmissionDuration(null);
+    setSelectedOffer(null);
 
     const verificationData = type === 'business'
       ? verificationStatus?.business
@@ -138,7 +141,37 @@ export function useVerificationPage(lang: string) {
       setIsResubmission(true);
       setResubmissionDuration(verificationData.request.durationDays);
       setShowForm(true);
+      return;
     }
+
+    // If user is NOT eligible for the free offer, skip the OfferCards step entirely
+    // and go straight to the paid duration selector (existing behavior).
+    const eligibleForFree =
+      pricing?.freeVerification.enabled &&
+      pricing?.freeVerification.isEligible &&
+      pricing?.freeVerification.types.includes(type);
+    if (!eligibleForFree) {
+      setSelectedOffer('paid');
+    }
+  };
+
+  // Eligible user picked the FREE card → auto-pick the free-duration tier and open form.
+  const handleSelectFreeOffer = () => {
+    if (!selectedType || !pricing) return;
+    const options = selectedType === 'individual' ? pricing.individual : pricing.business;
+    const freeOption = options.find((o) => o.durationDays === pricing.freeVerification.durationDays);
+    if (!freeOption) {
+      showError('Free verification pricing tier is not configured. Contact support.');
+      return;
+    }
+    setSelectedOffer('free');
+    setSelectedDuration(freeOption);
+    setShowForm(true);
+  };
+
+  // Eligible user picked the PAID card → fall through to existing duration selector.
+  const handleSelectPaidOffer = () => {
+    setSelectedOffer('paid');
   };
 
   const handleDurationSelect = (option: PricingOption) => {
@@ -156,23 +189,36 @@ export function useVerificationPage(lang: string) {
     setShowForm(false);
     setSelectedType(null);
     setSelectedDuration(null);
+    setSelectedOffer(null);
     await loadData();
   };
 
   const handleFormCancel = () => {
     setShowForm(false);
+    // If they came from the free offer and cancel, drop back to OfferCards
+    if (selectedOffer === 'free') {
+      setSelectedOffer(null);
+      setSelectedDuration(null);
+    }
   };
 
   const handleClearSelection = () => {
     setSelectedType(null);
     setSelectedDuration(null);
+    setSelectedOffer(null);
   };
 
-  // Check if free verification applies
-  const isFreeVerification = pricing?.freeVerification.enabled &&
-    pricing?.freeVerification.isEligible &&
-    selectedType &&
-    pricing?.freeVerification.types.includes(selectedType);
+  // True only when user explicitly picked the FREE offer (or it's a free resubmission).
+  const isFreeVerification = selectedOffer === 'free';
+
+  // True when eligible user hasn't yet picked free vs paid → render OfferCards.
+  const showOfferCards =
+    !!selectedType &&
+    !showForm &&
+    selectedOffer === null &&
+    !!pricing?.freeVerification.enabled &&
+    !!pricing?.freeVerification.isEligible &&
+    !!pricing?.freeVerification.types.includes(selectedType);
 
   return {
     status,
@@ -187,11 +233,15 @@ export function useVerificationPage(lang: string) {
     isResubmission,
     resubmissionDuration,
     isFreeVerification,
+    selectedOffer,
+    showOfferCards,
     handleTypeSelect,
     handleDurationSelect,
     handleProceedToForm,
     handleFormSuccess,
     handleFormCancel,
     handleClearSelection,
+    handleSelectFreeOffer,
+    handleSelectPaidOffer,
   };
 }
