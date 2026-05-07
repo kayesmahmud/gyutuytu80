@@ -34,6 +34,7 @@ export default function Header({ lang }: HeaderProps) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+  const [isFreeEligible, setIsFreeEligible] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Check both user and staff auth
@@ -196,6 +197,27 @@ export default function Header({ lang }: HeaderProps) {
     user?.businessVerificationStatus === 'approved' ||
     user?.businessVerificationStatus === 'verified';
 
+  // Check free verification eligibility — only for logged-in unverified users.
+  // Drives the green "FREE" badge on the "Get Verified" nav link.
+  useEffect(() => {
+    if (!isUserAuthenticated || staff || isUserVerified) {
+      setIsFreeEligible(false);
+      return;
+    }
+    let cancelled = false;
+    fetch('/api/verification/pricing', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const free = data?.data?.freeVerification;
+        setIsFreeEligible(!!(free?.enabled && free?.isEligible));
+      })
+      .catch(() => {
+        if (!cancelled) setIsFreeEligible(false);
+      });
+    return () => { cancelled = true; };
+  }, [isUserAuthenticated, staff, isUserVerified]);
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4">
@@ -276,10 +298,17 @@ export default function Header({ lang }: HeaderProps) {
 
                 <Link
                   href={`/${lang}/verification`}
-                  className={`no-underline font-medium text-sm ${pathname?.includes('/verification') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
+                  className={`relative no-underline font-medium text-sm ${pathname?.includes('/verification') ? 'text-rose-500' : 'text-gray-600 hover:text-rose-500'
                     } transition-colors`}
                 >
-                  {isUserVerified ? t('verification') : t('getVerified')}
+                  <span className="inline-flex items-center gap-1.5">
+                    {isUserVerified ? t('verification') : t('getVerified')}
+                    {isFreeEligible && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 shadow-sm animate-pulse">
+                        FREE
+                      </span>
+                    )}
+                  </span>
                 </Link>
 
                 {isAuthenticated && (
@@ -536,8 +565,13 @@ export default function Header({ lang }: HeaderProps) {
                 <Link href={`/${lang}/ads`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
                   {t('searchAds')}
                 </Link>
-                <Link href={`/${lang}/verification`} onClick={() => setMobileMenuOpen(false)} className="text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
-                  {isUserVerified ? t('verification') : t('getVerified')}
+                <Link href={`/${lang}/verification`} onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 text-gray-700 hover:text-rose-500 hover:bg-gray-50 py-3 px-3 rounded-lg transition-colors">
+                  <span>{isUserVerified ? t('verification') : t('getVerified')}</span>
+                  {isFreeEligible && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 shadow-sm animate-pulse">
+                      FREE
+                    </span>
+                  )}
                 </Link>
               </>
             )}

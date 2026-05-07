@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 
+import 'package:mobile/core/api/verification_client.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
 import 'package:mobile/features/auth/signup_screen.dart';
@@ -14,8 +15,37 @@ import 'package:mobile/features/profile/profile_screen.dart';
 import 'package:mobile/features/help/help_center_screen.dart';
 import 'package:mobile/features/contact/contact_screen.dart';
 import 'package:mobile/features/support/support_tickets_screen.dart';
-class MainDrawer extends StatelessWidget {
+
+class MainDrawer extends StatefulWidget {
   const MainDrawer({super.key});
+
+  @override
+  State<MainDrawer> createState() => _MainDrawerState();
+}
+
+class _MainDrawerState extends State<MainDrawer> {
+  bool _isFreeEligible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFreeEligibility();
+  }
+
+  Future<void> _checkFreeEligibility() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isLoggedIn) return;
+    try {
+      final pricing = await VerificationClient().getVerificationPricing();
+      if (!mounted) return;
+      final free = pricing?.freeVerification;
+      setState(() {
+        _isFreeEligible = (free?.enabled ?? false) && (free?.isEligible ?? false);
+      });
+    } catch (_) {
+      // Silent failure — badge just stays hidden
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,10 +88,13 @@ class MainDrawer extends StatelessWidget {
                      _buildLanguageToggle(context),
                      const SizedBox(height: 8),
 
-                     _buildMenuItem('drawer.getVerified'.tr(), onTap: () {
-                       Navigator.pop(context);
-                       Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
-                     }),
+                     _buildMenuItem('drawer.getVerified'.tr(),
+                       trailing: _isFreeEligible ? _buildFreeBadge() : null,
+                       onTap: () {
+                         Navigator.pop(context);
+                         Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
+                       },
+                     ),
 
                      const SizedBox(height: 16),
                      const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
@@ -235,7 +268,7 @@ class MainDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(String title, {IconData? icon, VoidCallback? onTap}) {
+  Widget _buildMenuItem(String title, {IconData? icon, VoidCallback? onTap, Widget? trailing}) {
     return ListTile(
       leading: icon != null ? Icon(icon, color: Colors.grey[600], size: 22) : null,
       title: Text(
@@ -246,10 +279,39 @@ class MainDrawer extends StatelessWidget {
           fontWeight: FontWeight.w500
         )
       ),
+      trailing: trailing,
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       horizontalTitleGap: 12,
       minLeadingWidth: icon != null ? 24 : 0,
+    );
+  }
+
+  Widget _buildFreeBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF059669)],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Text(
+        'FREE',
+        style: GoogleFonts.inter(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }
