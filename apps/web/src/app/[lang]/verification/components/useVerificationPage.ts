@@ -44,11 +44,17 @@ export function useVerificationPage(lang: string) {
     try {
       setLoading(true);
 
+      // Auth token: NextAuth users have it on the session, legacy phone-login users
+      // have it in localStorage. Fall back across both so eligibility resolves correctly.
+      const sessionToken = (session as { backendToken?: string } | null)?.backendToken;
+      const lsToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const authToken = sessionToken || lsToken || '';
+
       const [verificationResponse, pricingResponse, profileResponse] = await Promise.all([
         apiClient.getVerificationStatus().catch(() => ({ success: false, data: null })),
         fetch('/api/verification/pricing', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            'Authorization': `Bearer ${authToken}`,
           },
         }).then(res => res.json()).catch(() => ({ success: false, data: null })),
         fetch('/api/profile', { credentials: 'include' })

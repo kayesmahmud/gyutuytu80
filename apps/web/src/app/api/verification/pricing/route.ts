@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { formatDurationLabel } from '@/lib/verification';
+import { verifyToken } from '@/lib/auth/jwt';
 
 interface ActiveCampaign {
   id: number;
@@ -88,42 +89,35 @@ export async function GET(request: NextRequest) {
       settingsMap[s.setting_key] = s.setting_value;
     });
 
-    // Check if user is eligible for free verification
+    // Check if user is eligible for free verification.
+    // verifyToken accepts Bearer header, editorToken cookie, AND NextAuth session cookies
+    // so this works for legacy localStorage-token users and NextAuth users alike.
     let isEligibleForFreeVerification = false;
     let userId: number | null = null;
 
-    // Try to get user from token
-    const authHeader = request.headers.get('authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.slice(7);
-        const jwt = await import('jsonwebtoken');
-        const decoded = jwt.default.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { userId: number };
-        userId = decoded.userId;
+    try {
+      const payload = await verifyToken(request);
+      userId = payload?.userId ?? null;
 
-        if (userId && settingsMap['free_verification_enabled'] === 'true') {
-          // Check if user has ever been verified
-          const user = await prisma.users.findUnique({
-            where: { id: userId },
-            select: {
-              individual_verified: true,
-              individual_verification_expires_at: true,
-              business_verification_status: true,
-              business_verification_expires_at: true,
-            },
-          });
+      if (userId && settingsMap['free_verification_enabled'] === 'true') {
+        const user = await prisma.users.findUnique({
+          where: { id: userId },
+          select: {
+            individual_verified: true,
+            individual_verification_expires_at: true,
+            business_verification_status: true,
+            business_verification_expires_at: true,
+          },
+        });
 
-          // User is eligible if they have never had any verification
-          if (user) {
-            const hasHadIndividualVerification = user.individual_verified || user.individual_verification_expires_at;
-            const hasHadBusinessVerification = user.business_verification_status === 'approved' || user.business_verification_expires_at;
-            isEligibleForFreeVerification = !hasHadIndividualVerification && !hasHadBusinessVerification;
-          }
+        if (user) {
+          const hasHadIndividualVerification = user.individual_verified || user.individual_verification_expires_at;
+          const hasHadBusinessVerification = user.business_verification_status === 'approved' || user.business_verification_expires_at;
+          isEligibleForFreeVerification = !hasHadIndividualVerification && !hasHadBusinessVerification;
         }
-      } catch (err) {
-        // Token invalid or expired - no free verification
-        console.debug('Token validation for free verification failed:', err);
       }
+    } catch (err) {
+      console.debug('Token validation for free verification failed:', err);
     }
 
     // Helper to check if campaign applies to a verification type and duration
