@@ -239,45 +239,4 @@ class MessageClient {
     }
   }
 
-  // ==========================================
-  // ANNOUNCEMENTS
-  // ==========================================
-
-  /// Get announcements
-  Future<ApiResponse<List<Announcement>>> getAnnouncements({bool includeRead = true}) async {
-    try {
-      final response = await _dio.get(
-        '/announcements',
-        queryParameters: {'includeRead': includeRead.toString()},
-      );
-
-      if (response.data['success'] == true) {
-        final data = response.data['data'] as List<dynamic>;
-        final announcements = data
-            .map((e) => Announcement.fromJson(e as Map<String, dynamic>))
-            .toList();
-        return ApiResponse.success(announcements);
-      }
-      return ApiResponse.failure('Failed to fetch announcements');
-    } on DioException catch (e) {
-      return ApiResponse.failure(
-        e.response?.data?['error'] ?? 'Failed to fetch announcements',
-      );
-    }
-  }
-
-  /// Mark announcement as read
-  Future<ApiResponse<void>> markAnnouncementRead(int announcementId) async {
-    try {
-      final response = await _dio.post('/announcements/$announcementId/read');
-      if (response.data['success'] == true) {
-        return ApiResponse.success(null);
-      }
-      return ApiResponse.failure('Failed to mark announcement as read');
-    } on DioException catch (e) {
-      return ApiResponse.failure(
-        e.response?.data?['error'] ?? 'Failed to mark as read',
-      );
-    }
-  }
 }

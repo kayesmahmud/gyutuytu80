@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useMessages } from '@/hooks/useSocket';
-import { messagingApi, announcementsApi } from '@/lib/messaging';
-import type { Announcement } from '@/types/messaging';
-import type { TabType } from './types';
+import { messagingApi } from '@/lib/messaging';
 
 const POLL_INTERVAL_MS = 10_000; // 10 seconds when socket is down
 
@@ -19,11 +17,6 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Tab state
-  const [activeTab, setActiveTab] = useState<TabType>('conversations');
-  const [announcementUnreadCount, setAnnouncementUnreadCount] = useState(0);
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
 
   // Conversation messages
   const [conversationMessages, setConversationMessages] = useState<any[]>([]);
@@ -104,24 +97,6 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
       socket.io.off('reconnect', handleReconnect);
     };
   }, [socket, connected, token, loadConversations, selectedConversation]);
-
-  // Load announcement unread count
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchAnnouncementUnreadCount = async () => {
-      try {
-        const result = await announcementsApi.getUnreadCount(token);
-        if (result.success) {
-          setAnnouncementUnreadCount(result.unreadCount);
-        }
-      } catch (err) {
-        console.error('Failed to fetch announcement unread count:', err);
-      }
-    };
-
-    fetchAnnouncementUnreadCount();
-  }, [token]);
 
   // Auto-select conversation from URL
   useEffect(() => {
@@ -343,21 +318,9 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
     }
   }, [selectedConversation, token, sendMessage, connected]);
 
-  // Tab change handler
-  const handleTabChange = useCallback((tab: TabType) => {
-    setActiveTab(tab);
-    if (tab === 'announcements') {
-      setSelectedConversation(null);
-    }
-  }, []);
-
   // Clear selection handlers
   const clearSelectedConversation = useCallback(() => {
     setSelectedConversation(null);
-  }, []);
-
-  const clearSelectedAnnouncement = useCallback(() => {
-    setSelectedAnnouncement(null);
   }, []);
 
   const clearError = useCallback(() => {
@@ -370,9 +333,6 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
     selectedConversation,
     loading,
     error,
-    activeTab,
-    announcementUnreadCount,
-    selectedAnnouncement,
     conversationMessages,
     connected,
     socketError,
@@ -381,11 +341,7 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
     // Handlers
     handleSelectConversation,
     handleSendMessage,
-    handleTabChange,
-    setAnnouncementUnreadCount,
-    setSelectedAnnouncement,
     clearSelectedConversation,
-    clearSelectedAnnouncement,
     clearError,
     startTyping,
     stopTyping,

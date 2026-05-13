@@ -92,16 +92,6 @@ export function getSuperAdminNavSections(
       ],
     },
     {
-      title: 'Communication',
-      items: [
-        {
-          href: `/${lang}/super-admin/announcements`,
-          icon: 'Bell',
-          label: 'Announcements',
-        },
-      ],
-    },
-    {
       title: 'Business',
       items: [
         {

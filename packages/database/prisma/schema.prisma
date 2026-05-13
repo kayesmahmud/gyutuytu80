@@ -532,8 +532,6 @@ model users {
   ads_ads_deleted_byTousers                                                            ads[]                              @relation("ads_deleted_byTousers")
   ads_ads_reviewed_byTousers                                                           ads[]                              @relation("ads_reviewed_byTousers")
   ads_ads_user_idTousers                                                               ads[]                              @relation("ads_user_idTousers")
-  announcement_read_receipts                                                           announcement_read_receipts[]
-  announcements                                                                        announcements[]
   business_subscriptions                                                               business_subscriptions[]
   business_verification_requests_business_verification_requests_reviewed_byTousers     business_verification_requests[]   @relation("business_verification_requests_reviewed_byTousers")
   business_verification_requests_business_verification_requests_user_idTousers         business_verification_requests[]   @relation("business_verification_requests_user_idTousers")
@@ -870,38 +868,6 @@ model site_settings {
   updated_at    DateTime? @default(now()) @db.Timestamp(6)
 }
 
-/// System announcements for broadcasting messages to users
-model announcements {
-  id                         Int                          @id @default(autoincrement())
-  title                      String                       @db.VarChar(255)
-  content                    String
-  target_audience            announcement_audience        @default(all_users)
-  created_by                 Int
-  created_at                 DateTime?                    @default(now()) @db.Timestamp(6)
-  expires_at                 DateTime?                    @db.Timestamp(6)
-  is_active                  Boolean?                     @default(true)
-  announcement_read_receipts announcement_read_receipts[]
-  users                      users                        @relation(fields: [created_by], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([is_active, target_audience], map: "idx_announcements_active_audience")
-  @@index([created_at(sort: Desc)], map: "idx_announcements_created_at")
-  @@index([created_by], map: "idx_announcements_created_by")
-}
-
-/// Tracks which users have read which announcements
-model announcement_read_receipts {
-  id              Int           @id @default(autoincrement())
-  announcement_id Int
-  user_id         Int
-  read_at         DateTime?     @default(now()) @db.Timestamp(6)
-  announcements   announcements @relation(fields: [announcement_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users           users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([announcement_id, user_id])
-  @@index([user_id], map: "idx_announcement_receipts_user")
-  @@index([announcement_id], map: "idx_announcement_receipts_announcement")
-}
-
 /// Pre-defined templates for support agents
 model support_macros {
   id          Int       @id @default(autoincrement())
@@ -949,14 +915,6 @@ enum support_ticket_category {
   technical
   report
   other
-}
-
-/// Announcement target audience types
-enum announcement_audience {
-  all_users
-  new_users
-  business_verified
-  individual_verified
 }
 
 /// Refresh tokens for long-lived sessions with rotation

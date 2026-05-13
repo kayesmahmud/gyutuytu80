@@ -1,40 +1,7 @@
 /**
- * Messaging & Announcements Types
+ * Messaging Types
  * Shared types for web and mobile apps
  */
-
-// ============================================
-// Announcement Types
-// ============================================
-
-export type AnnouncementAudience =
-  | 'all_users'
-  | 'new_users'
-  | 'business_verified'
-  | 'individual_verified';
-
-export interface Announcement {
-  id: number;
-  title: string;
-  content: string;
-  targetAudience: AnnouncementAudience;
-  createdAt: string;
-  expiresAt: string | null;
-  isRead: boolean;
-  readAt: string | null;
-}
-
-export interface AnnouncementsResponse {
-  success: boolean;
-  data: Announcement[];
-  unreadCount: number;
-  message?: string;
-}
-
-export interface AnnouncementMarkReadResponse {
-  success: boolean;
-  message?: string;
-}
 
 // ============================================
 // Conversation Types
@@ -108,25 +75,6 @@ export interface SendMessageResponse {
   data: Message;
   message?: string;
 }
-
-// ============================================
-// Hook State Types
-// ============================================
-
-export interface UseAnnouncementsState {
-  announcements: Announcement[];
-  loading: boolean;
-  error: string | null;
-  unreadCount: number;
-}
-
-export interface UseAnnouncementsActions {
-  loadAnnouncements: () => Promise<void>;
-  markAsRead: (announcementId: number) => Promise<void>;
-  refresh: () => Promise<void>;
-}
-
-export type UseAnnouncementsReturn = UseAnnouncementsState & UseAnnouncementsActions;
 
 // ============================================
 // Utility Types

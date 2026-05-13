@@ -295,55 +295,6 @@ class Conversation {
   }
 }
 
-/// Announcement model
-class Announcement {
-  final int id;
-  final String title;
-  final String content;
-  final String targetAudience;
-  final DateTime createdAt;
-  final DateTime? expiresAt;
-  final bool isRead;
-  final DateTime? readAt;
-
-  Announcement({
-    required this.id,
-    required this.title,
-    required this.content,
-    required this.targetAudience,
-    required this.createdAt,
-    this.expiresAt,
-    this.isRead = false,
-    this.readAt,
-  });
-
-  factory Announcement.fromJson(Map<String, dynamic> json) {
-    return Announcement(
-      id: json['id'] as int,
-      title: json['title'] as String? ?? '',
-      content: json['content'] as String? ?? '',
-      targetAudience: json['targetAudience'] as String? ?? json['target_audience'] as String? ?? 'all_users',
-      createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
-      expiresAt: _parseDateTimeNullable(json['expiresAt'] ?? json['expires_at']),
-      isRead: json['isRead'] as bool? ?? json['is_read'] as bool? ?? false,
-      readAt: _parseDateTimeNullable(json['readAt'] ?? json['read_at']),
-    );
-  }
-
-  Announcement copyWith({bool? isRead, DateTime? readAt}) {
-    return Announcement(
-      id: id,
-      title: title,
-      content: content,
-      targetAudience: targetAudience,
-      createdAt: createdAt,
-      expiresAt: expiresAt,
-      isRead: isRead ?? this.isRead,
-      readAt: readAt ?? this.readAt,
-    );
-  }
-}
-
 /// Search result user
 class SearchUser {
   final int id;

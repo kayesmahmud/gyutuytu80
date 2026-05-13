@@ -27,7 +27,6 @@ import mockPaymentRoutes from './routes/mockPayment.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import categoryPricingTiersRoutes from './routes/categoryPricingTiers.routes.js';
 import favoritesRoutes from './routes/favorites.routes.js';
-import announcementsRoutes from './routes/announcements.routes.js';
 import supportRoutes from './routes/support.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
 import blogRoutes from './routes/blog.routes.js';
@@ -193,7 +192,6 @@ export function createApp(): Express {
   app.use('/api/payments', paymentRoutes);
   app.use('/api/category-pricing-tiers', categoryPricingTiersRoutes);
   app.use('/api/favorites', favoritesRoutes);
-  app.use('/api/announcements', announcementsRoutes);
   app.use('/api/support', supportRoutes);
   app.use('/api/reports', reportsRoutes);
   app.use('/api/blog', blogRoutes);

@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -40,7 +39,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
       final authProvider = context.read<AuthProvider>();
       if (authProvider.isAuthenticated) {
         context.read<ChatProvider>().loadConversations();
-        context.read<ChatProvider>().loadAnnouncements();
       }
     });
   }
@@ -83,69 +81,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
       );
     }
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: MainAppBar(
-          bottom: TabBar(
-            labelColor: const Color(0xFF2563EB),
-            unselectedLabelColor: Colors.grey[600],
-            indicatorColor: const Color(0xFF2563EB),
-            indicatorWeight: 3,
-            labelStyle: GoogleFonts.inter(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-            tabs: [
-              Tab(text: 'messages.chats'.tr()),
-              Consumer<ChatProvider>(
-                builder: (context, chatProvider, _) {
-                  final unread = chatProvider.unreadAnnouncementsCount;
-                  return Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('messages.announcements'.tr()),
-                        if (unread > 0) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDC143C),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '$unread',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-        drawer: const MainDrawer(),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: const Color(0xFFDC143C),
-          onPressed: () => _showNewConversationSheet(context),
-          child: const Icon(LucideIcons.pencil, color: Colors.white),
-        ),
-        body: TabBarView(
-          children: [_buildChatsTab(), _buildAnnouncementsTab()],
-        ),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: const MainAppBar(),
+      drawer: const MainDrawer(),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFFDC143C),
+        onPressed: () => _showNewConversationSheet(context),
+        child: const Icon(LucideIcons.pencil, color: Colors.white),
       ),
+      body: _buildChatsTab(),
     );
   }
 
@@ -421,218 +366,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   // ==========================================
-  // ANNOUNCEMENTS TAB
-  // ==========================================
-
-  Widget _buildAnnouncementsTab() {
-    return Consumer<ChatProvider>(
-      builder: (context, chatProvider, child) {
-        if (chatProvider.announcementsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (chatProvider.announcements.isEmpty) {
-          return _buildEmptyAnnouncementsState();
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            await chatProvider.loadAnnouncements();
-            HapticFeedback.mediumImpact();
-          },
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: chatProvider.announcements.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final announcement = chatProvider.announcements[index];
-              return _buildAnnouncementItem(
-                context,
-                announcement,
-                chatProvider,
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAnnouncementItem(
-    BuildContext context,
-    Announcement announcement,
-    ChatProvider chatProvider,
-  ) {
-    return InkWell(
-      onTap: () {
-        if (!announcement.isRead) {
-          chatProvider.markAnnouncementRead(announcement.id);
-        }
-        _showAnnouncementDetail(context, announcement);
-      },
-      child: Container(
-        color: announcement.isRead ? null : const Color(0xFFEFF6FF),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: announcement.isRead
-                    ? Colors.grey[100]
-                    : const Color(0xFF3B82F6).withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                LucideIcons.megaphone,
-                size: 22,
-                color: announcement.isRead
-                    ? Colors.grey[400]
-                    : const Color(0xFF3B82F6),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          announcement.title,
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: announcement.isRead
-                                ? FontWeight.w500
-                                : FontWeight.w700,
-                            color: const Color(0xFF111827),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        _formatTime(announcement.createdAt),
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    announcement.content,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAnnouncementDetail(
-    BuildContext context,
-    Announcement announcement,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (_, scrollController) => Padding(
-          padding: const EdgeInsets.all(24),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      LucideIcons.megaphone,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        announcement.title,
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                formatNepalTime(announcement.createdAt, 'MMMM d, yyyy · h:mm a', context.locale.languageCode),
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500]),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                announcement.content,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  color: Colors.grey[800],
-                  height: 1.6,
-                ),
-              ),
-              if (announcement.readAt != null) ...[
-                const SizedBox(height: 24),
-                Text(
-                  'Read on ${formatNepalTime(announcement.readAt!, 'MMM d, yyyy · h:mm a', context.locale.languageCode)}',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: Colors.grey[400],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ==========================================
   // NEW CONVERSATION SEARCH
   // ==========================================
 
@@ -755,51 +488,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 'messages.startConversation'.tr(),
                 style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyAnnouncementsState() {
-    return StaggeredFadeIn(
-      index: 0,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              FloatingWidget(
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    LucideIcons.megaphone,
-                    size: 48,
-                    color: Colors.grey[400],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'messages.noAnnouncements'.tr(),
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'messages.announcementsSubtitle'.tr(),
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
           ),

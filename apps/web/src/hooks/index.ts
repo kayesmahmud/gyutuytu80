@@ -1,8 +1,7 @@
 export { useFormState } from './useFormState';
 export type { UseFormStateOptions, UseFormStateReturn } from './useFormState';
 
-// Messaging & Announcements
-export { useAnnouncements, useAnnouncementUnreadCount } from './useAnnouncements';
+// Messaging
 export { useSocket, useMessages } from './useSocket';
 
 // Dashboard

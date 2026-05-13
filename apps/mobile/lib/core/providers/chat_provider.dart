@@ -24,10 +24,6 @@ class ChatProvider extends ChangeNotifier {
   String? _error;
   int? _currentUserId;
 
-  // Announcements state
-  List<Announcement> _announcements = [];
-  bool _announcementsLoading = false;
-
   // Subscriptions
   final List<StreamSubscription> _subscriptions = [];
 
@@ -37,9 +33,6 @@ class ChatProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isConnected => _isConnected;
   String? get error => _error;
-  List<Announcement> get announcements => _announcements;
-  bool get announcementsLoading => _announcementsLoading;
-  int get unreadAnnouncementsCount => _announcements.where((a) => !a.isRead).length;
 
   List<Message> getMessages(int conversationId) {
     return _messagesByConversation[conversationId] ?? [];
@@ -495,38 +488,6 @@ class ChatProvider extends ChangeNotifier {
     );
   }
 
-  // ==========================================
-  // ANNOUNCEMENTS
-  // ==========================================
-
-  /// Load announcements
-  Future<void> loadAnnouncements() async {
-    _announcementsLoading = true;
-    notifyListeners();
-
-    final response = await _messageClient.getAnnouncements(includeRead: true);
-    _announcementsLoading = false;
-
-    if (response.success && response.data != null) {
-      _announcements = response.data!;
-    }
-    notifyListeners();
-  }
-
-  /// Mark announcement as read
-  Future<void> markAnnouncementRead(int announcementId) async {
-    final response = await _messageClient.markAnnouncementRead(announcementId);
-    if (response.success) {
-      final index = _announcements.indexWhere((a) => a.id == announcementId);
-      if (index >= 0) {
-        _announcements[index] = _announcements[index].copyWith(
-          isRead: true,
-          readAt: DateTime.now(),
-        );
-        notifyListeners();
-      }
-    }
-  }
 
   // ==========================================
   // LIFECYCLE
