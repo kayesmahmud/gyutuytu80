@@ -33,6 +33,9 @@ export default function FilterBar({
           <option value="all">All Users</option>
           <option value="active">Active Only</option>
           <option value="suspended">Suspended Only</option>
+          <option value="verified">Verified Only (All)</option>
+          <option value="individual-verified">Individual Verified Only</option>
+          <option value="business-verified">Business Verified Only</option>
         </select>
       </div>
     </div>

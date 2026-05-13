@@ -17,16 +17,36 @@ router.get(
     const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
     const where: any = {};
+    const andClauses: any[] = [];
+
     if (search) {
-      where.OR = [
-        { full_name: { contains: search as string, mode: 'insensitive' } },
-        { email: { contains: search as string, mode: 'insensitive' } },
-      ];
+      andClauses.push({
+        OR: [
+          { full_name: { contains: search as string, mode: 'insensitive' } },
+          { email: { contains: search as string, mode: 'insensitive' } },
+        ],
+      });
     }
+
     if (status === 'suspended') {
       where.is_suspended = true;
     } else if (status === 'active') {
       where.is_suspended = false;
+    } else if (status === 'verified') {
+      andClauses.push({
+        OR: [
+          { business_verification_status: 'approved' },
+          { individual_verified: true },
+        ],
+      });
+    } else if (status === 'individual-verified') {
+      where.individual_verified = true;
+    } else if (status === 'business-verified') {
+      where.business_verification_status = 'approved';
+    }
+
+    if (andClauses.length > 0) {
+      where.AND = andClauses;
     }
 
     const [users, total] = await Promise.all([

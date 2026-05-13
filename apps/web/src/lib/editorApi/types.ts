@@ -220,6 +220,14 @@ export interface ReportedAdsParams {
 
 export type UserStatus = 'active' | 'suspended';
 
+/** Filter values accepted by GET /api/editor/users — wider than UserStatus because it includes verification filters. */
+export type UserListFilter =
+  | 'active'
+  | 'suspended'
+  | 'verified'
+  | 'individual-verified'
+  | 'business-verified';
+
 export interface User {
   id: number;
   email: string;
@@ -234,7 +242,7 @@ export interface User {
 
 export interface GetUsersParams {
   role?: string;
-  status?: UserStatus;
+  status?: UserListFilter;
   search?: string;
   page?: number;
   limit?: number;

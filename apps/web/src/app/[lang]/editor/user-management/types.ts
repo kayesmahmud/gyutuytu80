@@ -21,7 +21,13 @@ export interface User {
   shop_slug: string | null;
 }
 
-export type StatusFilter = 'all' | 'active' | 'suspended';
+export type StatusFilter =
+  | 'all'
+  | 'active'
+  | 'suspended'
+  | 'verified'
+  | 'individual-verified'
+  | 'business-verified';
 
 export const getUserBadge = (user: User): string => {
   if (user.is_suspended) return 'bg-red-100 text-red-800 border-red-200';
