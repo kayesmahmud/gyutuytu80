@@ -163,8 +163,10 @@ router.get(
     const limitNum = Math.min(parseInt(limit as string), PAGINATION.MAX_LIMIT);
     const offsetNum = parseInt(offset as string);
 
-    // Get seller's approved ads
-    const [ads, totalAds] = await Promise.all([
+    // Get seller's approved ads + aggregate stats in parallel.
+    // Single aggregate call returns both totalAds (count) and totalViews (sum of view_count)
+    // across ALL approved ads — not just the current page.
+    const [ads, statsAgg] = await Promise.all([
       prisma.ads.findMany({
         where: { user_id: user.id, status: 'approved' },
         include: {
@@ -179,10 +181,15 @@ router.get(
         take: limitNum,
         skip: offsetNum,
       }),
-      prisma.ads.count({
+      prisma.ads.aggregate({
         where: { user_id: user.id, status: 'approved' },
+        _count: { _all: true },
+        _sum: { view_count: true },
       }),
     ]);
+
+    const totalAds = statsAgg._count._all;
+    const totalViews = statsAgg._sum.view_count ?? 0;
 
     res.json({
       success: true,
@@ -219,6 +226,8 @@ router.get(
           instagramUrl: user.instagram_url,
           tiktokUrl: user.tiktok_url,
           memberSince: user.created_at,
+          totalAds,
+          totalViews,
         },
         ads: ads.map((ad: any) => ({
           ...ad,
