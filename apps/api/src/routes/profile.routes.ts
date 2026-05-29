@@ -11,6 +11,71 @@ import config from '../config/index.js';
 const router = Router();
 
 /**
+ * Builds the canonical "full profile" response shape (camelCase).
+ * Shared by GET and PUT so the client always receives the complete object —
+ * a partial response would wipe fields like phoneVerified on the client.
+ */
+async function getCurrentUserProfile(userId: number) {
+  const [user, passwordCheck] = await Promise.all([
+    prisma.users.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        phone: true,
+        phone_verified: true,
+        phone_verified_at: true,
+        avatar: true,
+        bio: true,
+        location_id: true,
+        account_type: true,
+        shop_slug: true,
+        custom_shop_slug: true,
+        business_name: true,
+        business_verification_status: true,
+        individual_verified: true,
+        created_at: true,
+        locations: true,
+        oauth_provider: true,
+        two_factor_enabled: true,
+      },
+    }),
+    // Separate minimal query — avoids loading the hash into the main user object
+    prisma.users.findUnique({
+      where: { id: userId },
+      select: { password_hash: true },
+    }),
+  ]);
+
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.full_name,
+    phone: user.phone,
+    phoneVerified: user.phone_verified,
+    phoneVerifiedAt: user.phone_verified_at,
+    avatar: user.avatar,
+    bio: user.bio,
+    locationId: user.location_id,
+    location: user.locations,
+    locationName: (user as any).locations?.name,
+    accountType: user.account_type,
+    shopSlug: user.custom_shop_slug || user.shop_slug,
+    customShopSlug: user.custom_shop_slug,
+    businessName: user.business_name,
+    businessVerificationStatus: user.business_verification_status,
+    individualVerified: user.individual_verified,
+    createdAt: user.created_at,
+    oauthProvider: user.oauth_provider,
+    hasPassword: !!passwordCheck?.password_hash,
+    twoFactorEnabled: user.two_factor_enabled,
+  };
+}
+
+/**
  * GET /api/profile
  * Get current user's profile
  */
@@ -18,70 +83,13 @@ router.get(
   '/',
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
+    const profile = await getCurrentUserProfile(req.user!.userId);
 
-    const [user, passwordCheck] = await Promise.all([
-      prisma.users.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          full_name: true,
-          phone: true,
-          phone_verified: true,
-          phone_verified_at: true,
-          avatar: true,
-          bio: true,
-          location_id: true,
-          account_type: true,
-          shop_slug: true,
-          custom_shop_slug: true,
-          business_name: true,
-          business_verification_status: true,
-          individual_verified: true,
-          created_at: true,
-          locations: true,
-          oauth_provider: true,
-          two_factor_enabled: true,
-        },
-      }),
-      // Separate minimal query — avoids loading the hash into the main user object
-      prisma.users.findUnique({
-        where: { id: userId },
-        select: { password_hash: true },
-      }),
-    ]);
-
-    if (!user) {
+    if (!profile) {
       throw new NotFoundError('User not found');
     }
 
-    res.json({
-      success: true,
-      data: {
-        id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        phone: user.phone,
-        phoneVerified: user.phone_verified,
-        phoneVerifiedAt: user.phone_verified_at,
-        avatar: user.avatar,
-        bio: user.bio,
-        locationId: user.location_id,
-        location: user.locations,
-        locationName: (user as any).locations?.name,
-        accountType: user.account_type,
-        shopSlug: user.custom_shop_slug || user.shop_slug,
-        customShopSlug: user.custom_shop_slug,
-        businessName: user.business_name,
-        businessVerificationStatus: user.business_verification_status,
-        individualVerified: user.individual_verified,
-        createdAt: user.created_at,
-        oauthProvider: user.oauth_provider,
-        hasPassword: !!passwordCheck?.password_hash,
-        twoFactorEnabled: user.two_factor_enabled,
-      },
-    });
+    res.json({ success: true, data: profile });
   })
 );
 
@@ -106,23 +114,19 @@ router.put(
     if (bio !== undefined) updateData.bio = bio || null;
     if (locationId !== undefined) updateData.location_id = locationId ? parseInt(locationId) : null;
 
-    const user = await prisma.users.update({
+    await prisma.users.update({
       where: { id: userId },
       data: updateData,
     });
 
     console.log(`✅ Profile updated for user ${userId}`);
 
+    // Return the complete profile (same shape as GET) so the client doesn't
+    // drop fields like phoneVerified when it replaces its local user state.
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      data: {
-        id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        phone: user.phone,
-        bio: user.bio,
-      },
+      data: await getCurrentUserProfile(userId),
     });
   })
 );

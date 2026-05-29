@@ -60,7 +60,12 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await _authClient.updateProfile(data);
       if (response['success'] == true) {
-        _user = response['data']; // Assuming API returns updated profile in 'data'
+        // Merge instead of replace: a partial API response must not wipe
+        // existing fields (e.g. phoneVerified), which would flip the badge.
+        final updated = response['data'];
+        if (updated is Map<String, dynamic>) {
+          _user = {...?_user, ...updated};
+        }
       }
     } finally {
       _isLoading = false;
