@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError, ValidationError } from '../../middleware/errorHandler.js';
-import { authenticateToken } from '../../middleware/auth.js';
+import { authenticateToken, requireEditorOrAdmin } from '../../middleware/auth.js';
 
 const router = Router();
 
@@ -293,6 +293,206 @@ router.post(
         status: dismissedReport.status,
         adminNotes: dismissedReport.admin_notes,
       },
+    });
+  })
+);
+
+/**
+ * GET /api/editor/reported-users
+ * List user reports (from chat) for editor review
+ */
+router.get(
+  '/reported-users',
+  authenticateToken,
+  requireEditorOrAdmin,
+  catchAsync(async (req: Request, res: Response) => {
+    const { status, limit = '10', page = '1' } = req.query;
+    const pageNum = Math.max(parseInt(page as string), 1);
+    const limitNum = Math.min(parseInt(limit as string), 100);
+    const offset = (pageNum - 1) * limitNum;
+
+    const where: any = {};
+    if (status) {
+      where.status = status;
+    }
+
+    const total = await prisma.user_reports.count({ where });
+
+    const reports = await prisma.user_reports.findMany({
+      where,
+      select: {
+        id: true,
+        reported_user_id: true,
+        reporter_id: true,
+        reason: true,
+        details: true,
+        status: true,
+        admin_notes: true,
+        conversation_id: true,
+        created_at: true,
+        updated_at: true,
+        reported: {
+          select: {
+            id: true,
+            full_name: true,
+            email: true,
+            avatar: true,
+            shop_slug: true,
+            is_active: true,
+          },
+        },
+        reporter: {
+          select: { id: true, full_name: true, email: true },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+      skip: offset,
+      take: limitNum,
+    });
+
+    const transformedReports = reports.map((report) => ({
+      reportId: report.id,
+      reportedUserId: report.reported_user_id,
+      reportedUserName: report.reported?.full_name || 'Unknown',
+      reportedUserEmail: report.reported?.email || '',
+      reportedUserAvatar: report.reported?.avatar || null,
+      reportedUserShopSlug: report.reported?.shop_slug || null,
+      reportedUserActive: report.reported?.is_active ?? true,
+      reason: report.reason,
+      description: report.details,
+      status: report.status,
+      conversationId: report.conversation_id,
+      adminNotes: report.admin_notes,
+      reportedAt: report.created_at?.toISOString(),
+      reporterId: report.reporter_id,
+      reporterName: report.reporter?.full_name || 'Unknown',
+      reporterEmail: report.reporter?.email || '',
+    }));
+
+    res.json({
+      success: true,
+      data: transformedReports,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/editor/reported-users/:id/dismiss
+ * Dismiss a user report (no violation found)
+ */
+router.post(
+  '/reported-users/:id/dismiss',
+  authenticateToken,
+  requireEditorOrAdmin,
+  catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const reviewerId = req.user!.userId;
+
+    const report = await prisma.user_reports.findUnique({
+      where: { id: parseInt(id) },
+      select: { id: true, status: true, reported_user_id: true },
+    });
+
+    if (!report) {
+      throw new NotFoundError('Report not found');
+    }
+    if (report.status !== 'pending') {
+      throw new ValidationError('Only pending reports can be dismissed');
+    }
+
+    const updated = await prisma.user_reports.update({
+      where: { id: parseInt(id) },
+      data: {
+        status: 'dismissed',
+        admin_notes: reason || `Dismissed after review by admin (ID: ${reviewerId}) - no violation found`,
+        resolved_by: reviewerId,
+        updated_at: new Date(),
+      },
+    });
+
+    await prisma.admin_activity_logs.create({
+      data: {
+        admin_id: reviewerId,
+        action_type: 'dismiss_user_report',
+        target_type: 'user_report',
+        target_id: report.id,
+        details: { reportedUserId: report.reported_user_id, reason: reason || null },
+      },
+    });
+
+    console.log(`✅ User report dismissed: ID ${id}`);
+    res.json({
+      success: true,
+      message: 'Report dismissed successfully',
+      data: { reportId: updated.id, status: updated.status },
+    });
+  })
+);
+
+/**
+ * POST /api/editor/reported-users/:id/resolve
+ * Resolve a user report, optionally suspending the reported user
+ */
+router.post(
+  '/reported-users/:id/resolve',
+  authenticateToken,
+  requireEditorOrAdmin,
+  catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { reason, suspend = true } = req.body;
+    const reviewerId = req.user!.userId;
+
+    const report = await prisma.user_reports.findUnique({
+      where: { id: parseInt(id) },
+      select: { id: true, status: true, reported_user_id: true },
+    });
+
+    if (!report) {
+      throw new NotFoundError('Report not found');
+    }
+    if (report.status !== 'pending') {
+      throw new ValidationError('Only pending reports can be resolved');
+    }
+
+    if (suspend) {
+      await prisma.users.update({
+        where: { id: report.reported_user_id },
+        data: { is_active: false, updated_at: new Date() },
+      });
+    }
+
+    const updated = await prisma.user_reports.update({
+      where: { id: parseInt(id) },
+      data: {
+        status: 'resolved',
+        admin_notes: reason || `Resolved by admin (ID: ${reviewerId})${suspend ? ' - user suspended' : ''}`,
+        resolved_by: reviewerId,
+        updated_at: new Date(),
+      },
+    });
+
+    await prisma.admin_activity_logs.create({
+      data: {
+        admin_id: reviewerId,
+        action_type: suspend ? 'resolve_user_report_suspend' : 'resolve_user_report',
+        target_type: 'user_report',
+        target_id: report.id,
+        details: { reportedUserId: report.reported_user_id, suspended: !!suspend, reason: reason || null },
+      },
+    });
+
+    console.log(`✅ User report resolved: ID ${id} (suspend=${suspend})`);
+    res.json({
+      success: true,
+      message: suspend ? 'Report resolved and user suspended' : 'Report resolved',
+      data: { reportId: updated.id, status: updated.status },
     });
   })
 );

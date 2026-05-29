@@ -121,6 +121,16 @@ export {
 } from './shops';
 
 // ============================================
+// User Reports Functions (chat/message reports)
+// ============================================
+export {
+  getReportedUsers,
+  dismissUserReport,
+  resolveUserReport,
+} from './userReports';
+export type { ReportedUsersParams } from './userReports';
+
+// ============================================
 // Stats Functions
 // ============================================
 export {

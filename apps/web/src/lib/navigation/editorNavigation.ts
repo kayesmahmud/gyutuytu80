@@ -7,6 +7,7 @@ interface BadgeCounts {
   pendingAds?: number;
   reportedAds?: number;
   reportedShops?: number;
+  reportedUsers?: number;
   businessVerifications?: number;
   individualVerifications?: number;
   supportChat?: number;
@@ -44,6 +45,12 @@ export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}
           icon: 'Store',
           label: 'Reported Shops',
           badge: badgeCounts.reportedShops,
+        },
+        {
+          href: `/${lang}/editor/reported-users`,
+          icon: 'UserX',
+          label: 'Reported Users',
+          badge: badgeCounts.reportedUsers,
         },
       ],
     },
