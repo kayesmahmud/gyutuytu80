@@ -19,6 +19,8 @@ import 'package:mobile/core/widgets/search_suggestions_overlay.dart';
 import 'package:mobile/core/services/search_history_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:mobile/core/utils/skeleton_data.dart';
+import 'package:mobile/core/widgets/load_error_view.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(String query)? onSearch;
@@ -47,6 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AdWithDetails> _displayLatestAds = [];
   List<AdWithDetails> _displayFeaturedAds = [];
   bool _isLoading = true;
+  // Set when the initial fetch fails, so we can show a retry state instead of
+  // the misleading "No ads yet" empty message.
+  bool _loadFailed = false;
+  bool _isOffline = false;
 
   @override
   void initState() {
@@ -89,7 +95,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadFailed = false;
+    });
 
     try {
       // Fetch all data in parallel
@@ -110,11 +119,30 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
+      final offline = await _isOfflineError();
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _loadFailed = true;
+          _isOffline = offline;
         });
       }
+    }
+  }
+
+  /// Decide whether a failed fetch was caused by the device being offline
+  /// (vs. the server being unreachable for some other reason). This drives
+  /// which message + icon the [LoadErrorView] shows.
+  ///
+  /// We check the device's connectivity rather than always assuming "offline":
+  /// the device is offline only when every connectivity result is `none`. If
+  /// the check itself fails for any reason, we fall back to the generic error.
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -130,7 +158,9 @@ class _HomeScreenState extends State<HomeScreen> {
           HapticFeedback.mediumImpact();
         },
         color: const Color(0xFF10B981),
-        child: Skeletonizer(
+        child: _loadFailed && !_isLoading
+            ? _buildErrorState()
+            : Skeletonizer(
           enabled: _isLoading,
           child: SingleChildScrollView(
             child: Column(
@@ -166,6 +196,25 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Full-screen failure state. Wrapped in a scrollable that fills the
+  /// viewport so RefreshIndicator's pull-to-refresh keeps working here.
+  Widget _buildErrorState() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: LoadErrorView(
+              isOffline: _isOffline,
+              onRetry: _fetchData,
+            ),
+          ),
+        );
+      },
     );
   }
 

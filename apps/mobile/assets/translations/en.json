@@ -13,20 +13,22 @@
     "error": "An error occurred",
     "success": "Success",
     "noInternet": "No internet connection",
+    "offlineTitle": "Looks like you're offline",
+    "offlineSubtitle": "Check your connection and try again.",
+    "loadErrorTitle": "Something went wrong",
+    "loadErrorSubtitle": "We couldn't load this right now. Please try again.",
     "contactForPrice": "Contact for price",
     "uncategorized": "Uncategorized",
     "seller": "Seller",
     "featured": "FEATURED",
     "verified": "Verified"
   },
-
   "nav": {
     "home": "Home",
     "search": "Search",
     "messages": "Messages",
     "profile": "Profile"
   },
-
   "auth": {
     "welcomeBack": "Welcome back",
     "loginSubtitle": "Login to your account to continue",
@@ -50,7 +52,6 @@
     "alreadyHaveAccount": "Already have an account?",
     "signInInstead": "Sign in instead",
     "errorOccurred": "An error occurred: {}",
-
     "completeRegistration": "Complete registration",
     "joinSubtitle": "Join Thulo Bazaar to buy and sell easily",
     "fillDetails": "Fill in your details to finish signing up",
@@ -86,14 +87,12 @@
     "privacyPolicy": "Privacy Policy",
     "phoneVerifiedComplete": "Phone verified! Complete your registration.",
     "enterValidOtp": "Please enter a 6-digit OTP",
-
     "loginRequired": "Login Required",
     "loginToPostAd": "Please login to post an ad on Thulo Bazaar",
     "loginToContinue": "Login to Continue",
     "maybeLater": "Maybe Later",
     "createAnAccount": "Create an Account"
   },
-
   "forgotPassword": {
     "title": "Reset Password",
     "subtitle": "Enter your registered phone number to reset your password",
@@ -114,7 +113,6 @@
     "resetSuccess": "Password reset successfully! Please sign in with your new password.",
     "resetFailed": "Failed to reset password. Please try again."
   },
-
   "report": {
     "reportThisAd": "Report this ad",
     "title": "Report Ad",
@@ -135,7 +133,6 @@
     "loginRequired": "Login Required",
     "loginToReport": "Please sign in to report this ad."
   },
-
   "home": {
     "heroTitle": "Buy, Sell, and Rent Across Nepal",
     "searchPlaceholder": "Search for anything...",
@@ -147,7 +144,6 @@
     "featuredSubtitle": "Premium listings from verified sellers",
     "noFeaturedAds": "No featured ads yet"
   },
-
   "search": {
     "searchPlaceholder": "Search for anything...",
     "allNepal": "All Nepal",
@@ -158,7 +154,6 @@
     "sortBy": "Sort by",
     "noAdsFound": "No ads found",
     "tryAdjustingFilters": "Try adjusting your filters",
-
     "filters": "Filters",
     "reset": "Reset",
     "showResults": "Show Results",
@@ -188,7 +183,6 @@
     "priceLowToHigh": "Price: Low to High",
     "priceHighToLow": "Price: High to Low"
   },
-
   "adDetail": {
     "description": "Description",
     "location": "Location",
@@ -208,7 +202,6 @@
     "interestedMessage": "Hi, I'm interested in \"{}\"",
     "share": "Share"
   },
-
   "dashboard": {
     "title": "My Dashboard",
     "welcomeBack": "Welcome back, {}!",
@@ -230,7 +223,6 @@
     "noAdsFound": "No ads found",
     "startSelling": "Start selling by posting your first ad!"
   },
-
   "myAds": {
     "title": "My Ads",
     "all": "All",
@@ -246,7 +238,6 @@
     "posted": "Posted {}",
     "failedToUpdate": "Failed to update"
   },
-
   "postAd": {
     "title": "Post a Free Ad",
     "stepProduct": "Product",
@@ -294,7 +285,6 @@
     "selectLocationError": "Please select full location",
     "validContactError": "Please enter valid contact number"
   },
-
   "messages": {
     "loginToView": "Login to View Messages",
     "loginSubtitle": "Sign in to see your conversations\nand chat with buyers and sellers",
@@ -302,10 +292,6 @@
     "offlineMode": "Offline mode - messages will sync when reconnected",
     "noMessages": "No Messages Yet",
     "startConversation": "Start a conversation by contacting\na seller from their ad listing",
-    "newMessage": "New Message",
-    "searchUsers": "Search users by name...",
-    "typeToSearch": "Type at least 2 characters to search",
-
     "online": "Online",
     "aboutAd": "About: {}",
     "today": "Today",
@@ -321,7 +307,6 @@
     "uploadError": "Upload error: {}",
     "edited": "(edited)"
   },
-
   "profile": {
     "title": "Profile",
     "editProfile": "Edit Profile",
@@ -338,7 +323,6 @@
     "profileUpdated": "Profile updated successfully",
     "failedToUpdate": "Failed to update profile"
   },
-
   "security": {
     "title": "Security Settings",
     "passwordAuth": "Password & Authentication",
@@ -368,7 +352,6 @@
     "passwordChanged": "Password changed successfully",
     "failedToChangePassword": "Failed to change password: {}"
   },
-
   "phoneVerify": {
     "title": "Verify Phone",
     "subtitle": "Add a phone number to secure your account and enable more features.",
@@ -387,7 +370,6 @@
     "sendOtp": "Send OTP",
     "verifyAndSave": "Verify & Save"
   },
-
   "payment": {
     "title": "Payment History",
     "all": "All",
@@ -405,7 +387,6 @@
     "refunded": "Refunded",
     "expired": "Expired"
   },
-
   "support": {
     "title": "Support",
     "loginToView": "Login to View Tickets",
@@ -428,7 +409,6 @@
     "statusWaiting": "Waiting on User",
     "statusResolved": "Resolved",
     "statusClosed": "Closed",
-
     "newTicket": "New Ticket",
     "ticketHelper": "Describe your issue clearly so we can help you faster.",
     "categoryLabel": "Category",
@@ -449,7 +429,6 @@
     "typeMessage": "Type a message...",
     "ticketResolved": "This ticket has been resolved",
     "ticketClosed": "This ticket is closed",
-
     "rateExperience": "Rate your experience",
     "csatCommentHint": "Tell us more (optional)",
     "submitFeedback": "Submit feedback",
@@ -466,7 +445,6 @@
     "csatChipConfusing": "Confusing answers",
     "csatChipNeedMore": "Need better support"
   },
-
   "drawer": {
     "getVerified": "Get Verified",
     "myProfile": "My Profile",
@@ -477,7 +455,6 @@
     "supportTickets": "Support Tickets",
     "contactUs": "Contact Us"
   },
-
   "shop": {
     "errorPickingImage": "Error picking image: {}",
     "cropCover": "Crop Cover Photo",
@@ -487,7 +464,6 @@
     "updatedSuccess": "updated successfully",
     "adsFrom": "Ads from {} ({})",
     "noActiveAds": "No active ads at the moment",
-
     "about": "About",
     "contact": "Contact",
     "categoriesTab": "Categories",
@@ -514,7 +490,6 @@
     "selectDistrict": "Select District",
     "selectCity": "Select City"
   },
-
   "verification": {
     "title": "Verification",
     "loginToVerify": "Login to Get Verified",
@@ -543,7 +518,6 @@
     "failedToLoad": "Failed to load verification",
     "unknownError": "Unknown error"
   },
-
   "help": {
     "title": "Help Center",
     "searchPlaceholder": "Search for help...",
@@ -553,7 +527,6 @@
     "supportTeamHere": "Our support team is here to assist you",
     "supportTicket": "Support Ticket",
     "contactUs": "Contact Us",
-
     "gettingStarted": "Getting Started",
     "gettingStartedDesc": "New to Thulo Bazaar? Start here.",
     "postingAds": "Posting Ads",
@@ -566,7 +539,6 @@
     "paymentsPromotionsDesc": "Understand our payment and promotion options.",
     "safetySecurity": "Safety & Security",
     "safetySecurityDesc": "Stay safe while buying and selling.",
-
     "q1": "What is Thulo Bazaar?",
     "a1": "Thulo Bazaar is Nepal's leading online classifieds marketplace where you can buy, sell, and rent items across all categories including vehicles, property, electronics, fashion, and services.",
     "q2": "How do I create an account?",
@@ -575,7 +547,6 @@
     "a3": "Yes! Creating an account and browsing ads is completely free. Posting standard ads is also free. Premium features like Featured Ads and promotions are available for a fee.",
     "q4": "What can I sell on Thulo Bazaar?",
     "a4": "You can sell a wide variety of items including electronics, vehicles, property, fashion, home goods, services, and more. Check our categories for the full list.",
-
     "q5": "How do I post an ad?",
     "a5": "Tap the \"+\" button, select a category, fill in the details (title, description, price, photos), add your location and contact info, then submit.",
     "q6": "Why was my ad rejected?",
@@ -584,7 +555,6 @@
     "a7": "You can upload up to 10 photos per ad. High-quality photos with good lighting will attract more buyers.",
     "q8": "How long will my ad stay active?",
     "a8": "Standard ads remain active for 30 days. You can renew or edit your ad from the Dashboard.",
-
     "q9": "Can I edit my ad after posting?",
     "a9": "Yes, you can edit your ad anytime from your Dashboard. Changes may need re-approval by our team.",
     "q10": "How do I contact a seller?",
@@ -593,7 +563,6 @@
     "a11": "We recommend meeting sellers in public places, inspecting items before payment, and using secure payment methods. Look for verified sellers for added trust.",
     "q12": "How do I report a suspicious ad or seller?",
     "a12": "Tap the \"Report\" button on any ad page or user profile. Our moderation team reviews all reports within 24 hours.",
-
     "q13": "Can I negotiate the price?",
     "a13": "Yes, most sellers are open to negotiation. Use the chat feature to discuss pricing directly with the seller.",
     "q14": "How do I verify my account?",
@@ -602,7 +571,6 @@
     "a15": "Tap \"Sign In\", then \"Forgot Password\". Enter your phone number and follow the OTP verification steps to set a new password.",
     "q16": "How do I delete my account?",
     "a16": "Go to Profile > Security > Delete Account. Please note this action is permanent and cannot be undone.",
-
     "q17": "What is a Business Account?",
     "a17": "Business accounts are for registered businesses and dealers. They get a verified badge, custom shop page, and enhanced visibility.",
     "q18": "What payment methods do you accept?",
@@ -613,7 +581,6 @@
     "a20": "Urgent tags add a visible badge to your ad indicating time-sensitivity. Sticky tags keep your ad pinned at the top of its category.",
     "q21": "Can I get a refund for promotions?",
     "a21": "Refunds are available within 24 hours of purchase if the promotion hasn't been activated. Contact support for refund requests.",
-
     "q22": "How can I stay safe when meeting buyers/sellers?",
     "a22": "Always meet in public places during daylight hours. Bring a friend if possible. Never share personal financial information.",
     "q23": "What should I do if I encounter fraud?",
@@ -623,7 +590,6 @@
     "q25": "Why do some users have verification badges?",
     "a25": "Verification badges indicate the user has verified their identity or business registration. This helps build trust between buyers and sellers."
   },
-
   "contact": {
     "title": "Contact Us",
     "wereHereToHelp": "We're here to help",
@@ -641,5 +607,35 @@
     "supportSubtitle": "Get help from our support team",
     "browseFaqs": "Browse FAQs",
     "faqSubtitle": "Find answers to common questions"
+  },
+  "chat": {
+    "reportUser": "Report user",
+    "blockUser": "Block user",
+    "unblockUser": "Unblock user",
+    "block": "Block",
+    "unblock": "Unblock",
+    "blockTitle": "Block user?",
+    "blockConfirm": "{} won't be able to message you, and you won't be able to message them. You can unblock anytime.",
+    "blocked": "User blocked",
+    "unblocked": "User unblocked",
+    "actionFailed": "Something went wrong. Please try again.",
+    "blockedByYouBanner": "You blocked this user. Unblock to send messages.",
+    "blockedYouBanner": "You can't reply to this conversation."
+  },
+  "reportUser": {
+    "title": "Report user",
+    "spam": "Spam",
+    "scam": "Scam or fraud",
+    "harassment": "Harassment",
+    "inappropriate": "Inappropriate behavior",
+    "impersonation": "Impersonation",
+    "other": "Other",
+    "whyReporting": "Why are you reporting this user?",
+    "additionalDetails": "Additional details (optional)",
+    "detailsHint": "Add any details that will help our team review this report...",
+    "submit": "Submit report",
+    "disclaimer": "Reports are confidential. Our team will review and take action if needed.",
+    "success": "User reported. Our team will review it shortly.",
+    "failed": "Failed to report user"
   }
 }
