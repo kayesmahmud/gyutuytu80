@@ -14,6 +14,7 @@ import 'package:mobile/core/widgets/app_cached_image.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
+import 'package:mobile/core/services/review_service.dart';
 import 'package:mobile/core/widgets/success_checkmark.dart';
 import 'package:mobile/features/dashboard/dashboard_screen.dart';
 import 'package:mobile/features/post_ad/models/ad_draft_model.dart';
@@ -699,6 +700,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
     if (result.success) {
       await _deleteDraftAfterPost();
+      // Positive moment: record it and maybe ask for a store review.
+      await ReviewService.recordSignificantAction();
+      await ReviewService.maybeRequestReview();
       if (mounted) {
         await showSuccessDialog(context, message: 'postAd.adPosted'.tr());
         if (mounted) {
