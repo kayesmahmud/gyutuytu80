@@ -96,9 +96,9 @@ class _MainDrawerState extends State<MainDrawer> {
                        },
                      ),
 
-                     const SizedBox(height: 16),
+                     const SizedBox(height: 12),
                      const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
-                     const SizedBox(height: 16),
+                     const SizedBox(height: 12),
 
                      if (isLoggedIn) ...[
                         _buildMenuItem('drawer.myProfile'.tr(), icon: LucideIcons.user, onTap: () {
@@ -172,9 +172,9 @@ class _MainDrawerState extends State<MainDrawer> {
                        ),
                      ],
 
-                     const SizedBox(height: 24),
-                     const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
                      const SizedBox(height: 16),
+                     const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
+                     const SizedBox(height: 12),
 
                      _buildMenuItem('drawer.helpCenter'.tr(), icon: LucideIcons.helpCircle, onTap: () {
                        Navigator.pop(context);
@@ -270,19 +270,21 @@ class _MainDrawerState extends State<MainDrawer> {
 
   Widget _buildMenuItem(String title, {IconData? icon, VoidCallback? onTap, Widget? trailing}) {
     return ListTile(
-      leading: icon != null ? Icon(icon, color: Colors.grey[600], size: 22) : null,
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      leading: icon != null ? Icon(icon, color: Colors.grey[600], size: 20) : null,
       title: Text(
         title,
         style: GoogleFonts.inter(
           color: const Color(0xFF374151),
-          fontSize: 15,
+          fontSize: 14,
           fontWeight: FontWeight.w500
         )
       ),
       trailing: trailing,
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-      horizontalTitleGap: 12,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
+      horizontalTitleGap: 10,
       minLeadingWidth: icon != null ? 24 : 0,
     );
   }
