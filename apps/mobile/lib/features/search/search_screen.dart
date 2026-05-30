@@ -111,10 +111,13 @@ class SearchScreenState extends State<SearchScreen> {
           _isLoading = false;
         });
       } else {
-        // Server responded with an error — not an offline situation.
+        // searchAds returns success == false on network failure too (it does
+        // not throw), so classify offline vs server error here.
+        final offline = await _isOfflineError();
+        if (!mounted) return;
         setState(() {
           _hasError = true;
-          _isOffline = false;
+          _isOffline = offline;
           _isLoading = false;
         });
       }

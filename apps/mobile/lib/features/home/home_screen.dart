@@ -108,11 +108,29 @@ class _HomeScreenState extends State<HomeScreen> {
         _adClient.getLatestAds(limit: 8),
       ]);
 
+      final featuredResp = results[1] as PaginatedResponse<AdWithDetails>;
+      final latestResp = results[2] as PaginatedResponse<AdWithDetails>;
+
+      // The ad endpoints don't throw on network failure — they return a
+      // response with success == false. If both ad feeds failed, treat it as a
+      // load failure so we show the offline/error state instead of an empty
+      // "No ads yet".
+      if (!latestResp.success && !featuredResp.success) {
+        final offline = await _isOfflineError();
+        if (!mounted) return;
+        setState(() {
+          _loadFailed = true;
+          _isOffline = offline;
+          _isLoading = false;
+        });
+        return;
+      }
+
       if (mounted) {
         setState(() {
           _categories = results[0] as List<CategoryWithSubcategories>;
-          _featuredAds = (results[1] as PaginatedResponse<AdWithDetails>).data;
-          _latestAds = (results[2] as PaginatedResponse<AdWithDetails>).data;
+          _featuredAds = featuredResp.data;
+          _latestAds = latestResp.data;
           _displayLatestAds = _latestAds.take(4).toList();
           _displayFeaturedAds = _featuredAds.take(4).toList();
           _isLoading = false;
