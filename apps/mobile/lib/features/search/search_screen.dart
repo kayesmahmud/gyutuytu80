@@ -14,6 +14,8 @@ import 'package:mobile/core/widgets/search_suggestions_overlay.dart';
 import 'package:mobile/core/services/search_history_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:mobile/core/utils/skeleton_data.dart';
+import 'package:mobile/core/widgets/load_error_view.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -35,7 +37,8 @@ class SearchScreenState extends State<SearchScreen> {
   List<AdWithDetails> _ads = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
-  String? _error;
+  bool _hasError = false;
+  bool _isOffline = false;
   int _currentPage = 1;
   int _totalPages = 1;
 
@@ -91,7 +94,7 @@ class SearchScreenState extends State<SearchScreen> {
 
     setState(() {
       _isLoading = _ads.isEmpty;
-      _error = null;
+      _hasError = false;
     });
 
     try {
@@ -108,16 +111,33 @@ class SearchScreenState extends State<SearchScreen> {
           _isLoading = false;
         });
       } else {
+        // Server responded with an error — not an offline situation.
         setState(() {
-          _error = response.errorMessage ?? 'Failed to load ads';
+          _hasError = true;
+          _isOffline = false;
           _isLoading = false;
         });
       }
     } catch (e) {
+      // Request threw (no network, host unreachable, timeout) — classify it.
+      final offline = await _isOfflineError();
+      if (!mounted) return;
       setState(() {
-        _error = 'Network error: $e';
+        _hasError = true;
+        _isOffline = offline;
         _isLoading = false;
       });
+    }
+  }
+
+  /// Returns true when the device has no connectivity at all, so the error
+  /// view can show "you're offline" rather than a generic message.
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -387,33 +407,12 @@ class SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    if (_error != null) {
+    if (_hasError) {
       return StaggeredFadeIn(
         index: 0,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(LucideIcons.alertCircle, size: 48, color: Colors.red[300]),
-              const SizedBox(height: 16),
-              Text(
-                _error!,
-                style: GoogleFonts.inter(color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => _fetchAds(refresh: true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                ),
-                child: const Text(
-                  'Retry',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
+        child: LoadErrorView(
+          isOffline: _isOffline,
+          onRetry: () => _fetchAds(refresh: true),
         ),
       );
     }
