@@ -17,6 +17,8 @@ import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
 import 'package:mobile/features/shop/shop_tabs.dart'; // Import Tabs
+import 'package:mobile/core/widgets/load_error_view.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ShopScreen extends StatefulWidget {
   final String shopSlug;
@@ -39,6 +41,7 @@ class _ShopScreenState extends State<ShopScreen> {
   bool _isLoading = true;
   bool _isLoadingMore = false;
   String? _error;
+  bool _isOffline = false;
   int _currentPage = 1;
   int _totalPages = 1;
 
@@ -104,26 +107,33 @@ class _ShopScreenState extends State<ShopScreen> {
         }
       }
 
-      if (mounted) {
-        if (shopResponse.success && shopResponse.data != null) {
-          setState(() {
-            _shop = shopResponse.data;
-            _ads = adsResponse.success ? adsResponse.data : [];
-            _totalPages = adsResponse.pagination?.totalPages ?? 1;
-            _isLoading = false;
-            _isOwner = isOwner;
-          });
-        } else {
-          setState(() {
-            _error = shopResponse.errorMessage ?? 'Shop not found';
-            _isLoading = false;
-          });
-        }
+      if (!mounted) return;
+      if (shopResponse.success && shopResponse.data != null) {
+        setState(() {
+          _shop = shopResponse.data;
+          _ads = adsResponse.success ? adsResponse.data : [];
+          _totalPages = adsResponse.pagination?.totalPages ?? 1;
+          _isLoading = false;
+          _isOwner = isOwner;
+          _error = null;
+        });
+      } else {
+        // A failed shop fetch is either offline or genuinely not found; when
+        // online, _isOfflineError() returns false → generic error message.
+        final offline = await _isOfflineError();
+        if (!mounted) return;
+        setState(() {
+          _error = shopResponse.errorMessage ?? 'Shop not found';
+          _isOffline = offline;
+          _isLoading = false;
+        });
       }
     } catch (e) {
+      final offline = await _isOfflineError();
       if (mounted) {
         setState(() {
           _error = 'Network error: $e';
+          _isOffline = offline;
           _isLoading = false;
         });
       }
@@ -390,22 +400,19 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
+  /// True when the device has no connectivity at all (drives offline vs
+  /// generic-error copy in [LoadErrorView]).
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
+    }
+  }
+
   Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(LucideIcons.alertCircle, size: 60, color: Colors.grey),
-          const SizedBox(height: 16),
-          Text(_error ?? 'An error occurred'),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _fetchShopData,
-            child: Text(l('retry', context.locale.languageCode)),
-          ),
-        ],
-      ),
-    );
+    return LoadErrorView(isOffline: _isOffline, onRetry: _fetchShopData);
   }
 
   Widget _buildContent() {

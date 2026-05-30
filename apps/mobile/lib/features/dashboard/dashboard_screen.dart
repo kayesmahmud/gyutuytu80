@@ -19,6 +19,8 @@ import 'package:mobile/features/promotion/promote_ad_screen.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:mobile/core/widgets/count_up_text.dart';
 import 'package:mobile/core/widgets/floating_widget.dart';
+import 'package:mobile/core/widgets/load_error_view.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String initialFilter;
@@ -36,6 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<AdWithDetails> _allAds = [];
   bool _isLoading = true;
   String? _error;
+  bool _isOffline = false;
 
   @override
   void initState() {
@@ -51,20 +54,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
 
     final response = await _adClient.getMyAds(limit: 100);
+    if (!mounted) return;
 
-    if (mounted) {
+    if (response.success) {
       setState(() {
         _isLoading = false;
-        if (response.success) {
-          _allAds = response.data;
-        } else {
-          _error =
-              response.errorMessage ??
-              (context.locale.languageCode == 'ne'
-                  ? 'विज्ञापन लोड गर्न असफल'
-                  : 'Failed to load ads');
-        }
+        _allAds = response.data;
+        _error = null;
       });
+    } else {
+      // getMyAds swallows network errors into success == false, so classify
+      // connectivity here to show the right offline/error message.
+      final offline = await _isOfflineError();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = response.errorMessage ?? 'Failed to load ads';
+        _isOffline = offline;
+      });
+    }
+  }
+
+  /// True when the device has no connectivity at all (drives offline vs
+  /// generic-error copy in [LoadErrorView]).
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -574,22 +592,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.alertCircle, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(_error!, style: GoogleFonts.inter(color: Colors.grey[600])),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _fetchAds,
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: Text('common.retry'.tr()),
-          ),
-        ],
-      ),
-    );
+    return LoadErrorView(isOffline: _isOffline, onRetry: _fetchAds);
   }
 
   Widget _buildEmptyState() {

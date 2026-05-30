@@ -13,6 +13,8 @@ import 'package:mobile/core/widgets/login_required_widget.dart';
 import 'package:mobile/core/widgets/floating_widget.dart';
 import 'create_ticket_screen.dart';
 import 'ticket_detail_screen.dart';
+import '../../core/widgets/load_error_view.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SupportTicketsScreen extends StatefulWidget {
   const SupportTicketsScreen({super.key});
@@ -26,6 +28,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   List<SupportTicket> _tickets = [];
   bool _isLoading = true;
   String? _error;
+  bool _isOffline = false;
 
   @override
   void initState() {
@@ -42,14 +45,34 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     final response = await _client.getTickets();
     if (!mounted) return;
 
-    setState(() {
-      _isLoading = false;
-      if (response.hasData) {
+    if (response.hasData) {
+      setState(() {
+        _isLoading = false;
         _tickets = response.data!;
-      } else {
+        _error = null;
+      });
+    } else {
+      // getTickets swallows network errors into a failed response, so classify
+      // connectivity here for the right offline/error message.
+      final offline = await _isOfflineError();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
         _error = response.errorMessage;
-      }
-    });
+        _isOffline = offline;
+      });
+    }
+  }
+
+  /// True when the device has no connectivity at all (drives offline vs
+  /// generic-error copy in [LoadErrorView]).
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
+    }
   }
 
   void _navigateToCreate() async {
@@ -112,48 +135,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     }
 
     if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: Colors.red[50],
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(LucideIcons.wifiOff, size: 28, color: Colors.red[300]),
-              ),
-              const SizedBox(height: 16),
-              Text('support.somethingWentWrong'.tr(),
-                  style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[700])),
-              const SizedBox(height: 6),
-              Text(_error!,
-                  style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 20),
-              OutlinedButton.icon(
-                onPressed: _loadTickets,
-                icon: const Icon(LucideIcons.refreshCw, size: 16),
-                label: Text('support.tryAgain'.tr()),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFE11D48),
-                  side: const BorderSide(color: Color(0xFFE11D48)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      return LoadErrorView(isOffline: _isOffline, onRetry: _loadTickets);
     }
 
     if (_tickets.isEmpty) {

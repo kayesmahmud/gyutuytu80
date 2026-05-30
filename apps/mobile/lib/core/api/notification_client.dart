@@ -20,6 +20,10 @@ class NotificationClient {
             .toList();
       }
       return [];
+    } on DioException {
+      // Let network failures propagate so the provider can show an
+      // offline/error state instead of an empty "no notifications".
+      rethrow;
     } catch (e) {
       developer.log('Error fetching notifications: $e', name: 'NotificationClient');
       return [];
