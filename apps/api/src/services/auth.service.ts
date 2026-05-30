@@ -18,6 +18,7 @@ import {
 import { generateAccessToken, generateRefreshToken } from '../lib/token.js';
 import { getBooleanSetting } from './adLimits.service.js';
 import { OAuth2Client } from 'google-auth-library';
+import appleSignin from 'apple-signin-auth';
 import { generateSecret, generateURI, verifySync } from 'otplib';
 import QRCode from 'qrcode';
 import jwt from 'jsonwebtoken';
@@ -681,6 +682,125 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
   } catch (error) {
     console.error('Google verification failed:', error);
     return { success: false, error: 'Google verification failed' };
+  }
+}
+
+// ============================================================================
+// Apple Auth Functions
+// ============================================================================
+
+export async function verifyAppleToken(
+  identityToken: string,
+  fullName?: { givenName?: string; familyName?: string },
+): Promise<LoginResult> {
+  try {
+    const audience = process.env.APPLE_CLIENT_ID || 'com.thulobazaar.mobile';
+
+    const payload = await appleSignin.verifyIdToken(identityToken, {
+      audience,
+      ignoreExpiration: false,
+    });
+
+    if (!payload || !payload.sub) {
+      return { success: false, error: 'Invalid Apple token payload' };
+    }
+
+    const appleUserId = payload.sub;
+    const email = payload.email || null;
+    const emailVerified = payload.email_verified === true || payload.email_verified === 'true';
+
+    let user = await prisma.users.findFirst({
+      where: {
+        OR: [
+          { oauth_provider_id: appleUserId },
+          ...(email ? [{ email }] : []),
+        ],
+      },
+    });
+
+    if (!user) {
+      const registrationAllowed = await getBooleanSetting('allow_registration', true);
+      if (!registrationAllowed) {
+        return { success: false, error: 'New user registration is currently disabled' };
+      }
+
+      const composedName = [fullName?.givenName, fullName?.familyName].filter(Boolean).join(' ').trim();
+
+      user = await prisma.users.create({
+        data: {
+          email,
+          full_name: composedName || 'Apple User',
+          oauth_provider: 'apple',
+          oauth_provider_id: appleUserId,
+          email_verified: emailVerified,
+          role: 'user',
+          is_active: true,
+          password_hash: await bcrypt.hash(Math.random().toString(36), 10),
+        },
+      });
+
+      console.log(`✅ New Apple user created: ${email || appleUserId} (userId: ${user.id})`);
+
+      sendNotification({
+        recipientUserIds: [user.id],
+        type: 'welcome',
+        title: 'Welcome to Thulo Bazaar!',
+        body: 'Start browsing or post your first ad today. Happy selling!',
+        data: { route: '/post-ad' },
+      }).catch(err => console.error('Welcome notification error:', err));
+    } else if (!user.oauth_provider_id) {
+      await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          oauth_provider: 'apple',
+          oauth_provider_id: appleUserId,
+        },
+      });
+    }
+
+    if (user.is_suspended) {
+      return { success: false, error: 'Your account has been suspended.' };
+    }
+
+    let isPendingDeletion = false;
+    if (user.deleted_at && user.deletion_requested_at) {
+      const daysSinceDeletion = (Date.now() - user.deletion_requested_at.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceDeletion >= RECOVERY_DAYS) {
+        return { success: false, error: 'This account has been permanently deleted.' };
+      }
+      isPendingDeletion = true;
+    } else if (!user.is_active) {
+      return { success: false, error: 'Your account has been deactivated.' };
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = await generateRefreshToken(user);
+
+    console.log(`📱 Apple login successful (userId: ${user.id})${isPendingDeletion ? ' [pending deletion]' : ''}`);
+
+    return {
+      success: true,
+      token: accessToken,
+      refreshToken,
+      ...(isPendingDeletion && {
+        accountPendingDeletion: true,
+        deletionDate: user.deletion_requested_at!.toISOString(),
+      }),
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        phone: user.phone,
+        phoneVerified: user.phone_verified,
+        role: user.role,
+        shopSlug: user.shop_slug,
+        accountType: user.account_type,
+        avatar: user.avatar,
+      },
+    };
+  } catch (error) {
+    console.error('Apple verification failed:', error);
+    return { success: false, error: 'Apple verification failed' };
   }
 }
 

@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/api/auth_client.dart';
 import 'package:provider/provider.dart';
@@ -50,6 +52,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   int _otpExpiry = 0;
   Timer? _cooldownTimer;
   Timer? _expiryTimer;
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   void dispose() {
@@ -142,6 +151,69 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'गुगल साइन अप त्रुटि: $e' : 'Google Sign Up Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _handleAppleLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final identityToken = credential.identityToken;
+      if (identityToken == null) {
+        throw Exception('Failed to get Apple identity token');
+      }
+
+      final authClient = AuthClient();
+      final result = await authClient.appleLogin(
+        identityToken,
+        givenName: credential.givenName,
+        familyName: credential.familyName,
+      );
+
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        final token = result['token'];
+        await context.read<AuthProvider>().login(token);
+
+        if (mounted) {
+          if (widget.onSuccess != null) {
+            widget.onSuccess!();
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const MainNavScreen()),
+              (route) => false,
+            );
+          }
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? (context.locale.languageCode == 'ne' ? 'एप्पल साइन अप असफल' : 'Apple Sign Up failed'))),
+        );
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'एप्पल साइन अप त्रुटि: ${e.message}' : 'Apple Sign Up Error: ${e.message}')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'एप्पल साइन अप त्रुटि: $e' : 'Apple Sign Up Error: $e')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -455,6 +527,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
                     ),
+                    if (Platform.isIOS) ...[
+                      const SizedBox(height: 12),
+                      SignInWithAppleButton(
+                        onPressed: _isLoading ? () {} : _handleAppleLogin,
+                        style: SignInWithAppleButtonStyle.black,
+                        borderRadius: BorderRadius.circular(28),
+                        height: 48,
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     Row(
                       children: [
@@ -679,12 +760,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             children: [
                               Text('auth.iAgreeTo'.tr(), style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
                               InkWell(
-                                onTap: () {},
+                                onTap: () => _openUrl('https://thulobazaar.com.np/en/support/terms-of-service'),
                                 child: Text('auth.termsAndConditions'.tr(), style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
                               ),
                               Text('auth.and'.tr(), style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
                               InkWell(
-                                onTap: () {},
+                                onTap: () => _openUrl('https://thulobazaar.com.np/en/support/privacy-policy'),
                                 child: Text('auth.privacyPolicy'.tr(), style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
                               ),
                             ],

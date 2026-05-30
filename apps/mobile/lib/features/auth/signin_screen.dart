@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -252,6 +253,70 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  void _handleAppleLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final identityToken = credential.identityToken;
+      if (identityToken == null) {
+        throw Exception('Failed to get Apple identity token');
+      }
+
+      final authClient = AuthClient();
+      final result = await authClient.appleLogin(
+        identityToken,
+        givenName: credential.givenName,
+        familyName: credential.familyName,
+      );
+
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        await _proceedAfterLogin(result['token'], result);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'auth.appleLoginFailed'.tr()),
+          ),
+        );
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'एप्पल लगइन त्रुटि: ${e.message}'
+                : 'Apple Login Error: ${e.message}',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'एप्पल लगइन त्रुटि: $e'
+                : 'Apple Login Error: $e',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _handleLogin() async {
     final rawPhone = _phoneController.text.trim();
     final password = _passwordController.text;
@@ -452,6 +517,16 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                     ),
                   ),
+
+                  if (Platform.isIOS) ...[
+                    const SizedBox(height: 12),
+                    SignInWithAppleButton(
+                      onPressed: _isLoading ? () {} : _handleAppleLogin,
+                      style: SignInWithAppleButtonStyle.black,
+                      borderRadius: BorderRadius.circular(28),
+                      height: 48,
+                    ),
+                  ],
 
                   const SizedBox(height: 24),
                   Row(

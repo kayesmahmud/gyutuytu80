@@ -156,6 +156,35 @@ class AuthClient {
     }
   }
 
+  // Apple Login
+  Future<Map<String, dynamic>> appleLogin(
+    String identityToken, {
+    String? givenName,
+    String? familyName,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/auth/apple-token',
+        data: {
+          'identityToken': identityToken,
+          if (givenName != null || familyName != null)
+            'fullName': {
+              if (givenName != null) 'givenName': givenName,
+              if (familyName != null) 'familyName': familyName,
+            },
+        },
+      );
+
+      if (response.data['success'] == true) {
+        await _saveTokens(response.data);
+      }
+
+      return response.data;
+    } on DioException catch (e) {
+      return _handleError(e);
+    }
+  }
+
   // ==========================================
   // SECURITY ENDPOINTS (/api/auth)
   // ==========================================
