@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final results = await Future.wait([
         _adClient.getCategories(),
         _adClient.getFeaturedAds(limit: 6),
-        _adClient.getLatestAds(limit: 8),
+        _adClient.getLatestAds(limit: 60),
       ]);
 
       final featuredResp = results[1] as PaginatedResponse<AdWithDetails>;
@@ -131,8 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _categories = results[0] as List<CategoryWithSubcategories>;
           _featuredAds = featuredResp.data;
           _latestAds = latestResp.data;
-          _displayLatestAds = _latestAds.take(4).toList();
-          _displayFeaturedAds = _featuredAds.take(4).toList();
+          _displayLatestAds = _latestAds.take(60).toList();
+          _displayFeaturedAds = _featuredAds.take(6).toList();
           _isLoading = false;
         });
       }
@@ -180,37 +180,46 @@ class _HomeScreenState extends State<HomeScreen> {
             ? _buildErrorState()
             : Skeletonizer(
           enabled: _isLoading,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeroSection(context),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeroSection(context),
 
-                const SizedBox(height: 24),
-                _buildSectionHeader('home.browseCategories'.tr(), ""),
-                const SizedBox(height: 12),
-                _buildCategoriesList(),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('home.browseCategories'.tr(), ""),
+                    const SizedBox(height: 12),
+                    _buildCategoriesList(),
 
-                const SizedBox(height: 24),
-                _buildSectionHeader('home.latestAds'.tr(), 'home.viewAllAds'.tr(), onTap: widget.onViewAllAds),
-                const SizedBox(height: 12),
-                _buildAdsGrid(
-                  _isLoading ? SkeletonData.fakeAds(4) : _displayLatestAds,
+                    // Featured ads first — small highlight strip
+                    const SizedBox(height: 24),
+                    _buildFeaturedHeader(),
+                    const SizedBox(height: 12),
+                    _buildFeaturedAdsGrid(
+                      _isLoading ? SkeletonData.fakeAds(6) : _displayFeaturedAds,
+                    ),
+
+                    if (!_isLoading && AdService.adsEnabled)
+                      AdBannerWidget(adUnitId: AdService.homeBannerTopId),
+
+                    // Latest/newest feed below
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('home.latestAds'.tr(), 'home.viewAllAds'.tr(), onTap: widget.onViewAllAds),
+                    const SizedBox(height: 12),
+                  ],
                 ),
+              ),
 
-                if (!_isLoading && AdService.adsEnabled)
-                  AdBannerWidget(adUnitId: AdService.homeBannerTopId),
+              // 60 newest ads as a lazy SliverGrid: off-screen cards (and their
+              // network images) aren't built until scrolled near the viewport.
+              _buildLatestSliverGrid(
+                _isLoading ? SkeletonData.fakeAds(6) : _displayLatestAds,
+              ),
 
-                const SizedBox(height: 24),
-                _buildFeaturedHeader(),
-                const SizedBox(height: 12),
-                _buildFeaturedAdsGrid(
-                  _isLoading ? SkeletonData.fakeAds(4) : _displayFeaturedAds,
-                ),
-
-                const SizedBox(height: 50),
-              ],
-            ),
+              const SliverToBoxAdapter(child: SizedBox(height: 50)),
+            ],
           ),
         ),
       ),
@@ -529,41 +538,46 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAdsGrid(List<AdWithDetails> ads) {
+  Widget _buildLatestSliverGrid(List<AdWithDetails> ads) {
     if (ads.isEmpty) {
-      return StaggeredFadeIn(
-        index: 0,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Center(
-            child: Text(
-              'home.noAdsYet'.tr(),
-              style: GoogleFonts.inter(color: Colors.grey[500]),
+      return SliverToBoxAdapter(
+        child: StaggeredFadeIn(
+          index: 0,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: Text(
+                'home.noAdsYet'.tr(),
+                style: GoogleFonts.inter(color: Colors.grey[500]),
+              ),
             ),
           ),
         ),
       );
     }
 
-    return Padding(
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        childAspectRatio: 0.65, // Adjusted for more info content
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        children: ads
-            .asMap()
-            .entries
-            .map(
-              (entry) => StaggeredFadeIn(
-                index: entry.key,
-                child: RepaintBoundary(child: AdCard(ad: entry.value, heroTagPrefix: 'latest')),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.65,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            // Clamp the stagger index so the last of 60 cards doesn't wait
+            // ~5s (delayPerItem * index); caps the cascade at ~0.5s.
+            return StaggeredFadeIn(
+              index: index.clamp(0, 6),
+              child: RepaintBoundary(
+                child: AdCard(ad: ads[index], heroTagPrefix: 'latest'),
               ),
-            )
-            .toList(),
+            );
+          },
+          childCount: ads.length,
+        ),
       ),
     );
   }
