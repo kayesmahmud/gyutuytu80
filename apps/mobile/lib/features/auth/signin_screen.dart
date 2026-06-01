@@ -83,7 +83,10 @@ class _SignInScreenState extends State<SignInScreen> {
 
   /// Shows the account recovery dialog when a pending-deletion user logs in.
   /// Returns true if the user chose to keep their account, false otherwise.
-  Future<bool> _showAccountRecoveryDialog(String token, String? deletionDate) async {
+  Future<bool> _showAccountRecoveryDialog(
+    String token,
+    String? deletionDate,
+  ) async {
     final lang = context.locale.languageCode;
 
     // Calculate days remaining
@@ -108,10 +111,16 @@ class _SignInScreenState extends State<SignInScreen> {
             color: Colors.orange.shade50,
             shape: BoxShape.circle,
           ),
-          child: Icon(LucideIcons.alertTriangle, color: Colors.orange.shade700, size: 32),
+          child: Icon(
+            LucideIcons.alertTriangle,
+            color: Colors.orange.shade700,
+            size: 32,
+          ),
         ),
         title: Text(
-          lang == 'ne' ? 'तपाईंको खाता मेटिने क्रममा छ' : 'Your Account Is Scheduled for Deletion',
+          lang == 'ne'
+              ? 'तपाईंको खाता मेटिने क्रममा छ'
+              : 'Your Account Is Scheduled for Deletion',
           style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18),
           textAlign: TextAlign.center,
         ),
@@ -133,12 +142,18 @@ class _SignInScreenState extends State<SignInScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   elevation: 0,
                 ),
                 child: Text(
                   lang == 'ne' ? 'मेरो खाता राख्नुहोस्' : 'Keep My Account',
-                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -151,8 +166,13 @@ class _SignInScreenState extends State<SignInScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: Text(
-                  lang == 'ne' ? 'मेटाउने प्रक्रिया जारी राख्नुहोस्' : 'Continue with Deletion',
-                  style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+                  lang == 'ne'
+                      ? 'मेटाउने प्रक्रिया जारी राख्नुहोस्'
+                      : 'Continue with Deletion',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ),
             ),
@@ -170,7 +190,12 @@ class _SignInScreenState extends State<SignInScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(cancelResult['message'] ?? (lang == 'ne' ? 'त्रुटि भयो' : 'Failed to cancel deletion'))),
+            SnackBar(
+              content: Text(
+                cancelResult['message'] ??
+                    (lang == 'ne' ? 'त्रुटि भयो' : 'Failed to cancel deletion'),
+              ),
+            ),
           );
         }
         return false;
@@ -185,13 +210,19 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   /// Handles post-login flow: checks for pending deletion, then proceeds to app
-  Future<void> _proceedAfterLogin(String token, Map<String, dynamic> result) async {
+  Future<void> _proceedAfterLogin(
+    String token,
+    Map<String, dynamic> result,
+  ) async {
     if (result['accountPendingDeletion'] == true) {
       // Log in first so the cancel-deletion endpoint has a valid token
       await context.read<AuthProvider>().login(token);
       if (!mounted) return;
 
-      final keepAccount = await _showAccountRecoveryDialog(token, result['deletionDate']?.toString());
+      final keepAccount = await _showAccountRecoveryDialog(
+        token,
+        result['deletionDate']?.toString(),
+      );
       if (!keepAccount || !mounted) return;
     } else {
       await context.read<AuthProvider>().login(token);
@@ -416,37 +447,27 @@ class _SignInScreenState extends State<SignInScreen> {
               elevation: 0,
             ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
         child: Column(
           children: [
-            const SizedBox(height: 10),
-            Text(
-              'common.appName'.tr(),
-              style: GoogleFonts.inter(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primary,
-              ),
-            ),
-            const SizedBox(height: 8),
             Text(
               'auth.welcomeBack'.tr(),
               style: GoogleFonts.inter(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textDark,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               'auth.loginSubtitle'.tr(),
-              style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
             // Container Card
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -470,7 +491,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       borderRadius: BorderRadius.circular(28),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(28),
@@ -490,23 +511,23 @@ class _SignInScreenState extends State<SignInScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: 24,
-                              height: 24,
+                              width: 18,
+                              height: 18,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: SvgPicture.asset(
                                 'assets/images/google_logo.svg',
-                                width: 24,
-                                height: 24,
+                                width: 18,
+                                height: 18,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                             Text(
                               'auth.continueWithGoogle'.tr(),
                               style: GoogleFonts.roboto(
-                                fontSize: 15,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.grey[700],
                                 letterSpacing: 0.25,
@@ -524,11 +545,11 @@ class _SignInScreenState extends State<SignInScreen> {
                       onPressed: _isLoading ? () {} : _handleAppleLogin,
                       style: SignInWithAppleButtonStyle.black,
                       borderRadius: BorderRadius.circular(28),
-                      height: 48,
+                      height: 36,
                     ),
                   ],
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(child: Divider(color: Colors.grey[200])),
@@ -545,7 +566,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       Expanded(child: Divider(color: Colors.grey[200])),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Phone Number
                   Text(
@@ -704,7 +725,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Sign In Button
                   SizedBox(
@@ -739,7 +760,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(child: Divider(color: Colors.grey[200])),
@@ -756,7 +777,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       Expanded(child: Divider(color: Colors.grey[200])),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // Create Account Button
                   SizedBox(

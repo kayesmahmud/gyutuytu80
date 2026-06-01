@@ -37,7 +37,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     clientId: Platform.isIOS
         ? '665688327385-lbpla4ui0ghmpq2k10mmmhj1s7cvgjfd.apps.googleusercontent.com'
         : null,
-    serverClientId: '665688327385-bc35e5a0jfis22p5d20k089l9ivm3fge.apps.googleusercontent.com',
+    serverClientId:
+        '665688327385-bc35e5a0jfis22p5d20k089l9ivm3fge.apps.googleusercontent.com',
   );
 
   bool _isLoading = false;
@@ -144,13 +145,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? (context.locale.languageCode == 'ne' ? 'गुगल साइन अप असफल' : 'Google Sign Up failed'))),
+          SnackBar(
+            content: Text(
+              result['message'] ??
+                  (context.locale.languageCode == 'ne'
+                      ? 'गुगल साइन अप असफल'
+                      : 'Google Sign Up failed'),
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'गुगल साइन अप त्रुटि: $e' : 'Google Sign Up Error: $e')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'गुगल साइन अप त्रुटि: $e'
+                : 'Google Sign Up Error: $e',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -198,7 +212,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? (context.locale.languageCode == 'ne' ? 'एप्पल साइन अप असफल' : 'Apple Sign Up failed'))),
+          SnackBar(
+            content: Text(
+              result['message'] ??
+                  (context.locale.languageCode == 'ne'
+                      ? 'एप्पल साइन अप असफल'
+                      : 'Apple Sign Up failed'),
+            ),
+          ),
         );
       }
     } on SignInWithAppleAuthorizationException catch (e) {
@@ -208,12 +229,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'एप्पल साइन अप त्रुटि: ${e.message}' : 'Apple Sign Up Error: ${e.message}')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'एप्पल साइन अप त्रुटि: ${e.message}'
+                : 'Apple Sign Up Error: ${e.message}',
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'एप्पल साइन अप त्रुटि: $e' : 'Apple Sign Up Error: $e')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'एप्पल साइन अप त्रुटि: $e'
+                : 'Apple Sign Up Error: $e',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -224,9 +257,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final rawPhone = _phoneController.text.trim();
 
     if (!_isValidNepaliPhone(rawPhone)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('auth.invalidPhone'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('auth.invalidPhone'.tr())));
       return;
     }
 
@@ -241,9 +274,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _startCooldownTimer();
         final expiresIn = result['expiresIn'] as int? ?? 600;
         _startExpiryTimer(expiresIn);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('auth.otpSentSuccess'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('auth.otpSentSuccess'.tr())));
       } else {
         // Handle cooldown from API response
         final cooldown = result['cooldownRemaining'] as int?;
@@ -252,13 +285,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
           _startCooldownTimer();
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['error'] ?? result['message'] ?? (context.locale.languageCode == 'ne' ? 'OTP पठाउन असफल' : 'Failed to send OTP'))),
+          SnackBar(
+            content: Text(
+              result['error'] ??
+                  result['message'] ??
+                  (context.locale.languageCode == 'ne'
+                      ? 'OTP पठाउन असफल'
+                      : 'Failed to send OTP'),
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'त्रुटि: $e' : 'Error: $e')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne' ? 'त्रुटि: $e' : 'Error: $e',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -282,9 +327,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final otp = _otpController.text.trim();
 
     if (otp.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('auth.enterValidOtp'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('auth.enterValidOtp'.tr())));
       return;
     }
 
@@ -305,13 +350,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(verifyResult['error'] ?? verifyResult['message'] ?? (context.locale.languageCode == 'ne' ? 'अमान्य OTP' : 'Invalid OTP'))),
+          SnackBar(
+            content: Text(
+              verifyResult['error'] ??
+                  verifyResult['message'] ??
+                  (context.locale.languageCode == 'ne'
+                      ? 'अमान्य OTP'
+                      : 'Invalid OTP'),
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString().replaceAll("Exception: ", "")}')),
+        SnackBar(
+          content: Text(
+            '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString().replaceAll("Exception: ", "")}',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -325,30 +382,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final confirmPassword = _confirmPasswordController.text;
 
     if (fullName.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('auth.nameMinLength'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('auth.nameMinLength'.tr())));
       return;
     }
 
     if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('auth.passwordMinLength'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('auth.passwordMinLength'.tr())));
       return;
     }
 
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('auth.passwordsDoNotMatch'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('auth.passwordsDoNotMatch'.tr())));
       return;
     }
 
     if (!_agreedToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('auth.agreeToTerms'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('auth.agreeToTerms'.tr())));
       return;
     }
 
@@ -382,12 +439,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         }
       } else {
-        throw Exception(registerResult['error'] ?? registerResult['message'] ?? (context.locale.languageCode == 'ne' ? 'दर्ता असफल' : 'Registration failed'));
+        throw Exception(
+          registerResult['error'] ??
+              registerResult['message'] ??
+              (context.locale.languageCode == 'ne'
+                  ? 'दर्ता असफल'
+                  : 'Registration failed'),
+        );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString().replaceAll("Exception: ", "")}')),
+        SnackBar(
+          content: Text(
+            '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString().replaceAll("Exception: ", "")}',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -416,48 +483,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'assets/images/logo.png',
           height: 28,
           fit: BoxFit.contain,
-          errorBuilder: (ctx, err, stack) => Text('common.appNameFallback'.tr(), style: GoogleFonts.poppins(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+          errorBuilder: (ctx, err, stack) => Text(
+            'common.appNameFallback'.tr(),
+            style: GoogleFonts.poppins(
+              color: AppTheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
         child: Column(
           children: [
-            const SizedBox(height: 10),
             Text(
-              'common.appName'.tr(),
+              _currentStep == SignUpStep.details
+                  ? 'auth.completeRegistration'.tr()
+                  : 'auth.createAccount'.tr(),
               style: GoogleFonts.inter(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _currentStep == SignUpStep.details ? 'auth.completeRegistration'.tr() : 'auth.createAccount'.tr(),
-              style: GoogleFonts.inter(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textDark,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               _currentStep == SignUpStep.details
                   ? 'auth.fillDetails'.tr()
                   : 'auth.joinSubtitle'.tr(),
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -483,11 +545,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         borderRadius: BorderRadius.circular(28),
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: Colors.grey[300]!, width: 1),
+                            border: Border.all(
+                              color: Colors.grey[300]!,
+                              width: 1,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.08),
@@ -500,23 +565,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                width: 24,
-                                height: 24,
+                                width: 18,
+                                height: 18,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: SvgPicture.asset(
                                   'assets/images/google_logo.svg',
-                                  width: 24,
-                                  height: 24,
+                                  width: 18,
+                                  height: 18,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               Text(
                                 'auth.signUpWithGoogle'.tr(),
                                 style: GoogleFonts.roboto(
-                                  fontSize: 15,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.grey[700],
                                   letterSpacing: 0.25,
@@ -533,50 +598,82 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         onPressed: _isLoading ? () {} : _handleAppleLogin,
                         style: SignInWithAppleButtonStyle.black,
                         borderRadius: BorderRadius.circular(28),
-                        height: 48,
+                        height: 36,
                       ),
                     ],
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(child: Divider(color: Colors.grey[200])),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text('auth.orRegisterWithPhone'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                          child: Text(
+                            'auth.orRegisterWithPhone'.tr(),
+                            style: GoogleFonts.inter(
+                              color: Colors.grey[400],
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                         Expanded(child: Divider(color: Colors.grey[200])),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Phone Number Input
                     Text(
                       'auth.phoneRequired'.tr(),
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.textDark, fontSize: 14),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textDark,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     _buildPhoneInput(enabled: true),
                     const SizedBox(height: 8),
                     Text(
                       'auth.phoneValidation'.tr(),
-                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading || _otpCooldown > 0 ? null : _handleSendOtp,
+                        onPressed: _isLoading || _otpCooldown > 0
+                            ? null
+                            : _handleSendOtp,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         child: _isLoading
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : Text(
-                                _otpCooldown > 0 ? 'auth.resendIn'.tr(args: ['$_otpCooldown']) : 'auth.sendOtp'.tr(),
-                                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                _otpCooldown > 0
+                                    ? 'auth.resendIn'.tr(
+                                        args: ['$_otpCooldown'],
+                                      )
+                                    : 'auth.sendOtp'.tr(),
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
                               ),
                       ),
                     ),
@@ -589,8 +686,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: Column(
                         children: [
                           Text(
-                            'auth.otpSentTo'.tr(args: [_phoneController.text.trim()]),
-                            style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14),
+                            'auth.otpSentTo'.tr(
+                              args: [_phoneController.text.trim()],
+                            ),
+                            style: GoogleFonts.inter(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
                           ),
                           if (_otpExpiry > 0)
                             Padding(
@@ -599,7 +701,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 context.locale.languageCode == 'ne'
                                     ? '${_formatTime(_otpExpiry)} मा समाप्त हुन्छ'
                                     : 'Expires in ${_formatTime(_otpExpiry)}',
-                                style: GoogleFonts.inter(fontSize: 12, color: Colors.orange[700]),
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.orange[700],
+                                ),
                               ),
                             ),
                         ],
@@ -607,7 +712,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    Text('auth.enterOtp'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text(
+                      'auth.enterOtp'.tr(),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _otpController,
@@ -618,8 +729,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       decoration: InputDecoration(
                         hintText: 'auth.otpPlaceholder'.tr(),
                         counterText: "",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -627,18 +743,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading || _otpController.text.trim().length != 6 ? null : _handleVerifyOtp,
+                        onPressed:
+                            _isLoading || _otpController.text.trim().length != 6
+                            ? null
+                            : _handleVerifyOtp,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         child: _isLoading
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : Text(
                                 'auth.verifyOtp'.tr(),
-                                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
                               ),
                       ),
                     ),
@@ -650,13 +782,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       children: [
                         TextButton(
                           onPressed: _handleChangeNumber,
-                          child: Text('auth.changeNumber'.tr(), style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600])),
+                          child: Text(
+                            'auth.changeNumber'.tr(),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
                         ),
                         TextButton(
-                          onPressed: _isLoading || _otpCooldown > 0 ? null : _handleSendOtp,
+                          onPressed: _isLoading || _otpCooldown > 0
+                              ? null
+                              : _handleSendOtp,
                           child: Text(
-                            _otpCooldown > 0 ? 'auth.resendIn'.tr(args: ['$_otpCooldown']) : 'auth.resendOtp'.tr(),
-                            style: GoogleFonts.inter(fontSize: 13, color: _otpCooldown > 0 ? Colors.grey[400] : AppTheme.primary),
+                            _otpCooldown > 0
+                                ? 'auth.resendIn'.tr(args: ['$_otpCooldown'])
+                                : 'auth.resendOtp'.tr(),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: _otpCooldown > 0
+                                  ? Colors.grey[400]
+                                  : AppTheme.primary,
+                            ),
                           ),
                         ),
                       ],
@@ -671,72 +818,130 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey[200]!),
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(LucideIcons.checkCircle, color: AppTheme.success, size: 20),
+                          const Icon(
+                            LucideIcons.checkCircle,
+                            color: AppTheme.success,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             context.locale.languageCode == 'ne'
                                 ? '+977 ${_phoneController.text.trim()} प्रमाणित'
                                 : '+977 ${_phoneController.text.trim()} verified',
-                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.success),
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.success,
+                            ),
                           ),
                         ],
                       ),
                     ),
 
-                    Text('auth.fullName'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text(
+                      'auth.fullName'.tr(),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _fullNameController,
                       decoration: InputDecoration(
                         hintText: 'auth.enterFullName'.tr(),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    Text('auth.passwordRequired'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text(
+                      'auth.passwordRequired'.tr(),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         hintText: 'auth.atLeast6Chars'.tr(),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         suffixIcon: IconButton(
                           icon: AnimatedRotation(
                             turns: _obscurePassword ? 0 : 0.5,
                             duration: const Duration(milliseconds: 200),
-                            child: Icon(_obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff, color: Colors.grey),
+                            child: Icon(
+                              _obscurePassword
+                                  ? LucideIcons.eye
+                                  : LucideIcons.eyeOff,
+                              color: Colors.grey,
+                            ),
                           ),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    Text('auth.confirmPassword'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                    Text(
+                      'auth.confirmPassword'.tr(),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
                         hintText: 'auth.reEnterPassword'.tr(),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         suffixIcon: IconButton(
                           icon: AnimatedRotation(
                             turns: _obscureConfirmPassword ? 0 : 0.5,
                             duration: const Duration(milliseconds: 200),
-                            child: Icon(_obscureConfirmPassword ? LucideIcons.eye : LucideIcons.eyeOff, color: Colors.grey),
+                            child: Icon(
+                              _obscureConfirmPassword
+                                  ? LucideIcons.eye
+                                  : LucideIcons.eyeOff,
+                              color: Colors.grey,
+                            ),
                           ),
-                          onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                          onPressed: () => setState(
+                            () => _obscureConfirmPassword =
+                                !_obscureConfirmPassword,
+                          ),
                         ),
                       ),
                     ),
@@ -750,7 +955,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           width: 24,
                           child: Checkbox(
                             value: _agreedToTerms,
-                            onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                            onChanged: (v) =>
+                                setState(() => _agreedToTerms = v ?? false),
                             activeColor: AppTheme.primary,
                           ),
                         ),
@@ -758,15 +964,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Expanded(
                           child: Wrap(
                             children: [
-                              Text('auth.iAgreeTo'.tr(), style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
-                              InkWell(
-                                onTap: () => _openUrl('https://thulobazaar.com.np/en/support/terms-of-service'),
-                                child: Text('auth.termsAndConditions'.tr(), style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                              Text(
+                                'auth.iAgreeTo'.tr(),
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: Colors.grey[700],
+                                ),
                               ),
-                              Text('auth.and'.tr(), style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700])),
                               InkWell(
-                                onTap: () => _openUrl('https://thulobazaar.com.np/en/support/privacy-policy'),
-                                child: Text('auth.privacyPolicy'.tr(), style: GoogleFonts.inter(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                                onTap: () => _openUrl(
+                                  'https://thulobazaar.com.np/en/support/terms-of-service',
+                                ),
+                                child: Text(
+                                  'auth.termsAndConditions'.tr(),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: AppTheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                'auth.and'.tr(),
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () => _openUrl(
+                                  'https://thulobazaar.com.np/en/support/privacy-policy',
+                                ),
+                                child: Text(
+                                  'auth.privacyPolicy'.tr(),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: AppTheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -778,48 +1016,84 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading || !_agreedToTerms ? null : _handleCreateAccount,
+                        onPressed: _isLoading || !_agreedToTerms
+                            ? null
+                            : _handleCreateAccount,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.success,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         child: _isLoading
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : Text(
                                 'auth.createAccount'.tr(),
-                                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
                               ),
                       ),
                     ),
                   ],
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(child: Divider(color: Colors.grey[200])),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('auth.alreadyHaveAccount'.tr(), style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                        child: Text(
+                          'auth.alreadyHaveAccount'.tr(),
+                          style: GoogleFonts.inter(
+                            color: Colors.grey[400],
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                       Expanded(child: Divider(color: Colors.grey[200])),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => SignInScreen(onSuccess: widget.onSuccess)));
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                SignInScreen(onSuccess: widget.onSuccess),
+                          ),
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(color: AppTheme.primary),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: Text('auth.signInInstead'.tr(), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                      child: Text(
+                        'auth.signInInstead'.tr(),
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -844,11 +1118,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
             decoration: BoxDecoration(
               border: Border(right: BorderSide(color: Colors.grey[300]!)),
               color: Colors.grey[50],
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                bottomLeft: Radius.circular(8),
+              ),
             ),
             child: Text(
               'auth.phonePrefix'.tr(),
-              style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: AppTheme.textDark, fontSize: 15),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textDark,
+                fontSize: 15,
+              ),
             ),
           ),
           Expanded(
