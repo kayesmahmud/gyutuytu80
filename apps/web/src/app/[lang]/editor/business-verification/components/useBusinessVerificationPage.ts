@@ -52,6 +52,9 @@ export function useBusinessVerificationPage(lang: string) {
           type: v.type,
           shopSlug: v.shopSlug,
           rejectionReason: v.rejectionReason,
+          reviewedAt: v.reviewedAt,
+          reviewedByName: v.reviewedByName,
+          reviewedByRole: v.reviewedByRole,
         }));
         setVerifications(businessVerifications);
       } else {

@@ -71,11 +71,15 @@ export async function GET(request: NextRequest) {
       payment_reference: true,
       payment_status: true,
       rejection_reason: true,
+      reviewed_at: true,
       users_business_verification_requests_user_idTousers: {
         select: {
           email: true,
           full_name: true,
         },
+      },
+      users_business_verification_requests_reviewed_byTousers: {
+        select: { full_name: true, role: true },
       },
     };
 
@@ -95,10 +99,14 @@ export async function GET(request: NextRequest) {
       payment_reference: true,
       payment_status: true,
       rejection_reason: true,
+      reviewed_at: true,
       users_individual_verification_requests_user_idTousers: {
         select: {
           email: true,
         },
+      },
+      users_individual_verification_requests_reviewed_byTousers: {
+        select: { full_name: true, role: true },
       },
     };
 
@@ -153,6 +161,9 @@ export async function GET(request: NextRequest) {
       rejectionReason: bv.rejection_reason,
       email: bv.users_business_verification_requests_user_idTousers?.email,
       fullName: bv.users_business_verification_requests_user_idTousers?.full_name,
+      reviewedAt: bv.reviewed_at,
+      reviewedByName: bv.users_business_verification_requests_reviewed_byTousers?.full_name || null,
+      reviewedByRole: bv.users_business_verification_requests_reviewed_byTousers?.role || null,
       type: 'business',
     }));
 
@@ -174,6 +185,9 @@ export async function GET(request: NextRequest) {
       paymentStatus: iv.payment_status,
       rejectionReason: iv.rejection_reason,
       email: iv.users_individual_verification_requests_user_idTousers?.email,
+      reviewedAt: iv.reviewed_at,
+      reviewedByName: iv.users_individual_verification_requests_reviewed_byTousers?.full_name || null,
+      reviewedByRole: iv.users_individual_verification_requests_reviewed_byTousers?.role || null,
       type: 'individual',
     }));
 

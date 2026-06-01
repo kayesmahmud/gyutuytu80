@@ -82,6 +82,12 @@ function HeaderSection({ verification }: { verification: BusinessVerification })
             year: 'numeric',
           })}
         </div>
+        {verification.reviewedByName && (
+          <div className="mt-1">
+            <span className="text-gray-400">By:</span>{' '}
+            <span className="font-medium text-gray-700">{verification.reviewedByName}</span>
+          </div>
+        )}
       </div>
     </div>
   );

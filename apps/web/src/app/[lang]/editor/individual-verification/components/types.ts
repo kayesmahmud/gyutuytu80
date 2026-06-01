@@ -20,6 +20,9 @@ export interface IndividualVerification {
   idDocumentBack?: string;
   selfieWithId?: string;
   rejectionReason?: string;
+  reviewedAt?: string | null;
+  reviewedByName?: string | null;
+  reviewedByRole?: string | null;
 }
 
 export type TabStatus = 'pending' | 'rejected' | 'approved';

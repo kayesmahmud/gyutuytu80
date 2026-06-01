@@ -56,6 +56,9 @@ export function useIndividualVerificationPage(lang: string) {
           idDocumentBack: v.idDocumentBack,
           selfieWithId: v.selfieWithId,
           rejectionReason: v.rejectionReason,
+          reviewedAt: v.reviewedAt,
+          reviewedByName: v.reviewedByName,
+          reviewedByRole: v.reviewedByRole,
         }));
         setVerifications(individualVerifications);
       } else {
