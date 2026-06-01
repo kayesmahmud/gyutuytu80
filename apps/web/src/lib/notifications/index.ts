@@ -8,4 +8,4 @@ export {
 } from './notifications';
 
 // Re-export SMS types for convenience
-export type { NotificationType } from '../sms';
+export type { NotificationType } from '@thulobazaar/auth-core';

@@ -1,17 +1,28 @@
 /**
- * SMS Service - AakashSMS integration for Nepal
- * Migrated from Next.js to Express for mobile app support
+ * SMS Service - AakashSMS integration for Nepal.
+ *
+ * Single source of truth shared by the Express API and the Next.js web app.
+ * Reads AAKASH_SMS_TOKEN / SMS_MOCK / NODE_ENV from the environment, so it
+ * behaves identically in both runtimes.
  */
 
 import { prisma } from '@thulobazaar/database';
 import fs from 'fs';
-import path from 'path';
 
 const LOG_FILE = '/tmp/sms_debug.log';
 
+/**
+ * Best-effort debug log. Writing to /tmp can fail on read-only/serverless
+ * filesystems (e.g. some Next.js hosts), so failures here must never break the
+ * OTP flow.
+ */
 function logToFile(message: string) {
-  const timestamp = new Date().toISOString();
-  fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
+  try {
+    const timestamp = new Date().toISOString();
+    fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
+  } catch {
+    // ignore — logging is non-critical
+  }
 }
 
 const AAKASH_SMS_API_URL = 'https://sms.aakashsms.com/sms/v3/send';
@@ -23,7 +34,7 @@ interface SendSmsResponse {
 }
 
 /**
- * Validate Nepali phone number format
+ * Validate Nepali phone number format.
  * Valid formats: 98XXXXXXXX, 97XXXXXXXX (10 digits starting with 97 or 98)
  */
 export function validateNepaliPhone(phone: string): boolean {
@@ -32,7 +43,7 @@ export function validateNepaliPhone(phone: string): boolean {
 }
 
 /**
- * Format phone number to standard 10-digit format
+ * Format phone number to standard 10-digit format.
  */
 export function formatPhoneNumber(phone: string): string {
   const cleanPhone = phone.replace(/\D/g, '');
@@ -44,7 +55,7 @@ export function formatPhoneNumber(phone: string): string {
 }
 
 /**
- * Generate a 6-digit OTP code
+ * Generate a 6-digit OTP code.
  */
 export function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -65,7 +76,7 @@ export type NotificationType =
   | 'ad_rejected';
 
 /**
- * Get SMS message based on purpose
+ * Get SMS message based on purpose.
  */
 function getOtpMessage(otp: string, purpose: OtpPurpose): string {
   switch (purpose) {
@@ -113,7 +124,7 @@ const defaultMessages: Record<NotificationType, string> = {
 };
 
 /**
- * Get notification message based on type (fetches custom template from DB if available)
+ * Get notification message based on type (fetches custom template from DB if available).
  */
 async function getNotificationMessage(type: NotificationType, details?: { reason?: string; userName?: string }): Promise<string> {
   const name = details?.userName || 'User';
@@ -138,7 +149,7 @@ async function getNotificationMessage(type: NotificationType, details?: { reason
 }
 
 /**
- * Send OTP SMS via AakashSMS API
+ * Send OTP SMS via AakashSMS API.
  */
 export async function sendOtpSms(
   phone: string,
@@ -147,7 +158,6 @@ export async function sendOtpSms(
 ): Promise<SendSmsResponse> {
   const authToken = process.env.AAKASH_SMS_TOKEN;
   logToFile(`Attempting to send OTP to ${phone} (Purpose: ${purpose})`);
-  console.log(`Log file path: ${LOG_FILE}`);
 
   // Local-dev bypass: AakashSMS IP-whitelists callers, so a dev machine can't
   // deliver OTPs even with a valid token. Setting SMS_MOCK=true skips the real
@@ -233,14 +243,14 @@ export async function sendOtpSms(
 }
 
 /**
- * Calculate OTP expiry time (10 minutes from now)
+ * Calculate OTP expiry time (10 minutes from now).
  */
 export function getOtpExpiry(): Date {
   return new Date(Date.now() + 10 * 60 * 1000);
 }
 
 /**
- * Send notification SMS via AakashSMS API
+ * Send notification SMS via AakashSMS API.
  */
 export async function sendNotificationSms(
   phone: string,

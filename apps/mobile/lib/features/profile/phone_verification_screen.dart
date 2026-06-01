@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile/core/api/auth_client.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:mobile/core/utils/localized_helpers.dart';
 
 class PhoneVerificationScreen extends StatefulWidget {
   final VoidCallback? onVerified;
@@ -70,25 +69,35 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         phone,
         purpose: 'phone_verification',
       );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
       if (result['success'] == true) {
-        setState(() {
-          _otpSent = true;
-          _isLoading = false;
-        });
+        setState(() => _otpSent = true);
         _startTimer();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                context.locale.languageCode == 'ne'
-                    ? 'OTP सफलतापूर्वक पठाइयो'
-                    : 'OTP sent successfully',
-              ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'OTP सफलतापूर्वक पठाइयो'
+                  : 'OTP sent successfully',
             ),
-          );
-        }
+          ),
+        );
       } else {
-        throw Exception(result['message']);
+        // Server rejected before sending an OTP — e.g. the number is already in
+        // use, on cooldown, or invalid. Show its message as-is (no "Exception:"
+        // wrapper) so the user can act on it (try another number, wait, etc.).
+        final message = result['message'] as String? ??
+            (context.locale.languageCode == 'ne'
+                ? 'OTP पठाउन असफल भयो'
+                : 'Failed to send OTP');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red[600],
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -97,8 +106,8 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
           SnackBar(
             content: Text(
               context.locale.languageCode == 'ne'
-                  ? 'OTP पठाउन असफल: $e'
-                  : 'Failed to send OTP: $e',
+                  ? 'OTP पठाउन असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।'
+                  : 'Failed to send OTP. Please try again.',
             ),
           ),
         );

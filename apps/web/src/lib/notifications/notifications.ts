@@ -3,7 +3,7 @@
  * Handles sending notifications via Email and SMS
  */
 
-import { sendNotificationSms, NotificationType, validateNepaliPhone } from '../sms/aakashSms';
+import { sendNotificationSms, NotificationType, validateNepaliPhone } from '@thulobazaar/auth-core';
 import nodemailer from 'nodemailer';
 import { prisma } from '@thulobazaar/database';
 

@@ -13,8 +13,16 @@ import {
   generateOtp,
   sendOtpSms,
   getOtpExpiry,
+  validateVerificationToken,
+  MAX_VERIFY_ATTEMPTS,
   type OtpPurpose,
-} from '../lib/sms.js';
+} from '@thulobazaar/auth-core';
+
+// OTP, phone-verification and verification-token logic now live in the shared
+// @thulobazaar/auth-core package (single source of truth with the web app).
+// Re-exported here so the API's routes keep importing them from the auth
+// service unchanged.
+export { sendOtp, verifyOtp, updatePhone } from '@thulobazaar/auth-core';
 import { generateAccessToken, generateRefreshToken } from '../lib/token.js';
 import { getBooleanSetting } from './adLimits.service.js';
 import { OAuth2Client } from 'google-auth-library';
@@ -30,10 +38,9 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Constants
 // ============================================================================
 
-const MAX_OTP_ATTEMPTS = 4;
-const OTP_COOLDOWN_SECONDS = 60;
-const MAX_VERIFY_ATTEMPTS = 5;
-const VERIFICATION_TOKEN_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
+// MAX_VERIFY_ATTEMPTS is imported from @thulobazaar/auth-core (used by the
+// account-deletion OTP flow below); OTP request/cooldown/token constants now
+// live in that package alongside the logic that uses them.
 const RECOVERY_DAYS = 30;
 
 // ============================================================================
@@ -41,22 +48,6 @@ const RECOVERY_DAYS = 30;
 // ============================================================================
 
 export type OtpPurposeType = 'registration' | 'login' | 'password_reset' | 'phone_verification' | 'account_deletion';
-
-export interface SendOtpResult {
-  success: boolean;
-  error?: string;
-  cooldownRemaining?: number;
-  identifier?: string;
-  expiresIn?: number;
-}
-
-export interface VerifyOtpResult {
-  success: boolean;
-  error?: string;
-  remainingAttempts?: number;
-  identifier?: string;
-  verificationToken?: string;
-}
 
 export interface LoginResult {
   success: boolean;
@@ -92,253 +83,6 @@ export interface RegisterResult {
     phoneVerified: boolean | null;
     role: string | null;
   };
-}
-
-// ============================================================================
-// OTP Functions
-// ============================================================================
-
-export async function sendOtp(phone: string, purpose: OtpPurposeType): Promise<SendOtpResult> {
-  const formattedPhone = formatPhoneNumber(phone);
-
-  // Validate phone number
-  if (!validateNepaliPhone(formattedPhone)) {
-    return { success: false, error: 'Invalid Nepali phone number. Must be 10 digits starting with 97 or 98.' };
-  }
-
-  // Purpose-specific validations
-  if (purpose === 'registration') {
-    const existingUser = await prisma.users.findFirst({
-      where: { phone: formattedPhone, phone_verified: true },
-    });
-    if (existingUser) {
-      return { success: false, error: 'This phone number is already registered' };
-    }
-  }
-
-  if (purpose === 'login') {
-    const existingUser = await prisma.users.findFirst({
-      where: { phone: formattedPhone, phone_verified: true, is_active: true },
-    });
-    if (!existingUser) {
-      return { success: false, error: 'No account found with this phone number' };
-    }
-    if (existingUser.is_suspended) {
-      return { success: false, error: 'Your account has been suspended. Please contact support.' };
-    }
-  }
-
-  if (purpose === 'password_reset') {
-    const existingUser = await prisma.users.findFirst({
-      where: { phone: formattedPhone, is_active: true },
-    });
-    if (!existingUser) {
-      return { success: false, error: 'No account found with this phone number' };
-    }
-    if (existingUser.is_suspended) {
-      return { success: false, error: 'Your account has been suspended. Please contact support.' };
-    }
-  }
-
-  // Check cooldown
-  const recentOtp = await prisma.phone_otps.findFirst({
-    where: {
-      phone: formattedPhone,
-      purpose,
-      created_at: { gte: new Date(Date.now() - OTP_COOLDOWN_SECONDS * 1000) },
-    },
-    orderBy: { created_at: 'desc' },
-  });
-
-  if (recentOtp) {
-    const secondsRemaining = Math.ceil(
-      (OTP_COOLDOWN_SECONDS * 1000 - (Date.now() - recentOtp.created_at.getTime())) / 1000
-    );
-    return {
-      success: false,
-      error: `Please wait ${secondsRemaining} seconds before requesting a new OTP`,
-      cooldownRemaining: secondsRemaining,
-    };
-  }
-
-  // Check max attempts in last hour
-  const recentAttempts = await prisma.phone_otps.count({
-    where: {
-      phone: formattedPhone,
-      purpose,
-      created_at: { gte: new Date(Date.now() - 60 * 60 * 1000) },
-    },
-  });
-
-  if (recentAttempts >= MAX_OTP_ATTEMPTS) {
-    return { success: false, error: 'Too many OTP requests. Please try again after 1 hour.' };
-  }
-
-  // Invalidate previous OTPs
-  await prisma.phone_otps.updateMany({
-    where: { phone: formattedPhone, purpose, is_used: false },
-    data: { is_used: true },
-  });
-
-  // Generate and save new OTP
-  const otp = generateOtp();
-  const expiresAt = getOtpExpiry();
-
-  await prisma.phone_otps.create({
-    data: {
-      phone: formattedPhone,
-      otp_code: otp,
-      purpose,
-      expires_at: expiresAt,
-    },
-  });
-
-  // Send OTP via SMS
-  const smsResult = await sendOtpSms(formattedPhone, otp, purpose as OtpPurpose);
-
-  if (!smsResult.success) {
-    console.error('Failed to send OTP SMS:', smsResult.error);
-    return { success: false, error: 'Failed to send OTP. Please try again.' };
-  }
-
-  console.log(`📱 OTP sent to ${formattedPhone} for ${purpose}`);
-
-  return {
-    success: true,
-    identifier: formattedPhone,
-    expiresIn: 600, // 10 minutes
-  };
-}
-
-export async function verifyOtp(phone: string, otp: string, purpose: OtpPurposeType): Promise<VerifyOtpResult> {
-  const formattedPhone = formatPhoneNumber(phone);
-
-  // Find valid OTP
-  const otpRecord = await prisma.phone_otps.findFirst({
-    where: {
-      phone: formattedPhone,
-      purpose,
-      is_used: false,
-      expires_at: { gte: new Date() },
-    },
-    orderBy: { created_at: 'desc' },
-  });
-
-  if (!otpRecord) {
-    return { success: false, error: 'OTP expired or not found. Please request a new OTP.' };
-  }
-
-  // Check max attempts
-  if (otpRecord.attempts >= MAX_VERIFY_ATTEMPTS) {
-    await prisma.phone_otps.update({
-      where: { id: otpRecord.id },
-      data: { is_used: true },
-    });
-    return { success: false, error: 'Too many failed attempts. Please request a new OTP.' };
-  }
-
-  // Verify OTP code
-  if (otpRecord.otp_code !== otp) {
-    await prisma.phone_otps.update({
-      where: { id: otpRecord.id },
-      data: { attempts: { increment: 1 } },
-    });
-
-    const remainingAttempts = MAX_VERIFY_ATTEMPTS - otpRecord.attempts - 1;
-    return {
-      success: false,
-      error: `Invalid OTP. ${remainingAttempts} attempts remaining.`,
-      remainingAttempts,
-    };
-  }
-
-  // Mark OTP as used (except for password_reset which needs it for the next step)
-  if (purpose !== 'password_reset') {
-    await prisma.phone_otps.update({
-      where: { id: otpRecord.id },
-      data: { is_used: true },
-    });
-  }
-
-  console.log(`✅ OTP verified for ${formattedPhone} (${purpose})`);
-
-  // Generate HMAC-signed verification token (format: base64(payload).hmac)
-  const verificationToken = signVerificationToken({
-    identifier: formattedPhone,
-    purpose,
-    verifiedAt: Date.now(),
-    expiresAt: Date.now() + VERIFICATION_TOKEN_EXPIRY_MS,
-  });
-
-  return {
-    success: true,
-    identifier: formattedPhone,
-    verificationToken,
-  };
-}
-
-// ============================================================================
-// Verification Token Functions
-// ============================================================================
-
-// Token format: base64(payload).<hmac-sha256>
-// Signing prevents clients from forging tokens with a different phone/purpose.
-function signVerificationToken(payload: object): string {
-  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64');
-  const sig = crypto
-    .createHmac('sha256', config.SESSION_SECRET)
-    .update(encodedPayload)
-    .digest('hex');
-  return `${encodedPayload}.${sig}`;
-}
-
-function verifyAndDecodeToken(token: string): Record<string, unknown> | null {
-  const dotIndex = token.lastIndexOf('.');
-  if (dotIndex === -1) return null;
-
-  const encodedPayload = token.slice(0, dotIndex);
-  const receivedSig = token.slice(dotIndex + 1);
-  const expectedSig = crypto
-    .createHmac('sha256', config.SESSION_SECRET)
-    .update(encodedPayload)
-    .digest('hex');
-
-  // Constant-time comparison to prevent timing attacks
-  if (!crypto.timingSafeEqual(Buffer.from(receivedSig, 'hex'), Buffer.from(expectedSig, 'hex'))) {
-    return null;
-  }
-
-  return JSON.parse(Buffer.from(encodedPayload, 'base64').toString());
-}
-
-export function validateVerificationToken(
-  token: string,
-  expectedPhone: string,
-  expectedPurpose: OtpPurposeType
-): { valid: boolean; error?: string } {
-  try {
-    const tokenData = verifyAndDecodeToken(token);
-
-    if (!tokenData) {
-      return { valid: false, error: 'Invalid token signature' };
-    }
-
-    if (tokenData.identifier !== expectedPhone) {
-      return { valid: false, error: 'Token mismatch' };
-    }
-
-    if (tokenData.purpose !== expectedPurpose) {
-      return { valid: false, error: 'Invalid token purpose' };
-    }
-
-    if (Date.now() > (tokenData.expiresAt as number)) {
-      return { valid: false, error: 'Token expired' };
-    }
-
-    return { valid: true };
-  } catch {
-    return { valid: false, error: 'Invalid verification token' };
-  }
 }
 
 // ============================================================================
@@ -830,34 +574,6 @@ export async function changePassword(userId: number, currentPassword: string, ne
   await prisma.users.update({
     where: { id: userId },
     data: { password_hash: newHash },
-  });
-
-  return { success: true };
-}
-
-export async function updatePhone(userId: number, phone: string, verificationToken: string) {
-  const formattedPhone = formatPhoneNumber(phone);
-
-  const tokenValidation = validateVerificationToken(verificationToken, formattedPhone, 'phone_verification');
-  if (!tokenValidation.valid) {
-    return { success: false, error: tokenValidation.error || 'Invalid verification' };
-  }
-
-  const existing = await prisma.users.findFirst({
-    where: { phone: formattedPhone, phone_verified: true, id: { not: userId } },
-  });
-
-  if (existing) {
-    return { success: false, error: 'Phone number already in use' };
-  }
-
-  await prisma.users.update({
-    where: { id: userId },
-    data: {
-      phone: formattedPhone,
-      phone_verified: true,
-      phone_verified_at: new Date(),
-    },
   });
 
   return { success: true };

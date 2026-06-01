@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Skip TS checking during build — handled separately in CI via tsc --noEmit
   typescript: { ignoreBuildErrors: true },
-  transpilePackages: ['@thulobazaar/types', '@thulobazaar/utils', '@thulobazaar/api-client'],
+  transpilePackages: ['@thulobazaar/types', '@thulobazaar/utils', '@thulobazaar/api-client', '@thulobazaar/auth-core'],
   // Allow dev requests from network IP for mobile testing
   allowedDevOrigins: ['192.168.0.114'],
   // Empty turbopack config to silence Next.js 16 warning about webpack config
