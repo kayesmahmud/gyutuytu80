@@ -54,20 +54,9 @@ export async function POST(
       }
     }
 
-    const newStatus = action === 'approve' ? 'approved' : 'rejected';
-
-    // Update verification request
-    const verificationRequest = await prisma.business_verification_requests.update({
-      where: {
-        id: requestId,
-        status: 'pending',
-      },
-      data: {
-        status: newStatus,
-        rejection_reason: action === 'reject' ? reason : null,
-        reviewed_by: admin.userId,
-        reviewed_at: new Date(),
-      },
+    // Load the request and make sure it is still pending before mutating anything
+    const verificationRequest = await prisma.business_verification_requests.findUnique({
+      where: { id: requestId },
       select: {
         id: true,
         user_id: true,
@@ -78,23 +67,34 @@ export async function POST(
       },
     });
 
+    if (!verificationRequest || verificationRequest.status !== 'pending') {
+      return NextResponse.json(
+        { success: false, message: 'Verification request not found or already processed' },
+        { status: 404 }
+      );
+    }
+
     // If approved, update user's profile to business account
     if (action === 'approve') {
-      // Generate unique shop slug
-      const baseSlug = verificationRequest.business_name
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .trim();
+      // Business name should always be present, but guard anyway so a missing
+      // value can never crash the approval (root cause of orphaned approvals).
+      const businessName = (verificationRequest.business_name || '').trim();
 
-      // Check for slug collision
+      const baseSlug =
+        businessName
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim() || `business-${verificationRequest.user_id}`;
+
+      // Check for slug collision (ignore the user being verified)
       let shopSlug = baseSlug;
       let counter = 1;
 
       while (true) {
         const existingUser = await prisma.users.findFirst({
-          where: { shop_slug: shopSlug },
+          where: { shop_slug: shopSlug, id: { not: verificationRequest.user_id } },
           select: { id: true },
         });
 
@@ -110,27 +110,37 @@ export async function POST(
       const durationDays = verificationRequest.duration_days || 365; // Default to 1 year
       const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
-      // Update user to business account
-      await prisma.users.update({
-        where: { id: verificationRequest.user_id },
-        data: {
-          account_type: 'business',
-          business_verification_status: 'approved',
-          business_verified_at: new Date(),
-          business_verification_expires_at: expiresAt,
-          business_name: verificationRequest.business_name,
-          shop_slug: shopSlug,
-          full_name: verificationRequest.business_name,
-        },
-      });
+      // Atomic: approve the request AND upgrade the user together, or neither.
+      // Prevents the partial-commit that left requests "approved" but users not verified.
+      await prisma.$transaction([
+        prisma.business_verification_requests.update({
+          where: { id: requestId, status: 'pending' },
+          data: {
+            status: 'approved',
+            rejection_reason: null,
+            reviewed_by: admin.userId,
+            reviewed_at: new Date(),
+          },
+        }),
+        prisma.users.update({
+          where: { id: verificationRequest.user_id },
+          data: {
+            account_type: 'business',
+            business_verification_status: 'approved',
+            business_verified_at: new Date(),
+            business_verification_expires_at: expiresAt,
+            ...(businessName ? { business_name: businessName, full_name: businessName } : {}),
+            shop_slug: shopSlug,
+          },
+        }),
+      ]);
 
       console.log(
-        `✅ Business verification approved: ${verificationRequest.business_name} (ID: ${requestId})`
+        `✅ Business verification approved: ${businessName || `business-${verificationRequest.user_id}`} (ID: ${requestId})`
       );
       console.log(`   Shop URL: /shop/${shopSlug}`);
       console.log(`   Duration: ${durationDays} days (expires: ${expiresAt.toISOString()})`);
       console.log(`   Payment Status: ${verificationRequest.payment_status || 'N/A'}`);
-      console.log(`   Profile name updated and locked to: ${verificationRequest.business_name}`);
 
       // Send notification to user (don't await to avoid blocking response)
       sendNotificationByUserId(
@@ -138,6 +148,17 @@ export async function POST(
         'business_verification_approved'
       ).catch((err) => console.error('Failed to send approval notification:', err));
     } else {
+      // Reject: single write, no user mutation
+      await prisma.business_verification_requests.update({
+        where: { id: requestId, status: 'pending' },
+        data: {
+          status: 'rejected',
+          rejection_reason: reason,
+          reviewed_by: admin.userId,
+          reviewed_at: new Date(),
+        },
+      });
+
       console.log(
         `❌ Business verification rejected: Request ID ${requestId}, Reason: ${reason}`
       );
@@ -158,7 +179,7 @@ export async function POST(
           id: verificationRequest.id,
           userId: verificationRequest.user_id,
           businessName: verificationRequest.business_name,
-          status: verificationRequest.status,
+          status: action === 'approve' ? 'approved' : 'rejected',
         },
       },
       { status: 200 }
