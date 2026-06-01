@@ -109,6 +109,31 @@ export async function permanentDeleteAd(
 }
 
 /**
+ * A single entry in an ad's moderation history
+ */
+export interface AdHistoryEntry {
+  id: number;
+  action: string;
+  actorId: number;
+  actorType: string;
+  actorName: string | null;
+  actorEmail: string | null;
+  reason: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+/**
+ * Get the full moderation history (who approved/rejected/suspended/etc.) for one ad
+ */
+export async function getAdHistory(
+  adId: number,
+  token?: string
+): Promise<ApiResponse<AdHistoryEntry[]>> {
+  return apiRequest<ApiResponse<AdHistoryEntry[]>>(`/api/editor/ads/${adId}/history`, { token });
+}
+
+/**
  * Get reported ads
  * Generic T allows callers to specify their own detailed type
  */

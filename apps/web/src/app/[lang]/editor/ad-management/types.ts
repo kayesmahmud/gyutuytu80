@@ -16,6 +16,9 @@ export interface Ad {
   statusReason?: string;
   suspendedUntil?: string | null;
   slug?: string;
+  reviewedByName?: string | null;
+  reviewedByRole?: string | null;
+  deletedByName?: string | null;
 }
 
 export type TabStatus = 'pending' | 'approved' | 'rejected' | 'suspended' | 'deleted' | 'all';
@@ -42,5 +45,8 @@ export function transformAd(ad: any): Ad {
     statusReason: ad.status_reason || ad.statusReason,
     suspendedUntil: ad.suspended_until || ad.suspendedUntil,
     slug: ad.slug,
+    reviewedByName: ad.reviewedByName ?? ad.reviewed_by_name ?? null,
+    reviewedByRole: ad.reviewedByRole ?? ad.reviewed_by_role ?? null,
+    deletedByName: ad.deletedByName ?? ad.deleted_by_name ?? null,
   };
 }

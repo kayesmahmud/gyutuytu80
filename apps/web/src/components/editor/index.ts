@@ -1,6 +1,7 @@
 export { RejectAdModal } from './RejectAdModal';
 export { SuspendAdModal } from './SuspendAdModal';
 export { PermanentDeleteAdModal } from './PermanentDeleteAdModal';
+export { AdHistoryModal } from './AdHistoryModal';
 export { EditorBadge } from './EditorBadge';
 export { EditorEmptyState } from './EditorEmptyState';
 export { EditorLoadingScreen } from './EditorLoadingScreen';

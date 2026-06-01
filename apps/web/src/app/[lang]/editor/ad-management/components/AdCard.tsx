@@ -9,6 +9,7 @@ import {
   RotateCcw,
   AlertTriangle,
   Eye,
+  History,
 } from 'lucide-react';
 import { getStatusBadge, getAvailableActions } from '@/utils/editorUtils';
 import { getImageUrl } from '@/lib/images/imageUrl';
@@ -27,6 +28,7 @@ interface AdCardProps {
   onReject: (ad: Ad) => void;
   onSuspend: (ad: Ad) => void;
   onPermanentDelete: (ad: Ad) => void;
+  onHistory: (ad: Ad) => void;
 }
 
 export default function AdCard({
@@ -36,6 +38,7 @@ export default function AdCard({
   onReject,
   onSuspend,
   onPermanentDelete,
+  onHistory,
 }: AdCardProps) {
   const availableActions = getAvailableActions(ad);
 
@@ -74,9 +77,19 @@ export default function AdCard({
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(ad.status)}`}>
                     {ad.status.toUpperCase()}
                   </span>
+                  {ad.reviewedByName && (
+                    <span className="text-xs text-gray-500">
+                      By: <span className="font-medium text-gray-700">{ad.reviewedByName}</span>
+                    </span>
+                  )}
                   {ad.deletedAt && (
                     <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-gray-100 text-gray-800 border-gray-200">
                       DELETED
+                    </span>
+                  )}
+                  {ad.deletedAt && ad.deletedByName && (
+                    <span className="text-xs text-gray-500">
+                      By: <span className="font-medium text-gray-700">{ad.deletedByName}</span>
                     </span>
                   )}
                 </div>
@@ -142,6 +155,14 @@ export default function AdCard({
               >
                 <Eye size={16} />
                 View Details
+              </button>
+
+              <button
+                onClick={() => onHistory(ad)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+              >
+                <History size={16} />
+                History
               </button>
 
               {availableActions.includes('approve') && (

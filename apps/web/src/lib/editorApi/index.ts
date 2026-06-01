@@ -81,10 +81,12 @@ export {
   suspendAd,
   unsuspendAd,
   permanentDeleteAd,
+  getAdHistory,
   getReportedAds,
   getReportedAdsCount,
   dismissReport,
 } from './ads';
+export type { AdHistoryEntry } from './ads';
 
 // ============================================
 // Verifications Functions

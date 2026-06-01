@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/admin';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { getEditorNavSections } from '@/lib/navigation';
 import { useAdActions } from '@/hooks/useAdActions';
-import { RejectAdModal, SuspendAdModal, PermanentDeleteAdModal } from '@/components/editor';
+import { RejectAdModal, SuspendAdModal, PermanentDeleteAdModal, AdHistoryModal } from '@/components/editor';
 import { AdTabs, AdSearchBar, AdsList, Pagination } from './components';
 import { useAdManagement } from './useAdManagement';
 import type { Ad, TabStatus } from './types';
@@ -61,6 +61,7 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   const handleLogout = useCallback(async () => {
     await logout();
@@ -106,10 +107,16 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
     setShowPermanentDeleteModal(true);
   };
 
+  const openHistoryModal = (ad: Ad) => {
+    setSelectedAd(ad);
+    setShowHistoryModal(true);
+  };
+
   const closeModals = () => {
     setShowRejectModal(false);
     setShowSuspendModal(false);
     setShowPermanentDeleteModal(false);
+    setShowHistoryModal(false);
     setSelectedAd(null);
   };
 
@@ -163,6 +170,7 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
           onReject={openRejectModal}
           onSuspend={openSuspendModal}
           onPermanentDelete={openPermanentDeleteModal}
+          onHistory={openHistoryModal}
         />
 
         {/* Pagination */}
@@ -200,6 +208,14 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
             closeModals();
           }}
           onCancel={closeModals}
+        />
+      )}
+
+      {showHistoryModal && selectedAd && (
+        <AdHistoryModal
+          adId={selectedAd.id}
+          adTitle={selectedAd.title}
+          onClose={closeModals}
         />
       )}
     </DashboardLayout>

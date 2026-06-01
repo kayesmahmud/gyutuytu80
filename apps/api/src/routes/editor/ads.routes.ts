@@ -103,6 +103,12 @@ router.get(
               individual_verified: true,
             },
           },
+          users_ads_reviewed_byTousers: {
+            select: { id: true, full_name: true, role: true },
+          },
+          users_ads_deleted_byTousers: {
+            select: { id: true, full_name: true, role: true },
+          },
           ad_images: { take: 1 },
         },
         orderBy: { [sortBy as string]: sortOrder === 'ASC' ? 'asc' : 'desc' },
@@ -130,7 +136,10 @@ router.get(
         createdAt: ad.created_at,
         updatedAt: ad.updated_at,
         reviewedAt: ad.reviewed_at,
+        reviewedByName: ad.users_ads_reviewed_byTousers?.full_name || null,
+        reviewedByRole: ad.users_ads_reviewed_byTousers?.role || null,
         deletedAt: ad.deleted_at,
+        deletedByName: ad.users_ads_deleted_byTousers?.full_name || null,
         categoryId: ad.category_id,
         locationId: ad.location_id,
         categoryName: ad.categories?.name,
