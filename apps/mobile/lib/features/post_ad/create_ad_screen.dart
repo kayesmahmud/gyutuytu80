@@ -10,6 +10,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dio/dio.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile/core/providers/auth_provider.dart';
+import 'package:mobile/features/profile/phone_verification_screen.dart';
 import 'package:mobile/core/widgets/app_cached_image.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
@@ -78,8 +81,12 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   // Contact Data
   final _whatsappController = TextEditingController();
   bool _whatsappSameAsPhone = true;
-  final String _verifiedPhone =
-      "9860887312"; // Mocked for now, should come from user profile
+
+  // Contact phone + verification status come from the logged-in user profile.
+  Map<String, dynamic>? get _authUser => context.read<AuthProvider>().user;
+  String get _verifiedPhone =>
+      (_authUser?['phone'] as String?)?.trim() ?? '';
+  bool get _isPhoneVerified => _authUser?['phoneVerified'] == true;
 
   // Edit mode: track if initial prefill is done (to avoid clearing attributes)
   bool _editPrefillDone = false;
@@ -632,6 +639,14 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   }
 
   Future<void> _submitAd() async {
+    // Phone must be verified before posting (mirrors the web post-ad flow).
+    if (!_isPhoneVerified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('postAd.verifyBeforePost'.tr())),
+      );
+      return;
+    }
+
     // Step 3 valid? WhatsApp check if needed
     if (_whatsappController.text.isEmpty) {
       ScaffoldMessenger.of(
@@ -776,6 +791,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Subscribe to auth changes so the verified badge / warning banner update
+    // immediately after the user verifies their phone.
+    context.watch<AuthProvider>();
+
     if (_isLoading && _categories.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -1627,51 +1646,65 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _verifiedPhone,
+                    _verifiedPhone.isNotEmpty
+                        ? _verifiedPhone
+                        : 'postAd.noPhoneAdded'.tr(),
                     style: GoogleFonts.inter(
                       fontSize: 15,
-                      color: Colors.black87,
+                      color: _verifiedPhone.isNotEmpty
+                          ? Colors.black87
+                          : Colors.grey,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFF10B981).withOpacity(0.3),
+                  // Only show the green "Verified" badge when the user's phone
+                  // is actually verified on their profile.
+                  if (_isPhoneVerified)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF10B981).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            LucideIcons.checkCircle,
+                            size: 12,
+                            color: Color(0xFF10B981),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'common.verified'.tr(),
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: const Color(0xFF047857),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          LucideIcons.checkCircle,
-                          size: 12,
-                          color: Color(0xFF10B981),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'common.verified'.tr(),
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: const Color(0xFF047857),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ],
           ),
         ),
+
+        // Warning banner + CTA when the phone is not verified. Mirrors the web
+        // post-ad flow: posting is blocked until the phone is verified.
+        if (!_isPhoneVerified) ...[
+          const SizedBox(height: 16),
+          _buildPhoneVerificationWarning(),
+        ],
 
         const SizedBox(height: 24),
 
@@ -1748,6 +1781,99 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           ),
       ],
     );
+  }
+
+  // Amber warning shown on the Contact step when the user's phone is not
+  // verified. Includes a CTA to the phone verification screen.
+  Widget _buildPhoneVerificationWarning() {
+    final detail = _verifiedPhone.isNotEmpty
+        ? 'postAd.phoneNotVerifiedWithNumber'.tr(args: [_verifiedPhone])
+        : 'postAd.noPhoneAdded'.tr();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF59E0B)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                LucideIcons.alertTriangle,
+                size: 20,
+                color: Color(0xFFB45309),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'postAd.phoneNotVerifiedTitle'.tr(),
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF92400E),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${'postAd.phoneNotVerifiedMsg'.tr()} $detail',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: const Color(0xFF92400E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _openPhoneVerification,
+              icon: const Icon(LucideIcons.shieldCheck, size: 16),
+              label: Text(
+                'postAd.verifyPhoneCta'.tr(),
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF59E0B),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openPhoneVerification() async {
+    final verified = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            PhoneVerificationScreen(isChanging: _verifiedPhone.isNotEmpty),
+      ),
+    );
+    // The screen pops `true` after a successful verify+save. Reload the profile
+    // so the phone number and verified badge update on this screen.
+    if (verified == true && mounted) {
+      await context.read<AuthProvider>().refreshProfile();
+    }
   }
 
   Widget _buildBottomBar() {

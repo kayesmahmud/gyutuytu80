@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -37,11 +39,24 @@ class _MainNavScreenState extends State<MainNavScreen> {
   final GlobalKey<SearchScreenState> _searchKey = GlobalKey();
   late final Set<int> _visitedTabs;
 
+  // Breadcrumb of NON-Home tabs in visit order (most recent last).
+  // Home is the implicit root: an empty trail means "we're on Home".
+  late final List<int> _tabHistory;
+
+  static const int _homeIndex = 0;
+  // Native bridge to send the Android app to the background (see MainActivity.kt).
+  static const _appControl = MethodChannel('com.thulobazaar.mobile/app_control');
+
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
     _visitedTabs = {widget.initialIndex};
+    // Seed the trail: empty if we open on Home, else the deep-linked tab
+    // sits above Home so back still lands on Home before backgrounding.
+    _tabHistory = widget.initialIndex == _homeIndex
+        ? []
+        : [widget.initialIndex];
 
     // Initialize chat if logged in
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -71,22 +86,31 @@ class _MainNavScreenState extends State<MainNavScreen> {
     });
   }
 
+  // Single entry point for switching tabs — keeps the breadcrumb in sync.
+  void _selectTab(int screenIndex) {
+    setState(() {
+      _visitedTabs.add(screenIndex);
+      if (screenIndex == _homeIndex) {
+        _tabHistory.clear(); // back at the root → collapse the trail
+      } else {
+        _tabHistory
+          ..remove(screenIndex) // dedup: drop any earlier visit...
+          ..add(screenIndex); // ...and push it as the most recent
+      }
+      _selectedIndex = screenIndex;
+    });
+  }
+
   void _handleHomeSearch(String query) {
     if (query.isEmpty) return;
-    setState(() {
-      _visitedTabs.add(1);
-      _selectedIndex = 1;
-    });
+    _selectTab(1);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchKey.currentState?.searchFor(query);
     });
   }
 
   void _handleViewAllAds() {
-    setState(() {
-      _visitedTabs.add(1);
-      _selectedIndex = 1;
-    });
+    _selectTab(1);
   }
 
   void _handleCategoryTap(
@@ -94,10 +118,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
     String categoryName, {
     int? subcategoryId,
   }) {
-    setState(() {
-      _visitedTabs.add(1);
-      _selectedIndex = 1;
-    });
+    _selectTab(1);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchKey.currentState?.filterByCategory(
         categoryId,
@@ -115,11 +136,31 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   void _onItemTapped(int index) {
     if (index == 2) return; // FAB spacer — ignore tap
-    final screenIndex = _navToScreen(index);
-    setState(() {
-      _visitedTabs.add(screenIndex);
-      _selectedIndex = screenIndex;
-    });
+    _selectTab(_navToScreen(index));
+  }
+
+  // Sends the app to the background on Android (no-op elsewhere).
+  // iOS has no back button and forbids programmatic backgrounding (App Store),
+  // so the Platform guard keeps this iOS-safe.
+  Future<void> _moveToBackground() async {
+    if (Platform.isAndroid) {
+      await _appControl.invokeMethod('moveToBackground');
+    }
+  }
+
+  // Decides what the system back button does from the nav shell.
+  // Back must NEVER close the app:
+  //   trail not empty -> step back to the previous tab (Home once it empties).
+  //   on Home         -> send the app to the background (stays alive in Recents).
+  void _handleBackPress() {
+    if (_tabHistory.isNotEmpty) {
+      setState(() {
+        _tabHistory.removeLast();
+        _selectedIndex = _tabHistory.isEmpty ? _homeIndex : _tabHistory.last;
+      });
+      return;
+    }
+    _moveToBackground();
   }
 
   void _navigateToPostAd() {
@@ -246,10 +287,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          // Minimize app to background instead of closing
-          SystemNavigator.pop();
-        }
+        if (!didPop) _handleBackPress();
       },
       child: Scaffold(
         body: IndexedStack(

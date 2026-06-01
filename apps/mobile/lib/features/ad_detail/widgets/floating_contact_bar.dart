@@ -30,9 +30,10 @@ class FloatingContactBar extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, -4)),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
         ],
       ),
       child: Row(
@@ -78,9 +79,7 @@ class FloatingContactBar extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SignInScreen(
-            onSuccess: () => Navigator.pop(context),
-          ),
+          builder: (_) => SignInScreen(onSuccess: () => Navigator.pop(context)),
         ),
       );
       return;
@@ -89,7 +88,13 @@ class FloatingContactBar extends StatelessWidget {
     // Prevent self-messaging
     if (authProvider.userId == ad.userId) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'आफैलाई सन्देश पठाउन मिल्दैन' : 'You cannot message yourself')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'आफैलाई सन्देश पठाउन मिल्दैन'
+                : 'You cannot message yourself',
+          ),
+        ),
       );
       return;
     }
@@ -123,25 +128,43 @@ class FloatingContactBar extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => ChatScreen(
               conversationId: conversation.id,
-              recipientName: (conversation.otherUserName.isNotEmpty && conversation.otherUserName != 'Unknown')
+              recipientName:
+                  (conversation.otherUserName.isNotEmpty &&
+                      conversation.otherUserName != 'Unknown')
                   ? conversation.otherUserName
-                  : (ad.userName ?? (context.locale.languageCode == 'ne' ? 'विक्रेता' : 'Seller')),
+                  : (ad.userName ??
+                        (context.locale.languageCode == 'ne'
+                            ? 'विक्रेता'
+                            : 'Seller')),
               recipientAvatar: avatarUrl,
               adTitle: ad.title,
-              initialMessage: "Hi, I'm interested in \"${ad.title}\"\nhttps://thulobazaar.com.np/en/ad/${ad.slug}",
+              adId: ad.id,
+              otherUserId: conversation.otherUserId,
+              initialMessage:
+                  "Hi, I'm interested in \"${ad.title}\"\nhttps://thulobazaar.com.np/en/ad/${ad.slug}",
             ),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'कुराकानी सुरु गर्न सकिएन' : 'Failed to start conversation')),
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'कुराकानी सुरु गर्न सकिएन'
+                  : 'Failed to start conversation',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context); // Close loading
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: $e')),
+          SnackBar(
+            content: Text(
+              '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: $e',
+            ),
+          ),
         );
       }
     }
@@ -159,8 +182,9 @@ class FloatingContactBar extends StatelessWidget {
           disabledBackgroundColor: bg,
           disabledForegroundColor: Colors.white70,
           elevation: 0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           padding: EdgeInsets.zero,
         ),
         child: Icon(icon, size: 22),
@@ -169,23 +193,29 @@ class FloatingContactBar extends StatelessWidget {
   }
 
   Widget _buildFilledBtn(
-      IconData icon, String label, Color bg, VoidCallback? onTap) {
+    IconData icon,
+    String label,
+    Color bg,
+    VoidCallback? onTap,
+  ) {
     return SizedBox(
       height: 48,
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 18),
-        label: Text(label,
-            style: GoogleFonts.inter(
-                fontSize: 13, fontWeight: FontWeight.w600)),
+        label: Text(
+          label,
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: bg,
           foregroundColor: Colors.white,
           disabledBackgroundColor: bg,
           disabledForegroundColor: Colors.white70,
           elevation: 0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
         ),
       ),
@@ -209,7 +239,9 @@ class FloatingContactBar extends StatelessWidget {
     if (phone == null) return;
     final formatted = _formatWhatsAppNumber(phone);
     final adUrl = 'https://thulobazaar.com.np/en/ad/${ad.slug}';
-    final message = Uri.encodeComponent("Hi, I'm interested in \"${ad.title}\"\n$adUrl");
+    final message = Uri.encodeComponent(
+      "Hi, I'm interested in \"${ad.title}\"\n$adUrl",
+    );
     final uri = Uri.parse('whatsapp://send?phone=+$formatted&text=$message');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

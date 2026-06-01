@@ -283,7 +283,13 @@
     "selectSubcategoryError": "Please select a subcategory",
     "addImageError": "Please add at least one image",
     "selectLocationError": "Please select full location",
-    "validContactError": "Please enter valid contact number"
+    "validContactError": "Please enter valid contact number",
+    "phoneNotVerifiedTitle": "Phone verification required",
+    "phoneNotVerifiedMsg": "To post ads and let buyers contact you, please verify your phone number first.",
+    "phoneNotVerifiedWithNumber": "Your phone {} is not yet verified.",
+    "noPhoneAdded": "You haven't added a phone number yet.",
+    "verifyPhoneCta": "Verify Phone Number",
+    "verifyBeforePost": "Please verify your phone number before posting an ad."
   },
   "messages": {
     "loginToView": "Login to View Messages",

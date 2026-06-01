@@ -174,6 +174,13 @@ class NotificationService {
   /// Get FCM token
   Future<String?> _getToken() async {
     try {
+      // On iOS the FCM token is derived from the APNs device token. If we call
+      // getToken() before APNs has handed us a token, it returns null and the
+      // device never gets registered. Wait for the APNs token first.
+      if (Platform.isIOS) {
+        await _waitForApnsToken();
+      }
+
       _fcmToken = await _firebaseMessaging.getToken();
       if (kDebugMode) developer.log('FCM Token: $_fcmToken', name: 'NotificationService');
 
@@ -188,6 +195,27 @@ class NotificationService {
     } catch (e) {
       if (kDebugMode) developer.log('Error getting FCM token: $e', name: 'NotificationService');
       return null;
+    }
+  }
+
+  /// Wait for the iOS APNs token to become available (retries with backoff).
+  /// Without it, getToken() returns null and no push can ever be delivered.
+  Future<void> _waitForApnsToken() async {
+    const maxAttempts = 5;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      final apnsToken = await _firebaseMessaging.getAPNSToken();
+      if (apnsToken != null) {
+        if (kDebugMode) developer.log('APNs token acquired', name: 'NotificationService');
+        return;
+      }
+      if (kDebugMode) {
+        developer.log('APNs token null (attempt $attempt/$maxAttempts)', name: 'NotificationService');
+      }
+      await Future.delayed(Duration(milliseconds: 500 * attempt));
+    }
+    if (kDebugMode) {
+      developer.log('APNs token unavailable after $maxAttempts attempts — '
+          'check APNs key in Firebase Console & push entitlement', name: 'NotificationService');
     }
   }
 

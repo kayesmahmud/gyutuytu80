@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Disables cloud backup and device-to-device transfer of app data to prevent
+    sensitive auth tokens (flutter_secure_storage) and cached personal data from
+    leaking via Google Drive backups or phone-switching transfers.
+
+    Targets Android 12+ (API 31). Pair with android:allowBackup="false" for <31.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root"/>
+        <exclude domain="database"/>
+        <exclude domain="sharedpref"/>
+        <exclude domain="external"/>
+        <exclude domain="file"/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root"/>
+        <exclude domain="database"/>
+        <exclude domain="sharedpref"/>
+        <exclude domain="external"/>
+        <exclude domain="file"/>
+    </device-transfer>
+</data-extraction-rules>

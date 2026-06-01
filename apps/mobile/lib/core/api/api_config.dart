@@ -6,8 +6,9 @@ class ApiConfig {
   // Production API URL (used in release builds)
   static const String _productionUrl = 'https://api.thulobazaar.com.np/api';
 
-  // Local development IP — both devices must be on the same WiFi network
-  static const String _localIp = '192.168.0.113';
+  // Local development IP — both devices must be on the same WiFi network.
+  // Override per-machine with: flutter run --dart-define=API_URL=http://<your-ip>:5000/api
+  static const String _localIp = '192.168.0.104';
 
   static String get baseUrl {
     // Check for environment override first
