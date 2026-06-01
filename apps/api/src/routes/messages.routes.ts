@@ -7,8 +7,62 @@ import { optimizeImage } from '../middleware/optimizeImage.js';
 import { sendMessagePushNotification } from '../services/pushNotification.js';
 import { isUserOnline } from '../socket/index.js';
 import { containsProfanity, getDetectedWords, censorProfanity } from '../utils/profanityFilter.js';
+import { isBlockedBetween, getBlockStatus } from '../utils/blockCheck.js';
 
 const router = Router();
+
+/**
+ * POST /api/messages/block
+ * Block a user (bidirectional: neither can message the other)
+ */
+router.post(
+  '/block',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const blockedId = parseInt(String(req.body.userId), 10);
+
+    if (!blockedId || Number.isNaN(blockedId)) {
+      return res.status(400).json({ success: false, message: 'userId is required' });
+    }
+    if (blockedId === userId) {
+      return res.status(400).json({ success: false, message: 'You cannot block yourself' });
+    }
+
+    await prisma.blocked_users.upsert({
+      where: { blocker_id_blocked_id: { blocker_id: userId, blocked_id: blockedId } },
+      update: {},
+      create: { blocker_id: userId, blocked_id: blockedId },
+    });
+
+    console.log(`🚫 User ${userId} blocked user ${blockedId}`);
+    res.json({ success: true, message: 'User blocked', data: { blockedByMe: true } });
+  })
+);
+
+/**
+ * DELETE /api/messages/block/:userId
+ * Unblock a previously blocked user
+ */
+router.delete(
+  '/block/:userId',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const blockedId = parseInt(req.params.userId, 10);
+
+    if (!blockedId || Number.isNaN(blockedId)) {
+      return res.status(400).json({ success: false, message: 'Invalid userId' });
+    }
+
+    await prisma.blocked_users.deleteMany({
+      where: { blocker_id: userId, blocked_id: blockedId },
+    });
+
+    console.log(`✅ User ${userId} unblocked user ${blockedId}`);
+    res.json({ success: true, message: 'User unblocked', data: { blockedByMe: false } });
+  })
+);
 
 /**
  * GET /api/messages/conversations
@@ -183,6 +237,12 @@ router.get(
         avatar: p.users.avatar,
       }));
 
+    // Block status relative to the other participant (drives mobile menu + composer)
+    const otherUser = otherParticipants[0];
+    const blockStatus = otherUser
+      ? await getBlockStatus(userId, otherUser.id)
+      : { blockedByMe: false, blockedMe: false };
+
     res.json({
       success: true,
       data: {
@@ -191,6 +251,9 @@ router.get(
           type: conversationData.type,
           title: conversationData.title,
           participants: otherParticipants,
+          otherUserId: otherUser?.id ?? null,
+          blockedByMe: blockStatus.blockedByMe,
+          blockedMe: blockStatus.blockedMe,
           lastMessageAt: conversationData.last_message_at,
           createdAt: conversationData.created_at,
         },
@@ -401,6 +464,19 @@ router.post(
       return res.status(403).json({ success: false, message: 'Not a member of this conversation' });
     }
 
+    // Block enforcement: reject if either party blocked the other
+    const otherParticipant = await prisma.conversation_participants.findFirst({
+      where: { conversation_id: conversationId, user_id: { not: userId } },
+      select: { user_id: true },
+    });
+    if (otherParticipant && (await isBlockedBetween(userId, otherParticipant.user_id))) {
+      return res.status(403).json({
+        success: false,
+        message: 'You cannot send messages in this conversation because of a block.',
+        code: 'BLOCKED',
+      });
+    }
+
     // Server-side profanity censoring (safety net)
     const sanitizedContent = content ? censorProfanity(content) : '';
 
@@ -481,38 +557,6 @@ router.post(
     res.status(201).json({
       success: true,
       data: messageData,
-    });
-  })
-);
-
-/**
- * GET /api/messages/search-users?q=...
- * Search users for starting new conversations
- */
-router.get(
-  '/search-users',
-  authenticateToken,
-  catchAsync(async (req: Request, res: Response) => {
-    const userId = req.user!.userId;
-    const query = (req.query.q as string || '').trim();
-
-    if (query.length < 2) {
-      return res.json({ success: true, data: [] });
-    }
-
-    const users = await prisma.users.findMany({
-      where: {
-        id: { not: userId },
-        is_active: true,
-        full_name: { contains: query, mode: 'insensitive' },
-      },
-      select: { id: true, full_name: true, avatar: true },
-      take: 10,
-    });
-
-    res.json({
-      success: true,
-      data: users.map((u) => ({ id: u.id, fullName: u.full_name, avatar: u.avatar })),
     });
   })
 );

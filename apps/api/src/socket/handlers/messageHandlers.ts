@@ -4,6 +4,7 @@ import type { AuthenticatedSocket, SendMessagePayload } from '../types.js';
 import { sendMessagePushNotification } from '../../services/pushNotification.js';
 import { sendNotification, canSendNotification } from '../../services/notification.service.js';
 import { censorProfanity } from '../../utils/profanityFilter.js';
+import { isBlockedBetween } from '../../utils/blockCheck.js';
 
 // Safe callback helper — prevents crashes when client emits without a callback
 function safeCallback(callback: unknown, data: Record<string, unknown>) {
@@ -15,7 +16,7 @@ function safeCallback(callback: unknown, data: Record<string, unknown>) {
 export function initializeMessageHandlers(
   io: Server,
   socket: AuthenticatedSocket,
-  onlineUsers: Map<number, string>
+  onlineUsers: Map<number, Set<string>>
 ): void {
   const userId = socket.userId;
 
@@ -36,6 +37,18 @@ export function initializeMessageHandlers(
 
       if (!participant) {
         return safeCallback(callback, { error: 'Not a member of this conversation' });
+      }
+
+      // Block enforcement: reject if either party blocked the other
+      const otherParticipant = await prisma.conversation_participants.findFirst({
+        where: { conversation_id: conversationId, user_id: { not: userId } },
+        select: { user_id: true },
+      });
+      if (otherParticipant && (await isBlockedBetween(userId, otherParticipant.user_id))) {
+        return safeCallback(callback, {
+          error: 'You cannot send messages in this conversation because of a block.',
+          code: 'BLOCKED',
+        });
       }
 
       // Server-side profanity censoring (safety net)

@@ -127,6 +127,44 @@ model shop_reports {
   @@index([status], map: "idx_shop_reports_status")
 }
 
+/// Blocked users - bidirectional messaging block (blocker can no longer message or be messaged by blocked)
+model blocked_users {
+  id         Int       @id @default(autoincrement())
+  blocker_id Int
+  blocked_id Int
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  blocker    users     @relation("blocked_users_blocker", fields: [blocker_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  blocked    users     @relation("blocked_users_blocked", fields: [blocked_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([blocker_id, blocked_id], map: "idx_blocked_users_unique")
+  @@index([blocker_id], map: "idx_blocked_users_blocker_id")
+  @@index([blocked_id], map: "idx_blocked_users_blocked_id")
+}
+
+/// User reports - for reporting users from chat conversations
+model user_reports {
+  id               Int       @id @default(autoincrement())
+  reported_user_id Int
+  reporter_id      Int
+  reason           String    @db.VarChar(100)
+  details          String?
+  status           String?   @default("pending") @db.VarChar(20)
+  admin_notes      String?
+  conversation_id  Int?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @default(now()) @db.Timestamp(6)
+  resolved_by      Int?
+  reporter         users     @relation("user_reports_reporter", fields: [reporter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reported         users     @relation("user_reports_reported", fields: [reported_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  resolver         users?    @relation("user_reports_resolver", fields: [resolved_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([reported_user_id, reporter_id], map: "idx_user_reports_unique")
+  @@index([reported_user_id], map: "idx_user_reports_reported_user_id")
+  @@index([reporter_id], map: "idx_user_reports_reporter_id")
+  @@index([status], map: "idx_user_reports_status")
+  @@index([created_at(sort: Desc)], map: "idx_user_reports_created_at")
+}
+
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model admin_activity_logs {
   id          Int       @id @default(autoincrement())
@@ -548,6 +586,11 @@ model users {
   shop_reports_as_reporter                                                             shop_reports[]                     @relation("shop_reports_reporter")
   shop_reports_as_resolver                                                             shop_reports[]                     @relation("shop_reports_resolver")
   shop_reports_as_shop                                                                 shop_reports[]                     @relation("shop_reports_shop")
+  blocked_users_as_blocker                                                             blocked_users[]                    @relation("blocked_users_blocker")
+  blocked_users_as_blocked                                                             blocked_users[]                    @relation("blocked_users_blocked")
+  user_reports_as_reporter                                                             user_reports[]                     @relation("user_reports_reporter")
+  user_reports_as_reported                                                             user_reports[]                     @relation("user_reports_reported")
+  user_reports_as_resolver                                                             user_reports[]                     @relation("user_reports_resolver")
   refresh_tokens                                                                       refresh_tokens[]
   support_messages                                                                     support_messages[]
   support_tickets_support_tickets_assigned_toTousers                                   support_tickets[]                  @relation("support_tickets_assigned_toTousers")

@@ -19,7 +19,7 @@ import { joinUserConversations, broadcastUserOnlineStatus } from './utils/roomMa
 import type { AuthenticatedSocket } from './types.js';
 
 // In-memory store for online users (use Redis in production for multi-server scaling)
-const onlineUsers = new Map<number, string>(); // userId -> socketId
+const onlineUsers = new Map<number, Set<string>>(); // userId -> set of socketIds (a user may be on several devices)
 
 // Module-level io reference for use by notification service
 let ioInstance: Server | null = null;
@@ -68,14 +68,20 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
     const userId = authSocket.userId;
     console.log(`🔌 Socket.IO: User ${userId} connected (Socket: ${socket.id})`);
 
-    // Store online user
-    onlineUsers.set(userId, socket.id);
+    // Track this device. A user may be signed in on several devices, so we keep
+    // a set of sockets per user rather than a single socket id.
+    const firstDevice = !onlineUsers.has(userId);
+    const userSockets = onlineUsers.get(userId) ?? new Set<string>();
+    userSockets.add(socket.id);
+    onlineUsers.set(userId, userSockets);
 
     // Join personal notification room
     socket.join(`user:${userId}`);
 
-    // Broadcast user online status to their conversations
-    broadcastUserOnlineStatus(io, userId, true);
+    // Broadcast "online" only when the user's first device connects
+    if (firstDevice) {
+      broadcastUserOnlineStatus(io, userId, true);
+    }
 
     // Join user's conversation rooms
     joinUserConversations(socket, userId);
@@ -119,11 +125,16 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
     socket.on('disconnect', (reason) => {
       console.log(`🔌 Socket.IO: User ${userId} disconnected (Socket: ${socket.id}, Reason: ${reason})`);
 
-      // Remove from online users
-      onlineUsers.delete(userId);
-
-      // Broadcast user offline status
-      broadcastUserOnlineStatus(io, userId, false);
+      // Remove just this device. The user is only "offline" once their last
+      // device disconnects — otherwise other devices stay live.
+      const userSockets = onlineUsers.get(userId);
+      if (userSockets) {
+        userSockets.delete(socket.id);
+        if (userSockets.size === 0) {
+          onlineUsers.delete(userId);
+          broadcastUserOnlineStatus(io, userId, false);
+        }
+      }
 
       // Clean up typing indicators
       prisma.typing_indicators
