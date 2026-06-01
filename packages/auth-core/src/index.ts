@@ -15,14 +15,14 @@ export {
   getOtpExpiry,
   type OtpPurpose,
   type NotificationType,
-} from './sms.js';
+} from './sms';
 
 // Signed verification tokens
 export {
   signVerificationToken,
   validateVerificationToken,
   type VerificationTokenPayload,
-} from './token.js';
+} from './token';
 
 // OTP / phone-verification core
 export {
@@ -37,4 +37,4 @@ export {
   type VerifyOtpResult,
   type UpdatePhoneResult,
   type SendOtpOptions,
-} from './otp.js';
+} from './otp';

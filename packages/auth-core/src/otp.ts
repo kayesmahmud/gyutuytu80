@@ -13,8 +13,8 @@ import {
   getOtpExpiry,
   sendOtpSms,
   type OtpPurpose,
-} from './sms.js';
-import { signVerificationToken, validateVerificationToken } from './token.js';
+} from './sms';
+import { signVerificationToken, validateVerificationToken } from './token';
 
 export const MAX_OTP_ATTEMPTS = 4; // OTP *requests* per hour
 export const OTP_COOLDOWN_SECONDS = 60;
