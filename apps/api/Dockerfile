@@ -12,6 +12,7 @@ COPY packages/types/package.json packages/types/
 COPY packages/utils/package.json packages/utils/
 COPY packages/api-client/package.json packages/api-client/
 COPY packages/database/package.json packages/database/
+COPY packages/auth-core/package.json packages/auth-core/
 COPY packages/messaging-core/package.json packages/messaging-core/
 COPY packages/upload-utils/package.json packages/upload-utils/
 COPY packages/translations/package.json packages/translations/
@@ -55,6 +56,13 @@ RUN npm run build -w packages/types && \
 RUN cd packages/database && npx tsc --noCheck --module commonjs --moduleResolution node && \
     node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); delete p.type; p.main='./dist/index.js'; p.exports={'.': {types:'./dist/index.d.ts', import:'./dist/index.js', require:'./dist/index.js', default:'./dist/index.js'}}; fs.writeFileSync('package.json', JSON.stringify(p,null,2))"
 
+# Build auth-core for production the same way as database: source is .ts, prod
+# runs compiled .js via `node`. Compile to CommonJS (extensionless relative
+# imports + the @thulobazaar/database require resolve at runtime) and rewrite
+# package.json to point at dist. Must run AFTER database (auth-core imports it).
+RUN cd packages/auth-core && npx tsc --noCheck --module commonjs --moduleResolution node && \
+    node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8')); delete p.type; p.main='./dist/index.js'; p.exports={'.': {types:'./dist/index.d.ts', import:'./dist/index.js', require:'./dist/index.js', default:'./dist/index.js'}}; fs.writeFileSync('package.json', JSON.stringify(p,null,2))"
+
 # Build Express API (--noCheck skips type checking, handled separately in CI)
 RUN cd apps/api && npx tsc --noCheck
 
@@ -84,6 +92,8 @@ COPY --from=builder /app/packages/api-client/dist ./packages/api-client/dist
 COPY --from=builder /app/packages/api-client/package.json ./packages/api-client/
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
 COPY --from=builder /app/packages/database/package.json ./packages/database/
+COPY --from=builder /app/packages/auth-core/dist ./packages/auth-core/dist
+COPY --from=builder /app/packages/auth-core/package.json ./packages/auth-core/
 COPY --from=builder /app/package.json ./
 
 # Create uploads directory
