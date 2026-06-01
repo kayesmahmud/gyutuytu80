@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +9,7 @@ import '../../core/models/notification_item.dart';
 import '../../features/ad_detail/ad_detail_screen.dart';
 import '../../features/messages/chat_screen.dart';
 import '../../features/verification/verification_screen.dart';
+import '../../core/widgets/load_error_view.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -17,6 +20,7 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   final ScrollController _scrollController = ScrollController();
+  Timer? _autoMarkReadTimer;
 
   @override
   void initState() {
@@ -24,6 +28,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final provider = context.read<NotificationProvider>();
     provider.fetchNotifications(refresh: true);
     _scrollController.addListener(_onScroll);
+
+    // Auto mark-all-as-read after a brief delay so the user can briefly see
+    // which items were unread (blue dots / highlighted bg) before they clear.
+    _autoMarkReadTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      final p = context.read<NotificationProvider>();
+      if (p.unreadCount > 0) {
+        p.markAllAsRead();
+      }
+    });
   }
 
   void _onScroll() {
@@ -35,6 +49,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   void dispose() {
+    _autoMarkReadTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -77,6 +92,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
         builder: (context, provider, _) {
           if (provider.isLoading && provider.notifications.isEmpty) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          // Failed to load (offline / server) with nothing cached — show the
+          // offline/error view instead of a misleading "No notifications yet".
+          if (provider.hasError && provider.notifications.isEmpty) {
+            return LoadErrorView(
+              isOffline: provider.isOffline,
+              onRetry: () => provider.fetchNotifications(refresh: true),
+            );
           }
 
           if (provider.notifications.isEmpty) {

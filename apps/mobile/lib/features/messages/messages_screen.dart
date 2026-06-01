@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -8,7 +7,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/api/api_config.dart';
-import '../../core/api/message_client.dart';
 import '../../core/models/message.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/chat_provider.dart';
@@ -85,11 +83,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
       backgroundColor: Colors.white,
       appBar: const MainAppBar(),
       drawer: const MainDrawer(),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFFDC143C),
-        onPressed: () => _showNewConversationSheet(context),
-        child: const Icon(LucideIcons.pencil, color: Colors.white),
-      ),
       body: _buildChatsTab(),
     );
   }
@@ -206,6 +199,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
               recipientName: conversation.otherUserName,
               recipientAvatar: avatarUrl,
               adTitle: conversation.adTitle,
+              adId: conversation.adId,
+              otherUserId: conversation.otherUserId,
             ),
           ),
         ).then((_) {
@@ -366,58 +361,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   // ==========================================
-  // NEW CONVERSATION SEARCH
-  // ==========================================
-
-  void _showNewConversationSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _NewConversationSheet(
-        onUserSelected: (user) async {
-          Navigator.pop(context);
-
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => const Center(child: CircularProgressIndicator()),
-          );
-
-          final conversation = await context
-              .read<ChatProvider>()
-              .getOrCreateConversation(participantId: user.id);
-
-          if (!context.mounted) return;
-          Navigator.pop(context); // Close loading
-
-          if (conversation != null) {
-            final avatarUrl = user.avatar != null
-                ? ApiConfig.getAvatarUrl(user.avatar)
-                : null;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(
-                  conversationId: conversation.id,
-                  recipientName: user.fullName,
-                  recipientAvatar: avatarUrl,
-                ),
-              ),
-            ).then((_) {
-              if (context.mounted) {
-                context.read<ChatProvider>().loadConversations();
-              }
-            });
-          }
-        },
-      ),
-    );
-  }
-
-  // ==========================================
   // EMPTY / ERROR STATES
   // ==========================================
 
@@ -506,175 +449,5 @@ class _MessagesScreenState extends State<MessagesScreen> {
     if (diff.inDays < 7) return '${diff.inDays}d ago';
 
     return formatNepalTime(time, 'MMM d', context.locale.languageCode);
-  }
-}
-
-// ==========================================
-// NEW CONVERSATION BOTTOM SHEET
-// ==========================================
-
-class _NewConversationSheet extends StatefulWidget {
-  final Function(SearchUser) onUserSelected;
-
-  const _NewConversationSheet({required this.onUserSelected});
-
-  @override
-  State<_NewConversationSheet> createState() => _NewConversationSheetState();
-}
-
-class _NewConversationSheetState extends State<_NewConversationSheet> {
-  final TextEditingController _searchController = TextEditingController();
-  final MessageClient _messageClient = MessageClient();
-  List<SearchUser> _results = [];
-  bool _isSearching = false;
-  Timer? _debounce;
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  void _onSearchChanged(String query) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      _search(query);
-    });
-  }
-
-  Future<void> _search(String query) async {
-    if (query.length < 2) {
-      setState(() => _results = []);
-      return;
-    }
-
-    setState(() => _isSearching = true);
-    final response = await _messageClient.searchUsers(query);
-
-    if (mounted) {
-      setState(() {
-        _isSearching = false;
-        _results = response.success ? (response.data ?? []) : [];
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7,
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'messages.newMessage'.tr(),
-              style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _searchController,
-              autofocus: true,
-              onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'messages.searchUsers'.tr(),
-                prefixIcon: const Icon(LucideIcons.search),
-                suffixIcon: _isSearching
-                    ? const Padding(
-                        padding: EdgeInsets.all(14),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (_searchController.text.length < 2 && _results.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Center(
-                  child: Text(
-                    'messages.typeToSearch'.tr(),
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ),
-              )
-            else
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _results.length,
-                  itemBuilder: (context, index) {
-                    final user = _results[index];
-                    final avatarUrl = user.avatar != null
-                        ? ApiConfig.getAvatarUrl(user.avatar)
-                        : null;
-
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.grey[200],
-                        backgroundImage: avatarUrl != null
-                            ? CachedNetworkImageProvider(avatarUrl)
-                            : null,
-                        child: avatarUrl == null
-                            ? Text(
-                                user.fullName.isNotEmpty
-                                    ? user.fullName[0].toUpperCase()
-                                    : '?',
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[600],
-                                ),
-                              )
-                            : null,
-                      ),
-                      title: Text(
-                        user.fullName,
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                      ),
-                      onTap: () => widget.onUserSelected(user),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
   }
 }

@@ -154,3 +154,16 @@ emulator_screen.png
 index.js
 locations_dump.json
 pad_logo.py
+
+# Apple APNs auth keys — never commit
+*.p8
+AuthKey_*.p8
+*.der
+/Table.csv
+apps/mobile/App icon/
+apps/mobile/PLAY_STORE/
+/scripts/e2e-*.cjs
+packages/database/_vt.mjs
+packages/database/verify_tables.mjs
+/*.png
+/*.sql

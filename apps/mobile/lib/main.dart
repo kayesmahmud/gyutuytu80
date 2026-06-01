@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +20,7 @@ import 'core/services/version_check_service.dart';
 import 'core/widgets/update_dialog.dart';
 import 'core/widgets/connectivity_wrapper.dart';
 import 'features/main_nav/main_nav_screen.dart';
+import 'features/splash/splash_screen.dart';
 import 'features/messages/chat_screen.dart';
 import 'features/notifications/notification_screen.dart';
 import 'features/ad_detail/ad_detail_screen.dart';
@@ -29,12 +33,24 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 bool _firebaseInitialized = false;
 
 void main() async {
+  // Silence all debugPrint calls in release builds to prevent information
+  // leakage via logcat. debugPrint normally runs in release — only assert()
+  // is stripped. This makes the 120+ debugPrint call sites safe to ship.
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
+
   // Initialize Marionette for AI-assisted testing (debug only)
   if (kDebugMode) {
     MarionetteBinding.ensureInitialized();
   } else {
     WidgetsFlutterBinding.ensureInitialized();
   }
+
+  // Lock the app to portrait — never auto-rotate, never landscape.
+  // Native config (Info.plist / AndroidManifest) enforces this at the window
+  // level; this call enforces it from the engine for full coverage.
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   // Initialize SSL certificate pinning (no-op in dev if cert file is absent)
   await DioClient.ensureInitialized();
@@ -52,27 +68,28 @@ void main() async {
     debugPrint('Push notifications will be disabled');
   }
 
-  // Initialize Google Mobile Ads SDK + fetch remote config
-  try {
-    await AdService.initialize();
-    AdService.fetchConfig().then((_) {
-      // Preload interstitial after config is fetched
-      InterstitialAdService.preload();
-    }); // Non-blocking — fetches in background
-  } catch (e) {
-    debugPrint('⚠️ AdMob init failed: $e');
-  }
+  // Initialize Google Mobile Ads SDK + fetch remote config — OFF critical path.
+  // Splash doesn't show ads; SDK is ready long before user reaches a banner.
+  // Previously awaited here, which added 1.5–3s to cold-start splash time.
+  unawaited(
+    AdService.initialize().then((_) {
+      AdService.fetchConfig().then((_) {
+        InterstitialAdService.preload();
+      });
+    }).catchError((e) => debugPrint('⚠️ AdMob init failed: $e')),
+  );
 
-  // Initialize notifications only if Firebase is available
+  // Initialize notifications only if Firebase is available — OFF critical path.
+  // FCM token registration in ThuloBazaarApp.initState already runs after
+  // first frame, so channel/handler setup doesn't need to block runApp().
   if (_firebaseInitialized) {
-    try {
-      final notificationService = NotificationService();
-      await notificationService.initialize();
-      notificationService.onNotificationTap = _handleNotificationTap;
-      debugPrint('✅ Notifications initialized');
-    } catch (e) {
-      debugPrint('⚠️ Notifications init failed: $e');
-    }
+    final notificationService = NotificationService();
+    unawaited(
+      notificationService.initialize().then((_) {
+        notificationService.onNotificationTap = _handleNotificationTap;
+        debugPrint('✅ Notifications initialized');
+      }).catchError((e) => debugPrint('⚠️ Notifications init failed: $e')),
+    );
   }
 
   runApp(
@@ -95,12 +112,19 @@ void main() async {
 /// Pending notification data when navigator isn't ready (terminated state)
 Map<String, dynamic>? _pendingNotification;
 
+/// True once SplashScreen has handed off to MainNavScreen. Until then, deep-link
+/// taps are stored and replayed later — otherwise the splash's
+/// pushReplacement(MainNav) at ~2s replaces any screen we push too early during
+/// a cold start (the cause of "tap chat push → lands on message list").
+bool appReadyForDeepLinks = false;
+
 /// Handle notification taps and navigate
 void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
   if (route == null) return;
 
-  // Navigator not ready yet — store for later
-  if (navigatorKey.currentState == null) {
+  // Defer until MainNav is the base route (and navigator exists), so a
+  // cold-start deep link isn't clobbered by the splash transition.
+  if (!appReadyForDeepLinks || navigatorKey.currentState == null) {
     _pendingNotification = {'route': route, ...?data};
     return;
   }
@@ -120,6 +144,7 @@ void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
             builder: (_) => ChatScreen(
               conversationId: conversationId,
               recipientName: senderName,
+              adId: adId,
             ),
           ),
         );
@@ -151,8 +176,9 @@ void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
   }
 }
 
-/// Process any pending notification that arrived before the navigator was ready
-void _processPendingNotification() {
+/// Process any pending notification that arrived before the app was ready to
+/// deep-link. Safe to call multiple times — it no-ops when nothing is pending.
+void processPendingNotification() {
   if (_pendingNotification == null) return;
   final data = Map<String, dynamic>.from(_pendingNotification!);
   _pendingNotification = null;
@@ -216,7 +242,7 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
       NotificationService().registerToken();
       notificationProvider.initialize();
       // Process any notification that arrived before navigator/auth was ready
-      _processPendingNotification();
+      processPendingNotification();
     }
 
     // Listen for auth changes
@@ -225,7 +251,7 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
         NotificationService().registerToken();
         notificationProvider.initialize();
         // Process any pending notification after login
-        _processPendingNotification();
+        processPendingNotification();
       } else {
         NotificationService().unregisterToken();
         notificationProvider.reset();
@@ -239,7 +265,7 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
       navigatorKey: navigatorKey,
       title: 'Thulo Bazaar',
       theme: AppTheme.lightTheme,
-      home: const MainNavScreen(),
+      home: const SplashScreen(nextScreen: MainNavScreen()),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,

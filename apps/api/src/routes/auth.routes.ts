@@ -13,6 +13,7 @@ import {
   registerWithPhone,
   resetPassword,
   verifyGoogleToken,
+  verifyAppleToken,
   changePassword,
   updatePhone,
   getSessions,
@@ -166,6 +167,43 @@ router.post(
     res.json({
       success: true,
       message: 'Google login successful',
+      token: result.token,
+      refreshToken: result.refreshToken,
+      user: result.user,
+      ...(result.accountPendingDeletion && {
+        accountPendingDeletion: true,
+        deletionDate: result.deletionDate,
+      }),
+    });
+  })
+);
+
+/**
+ * POST /api/auth/apple-token
+ * Verify Apple ID Token from mobile app and return session tokens
+ */
+router.post(
+  '/apple-token',
+  rateLimiters.auth,
+  catchAsync(async (req: Request, res: Response) => {
+    const { identityToken, fullName } = req.body;
+
+    if (!identityToken) {
+      throw new ValidationError('identityToken is required');
+    }
+
+    const result = await verifyAppleToken(identityToken, fullName);
+
+    if (!result.success) {
+      return res.status(401).json({
+        success: false,
+        message: result.error,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Apple login successful',
       token: result.token,
       refreshToken: result.refreshToken,
       user: result.user,

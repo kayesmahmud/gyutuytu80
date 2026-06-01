@@ -175,10 +175,23 @@ export default function NotificationsPage() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchNotifications(1, true);
-      fetchUnreadCount();
-    }
+    if (!isAuthenticated) return;
+    fetchNotifications(1, true);
+    fetchUnreadCount();
+
+    // Auto mark-all-as-read after a brief delay so the user can briefly see
+    // the unread highlights / blue dots before they clear.
+    const timer = setTimeout(() => {
+      apiClient
+        .markAllNotificationsRead()
+        .then(() => {
+          setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+          setUnreadCount(0);
+        })
+        .catch((err) => console.error('Failed to auto-mark as read:', err));
+    }, 1500);
+
+    return () => clearTimeout(timer);
   }, [isAuthenticated, fetchNotifications, fetchUnreadCount]);
 
   // Infinite scroll

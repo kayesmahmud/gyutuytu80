@@ -149,6 +149,16 @@ export async function sendOtpSms(
   logToFile(`Attempting to send OTP to ${phone} (Purpose: ${purpose})`);
   console.log(`Log file path: ${LOG_FILE}`);
 
+  // Local-dev bypass: AakashSMS IP-whitelists callers, so a dev machine can't
+  // deliver OTPs even with a valid token. Setting SMS_MOCK=true skips the real
+  // provider and logs the code instead. Hard-gated to non-production so it can
+  // never disable real verification on the live server.
+  if (process.env.SMS_MOCK === 'true' && process.env.NODE_ENV !== 'production') {
+    console.warn(`📱 [SMS_MOCK] OTP for ${phone} (${purpose}): ${otp}`);
+    logToFile(`[SMS_MOCK] OTP for ${phone} (${purpose}): ${otp}`);
+    return { success: true, message: 'SMS mocked (SMS_MOCK enabled)' };
+  }
+
   // In non-production, allow OTP flow to continue even if token is missing
   if (!authToken) {
     const msg = `AAKASH_SMS_TOKEN not configured. Mocking OTP send for ${phone}: ${otp}`;

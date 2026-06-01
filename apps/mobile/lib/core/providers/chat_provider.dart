@@ -23,6 +23,7 @@ class ChatProvider extends ChangeNotifier {
   bool _isConnected = false;
   String? _error;
   int? _currentUserId;
+  int? _activeConversationId; // conversation currently open on screen
 
   // Subscriptions
   final List<StreamSubscription> _subscriptions = [];
@@ -83,6 +84,13 @@ class ChatProvider extends ChangeNotifier {
         if (connected && wasDisconnected) {
           loadConversations();
           loadUnreadCount();
+          // Re-join the open conversation's room and reload its messages —
+          // the socket left the room when it dropped (e.g. iOS backgrounding),
+          // so without this no live messages arrive until the screen reopens.
+          if (_activeConversationId != null) {
+            _socketService.joinConversation(_activeConversationId!);
+            loadMessages(_activeConversationId!);
+          }
         }
         notifyListeners();
       }),
@@ -150,11 +158,14 @@ class ChatProvider extends ChangeNotifier {
     // Skip own messages - already added via optimistic update in sendMessage()
     if (message.senderId == _currentUserId) return;
 
-    // Add to messages list
-    if (_messagesByConversation[conversationId] == null) {
-      _messagesByConversation[conversationId] = [];
-    }
-    _messagesByConversation[conversationId]!.insert(0, message);
+    final messages = _messagesByConversation[conversationId] ??= [];
+
+    // De-dupe: a reconnect can leave a stale socket in the conversation room, so
+    // the server delivers the same message:new more than once. Also guards the
+    // reconnect reload-vs-socket race. Ignore if we already have this message id.
+    if (messages.any((m) => m.id == message.id)) return;
+
+    messages.insert(0, message);
 
     // Update conversation list
     final index = _conversations.indexWhere((c) => c.id == conversationId);
@@ -374,7 +385,14 @@ class ChatProvider extends ChangeNotifier {
 
   /// Join a conversation's socket room for real-time updates
   void joinConversation(int conversationId) {
+    _activeConversationId = conversationId;
     _socketService.joinConversation(conversationId);
+  }
+
+  /// Leave a conversation's socket room (call when its screen closes)
+  void leaveConversation(int conversationId) {
+    if (_activeConversationId == conversationId) _activeConversationId = null;
+    _socketService.leaveConversation(conversationId);
   }
 
   /// Create or get conversation with a user

@@ -53,7 +53,15 @@ class _MainDrawerState extends State<MainDrawer> {
     final isLoggedIn = authProvider.isLoggedIn;
     final user = authProvider.user;
 
+    // Flutter's default Drawer width (304px) covers ~85% on narrow Android
+    // phones but looks fine on wider iOS screens. Constrain it to ~58% of the
+    // screen on Android only; iOS keeps the default (width: null).
+    final isAndroid = Theme.of(context).platform == TargetPlatform.android;
+    final drawerWidth =
+        isAndroid ? MediaQuery.of(context).size.width * 0.58 : null;
+
     return Drawer(
+      width: drawerWidth,
       backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
@@ -126,11 +134,11 @@ class _MainDrawerState extends State<MainDrawer> {
                              style: ElevatedButton.styleFrom(
                                backgroundColor: const Color(0xFFDC2626),
                                foregroundColor: Colors.white,
-                               minimumSize: const Size(double.infinity, 48),
+                               minimumSize: const Size(double.infinity, 42),
                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                elevation: 0,
                              ),
-                             child: Text('auth.signOut'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
+                             child: Text('auth.signOut'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
                            ),
                         ),
                      ] else ...[
@@ -147,10 +155,10 @@ class _MainDrawerState extends State<MainDrawer> {
                                style: OutlinedButton.styleFrom(
                                  side: const BorderSide(color: Color(0xFFE11D48)),
                                  foregroundColor: const Color(0xFFE11D48),
-                                 minimumSize: const Size(double.infinity, 48),
+                                 minimumSize: const Size(double.infinity, 42),
                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                ),
-                               child: Text('auth.signIn'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
+                               child: Text('auth.signIn'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
                              ),
                              const SizedBox(height: 12),
                              ElevatedButton(
@@ -161,11 +169,11 @@ class _MainDrawerState extends State<MainDrawer> {
                                style: ElevatedButton.styleFrom(
                                  backgroundColor: const Color(0xFFE11D48),
                                  foregroundColor: Colors.white,
-                                 minimumSize: const Size(double.infinity, 48),
+                                 minimumSize: const Size(double.infinity, 42),
                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                  elevation: 0,
                                ),
-                               child: Text('auth.signUp'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
+                               child: Text('auth.signUp'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
                              ),
                            ],
                          ),

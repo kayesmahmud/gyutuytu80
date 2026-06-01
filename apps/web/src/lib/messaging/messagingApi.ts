@@ -104,13 +104,6 @@ export const messagingApi = {
   },
 
   /**
-   * Search for users to start a conversation with
-   */
-  searchUsers: async (token: string, query: string) => {
-    return fetchApi(`/api/messages/search-users?q=${encodeURIComponent(query)}`, { token });
-  },
-
-  /**
    * Get total unread message count
    */
   getUnreadCount: async (token: string) => {

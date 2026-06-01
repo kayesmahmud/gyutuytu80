@@ -13,7 +13,6 @@ interface ConversationListProps {
   selectedConversation: any | null;
   onSelectConversation: (conversation: any) => void;
   loading: boolean;
-  onNewMessage?: () => void; // Callback to open new message modal
   currentUserId?: number; // Current logged-in user ID
 }
 
@@ -22,7 +21,6 @@ export default function ConversationList({
   selectedConversation,
   onSelectConversation,
   loading,
-  onNewMessage,
   currentUserId,
 }: ConversationListProps) {
   if (loading) {
@@ -40,26 +38,7 @@ export default function ConversationList({
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Messages</h2>
-          {/* New Message Button */}
-          {onNewMessage && (
-            <button
-              onClick={onNewMessage}
-              className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-full transition"
-              title="New Message"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-            </button>
-          )}
-        </div>
+        <h2 className="text-xl font-bold text-gray-900">Messages</h2>
       </div>
 
       {/* Conversation List */}

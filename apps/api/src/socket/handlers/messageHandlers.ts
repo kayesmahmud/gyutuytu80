@@ -16,7 +16,7 @@ function safeCallback(callback: unknown, data: Record<string, unknown>) {
 export function initializeMessageHandlers(
   io: Server,
   socket: AuthenticatedSocket,
-  onlineUsers: Map<number, string>
+  onlineUsers: Map<number, Set<string>>
 ): void {
   const userId = socket.userId;
 

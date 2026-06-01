@@ -11,6 +11,8 @@ import '../../core/models/models.dart';
 import '../../core/models/payment.dart';
 import '../../core/utils/localized_helpers.dart';
 import '../../core/widgets/floating_widget.dart';
+import '../../core/widgets/load_error_view.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Payment History Screen - shows user's payment transactions
 class PaymentHistoryScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   bool _isLoading = true;
   bool _isLoadingMore = false;
   String? _error;
+  bool _isOffline = false;
   int _currentPage = 1;
   bool _hasMorePages = true;
   String? _statusFilter;
@@ -73,9 +76,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       status: _statusFilter,
     );
 
-    setState(() {
-      _isLoading = false;
-      if (response.success) {
+    if (!mounted) return;
+    if (response.success) {
+      setState(() {
+        _isLoading = false;
         if (refresh || _currentPage == 1) {
           _transactions = response.data;
         } else {
@@ -83,12 +87,30 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         }
         _hasMorePages =
             response.pagination.page < response.pagination.totalPages;
-      } else {
-        _error = response.errorMessage ?? (context.locale.languageCode == 'ne'
-          ? 'भुक्तानी इतिहास लोड गर्न असफल'
-          : 'Failed to load payment history');
-      }
-    });
+        _error = null;
+      });
+    } else {
+      // getPaymentHistory swallows network errors into success == false, so
+      // classify connectivity here for the right offline/error message.
+      final offline = await _isOfflineError();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = response.errorMessage ?? 'Failed to load payment history';
+        _isOffline = offline;
+      });
+    }
+  }
+
+  /// True when the device has no connectivity at all (drives offline vs
+  /// generic-error copy in [LoadErrorView]).
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _loadMore() async {
@@ -213,27 +235,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.alertCircle, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: TextStyle(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _loadTransactions(refresh: true),
-              child: Text('common.retry'.tr()),
-            ),
-          ],
-        ),
-      ),
+    return LoadErrorView(
+      isOffline: _isOffline,
+      onRetry: () => _loadTransactions(refresh: true),
     );
   }
 

@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 import { prisma } from '@thulobazaar/database';
 import type { AuthenticatedSocket, CreateConversationPayload } from '../types.js';
 
-export function initializeConversationHandlers(io: Server, socket: AuthenticatedSocket, onlineUsers: Map<number, string>): void {
+export function initializeConversationHandlers(io: Server, socket: AuthenticatedSocket, onlineUsers: Map<number, Set<string>>): void {
   const userId = socket.userId;
 
   /**
@@ -30,10 +30,10 @@ export function initializeConversationHandlers(io: Server, socket: Authenticated
       });
 
       allParticipants.forEach((pId) => {
-        const socketId = onlineUsers.get(pId);
-        if (socketId) {
+        // Join every connected device of each participant, not just one.
+        onlineUsers.get(pId)?.forEach((socketId) => {
           io.sockets.sockets.get(socketId)?.join(`conversation:${conversation.id}`);
-        }
+        });
       });
 
       io.to(`conversation:${conversation.id}`).emit('conversation:created', conversation);

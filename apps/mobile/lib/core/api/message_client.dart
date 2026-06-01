@@ -29,7 +29,9 @@ class MessageClient {
             .toList();
         return ApiResponse.success(conversations);
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to fetch conversations');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Failed to fetch conversations',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch conversations',
@@ -43,17 +45,19 @@ class MessageClient {
     int? adId,
   }) async {
     try {
-      final response = await _dio.post('/messages/conversations', data: {
-        'participantId': participantId,
-        if (adId != null) 'adId': adId,
-      });
+      final response = await _dio.post(
+        '/messages/conversations',
+        data: {'participantId': participantId, if (adId != null) 'adId': adId},
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
           Conversation.fromJson(response.data['data'] as Map<String, dynamic>),
         );
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to create conversation');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Failed to create conversation',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to create conversation',
@@ -66,7 +70,11 @@ class MessageClient {
   // ==========================================
 
   /// Get messages for a conversation with cursor-based pagination
-  Future<ApiResponse<List<Message>>> getMessages(int conversationId, {String? before, int limit = 50}) async {
+  Future<ApiResponse<List<Message>>> getMessages(
+    int conversationId, {
+    String? before,
+    int limit = 50,
+  }) async {
     try {
       final queryParams = <String, dynamic>{'limit': limit};
       if (before != null) queryParams['before'] = before;
@@ -86,7 +94,11 @@ class MessageClient {
           messagesList = responseData;
         } else {
           messagesList = [];
-          if (kDebugMode) developer.log('Unrecognized data format: ${responseData.runtimeType}', name: 'MessageClient');
+          if (kDebugMode)
+            developer.log(
+              'Unrecognized data format: ${responseData.runtimeType}',
+              name: 'MessageClient',
+            );
         }
 
         final messages = messagesList
@@ -94,14 +106,21 @@ class MessageClient {
             .toList();
         return ApiResponse.success(messages);
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to fetch messages');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Failed to fetch messages',
+      );
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('getMessages error: ${e.type} ${e.message}', name: 'MessageClient');
+      if (kDebugMode)
+        developer.log(
+          'getMessages error: ${e.type} ${e.message}',
+          name: 'MessageClient',
+        );
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch messages',
       );
     } catch (e) {
-      if (kDebugMode) developer.log('getMessages unexpected: $e', name: 'MessageClient');
+      if (kDebugMode)
+        developer.log('getMessages unexpected: $e', name: 'MessageClient');
       return ApiResponse.failure('Unexpected error: $e');
     }
   }
@@ -131,7 +150,9 @@ class MessageClient {
           Message.fromJson(response.data['data'] as Map<String, dynamic>),
         );
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Failed to send message');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Failed to send message',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to send message',
@@ -143,7 +164,9 @@ class MessageClient {
   Future<ApiResponse<void>> markAsRead(int conversationId) async {
     try {
       // Reading the conversation already updates last_read_at on the backend
-      final response = await _dio.get('/messages/conversations/$conversationId?limit=1');
+      final response = await _dio.get(
+        '/messages/conversations/$conversationId?limit=1',
+      );
       if (response.data['success'] == true) {
         return ApiResponse.success(null);
       }
@@ -151,6 +174,97 @@ class MessageClient {
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to mark as read',
+      );
+    }
+  }
+
+  // ==========================================
+  // BLOCK / REPORT
+  // ==========================================
+
+  /// Fetch block status + other user id for a conversation
+  /// Returns { blockedByMe, blockedMe, otherUserId }
+  Future<ApiResponse<Map<String, dynamic>>> getConversationStatus(
+    int conversationId,
+  ) async {
+    try {
+      final response = await _dio.get(
+        '/messages/conversations/$conversationId?limit=1',
+      );
+      if (response.data['success'] == true) {
+        final conv =
+            response.data['data']?['conversation'] as Map<String, dynamic>?;
+        return ApiResponse.success({
+          'blockedByMe': conv?['blockedByMe'] == true,
+          'blockedMe': conv?['blockedMe'] == true,
+          'otherUserId': conv?['otherUserId'],
+        });
+      }
+      return ApiResponse.failure('Failed to fetch conversation status');
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to fetch conversation status',
+      );
+    }
+  }
+
+  /// Block a user (bidirectional)
+  Future<ApiResponse<void>> blockUser(int userId) async {
+    try {
+      final response = await _dio.post(
+        '/messages/block',
+        data: {'userId': userId},
+      );
+      if (response.data['success'] == true) return ApiResponse.success(null);
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to block user',
+      );
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to block user',
+      );
+    }
+  }
+
+  /// Unblock a previously blocked user
+  Future<ApiResponse<void>> unblockUser(int userId) async {
+    try {
+      final response = await _dio.delete('/messages/block/$userId');
+      if (response.data['success'] == true) return ApiResponse.success(null);
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to unblock user',
+      );
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to unblock user',
+      );
+    }
+  }
+
+  /// Report a user from a conversation
+  Future<ApiResponse<void>> reportUser({
+    required int reportedUserId,
+    required String reason,
+    String? details,
+    int? conversationId,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/reports/user',
+        data: {
+          'reportedUserId': reportedUserId,
+          'reason': reason,
+          if (details != null && details.isNotEmpty) 'details': details,
+          if (conversationId != null) 'conversationId': conversationId,
+        },
+      );
+      if (response.data['success'] == true) return ApiResponse.success(null);
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to report user',
+      );
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to report user',
       );
     }
   }
@@ -165,10 +279,13 @@ class MessageClient {
       final String fileName = imageFile.path.split('/').last;
       String mimeType = 'image/jpeg';
       final ext = fileName.split('.').last.toLowerCase();
-      
-      if (ext == 'png') mimeType = 'image/png';
-      else if (ext == 'gif') mimeType = 'image/gif';
-      else if (ext == 'webp') mimeType = 'image/webp';
+
+      if (ext == 'png')
+        mimeType = 'image/png';
+      else if (ext == 'gif')
+        mimeType = 'image/gif';
+      else if (ext == 'webp')
+        mimeType = 'image/webp';
 
       final formData = FormData.fromMap({
         'image': await MultipartFile.fromFile(
@@ -186,7 +303,8 @@ class MessageClient {
       }
       return ApiResponse.failure('Failed to upload image');
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Upload error: ${e.message}', name: 'MessageClient');
+      if (kDebugMode)
+        developer.log('Upload error: ${e.message}', name: 'MessageClient');
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to upload image',
       );
@@ -210,33 +328,9 @@ class MessageClient {
       }
       return 0;
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching unread count: $e', name: 'MessageClient');
+      if (kDebugMode)
+        developer.log('Error fetching unread count: $e', name: 'MessageClient');
       return 0;
     }
   }
-
-  // ==========================================
-  // SEARCH USERS
-  // ==========================================
-
-  /// Search users for starting new conversations
-  Future<ApiResponse<List<SearchUser>>> searchUsers(String query) async {
-    try {
-      final response = await _dio.get('/messages/search-users', queryParameters: {'q': query});
-
-      if (response.data['success'] == true) {
-        final data = response.data['data'] as List<dynamic>;
-        final users = data
-            .map((e) => SearchUser.fromJson(e as Map<String, dynamic>))
-            .toList();
-        return ApiResponse.success(users);
-      }
-      return ApiResponse.failure('Failed to search users');
-    } on DioException catch (e) {
-      return ApiResponse.failure(
-        e.response?.data?['error'] ?? 'Failed to search users',
-      );
-    }
-  }
-
 }

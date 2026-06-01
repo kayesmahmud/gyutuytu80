@@ -1,0 +1,9 @@
+# Copy this file to android/key.properties and fill in your keystore details.
+# The real key.properties is gitignored — NEVER commit passwords.
+#
+# To generate the upload keystore, see android/KEYSTORE_SETUP.md
+
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=../../thulobazaar-upload.jks

@@ -25,6 +25,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/chat_provider.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/utils/page_transitions.dart';
+import '../shop/shop_screen.dart';
+import 'widgets/report_user_sheet.dart';
 
 /// Chat Screen - individual conversation view
 class ChatScreen extends StatefulWidget {
@@ -32,7 +35,9 @@ class ChatScreen extends StatefulWidget {
   final String recipientName;
   final String? recipientAvatar;
   final String? adTitle;
+  final int? adId;
   final String? initialMessage;
+  final int? otherUserId;
 
   const ChatScreen({
     super.key,
@@ -40,7 +45,9 @@ class ChatScreen extends StatefulWidget {
     required this.recipientName,
     this.recipientAvatar,
     this.adTitle,
+    this.adId,
     this.initialMessage,
+    this.otherUserId,
   });
 
   @override
@@ -55,12 +62,22 @@ class _ChatScreenState extends State<ChatScreen> {
   final MessageClient _messageClient = MessageClient();
 
   int? _currentUserId;
+  ChatProvider? _chatProviderRef; // cached for safe use in dispose()
   bool _isTyping = false;
   Timer? _typingDebounce;
   File? _pendingImage;
   bool _isUploading = false;
   int _initialMessageCount = 0;
   bool _initialLoadDone = false;
+
+  // Block state (drives menu label + composer)
+  int? _resolvedOtherUserId;
+  bool _blockedByMe = false;
+  bool _blockedMe = false;
+
+  /// The other user's id — from the constructor or backfilled from messages/status.
+  int? get _effectiveOtherUserId => widget.otherUserId ?? _resolvedOtherUserId;
+  bool get _isBlocked => _blockedByMe || _blockedMe;
 
   @override
   void initState() {
@@ -87,18 +104,50 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (_currentUserId != null) {
       final chatProvider = context.read<ChatProvider>();
+      _chatProviderRef = chatProvider;
       // Ensure socket is in this conversation's room for real-time updates
       chatProvider.joinConversation(widget.conversationId);
       await chatProvider.loadMessages(widget.conversationId);
       chatProvider.markAsRead(widget.conversationId);
 
       if (mounted) {
-        _initialMessageCount = chatProvider.getMessages(widget.conversationId).length;
+        _initialMessageCount = chatProvider
+            .getMessages(widget.conversationId)
+            .length;
         _initialLoadDone = true;
+        _backfillOtherUserId(chatProvider);
         setState(() {});
         _scrollToBottom();
+        _loadBlockStatus();
       }
     }
+  }
+
+  /// Push-notification entry points don't pass otherUserId. Derive it from the
+  /// first message whose sender isn't the current user.
+  void _backfillOtherUserId(ChatProvider chatProvider) {
+    if (widget.otherUserId != null) return;
+    final messages = chatProvider.getMessages(widget.conversationId);
+    for (final m in messages) {
+      if (m.senderId != _currentUserId && m.senderId != 0) {
+        _resolvedOtherUserId = m.senderId;
+        break;
+      }
+    }
+  }
+
+  /// Fetch block status (and otherUserId fallback) from the backend.
+  Future<void> _loadBlockStatus() async {
+    final result = await _messageClient.getConversationStatus(
+      widget.conversationId,
+    );
+    if (!mounted || !result.success || result.data == null) return;
+    final data = result.data!;
+    setState(() {
+      _blockedByMe = data['blockedByMe'] == true;
+      _blockedMe = data['blockedMe'] == true;
+      _resolvedOtherUserId ??= data['otherUserId'] as int?;
+    });
   }
 
   /// Wait for auth to become available (up to 5 seconds)
@@ -154,12 +203,19 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Please use respectful language. Offensive words are not allowed on Thulo Bazaar.',
-                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -167,7 +223,10 @@ class _ChatScreenState extends State<ChatScreen> {
               const SizedBox(height: 4),
               Text(
                 'Thulo Bazaar promotes respectful communication between buyers and sellers.',
-                style: GoogleFonts.inter(fontSize: 11, color: Colors.red.shade100),
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: Colors.red.shade100,
+                ),
               ),
             ],
           ),
@@ -175,7 +234,9 @@ class _ChatScreenState extends State<ChatScreen> {
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -190,7 +251,8 @@ class _ChatScreenState extends State<ChatScreen> {
       conversationId: widget.conversationId,
       content: text,
     );
-    if (kDebugMode) developer.log('Sent message result: $success', name: 'ChatScreen');
+    if (kDebugMode)
+      developer.log('Sent message result: $success', name: 'ChatScreen');
 
     if (success) {
       _scrollToBottom();
@@ -211,11 +273,9 @@ class _ChatScreenState extends State<ChatScreen> {
     final fileSize = await file.length();
     if (fileSize > 5 * 1024 * 1024) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('messages.imageSizeError'.tr()),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('messages.imageSizeError'.tr())));
       }
       return;
     }
@@ -235,11 +295,11 @@ class _ChatScreenState extends State<ChatScreen> {
       if (uploadResult.success && uploadResult.data != null) {
         if (mounted) {
           await context.read<ChatProvider>().sendMessage(
-                conversationId: widget.conversationId,
-                content: 'Image',
-                type: MessageType.image,
-                attachmentUrl: uploadResult.data!,
-              );
+            conversationId: widget.conversationId,
+            content: 'Image',
+            type: MessageType.image,
+            attachmentUrl: uploadResult.data!,
+          );
         }
         setState(() {
           _pendingImage = null;
@@ -257,9 +317,9 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       setState(() => _isUploading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload error: $e')));
       }
     }
   }
@@ -272,6 +332,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     // Clear active conversation so notifications resume
     NotificationService().setActiveConversation(null);
+    // Leave the socket room and clear the provider's active conversation
+    _chatProviderRef?.leaveConversation(widget.conversationId);
     _typingDebounce?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
@@ -284,11 +346,14 @@ class _ChatScreenState extends State<ChatScreen> {
     // Watch global provider
     final chatProvider = context.watch<ChatProvider>();
 
-    if (chatProvider.isLoading && chatProvider.getMessages(widget.conversationId).isEmpty) {
+    // Resolve the current user id live from AuthProvider so message alignment
+    // never relies on a stale/null local copy (iOS recreates state on resume).
+    final currentUserId = context.watch<AuthProvider>().userId ?? _currentUserId;
+
+    if (chatProvider.isLoading &&
+        chatProvider.getMessages(widget.conversationId).isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.recipientName),
-        ),
+        appBar: AppBar(title: Text(widget.recipientName)),
         body: Skeletonizer(
           enabled: true,
           child: ListView.builder(
@@ -301,7 +366,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                 child: Container(
                   margin: const EdgeInsets.symmetric(vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.7,
                   ),
@@ -335,13 +403,98 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           if (widget.adTitle != null) _buildAdBanner(),
-          Expanded(child: _buildMessageList()),
+          Expanded(child: _buildMessageList(currentUserId)),
           _buildTypingIndicator(),
           if (_pendingImage != null) _buildImagePreview(),
           _buildInputArea(),
         ],
       ),
     );
+  }
+
+  /// Open the other user's shop/profile page (every user has a `user-{id}` slug).
+  void _openShop() {
+    final id = _effectiveOtherUserId;
+    if (id == null) return;
+    Navigator.push(
+      context,
+      FadeScaleRoute(builder: (_) => ShopScreen(shopSlug: 'user-$id')),
+    );
+  }
+
+  /// Open the ad this conversation is about.
+  void _openAd() {
+    final id = widget.adId;
+    if (id == null) return;
+    Navigator.push(
+      context,
+      FadeScaleRoute(builder: (_) => AdDetailScreen(adId: id)),
+    );
+  }
+
+  Future<void> _handleReport() async {
+    final id = _effectiveOtherUserId;
+    if (id == null) return;
+    await showReportUserSheet(
+      context,
+      reportedUserId: id,
+      userName: widget.recipientName,
+      conversationId: widget.conversationId,
+    );
+  }
+
+  Future<void> _handleBlockToggle() async {
+    final id = _effectiveOtherUserId;
+    if (id == null) return;
+
+    if (_blockedByMe) {
+      final result = await _messageClient.unblockUser(id);
+      if (!mounted) return;
+      if (result.success) {
+        setState(() => _blockedByMe = false);
+        _showSnack('chat.unblocked'.tr());
+      } else {
+        _showSnack(result.error ?? 'chat.actionFailed'.tr());
+      }
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('chat.blockTitle'.tr()),
+        content: Text('chat.blockConfirm'.tr(args: [widget.recipientName])),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('common.cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFEF4444),
+            ),
+            child: Text('chat.block'.tr()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final result = await _messageClient.blockUser(id);
+    if (!mounted) return;
+    if (result.success) {
+      setState(() => _blockedByMe = true);
+      _showSnack('chat.blocked'.tr());
+    } else {
+      _showSnack(result.error ?? 'chat.actionFailed'.tr());
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -355,114 +508,168 @@ class _ChatScreenState extends State<ChatScreen> {
       title: Consumer<ChatProvider>(
         builder: (context, chatProvider, child) {
           final isOnline = chatProvider.isUserOnline(widget.conversationId);
-          return Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: widget.recipientAvatar != null
-                    ? CachedNetworkImageProvider(widget.recipientAvatar!)
-                    : null,
-                child: widget.recipientAvatar == null
-                    ? Text(
-                        widget.recipientName.isNotEmpty
-                            ? widget.recipientName[0].toUpperCase()
-                            : '?',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
-                        ),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.recipientName,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (isOnline)
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF10B981),
-                              shape: BoxShape.circle,
-                            ),
+          return InkWell(
+            onTap: _effectiveOtherUserId != null ? _openShop : null,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: widget.recipientAvatar != null
+                      ? CachedNetworkImageProvider(widget.recipientAvatar!)
+                      : null,
+                  child: widget.recipientAvatar == null
+                      ? Text(
+                          widget.recipientName.isNotEmpty
+                              ? widget.recipientName[0].toUpperCase()
+                              : '?',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'messages.online'.tr(),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: const Color(0xFF10B981),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
+                        )
+                      : null,
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.recipientName,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (isOnline)
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF10B981),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'messages.online'.tr(),
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
       actions: [
-        IconButton(
-          icon: const Icon(LucideIcons.moreVertical, color: Colors.black54),
-          onPressed: () {
-            // TODO: Show options menu
-          },
-        ),
+        if (_effectiveOtherUserId != null)
+          PopupMenuButton<String>(
+            icon: const Icon(LucideIcons.moreVertical, color: Colors.black54),
+            onSelected: (value) {
+              if (value == 'report') {
+                _handleReport();
+              } else if (value == 'block') {
+                _handleBlockToggle();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                value: 'report',
+                child: Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.flag,
+                      size: 18,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 12),
+                    Text('chat.reportUser'.tr()),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'block',
+                child: Row(
+                  children: [
+                    Icon(
+                      _blockedByMe ? LucideIcons.userCheck : LucideIcons.userX,
+                      size: 18,
+                      color: const Color(0xFFEF4444),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      _blockedByMe
+                          ? 'chat.unblockUser'.tr()
+                          : 'chat.blockUser'.tr(),
+                      style: const TextStyle(color: Color(0xFFEF4444)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }
 
   Widget _buildAdBanner() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-      ),
-      child: Row(
-        children: [
-          Icon(LucideIcons.tag, size: 16, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'messages.aboutAd'.tr(args: [widget.adTitle!]),
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: Colors.grey[700],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+    final tappable = widget.adId != null;
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: tappable ? _openAd : null,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
           ),
-        ],
+          child: Row(
+            children: [
+              Icon(LucideIcons.tag, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'messages.aboutAd'.tr(args: [widget.adTitle!]),
+                  style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700]),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (tappable) ...[
+                const SizedBox(width: 8),
+                Icon(LucideIcons.chevronRight, size: 16, color: Colors.grey[400]),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildMessageList() {
+  Widget _buildMessageList(int? currentUserId) {
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
         final messages = chatProvider.getMessages(widget.conversationId);
 
-        if (kDebugMode) developer.log('Building list. Count: ${messages.length}', name: 'ChatScreen');
+        if (kDebugMode)
+          developer.log(
+            'Building list. Count: ${messages.length}',
+            name: 'ChatScreen',
+          );
 
         if (messages.isEmpty) {
           return _buildEmptyState();
@@ -477,10 +684,16 @@ class _ChatScreenState extends State<ChatScreen> {
           itemBuilder: (context, index) {
             final message = messages[index];
             final showDate = _shouldShowDate(messages, index);
-            final isMe = message.senderId == _currentUserId;
-            if (kDebugMode) developer.log('Msg $index: sender=${message.senderId}, me=$_currentUserId, isMe=$isMe, content=${message.content}', name: 'ChatScreen');
+            final isMe = message.senderId == currentUserId;
+            if (kDebugMode)
+              developer.log(
+                'Msg $index: sender=${message.senderId}, me=$_currentUserId, isMe=$isMe, content=${message.content}',
+                name: 'ChatScreen',
+              );
 
-            final isNewMessage = _initialLoadDone && index < (messages.length - _initialMessageCount);
+            final isNewMessage =
+                _initialLoadDone &&
+                index < (messages.length - _initialMessageCount);
             final bubble = Column(
               children: [
                 if (showDate) _buildDateHeader(message.createdAt),
@@ -574,7 +787,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     for (final match in matches) {
       if (match.start > lastEnd) {
-        spans.add(TextSpan(text: text.substring(lastEnd, match.start), style: style));
+        spans.add(
+          TextSpan(text: text.substring(lastEnd, match.start), style: style),
+        );
       }
 
       final url = match.group(0)!;
@@ -642,7 +857,8 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
-    final isImage = message.type == MessageType.image && message.attachmentUrl != null;
+    final isImage =
+        message.type == MessageType.image && message.attachmentUrl != null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -693,7 +909,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         width: 220,
                         height: 160,
                         color: Colors.grey[300],
-                        child: const Icon(LucideIcons.imageOff, color: Colors.grey),
+                        child: const Icon(
+                          LucideIcons.imageOff,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ),
@@ -702,12 +921,18 @@ class _ChatScreenState extends State<ChatScreen> {
                 _buildLinkifiedText(message.content, isMe),
               const SizedBox(height: 4),
               Padding(
-                padding: isImage ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4) : EdgeInsets.zero,
+                padding: isImage
+                    ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                    : EdgeInsets.zero,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      formatNepalTime(message.createdAt, 'h:mm a', context.locale.languageCode),
+                      formatNepalTime(
+                        message.createdAt,
+                        'h:mm a',
+                        context.locale.languageCode,
+                      ),
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: isMe
@@ -776,10 +1001,7 @@ class _ChatScreenState extends State<ChatScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              SizedBox(
-                width: 24,
-                child: _TypingAnimation(),
-              ),
+              SizedBox(width: 24, child: _TypingAnimation()),
               const SizedBox(width: 8),
               Text(
                 'messages.typing'.tr(args: [widget.recipientName]),
@@ -843,6 +1065,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildInputArea() {
+    if (_isBlocked) return _buildBlockedBanner();
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -882,7 +1105,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           fontSize: 15,
                         ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
                       style: GoogleFonts.inter(fontSize: 15),
                       maxLines: null,
@@ -920,6 +1145,51 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _buildBlockedBanner() {
+    final message = _blockedByMe
+        ? 'chat.blockedByYouBanner'.tr()
+        : 'chat.blockedYouBanner'.tr();
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        14,
+        16,
+        MediaQuery.of(context).padding.bottom + 14,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        border: Border(top: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(LucideIcons.ban, size: 18, color: Colors.grey[600]),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700]),
+            ),
+          ),
+          if (_blockedByMe) ...[
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: _handleBlockToggle,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text('chat.unblock'.tr()),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -952,10 +1222,7 @@ class _ChatScreenState extends State<ChatScreen> {
           const SizedBox(height: 4),
           Text(
             'messages.startTheConversation'.tr(),
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
       ),

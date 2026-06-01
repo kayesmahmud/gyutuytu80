@@ -19,6 +19,8 @@ import 'package:mobile/core/widgets/search_suggestions_overlay.dart';
 import 'package:mobile/core/services/search_history_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:mobile/core/utils/skeleton_data.dart';
+import 'package:mobile/core/widgets/load_error_view.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(String query)? onSearch;
@@ -47,6 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AdWithDetails> _displayLatestAds = [];
   List<AdWithDetails> _displayFeaturedAds = [];
   bool _isLoading = true;
+  // Set when the initial fetch fails, so we can show a retry state instead of
+  // the misleading "No ads yet" empty message.
+  bool _loadFailed = false;
+  bool _isOffline = false;
 
   @override
   void initState() {
@@ -89,32 +95,72 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadFailed = false;
+    });
 
     try {
       // Fetch all data in parallel
       final results = await Future.wait([
         _adClient.getCategories(),
         _adClient.getFeaturedAds(limit: 6),
-        _adClient.getLatestAds(limit: 8),
+        _adClient.getLatestAds(limit: 60),
       ]);
+
+      final featuredResp = results[1] as PaginatedResponse<AdWithDetails>;
+      final latestResp = results[2] as PaginatedResponse<AdWithDetails>;
+
+      // The ad endpoints don't throw on network failure — they return a
+      // response with success == false. If both ad feeds failed, treat it as a
+      // load failure so we show the offline/error state instead of an empty
+      // "No ads yet".
+      if (!latestResp.success && !featuredResp.success) {
+        final offline = await _isOfflineError();
+        if (!mounted) return;
+        setState(() {
+          _loadFailed = true;
+          _isOffline = offline;
+          _isLoading = false;
+        });
+        return;
+      }
 
       if (mounted) {
         setState(() {
           _categories = results[0] as List<CategoryWithSubcategories>;
-          _featuredAds = (results[1] as PaginatedResponse<AdWithDetails>).data;
-          _latestAds = (results[2] as PaginatedResponse<AdWithDetails>).data;
-          _displayLatestAds = _latestAds.take(4).toList();
-          _displayFeaturedAds = _featuredAds.take(4).toList();
+          _featuredAds = featuredResp.data;
+          _latestAds = latestResp.data;
+          _displayLatestAds = _latestAds.take(60).toList();
+          _displayFeaturedAds = _featuredAds.take(6).toList();
           _isLoading = false;
         });
       }
     } catch (e) {
+      final offline = await _isOfflineError();
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _loadFailed = true;
+          _isOffline = offline;
         });
       }
+    }
+  }
+
+  /// Decide whether a failed fetch was caused by the device being offline
+  /// (vs. the server being unreachable for some other reason). This drives
+  /// which message + icon the [LoadErrorView] shows.
+  ///
+  /// We check the device's connectivity rather than always assuming "offline":
+  /// the device is offline only when every connectivity result is `none`. If
+  /// the check itself fails for any reason, we fall back to the generic error.
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -130,42 +176,72 @@ class _HomeScreenState extends State<HomeScreen> {
           HapticFeedback.mediumImpact();
         },
         color: const Color(0xFF10B981),
-        child: Skeletonizer(
+        child: _loadFailed && !_isLoading
+            ? _buildErrorState()
+            : Skeletonizer(
           enabled: _isLoading,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeroSection(context),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeroSection(context),
 
-                const SizedBox(height: 24),
-                _buildSectionHeader('home.browseCategories'.tr(), ""),
-                const SizedBox(height: 12),
-                _buildCategoriesList(),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('home.browseCategories'.tr(), ""),
+                    const SizedBox(height: 12),
+                    _buildCategoriesList(),
 
-                const SizedBox(height: 24),
-                _buildSectionHeader('home.latestAds'.tr(), 'home.viewAllAds'.tr(), onTap: widget.onViewAllAds),
-                const SizedBox(height: 12),
-                _buildAdsGrid(
-                  _isLoading ? SkeletonData.fakeAds(4) : _displayLatestAds,
+                    // Featured ads first — small highlight strip
+                    const SizedBox(height: 24),
+                    _buildFeaturedHeader(),
+                    const SizedBox(height: 12),
+                    _buildFeaturedAdsGrid(
+                      _isLoading ? SkeletonData.fakeAds(6) : _displayFeaturedAds,
+                    ),
+
+                    if (!_isLoading && AdService.adsEnabled)
+                      AdBannerWidget(adUnitId: AdService.homeBannerTopId),
+
+                    // Latest/newest feed below
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('home.latestAds'.tr(), 'home.viewAllAds'.tr(), onTap: widget.onViewAllAds),
+                    const SizedBox(height: 12),
+                  ],
                 ),
+              ),
 
-                if (!_isLoading && AdService.adsEnabled)
-                  AdBannerWidget(adUnitId: AdService.homeBannerTopId),
+              // 60 newest ads as a lazy SliverGrid: off-screen cards (and their
+              // network images) aren't built until scrolled near the viewport.
+              _buildLatestSliverGrid(
+                _isLoading ? SkeletonData.fakeAds(6) : _displayLatestAds,
+              ),
 
-                const SizedBox(height: 24),
-                _buildFeaturedHeader(),
-                const SizedBox(height: 12),
-                _buildFeaturedAdsGrid(
-                  _isLoading ? SkeletonData.fakeAds(4) : _displayFeaturedAds,
-                ),
-
-                const SizedBox(height: 50),
-              ],
-            ),
+              const SliverToBoxAdapter(child: SizedBox(height: 50)),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  /// Full-screen failure state. Wrapped in a scrollable that fills the
+  /// viewport so RefreshIndicator's pull-to-refresh keeps working here.
+  Widget _buildErrorState() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: LoadErrorView(
+              isOffline: _isOffline,
+              onRetry: _fetchData,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -462,41 +538,46 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAdsGrid(List<AdWithDetails> ads) {
+  Widget _buildLatestSliverGrid(List<AdWithDetails> ads) {
     if (ads.isEmpty) {
-      return StaggeredFadeIn(
-        index: 0,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Center(
-            child: Text(
-              'home.noAdsYet'.tr(),
-              style: GoogleFonts.inter(color: Colors.grey[500]),
+      return SliverToBoxAdapter(
+        child: StaggeredFadeIn(
+          index: 0,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: Text(
+                'home.noAdsYet'.tr(),
+                style: GoogleFonts.inter(color: Colors.grey[500]),
+              ),
             ),
           ),
         ),
       );
     }
 
-    return Padding(
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        childAspectRatio: 0.65, // Adjusted for more info content
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        children: ads
-            .asMap()
-            .entries
-            .map(
-              (entry) => StaggeredFadeIn(
-                index: entry.key,
-                child: RepaintBoundary(child: AdCard(ad: entry.value, heroTagPrefix: 'latest')),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.65,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            // Clamp the stagger index so the last of 60 cards doesn't wait
+            // ~5s (delayPerItem * index); caps the cascade at ~0.5s.
+            return StaggeredFadeIn(
+              index: index.clamp(0, 6),
+              child: RepaintBoundary(
+                child: AdCard(ad: ads[index], heroTagPrefix: 'latest'),
               ),
-            )
-            .toList(),
+            );
+          },
+          childCount: ads.length,
+        ),
       ),
     );
   }

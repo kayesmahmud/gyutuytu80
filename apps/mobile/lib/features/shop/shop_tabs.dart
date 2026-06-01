@@ -142,18 +142,36 @@ class ShopAboutSection extends StatefulWidget {
 class _ShopAboutSectionState extends State<ShopAboutSection> {
   bool _isEditing = false;
   bool _saving = false;
-  final _bioController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final ShopClient _shopClient = ShopClient();
+
+  /// Effective description — prefers business_description, falls back to bio.
+  /// Matches web's `useShopAbout.ts` behaviour so both platforms render the
+  /// same source of truth.
+  String get _effectiveDescription =>
+      widget.shop.businessDescription?.isNotEmpty == true
+          ? widget.shop.businessDescription!
+          : (widget.shop.bio ?? '');
 
   @override
   void initState() {
     super.initState();
-    _bioController.text = widget.shop.bio ?? '';
+    _descriptionController.text = _effectiveDescription;
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    final response = await _shopClient.updateShopProfile({'bio': _bioController.text});
+    // Save to businessDescription (web's source of truth) so edits sync
+    // across web and mobile. The API maps camelCase → snake_case server-side.
+    final response = await _shopClient.updateShopProfile(
+      {'businessDescription': _descriptionController.text.trim()},
+    );
     setState(() => _saving = false);
 
     if (response.success && response.data != null) {
@@ -172,8 +190,9 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
-            controller: _bioController,
+            controller: _descriptionController,
             maxLines: 5,
+            maxLength: 500,
             decoration: InputDecoration(
               hintText: context.locale.languageCode == 'ne' ? 'आफ्नो व्यवसाय वर्णन गर्नुहोस्...' : 'Describe your business...',
               border: const OutlineInputBorder(),
@@ -192,7 +211,12 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => setState(() => _isEditing = false),
+                  onPressed: () {
+                    setState(() {
+                      _descriptionController.text = _effectiveDescription;
+                      _isEditing = false;
+                    });
+                  },
                   child: Text(l('cancel', context.locale.languageCode)),
                 ),
               ),
@@ -202,6 +226,7 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
       );
     }
 
+    final description = _effectiveDescription;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -218,23 +243,11 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
         ),
         const SizedBox(height: 8),
         Text(
-          widget.shop.bio?.isNotEmpty == true
-              ? widget.shop.bio!
+          description.isNotEmpty
+              ? description
               : (context.locale.languageCode == 'ne' ? 'कुनै विवरण उपलब्ध छैन।' : 'No description available.'),
           style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700], height: 1.5),
         ),
-        if (widget.shop.businessDescription?.isNotEmpty == true) ...[
-          const SizedBox(height: 16),
-          Text(
-            context.locale.languageCode == 'ne' ? 'व्यवसाय विवरण' : 'Business Description',
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[800]),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            widget.shop.businessDescription!,
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700], height: 1.5),
-          ),
-        ],
       ],
     );
   }

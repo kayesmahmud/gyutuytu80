@@ -96,6 +96,7 @@ services:
       - ESEWA_MERCHANT_CODE=${ESEWA_MERCHANT_CODE}
       - ESEWA_SECRET_KEY=${ESEWA_SECRET_KEY}
       - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
+      - APPLE_CLIENT_ID=${APPLE_CLIENT_ID:-com.thulobazaar.mobile}
     volumes:
       - uploads-data:/app/uploads
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro

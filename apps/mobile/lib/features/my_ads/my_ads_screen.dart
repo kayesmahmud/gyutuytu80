@@ -14,6 +14,8 @@ import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/utils/page_transitions.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 import 'package:mobile/features/post_ad/create_ad_screen.dart';
+import 'package:mobile/core/widgets/load_error_view.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class MyAdsScreen extends StatefulWidget {
   const MyAdsScreen({super.key});
@@ -30,6 +32,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
   List<AdWithDetails> _allAds = [];
   bool _isLoading = true;
   String? _error;
+  bool _isOffline = false;
 
   // Tab filters
   static const List<String> _tabs = ['All', 'Active', 'Pending', 'Rejected'];
@@ -85,16 +88,35 @@ class _MyAdsScreenState extends State<MyAdsScreen>
     });
 
     final response = await _adClient.getMyAds(limit: 100);
+    if (!mounted) return;
 
-    if (mounted) {
+    if (response.success) {
       setState(() {
         _isLoading = false;
-        if (response.success) {
-          _allAds = response.data;
-        } else {
-          _error = response.errorMessage ?? 'Failed to load ads';
-        }
+        _allAds = response.data;
+        _error = null;
       });
+    } else {
+      // getMyAds swallows network errors into success == false, so classify
+      // connectivity here to show the right offline/error message.
+      final offline = await _isOfflineError();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = response.errorMessage ?? 'Failed to load ads';
+        _isOffline = offline;
+      });
+    }
+  }
+
+  /// True when the device has no connectivity at all (drives offline vs
+  /// generic-error copy in [LoadErrorView]).
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -279,22 +301,7 @@ class _MyAdsScreenState extends State<MyAdsScreen>
   }
 
   Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.alertCircle, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(_error!, style: GoogleFonts.inter(color: Colors.grey[600])),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _fetchAds,
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: Text('common.retry'.tr()),
-          ),
-        ],
-      ),
-    );
+    return LoadErrorView(isOffline: _isOffline, onRetry: _fetchAds);
   }
 
   Widget _buildEmptyState() {

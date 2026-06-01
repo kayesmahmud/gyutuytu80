@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../api/notification_client.dart';
 import '../models/notification_item.dart';
 import '../services/socket_service.dart';
@@ -15,6 +16,8 @@ class NotificationProvider extends ChangeNotifier {
   int _unreadCount = 0;
   bool _isLoading = false;
   bool _hasMore = true;
+  bool _hasError = false;
+  bool _isOffline = false;
   int _currentPage = 1;
   StreamSubscription<dynamic>? _socketSub;
 
@@ -22,6 +25,8 @@ class NotificationProvider extends ChangeNotifier {
   int get unreadCount => _unreadCount;
   bool get isLoading => _isLoading;
   bool get hasMore => _hasMore;
+  bool get hasError => _hasError;
+  bool get isOffline => _isOffline;
 
   /// Initialize — fetch unread count and listen for real-time updates
   Future<void> initialize() async {
@@ -48,6 +53,7 @@ class NotificationProvider extends ChangeNotifier {
     if (!_hasMore) return;
 
     _isLoading = true;
+    _hasError = false;
     notifyListeners();
 
     try {
@@ -60,10 +66,23 @@ class NotificationProvider extends ChangeNotifier {
       }
     } catch (e) {
       developer.log('Error fetching notifications: $e', name: 'NotificationProvider');
+      _hasError = true;
+      _isOffline = await _isOfflineError();
     }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  /// True when the device has no connectivity at all (drives offline vs
+  /// generic-error copy in the notifications error view).
+  Future<bool> _isOfflineError() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.every((r) => r == ConnectivityResult.none);
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Mark single notification as read

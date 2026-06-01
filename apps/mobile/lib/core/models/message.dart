@@ -295,23 +295,6 @@ class Conversation {
   }
 }
 
-/// Search result user
-class SearchUser {
-  final int id;
-  final String fullName;
-  final String? avatar;
-
-  SearchUser({required this.id, required this.fullName, this.avatar});
-
-  factory SearchUser.fromJson(Map<String, dynamic> json) {
-    return SearchUser(
-      id: json['id'] as int,
-      fullName: json['fullName'] as String? ?? json['full_name'] as String? ?? 'Unknown',
-      avatar: json['avatar'] as String?,
-    );
-  }
-}
-
 // Helper functions
 DateTime _parseDateTime(dynamic value) {
   if (value == null) return DateTime.now();

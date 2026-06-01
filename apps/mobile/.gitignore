@@ -30,3 +30,24 @@ build/
 
 # Mac
 .DS_Store
+
+# Release artifacts — must never be committed
+*.apk
+*.aab
+
+# Firebase admin SDK (server-side secret — never bundle in app)
+*firebase-adminsdk*.json
+
+# Keystores & signing secrets
+*.jks
+*.keystore
+key.properties
+android/key.properties
+
+# Screenshots scratch files
+/Screenshot Flutter/
+/Mobile View Screenshot/
+emulator_*.png
+test_home*.png
+blog-*.png
+play-store-assets/
