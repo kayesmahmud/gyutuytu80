@@ -1,10 +1,10 @@
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import config from '../config/index.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, optionalAuth } from '../middleware/auth.js';
 import { rateLimiters } from '../middleware/rateLimiter.js';
 import { catchAsync, ValidationError } from '../middleware/errorHandler.js';
-import { formatPhoneNumber } from '../lib/sms.js';
+import { formatPhoneNumber } from '@thulobazaar/auth-core';
 import { generateAccessToken, generateRefreshToken, rotateRefreshToken } from '../lib/token.js';
 import {
   sendOtp,
@@ -226,6 +226,10 @@ router.post(
 router.post(
   '/send-otp',
   rateLimiters.auth,
+  // Optional auth: phone_verification is requested by a logged-in user, so when
+  // a token is present we pass their id through to exclude their own number
+  // from the duplicate check. Anonymous flows (registration/login) still work.
+  optionalAuth,
   catchAsync(async (req: Request, res: Response) => {
     const { phone, purpose = 'registration' } = req.body;
 
@@ -238,7 +242,7 @@ router.post(
       throw new ValidationError('Invalid purpose');
     }
 
-    const result = await sendOtp(phone, purpose);
+    const result = await sendOtp(phone, purpose, { currentUserId: req.user?.userId });
 
     if (!result.success) {
       const status = result.cooldownRemaining ? 429 : result.error?.includes('not found') ? 404 : 400;

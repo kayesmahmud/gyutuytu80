@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperAdmin } from '@/lib/auth';
-import { sendNotificationSms } from '@/lib/sms';
+import { sendNotificationSms } from '@thulobazaar/auth-core';
 
 /**
  * POST /api/admin/settings/test-sms

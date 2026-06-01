@@ -6,7 +6,7 @@ import {
   sendOtpSms,
   getOtpExpiry,
   formatPhoneNumber,
-} from '@/lib/sms';
+} from '@thulobazaar/auth-core';
 
 const MAX_OTP_ATTEMPTS = 3;
 const OTP_COOLDOWN_SECONDS = 60;

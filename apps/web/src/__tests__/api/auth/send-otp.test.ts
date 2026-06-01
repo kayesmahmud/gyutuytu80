@@ -1,44 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-// Create separate mock functions per model to avoid cross-contamination
-const mockUsersFindFirst = vi.fn();
-const mockOtpsFindFirst = vi.fn();
-const mockOtpsCount = vi.fn();
-const mockOtpsUpdateMany = vi.fn();
-const mockOtpsCreate = vi.fn();
+// The OTP logic now lives in @thulobazaar/auth-core (single source of truth with
+// the Express API). This route is a thin HTTP wrapper, so these tests mock
+// `sendOtp` and verify the wrapper's own responsibilities: input validation,
+// mapping the result to the right HTTP status, and passing the logged-in user's
+// id through for phone_verification. The OTP logic itself is covered where it
+// lives, in auth-core.
+const mockSendOtp = vi.fn();
+const mockGetServerSession = vi.fn();
 
-const mockValidateNepaliPhone = vi.fn();
-const mockFormatPhoneNumber = vi.fn();
-const mockGenerateOtp = vi.fn();
-const mockSendOtpSms = vi.fn();
-const mockGetOtpExpiry = vi.fn();
-
-// Mock Prisma - separate mocks per model
-vi.mock('@thulobazaar/database', () => ({
-  prisma: {
-    users: {
-      findFirst: (...args: unknown[]) => mockUsersFindFirst(...args),
-    },
-    phone_otps: {
-      findFirst: (...args: unknown[]) => mockOtpsFindFirst(...args),
-      count: (...args: unknown[]) => mockOtpsCount(...args),
-      updateMany: (...args: unknown[]) => mockOtpsUpdateMany(...args),
-      create: (...args: unknown[]) => mockOtpsCreate(...args),
-    },
-  },
+vi.mock('@thulobazaar/auth-core', () => ({
+  sendOtp: (...args: unknown[]) => mockSendOtp(...args),
 }));
 
-// Mock SMS functions
-vi.mock('@/lib/sms', () => ({
-  validateNepaliPhone: (...args: unknown[]) => mockValidateNepaliPhone(...args),
-  formatPhoneNumber: (...args: unknown[]) => mockFormatPhoneNumber(...args),
-  generateOtp: () => mockGenerateOtp(),
-  sendOtpSms: (...args: unknown[]) => mockSendOtpSms(...args),
-  getOtpExpiry: () => mockGetOtpExpiry(),
+vi.mock('next-auth', () => ({
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 
-// Helper to create mock requests
+vi.mock('@/lib/auth', () => ({
+  authOptions: {},
+}));
+
 function createMockRequest(body: Record<string, unknown>) {
   return new NextRequest('http://localhost:3333/api/auth/send-otp', {
     method: 'POST',
@@ -47,29 +30,20 @@ function createMockRequest(body: Record<string, unknown>) {
   });
 }
 
-// Setup default mock behaviors
-function setupDefaultMocks() {
-  mockValidateNepaliPhone.mockReturnValue(true);
-  mockFormatPhoneNumber.mockImplementation((phone: string) => phone);
-  mockGenerateOtp.mockReturnValue('123456');
-  mockSendOtpSms.mockResolvedValue({ success: true, message: 'OTP sent' });
-  mockGetOtpExpiry.mockReturnValue(new Date(Date.now() + 600000));
-
-  // Default prisma mocks
-  mockUsersFindFirst.mockResolvedValue(null);
-  mockOtpsFindFirst.mockResolvedValue(null);
-  mockOtpsCount.mockResolvedValue(0);
-  mockOtpsUpdateMany.mockResolvedValue({ count: 0 });
-  mockOtpsCreate.mockResolvedValue({ id: 1, phone: '9800000000', otp_code: '123456' });
-}
-
-describe('POST /api/auth/send-otp', () => {
+describe('POST /api/auth/send-otp (wrapper)', () => {
   let POST: typeof import('@/app/api/auth/send-otp/route').POST;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.resetModules();
-    setupDefaultMocks();
+
+    // Default: a successful send
+    mockSendOtp.mockResolvedValue({
+      success: true,
+      identifier: '9800000000',
+      expiresIn: 600,
+    });
+    mockGetServerSession.mockResolvedValue(null);
 
     const routeModule = await import('@/app/api/auth/send-otp/route');
     POST = routeModule.POST;
@@ -79,390 +53,137 @@ describe('POST /api/auth/send-otp', () => {
     vi.clearAllMocks();
   });
 
-  // ==========================================
-  // Validation Tests
-  // ==========================================
   describe('Validation', () => {
-    it('should return 400 when phone not provided', async () => {
-      const request = createMockRequest({
-        purpose: 'registration',
-      });
-      const response = await POST(request);
+    it('returns 400 when phone is missing (does not call sendOtp)', async () => {
+      const response = await POST(createMockRequest({ purpose: 'registration' }));
       const data = await response.json();
 
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
       expect(data.message).toBe('Validation failed');
+      expect(mockSendOtp).not.toHaveBeenCalled();
     });
 
-    it('should return 400 for invalid purpose', async () => {
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'invalid_purpose',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
+    it('returns 400 for an invalid purpose', async () => {
+      const response = await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'invalid_purpose' })
+      );
       expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-    });
-
-    it('should return 400 for invalid Nepali phone number', async () => {
-      mockValidateNepaliPhone.mockReturnValue(false);
-
-      const request = createMockRequest({
-        phone: '1234567890',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('Invalid Nepali phone number');
+      expect(mockSendOtp).not.toHaveBeenCalled();
     });
   });
 
-  // ==========================================
-  // Registration Purpose Tests
-  // ==========================================
-  describe('Registration Purpose', () => {
-    it('should return 400 if phone already registered', async () => {
-      mockUsersFindFirst.mockResolvedValueOnce({
-        id: 1,
-        phone: '9800000000',
-        phone_verified: true,
-      });
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('already registered');
-    });
-  });
-
-  // ==========================================
-  // Login Purpose Tests
-  // ==========================================
-  describe('Login Purpose', () => {
-    it('should return 404 if phone not registered for login', async () => {
-      mockUsersFindFirst.mockResolvedValue(null);
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'login',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(404);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('No account found');
-    });
-
-    it('should return 403 if account suspended for login', async () => {
-      mockUsersFindFirst.mockResolvedValueOnce({
-        id: 1,
-        phone: '9800000000',
-        phone_verified: true,
-        is_active: true,
-        is_suspended: true,
-      });
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'login',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(403);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('suspended');
-    });
-  });
-
-  // ==========================================
-  // Password Reset Purpose Tests
-  // ==========================================
-  describe('Password Reset Purpose', () => {
-    it('should return 404 if account not found for password reset', async () => {
-      mockUsersFindFirst.mockResolvedValue(null);
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'password_reset',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(404);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('No account found');
-    });
-
-    it('should return 403 if account suspended for password reset', async () => {
-      mockUsersFindFirst.mockResolvedValueOnce({
-        id: 1,
-        phone: '9800000000',
-        is_active: true,
-        is_suspended: true,
-      });
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'password_reset',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(403);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('suspended');
-    });
-  });
-
-  // ==========================================
-  // Rate Limiting Tests
-  // ==========================================
-  describe('Rate Limiting', () => {
-    it('should return 429 if OTP requested within cooldown', async () => {
-      // users.findFirst: no existing user (registration passes)
-      mockUsersFindFirst.mockResolvedValueOnce(null);
-      // phone_otps.findFirst: recent OTP exists (cooldown active)
-      mockOtpsFindFirst.mockResolvedValueOnce({
-        id: 1,
-        phone: '9800000000',
-        created_at: new Date(Date.now() - 30000), // 30 seconds ago
-      });
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(429);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('Please wait');
-      expect(data.cooldownRemaining).toBeDefined();
-    });
-
-    it('should return 429 if max attempts exceeded', async () => {
-      mockUsersFindFirst.mockResolvedValue(null);
-      mockOtpsFindFirst.mockResolvedValue(null); // No cooldown
-      mockOtpsCount.mockResolvedValue(4); // MAX_OTP_ATTEMPTS = 4
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(429);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('Too many OTP requests');
-    });
-  });
-
-  // ==========================================
-  // Successful OTP Send Tests
-  // ==========================================
-  describe('Successful OTP Send', () => {
-    it('should send OTP via SMS for phone registration', async () => {
-      mockUsersFindFirst.mockResolvedValue(null);
-      mockOtpsFindFirst.mockResolvedValue(null);
-      mockOtpsCount.mockResolvedValue(0);
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
+  describe('Result -> HTTP status mapping', () => {
+    it('200 on success and echoes identifier/expiresIn', async () => {
+      const response = await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'registration' })
+      );
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(data.message).toContain('SMS');
       expect(data.identifier).toBe('9800000000');
       expect(data.expiresIn).toBe(600);
-      expect(mockSendOtpSms).toHaveBeenCalledWith('9800000000', '123456', 'registration');
+      expect(mockSendOtp).toHaveBeenCalledWith('9800000000', 'registration', {
+        currentUserId: undefined,
+      });
     });
 
-    it('should invalidate previous unused OTPs', async () => {
-      mockUsersFindFirst.mockResolvedValue(null);
-      mockOtpsFindFirst.mockResolvedValue(null);
-      mockOtpsCount.mockResolvedValue(0);
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'registration',
-      });
-      await POST(request);
-
-      expect(mockOtpsUpdateMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            phone: '9800000000',
-            purpose: 'registration',
-            is_used: false,
-          }),
-          data: { is_used: true },
-        })
-      );
-    });
-
-    it('should store new OTP in database', async () => {
-      mockUsersFindFirst.mockResolvedValue(null);
-      mockOtpsFindFirst.mockResolvedValue(null);
-      mockOtpsCount.mockResolvedValue(0);
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'registration',
-      });
-      await POST(request);
-
-      expect(mockOtpsCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            phone: '9800000000',
-            otp_code: '123456',
-            purpose: 'registration',
-          }),
-        })
-      );
-    });
-
-    it('should send OTP for password reset with phone', async () => {
-      mockUsersFindFirst.mockResolvedValueOnce({
-        id: 1,
-        phone: '9800000000',
-        password_hash: 'hashedpassword',
-        is_active: true,
-        is_suspended: false,
-      });
-      mockOtpsFindFirst.mockResolvedValue(null);
-      mockOtpsCount.mockResolvedValue(0);
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'password_reset',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(mockSendOtpSms).toHaveBeenCalledWith('9800000000', '123456', 'password_reset');
-    });
-
-    it('should send OTP for login with existing user', async () => {
-      mockUsersFindFirst.mockResolvedValueOnce({
-        id: 1,
-        phone: '9800000000',
-        phone_verified: true,
-        is_active: true,
-        is_suspended: false,
-      });
-      mockOtpsFindFirst.mockResolvedValue(null);
-      mockOtpsCount.mockResolvedValue(0);
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'login',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(mockSendOtpSms).toHaveBeenCalledWith('9800000000', '123456', 'login');
-    });
-  });
-
-  // ==========================================
-  // Phone Verification Purpose Tests
-  // ==========================================
-  describe('Phone Verification Purpose', () => {
-    it('should return 400 if phone already verified by another user', async () => {
-      mockUsersFindFirst.mockResolvedValueOnce({
-        id: 2,
-        phone: '9800000000',
-        phone_verified: true,
-      });
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'phone_verification',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('already verified');
-    });
-
-    it('should send OTP for phone verification if not verified', async () => {
-      mockUsersFindFirst.mockResolvedValue(null);
-      mockOtpsFindFirst.mockResolvedValue(null);
-      mockOtpsCount.mockResolvedValue(0);
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'phone_verification',
-      });
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(mockSendOtpSms).toHaveBeenCalledWith('9800000000', '123456', 'phone_verification');
-    });
-  });
-
-  // ==========================================
-  // Error Handling Tests
-  // ==========================================
-  describe('Error Handling', () => {
-    it('should return 500 if SMS sending fails', async () => {
-      mockUsersFindFirst.mockResolvedValue(null);
-      mockOtpsFindFirst.mockResolvedValue(null);
-      mockOtpsCount.mockResolvedValue(0);
-      mockSendOtpSms.mockResolvedValue({
+    it('400 for a generic rejection (e.g. already registered)', async () => {
+      mockSendOtp.mockResolvedValue({
         success: false,
-        message: 'Failed',
-        error: 'SMS service unavailable',
+        error: 'This phone number is already registered',
       });
-
-      const request = createMockRequest({
-        phone: '9800000000',
-        purpose: 'registration',
-      });
-      const response = await POST(request);
+      const response = await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'registration' })
+      );
       const data = await response.json();
-
-      expect(response.status).toBe(500);
-      expect(data.success).toBe(false);
-      expect(data.message).toContain('Failed to send OTP');
+      expect(response.status).toBe(400);
+      expect(data.message).toContain('already registered');
     });
 
-    it('should handle invalid JSON body gracefully', async () => {
+    it('404 when no account is found', async () => {
+      mockSendOtp.mockResolvedValue({
+        success: false,
+        error: 'No account found with this phone number',
+      });
+      const response = await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'login' })
+      );
+      expect(response.status).toBe(404);
+    });
+
+    it('403 when the account is suspended', async () => {
+      mockSendOtp.mockResolvedValue({
+        success: false,
+        error: 'Your account has been suspended. Please contact support.',
+      });
+      const response = await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'login' })
+      );
+      expect(response.status).toBe(403);
+    });
+
+    it('429 on cooldown, surfacing cooldownRemaining', async () => {
+      mockSendOtp.mockResolvedValue({
+        success: false,
+        error: 'Please wait 30 seconds before requesting a new OTP',
+        cooldownRemaining: 30,
+      });
+      const response = await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'registration' })
+      );
+      const data = await response.json();
+      expect(response.status).toBe(429);
+      expect(data.cooldownRemaining).toBe(30);
+    });
+
+    it('429 when too many OTP requests', async () => {
+      mockSendOtp.mockResolvedValue({
+        success: false,
+        error: 'Too many OTP requests. Please try again after 1 hour.',
+      });
+      const response = await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'registration' })
+      );
+      expect(response.status).toBe(429);
+    });
+  });
+
+  describe('phone_verification session pass-through', () => {
+    it('passes the logged-in user id as currentUserId', async () => {
+      mockGetServerSession.mockResolvedValue({ user: { id: '42' } });
+      await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'phone_verification' })
+      );
+      expect(mockSendOtp).toHaveBeenCalledWith('9800000000', 'phone_verification', {
+        currentUserId: 42,
+      });
+    });
+
+    it('passes undefined currentUserId when not logged in', async () => {
+      mockGetServerSession.mockResolvedValue(null);
+      await POST(
+        createMockRequest({ phone: '9800000000', purpose: 'phone_verification' })
+      );
+      expect(mockSendOtp).toHaveBeenCalledWith('9800000000', 'phone_verification', {
+        currentUserId: undefined,
+      });
+    });
+
+    it('does not read the session for anonymous purposes', async () => {
+      await POST(createMockRequest({ phone: '9800000000', purpose: 'registration' }));
+      expect(mockGetServerSession).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Error handling', () => {
+    it('returns 500 on invalid JSON body', async () => {
       const request = new NextRequest('http://localhost:3333/api/auth/send-otp', {
         method: 'POST',
         body: 'invalid-json',
         headers: { 'Content-Type': 'application/json' },
       });
-
       const response = await POST(request);
       expect(response.status).toBe(500);
     });

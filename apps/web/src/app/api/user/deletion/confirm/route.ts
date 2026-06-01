@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
-import { formatPhoneNumber } from '@/lib/sms';
+import { formatPhoneNumber } from '@thulobazaar/auth-core';
 
 const confirmSchema = z.object({
   otp: z.string().length(6, 'OTP must be 6 digits'),

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperAdmin } from '@/lib/auth';
 import { prisma } from '@thulobazaar/database';
-import { validateNepaliPhone, formatPhoneNumber } from '@/lib/sms/aakashSms';
+import { validateNepaliPhone, formatPhoneNumber } from '@thulobazaar/auth-core';
 
 const AAKASH_SMS_API_URL = 'https://sms.aakashsms.com/sms/v3/send';
 

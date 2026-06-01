@@ -48,7 +48,8 @@
     "sharp": "^0.34.5",
     "socket.io": "^4.8.1",
     "typesense": "^2.1.0",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "@thulobazaar/auth-core": "*"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

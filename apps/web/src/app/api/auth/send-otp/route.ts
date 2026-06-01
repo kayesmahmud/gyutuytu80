@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@thulobazaar/database';
+import { getServerSession } from 'next-auth';
 import { z } from 'zod';
-import {
-  validateNepaliPhone,
-  formatPhoneNumber,
-  generateOtp,
-  sendOtpSms,
-  getOtpExpiry,
-  type OtpPurpose,
-} from '@/lib/sms';
+import { authOptions } from '@/lib/auth';
+import { sendOtp } from '@thulobazaar/auth-core';
 
-// Phone-only OTP (email registration removed)
+// OTP logic lives in the shared @thulobazaar/auth-core package (single source of
+// truth with the Express API). This route is a thin HTTP wrapper: validate the
+// body, supply the logged-in user's id for phone_verification, shape the JSON.
 const sendOtpSchema = z.object({
   phone: z.string().min(10, 'Phone number is required'),
-  purpose: z.enum(['registration', 'login', 'password_reset', 'phone_verification']).default('registration'),
+  purpose: z
+    .enum(['registration', 'login', 'password_reset', 'phone_verification'])
+    .default('registration'),
 });
-
-const MAX_OTP_ATTEMPTS = 4;
-const OTP_COOLDOWN_SECONDS = 60;
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,218 +32,50 @@ export async function POST(request: NextRequest) {
 
     const { phone, purpose } = validation.data;
 
-    // Format and validate phone number
-    const formattedPhone = formatPhoneNumber(phone);
-
-    if (!validateNepaliPhone(formattedPhone)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Invalid Nepali phone number. Must be 10 digits starting with 97 or 98.',
-        },
-        { status: 400 }
-      );
-    }
-
-    // For registration, check if phone is already registered
-    if (purpose === 'registration') {
-      const existingUser = await prisma.users.findFirst({
-        where: { phone: formattedPhone, phone_verified: true },
-      });
-
-      if (existingUser) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: 'This phone number is already registered',
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    // For login, check if phone is registered
-    if (purpose === 'login') {
-      const existingUser = await prisma.users.findFirst({
-        where: {
-          phone: formattedPhone,
-          phone_verified: true,
-          is_active: true,
-        },
-      });
-
-      if (!existingUser) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: 'No account found with this phone number',
-          },
-          { status: 404 }
-        );
-      }
-
-      if (existingUser.is_suspended) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: 'Your account has been suspended. Please contact support.',
-          },
-          { status: 403 }
-        );
-      }
-    }
-
-    // For password_reset, check if account exists
-    if (purpose === 'password_reset') {
-      const existingUser = await prisma.users.findFirst({
-        where: { phone: formattedPhone, is_active: true },
-      });
-
-      if (!existingUser) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: 'No account found with this phone number',
-          },
-          { status: 404 }
-        );
-      }
-
-      if (existingUser.is_suspended) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: 'Your account has been suspended. Please contact support.',
-          },
-          { status: 403 }
-        );
-      }
-    }
-
-    // For phone_verification, check if phone is already verified by another user
+    // For phone_verification, pass the logged-in user's id so the duplicate
+    // check excludes their own number (lets them re-verify it). Other purposes
+    // are anonymous flows.
+    let currentUserId: number | undefined;
     if (purpose === 'phone_verification') {
-      const existingVerifiedUser = await prisma.users.findFirst({
-        where: {
-          phone: formattedPhone,
-          phone_verified: true,
-        },
-      });
-
-      if (existingVerifiedUser) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: 'This phone number is already verified by another account',
-          },
-          { status: 400 }
-        );
-      }
+      const session = await getServerSession(authOptions);
+      currentUserId = session?.user?.id ? parseInt(session.user.id, 10) : undefined;
     }
 
-    // Check for recent OTP (cooldown)
-    const recentOtp = await prisma.phone_otps.findFirst({
-      where: {
-        phone: formattedPhone,
-        purpose,
-        created_at: {
-          gte: new Date(Date.now() - OTP_COOLDOWN_SECONDS * 1000),
-        },
-      },
-      orderBy: { created_at: 'desc' },
-    });
+    const result = await sendOtp(phone, purpose, { currentUserId });
 
-    if (recentOtp) {
-      const secondsRemaining = Math.ceil(
-        (OTP_COOLDOWN_SECONDS * 1000 - (Date.now() - recentOtp.created_at.getTime())) / 1000
-      );
+    if (!result.success) {
+      const msg = result.error || '';
+      const status =
+        result.cooldownRemaining || msg.includes('Too many')
+          ? 429
+          : msg.includes('No account')
+            ? 404
+            : msg.includes('suspended')
+              ? 403
+              : 400;
       return NextResponse.json(
         {
           success: false,
-          message: `Please wait ${secondsRemaining} seconds before requesting a new OTP`,
-          cooldownRemaining: secondsRemaining,
+          message: result.error,
+          cooldownRemaining: result.cooldownRemaining,
         },
-        { status: 429 }
+        { status }
       );
     }
-
-    // Check if user has exceeded max attempts
-    const recentAttempts = await prisma.phone_otps.count({
-      where: {
-        phone: formattedPhone,
-        purpose,
-        created_at: {
-          gte: new Date(Date.now() - 60 * 60 * 1000), // Last hour
-        },
-      },
-    });
-
-    if (recentAttempts >= MAX_OTP_ATTEMPTS) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Too many OTP requests. Please try again after 1 hour.',
-        },
-        { status: 429 }
-      );
-    }
-
-    // Invalidate previous unused OTPs
-    await prisma.phone_otps.updateMany({
-      where: {
-        phone: formattedPhone,
-        purpose,
-        is_used: false,
-      },
-      data: {
-        is_used: true,
-      },
-    });
-
-    // Generate new OTP
-    const otp = generateOtp();
-    const expiresAt = getOtpExpiry();
-
-    // Save OTP to database
-    await prisma.phone_otps.create({
-      data: {
-        phone: formattedPhone,
-        otp_code: otp,
-        purpose,
-        expires_at: expiresAt,
-      },
-    });
-
-    // Send OTP via SMS
-    const smsResult = await sendOtpSms(formattedPhone, otp, purpose as OtpPurpose);
-
-    if (!smsResult.success) {
-      console.error('Failed to send OTP SMS:', smsResult.error);
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Failed to send OTP. Please try again.',
-        },
-        { status: 500 }
-      );
-    }
-    console.log(`OTP sent via SMS to ${formattedPhone} for ${purpose}`);
 
     return NextResponse.json(
       {
         success: true,
         message: 'OTP sent successfully via SMS',
-        identifier: formattedPhone,
-        expiresIn: 600, // 10 minutes in seconds
+        identifier: result.identifier,
+        expiresIn: result.expiresIn,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error('Send OTP error:', error);
     return NextResponse.json(
-      {
-        success: false,
-        message: 'Internal server error',
-      },
+      { success: false, message: 'Internal server error' },
       { status: 500 }
     );
   }
