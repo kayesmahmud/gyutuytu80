@@ -35,14 +35,15 @@ export function ProfileHeader({
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4 sm:mb-6">
       <div className="h-20 sm:h-32 bg-gradient-to-r from-primary to-pink-500"></div>
       <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-        <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 -mt-8 sm:-mt-12">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
           <UserAvatar
             src={avatar}
             name={displayName}
             size="2xl"
             borderColor={isVerifiedBusiness ? 'gold' : isVerified ? 'blue' : 'default'}
+            className="-mt-10 sm:-mt-16"
           />
-          <div className="flex-1 sm:pb-2">
+          <div className="flex-1 sm:pt-3">
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{displayName}</h1>
               {isVerified && (
