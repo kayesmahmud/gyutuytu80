@@ -6,6 +6,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { checkProfanity } from '@/utils/profanityCheck';
@@ -69,6 +71,9 @@ export default function ChatWindow({
   onBack,
   token,
 }: ChatWindowProps) {
+  const params = useParams<{ lang: string }>();
+  const lang = params?.lang || 'en';
+
   const [inputValue, setInputValue] = useState('');
   const [sending, setSending] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -311,16 +316,17 @@ export default function ChatWindow({
           </div>
         </div>
 
-        {/* Ad info if exists */}
+        {/* Ad info if exists - clickable, links to the ad detail page */}
         {conversation.ad && (
-          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-            <div className="flex items-center text-sm">
-              <svg className="h-4 w-4 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-              </svg>
-              <span className="text-blue-900 font-medium">About: {conversation.ad.title}</span>
-            </div>
-          </div>
+          <Link
+            href={`/${lang}/ad/${conversation.ad.slug || `ad-${conversation.ad.id}`}`}
+            className="mt-3 flex items-center text-sm p-3 bg-blue-50 rounded-lg border border-blue-100 no-underline transition hover:bg-blue-100 hover:border-blue-200"
+          >
+            <svg className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+            </svg>
+            <span className="text-blue-900 font-medium truncate">About: {conversation.ad.title}</span>
+          </Link>
         )}
       </div>
 
