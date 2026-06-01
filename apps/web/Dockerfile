@@ -12,6 +12,7 @@ COPY packages/types/package.json packages/types/
 COPY packages/utils/package.json packages/utils/
 COPY packages/api-client/package.json packages/api-client/
 COPY packages/database/package.json packages/database/
+COPY packages/auth-core/package.json packages/auth-core/
 COPY packages/messaging-core/package.json packages/messaging-core/
 COPY packages/upload-utils/package.json packages/upload-utils/
 COPY packages/translations/package.json packages/translations/
