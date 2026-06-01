@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Fetch all data in parallel
       final results = await Future.wait([
         _adClient.getCategories(),
-        _adClient.getFeaturedAds(limit: 6),
+        _adClient.getFeaturedAds(limit: 12),
         _adClient.getLatestAds(limit: 60),
       ]);
 
@@ -131,8 +131,13 @@ class _HomeScreenState extends State<HomeScreen> {
           _categories = results[0] as List<CategoryWithSubcategories>;
           _featuredAds = featuredResp.data;
           _latestAds = latestResp.data;
-          _displayLatestAds = _latestAds.take(60).toList();
-          _displayFeaturedAds = _featuredAds.take(6).toList();
+          // Featured ads already get their own carousel above, so keep them out
+          // of the Latest feed to avoid showing the same ad twice.
+          _displayLatestAds =
+              _latestAds.where((ad) => !ad.isFeatured).take(60).toList();
+          // Up to 6 rows of 2 = 12 cards; the grid shrinks to the real count
+          // (2 ads -> 1 row, 4 ads -> 2 rows, ...).
+          _displayFeaturedAds = _featuredAds.take(12).toList();
           _isLoading = false;
         });
       }
@@ -628,13 +633,16 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    // 2-column grid that grows with the data: 2 ads -> 1 row, 4 -> 2 rows,
+    // capped at 12 (6 rows) by the take(12) above. Non-scrollable; it sits in
+    // the page's CustomScrollView between the featured header and Latest Ads.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 2,
-        childAspectRatio: 0.65, // Unified aspect ratio
+        childAspectRatio: 0.65,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         children: ads
@@ -642,8 +650,10 @@ class _HomeScreenState extends State<HomeScreen> {
             .entries
             .map(
               (entry) => StaggeredFadeIn(
-                index: entry.key,
-                child: RepaintBoundary(child: AdCard(ad: entry.value, heroTagPrefix: 'featured')),
+                index: entry.key.clamp(0, 6),
+                child: RepaintBoundary(
+                  child: AdCard(ad: entry.value, heroTagPrefix: 'featured'),
+                ),
               ),
             )
             .toList(),
