@@ -4,6 +4,7 @@ export interface Editor {
   email: string;
   avatar: string | null;
   status: 'active' | 'suspended';
+  twoFactorEnabled: boolean;
   createdAt: string;
   lastLogin: string | null;
   stats: {
@@ -27,6 +28,7 @@ export function transformBackendEditor(editor: any): Editor {
     email: editor.email,
     avatar: editor.avatar,
     status: editor.is_active ? 'active' : 'suspended',
+    twoFactorEnabled: editor.two_factor_enabled ?? false,
     createdAt: editor.created_at,
     lastLogin: editor.last_login || null,
     stats: {

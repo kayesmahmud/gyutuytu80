@@ -32,6 +32,7 @@ import {
   Ticket,
   Gift,
   Layers,
+  Lock,
   type LucideIcon,
 } from 'lucide-react';
 import { AdminTheme, getRoleLabel } from '@/lib/themes';
@@ -90,6 +91,7 @@ const iconMap: Record<string, LucideIcon> = {
   Ticket,
   Gift,
   Layers,
+  Lock,
 };
 
 export function Sidebar({

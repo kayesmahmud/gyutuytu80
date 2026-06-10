@@ -118,6 +118,7 @@ export function createEditorMethods(client: AxiosInstance) {
           email: string;
           role: string;
           is_active: boolean;
+          two_factor_enabled: boolean | null;
           created_at: string;
           avatar: string | null;
           total_actions: number;
@@ -186,6 +187,12 @@ export function createEditorMethods(client: AxiosInstance) {
 
     async deleteEditor(editorId: number): Promise<ApiResponse<any>> {
       const response = await client.delete(`/api/editor/editors/${editorId}`);
+      return response.data;
+    },
+
+    // Recovery: super-admin clears an editor's 2FA (lost authenticator + backup codes).
+    async resetEditor2FA(editorId: number): Promise<ApiResponse<any>> {
+      const response = await client.put(`/api/editor/editors/${editorId}/reset-2fa`);
       return response.data;
     },
 

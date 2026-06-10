@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { prisma } from '@thulobazaar/database';
+import { prisma, Prisma } from '@thulobazaar/database';
 import { catchAsync, ValidationError, AuthenticationError } from '../../middleware/errorHandler.js';
 import { authenticateToken } from '../../middleware/auth.js';
 import { SECURITY } from '../../config/constants.js';
@@ -31,6 +31,7 @@ router.get(
         email: true,
         role: true,
         is_active: true,
+        two_factor_enabled: true,
         avatar: true,
         last_login: true,
         created_at: true,
@@ -46,6 +47,7 @@ router.get(
         email: editor.email,
         role: editor.role,
         is_active: editor.is_active,
+        two_factor_enabled: editor.two_factor_enabled,
         avatar: editor.avatar,
         last_login: editor.last_login,
         created_at: editor.created_at,
@@ -251,6 +253,42 @@ router.put(
     res.json({
       success: true,
       message: `Editor ${suspend ? 'suspended' : 'activated'} successfully`,
+      data: updatedEditor,
+    });
+  })
+);
+
+/**
+ * PUT /api/editor/editors/:id/reset-2fa
+ * Reset (disable) an editor's two-factor authentication — recovery for a lost
+ * authenticator/backup codes (super admin only). The editor can re-enable it
+ * themselves afterward.
+ */
+router.put(
+  '/:id/reset-2fa',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    if (req.user!.role !== 'super_admin') {
+      throw new AuthenticationError('Access denied. Super admin only.');
+    }
+
+    const { id } = req.params;
+
+    const updatedEditor = await prisma.users.update({
+      where: { id: parseInt(id) },
+      data: {
+        two_factor_enabled: false,
+        two_factor_secret: null,
+        two_factor_backup_codes: Prisma.DbNull,
+      },
+      select: { id: true, full_name: true, email: true, two_factor_enabled: true },
+    });
+
+    console.log(`✅ Editor 2FA reset: ${updatedEditor.email}`);
+
+    res.json({
+      success: true,
+      message: 'Two-factor authentication reset successfully',
       data: updatedEditor,
     });
   })

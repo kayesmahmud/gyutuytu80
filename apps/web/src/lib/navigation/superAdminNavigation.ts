@@ -145,6 +145,11 @@ export function getSuperAdminNavSections(
           label: 'Locations',
         },
         {
+          href: `/${lang}/super-admin/account`,
+          icon: 'Lock',
+          label: 'Account Security',
+        },
+        {
           href: `/${lang}/super-admin/settings`,
           icon: 'Settings',
           label: 'Settings',

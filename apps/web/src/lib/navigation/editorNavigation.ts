@@ -122,5 +122,15 @@ export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}
         },
       ],
     },
+    {
+      title: 'Account',
+      items: [
+        {
+          href: `/${lang}/editor/account`,
+          icon: 'Lock',
+          label: 'Account Security',
+        },
+      ],
+    },
   ];
 }

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { updateEditor } from '@/lib/editorApi';
+import { apiClient } from '@/lib/api';
 import { ImageCropperModal } from './ImageCropperModal';
 
 interface Editor {
@@ -10,6 +11,7 @@ interface Editor {
   email: string;
   avatar: string | null;
   status: 'active' | 'suspended';
+  twoFactorEnabled: boolean;
 }
 
 interface EditEditorModalProps {
@@ -35,6 +37,41 @@ export function EditEditorModal({ isOpen, onClose, onSuccess, editor }: EditEdit
   // Image cropper states
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+
+  // 2FA recovery (reset) state
+  const [resetting2FA, setResetting2FA] = useState(false);
+  const [twoFAReset, setTwoFAReset] = useState(false);
+
+  // Reset the per-editor reset flag whenever a different editor is loaded
+  useEffect(() => {
+    setTwoFAReset(false);
+  }, [editor?.id]);
+
+  const handleReset2FA = async () => {
+    if (!editor) return;
+    if (
+      !confirm(
+        `Reset two-factor authentication for ${editor.fullName}? They will be able to sign in without a code and can re-enable it themselves.`
+      )
+    ) {
+      return;
+    }
+    setResetting2FA(true);
+    try {
+      const res = await apiClient.resetEditor2FA(editor.id);
+      if (res.success) {
+        setTwoFAReset(true);
+        onSuccess();
+      } else {
+        setErrors((prev) => ({ ...prev, twoFactor: res.message || 'Failed to reset 2FA.' }));
+      }
+    } catch (error: any) {
+      console.error('Error resetting editor 2FA:', error);
+      setErrors((prev) => ({ ...prev, twoFactor: error.message || 'Failed to reset 2FA.' }));
+    } finally {
+      setResetting2FA(false);
+    }
+  };
 
   // Pre-populate form when editor changes
   useEffect(() => {
@@ -352,6 +389,36 @@ export function EditEditorModal({ isOpen, onClose, onSuccess, editor }: EditEdit
               <p className="text-rose-700 text-sm font-semibold">{errors.submit}</p>
             </div>
           )}
+
+          {/* Two-Factor Authentication (recovery) */}
+          <div className="mb-6 p-4 border-2 border-gray-100 rounded-xl">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Two-Factor Authentication</p>
+                {editor.twoFactorEnabled && !twoFAReset ? (
+                  <p className="text-xs text-emerald-600 font-medium mt-0.5">Enabled</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {twoFAReset ? 'Reset — editor can set it up again' : 'Not enabled'}
+                  </p>
+                )}
+              </div>
+              {editor.twoFactorEnabled && !twoFAReset && (
+                <button
+                  type="button"
+                  onClick={handleReset2FA}
+                  disabled={resetting2FA}
+                  className="px-4 py-2 border border-rose-300 text-rose-600 text-sm font-semibold rounded-lg hover:bg-rose-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resetting2FA ? 'Resetting…' : 'Reset 2FA'}
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Use this only if the editor lost access to their authenticator app and backup codes.
+            </p>
+            {errors.twoFactor && <p className="text-rose-600 text-sm mt-2">{errors.twoFactor}</p>}
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3">
