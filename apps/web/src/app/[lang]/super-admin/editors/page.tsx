@@ -20,6 +20,8 @@ export default function EditorsManagementPage({ params: paramsPromise }: { param
     filteredEditors,
     loading,
     loadEditors,
+    toggleSuspend,
+    actioningId,
     searchQuery,
     setSearchQuery,
     statusFilter,
@@ -110,6 +112,8 @@ export default function EditorsManagementPage({ params: paramsPromise }: { param
           setShowEditModal(true);
         }}
         onView={(editorId) => router.push(`/${params.lang}/super-admin/editors/${editorId}`)}
+        onToggleSuspend={toggleSuspend}
+        actioningId={actioningId}
       />
 
       {/* Create Editor Modal */}

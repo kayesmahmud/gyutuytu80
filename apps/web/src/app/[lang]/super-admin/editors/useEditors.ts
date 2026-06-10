@@ -19,6 +19,8 @@ export interface UseEditorsReturn {
   filteredEditors: Editor[];
   loading: boolean;
   loadEditors: () => void;
+  toggleSuspend: (editor: Editor) => Promise<void>;
+  actioningId: number | null;
 
   // Filters
   searchQuery: string;
@@ -51,6 +53,7 @@ export function useEditors(lang: string): UseEditorsReturn {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEditor, setSelectedEditor] = useState<Editor | null>(null);
+  const [actioningId, setActioningId] = useState<number | null>(null);
 
   const navSections = useMemo(
     () => getSuperAdminNavSections(lang, { editors: editors.length }),
@@ -75,6 +78,34 @@ export function useEditors(lang: string): UseEditorsReturn {
       setLoading(false);
     }
   }, []);
+
+  const toggleSuspend = useCallback(
+    async (editor: Editor) => {
+      const suspend = editor.status === 'active';
+      const confirmed = window.confirm(
+        suspend
+          ? `Suspend ${editor.fullName}? They will not be able to log in. Their data is kept.`
+          : `Activate ${editor.fullName}? They will be able to log in again.`
+      );
+      if (!confirmed) return;
+
+      setActioningId(editor.id);
+      try {
+        const response = await apiClient.suspendEditor(editor.id, suspend);
+        if (response.success) {
+          await loadEditors();
+        } else {
+          alert(response.message || 'Action failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error toggling editor suspension:', error);
+        alert('Action failed. Please try again.');
+      } finally {
+        setActioningId(null);
+      }
+    },
+    [loadEditors]
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -109,6 +140,8 @@ export function useEditors(lang: string): UseEditorsReturn {
     filteredEditors,
     loading: authLoading || loading,
     loadEditors,
+    toggleSuspend,
+    actioningId,
     searchQuery,
     setSearchQuery,
     statusFilter,

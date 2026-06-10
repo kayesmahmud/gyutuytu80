@@ -177,6 +177,13 @@ export function createEditorMethods(client: AxiosInstance) {
       return response.data;
     },
 
+    // Suspend (suspend=true) or reactivate (suspend=false) an editor account.
+    // Toggles is_active, which both editor login paths enforce. Data is preserved.
+    async suspendEditor(editorId: number, suspend: boolean): Promise<ApiResponse<any>> {
+      const response = await client.put(`/api/editor/editors/${editorId}/suspend`, { suspend });
+      return response.data;
+    },
+
     async verifyUser(userId: number): Promise<ApiResponse<any>> {
       const response = await client.put(`/api/editor/users/${userId}/verify`);
       return response.data;

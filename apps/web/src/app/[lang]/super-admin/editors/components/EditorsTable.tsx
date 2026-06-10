@@ -9,9 +9,11 @@ interface EditorsTableProps {
   lang: string;
   onEdit: (editor: Editor) => void;
   onView: (editorId: number) => void;
+  onToggleSuspend: (editor: Editor) => void;
+  actioningId: number | null;
 }
 
-export default function EditorsTable({ editors, lang, onEdit, onView }: EditorsTableProps) {
+export default function EditorsTable({ editors, lang, onEdit, onView, onToggleSuspend, actioningId }: EditorsTableProps) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   return (
@@ -102,13 +104,17 @@ export default function EditorsTable({ editors, lang, onEdit, onView }: EditorsT
                         View
                       </button>
                       <button
-                        className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                        onClick={() => onToggleSuspend(editor)}
+                        disabled={actioningId === editor.id}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                           editor.status === 'active'
                             ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
                             : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                         }`}
                       >
-                        {editor.status === 'active' ? 'Suspend' : 'Activate'}
+                        {actioningId === editor.id
+                          ? '...'
+                          : editor.status === 'active' ? 'Suspend' : 'Activate'}
                       </button>
                     </div>
                   </td>
