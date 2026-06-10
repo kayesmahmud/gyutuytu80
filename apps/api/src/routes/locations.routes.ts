@@ -118,29 +118,35 @@ router.get(
       ORDER BY name ASC
     `;
 
-    // Build lookup map
-    const nodeMap = new Map<number, LocationRow & {
+    type LocationNode = LocationRow & {
       districts?: unknown[]; municipalities?: unknown[]; areas?: unknown[];
-    }>();
-    for (const row of rows) nodeMap.set(row.id, { ...row });
+    };
+    const MUNICIPALITY_TYPES = ['municipality', 'sub-metropolitan', 'metropolitan'];
 
+    // Pass 1: create every node with its (empty) child container up front.
+    // Rows arrive name-sorted (not parent-before-child), so a child can be processed
+    // before its parent. Initialising all containers here makes linking order-independent.
+    const nodeMap = new Map<number, LocationNode>();
+    for (const row of rows) {
+      const node: LocationNode = { ...row };
+      if (row.type === 'province') node.districts = [];
+      else if (row.type === 'district') node.municipalities = [];
+      else if (MUNICIPALITY_TYPES.includes(row.type)) node.areas = [];
+      nodeMap.set(row.id, node);
+    }
+
+    // Pass 2: attach each node to its parent — every container is guaranteed to exist now.
     const provinces: unknown[] = [];
     for (const node of nodeMap.values()) {
       if (node.type === 'province') {
-        node.districts = [];
         provinces.push(node);
-      } else if (node.type === 'district') {
-        node.municipalities = [];
-        const parent = node.parent_id ? nodeMap.get(node.parent_id) : undefined;
-        parent?.districts?.push(node);
-      } else if (node.type === 'municipality' || node.type === 'sub-metropolitan' || node.type === 'metropolitan') {
-        node.areas = [];
-        const parent = node.parent_id ? nodeMap.get(node.parent_id) : undefined;
-        parent?.municipalities?.push(node);
-      } else if (node.type === 'area') {
-        const parent = node.parent_id ? nodeMap.get(node.parent_id) : undefined;
-        parent?.areas?.push(node);
+        continue;
       }
+      const parent = node.parent_id ? nodeMap.get(node.parent_id) : undefined;
+      if (!parent) continue;
+      if (node.type === 'district') parent.districts?.push(node);
+      else if (MUNICIPALITY_TYPES.includes(node.type)) parent.municipalities?.push(node);
+      else if (node.type === 'area') parent.areas?.push(node);
     }
 
     const stats = {
