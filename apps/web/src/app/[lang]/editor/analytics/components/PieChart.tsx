@@ -29,9 +29,10 @@ export default function PieChart({ data }: PieChartProps) {
                 key={index}
                 d={path}
                 fill={item.color}
-                className="hover:opacity-80 transition-opacity cursor-pointer"
-                onClick={() => alert(`${item.category}: ${item.percentage}%`)}
-              />
+                className="hover:opacity-80 transition-opacity"
+              >
+                <title>{`${item.category}: ${item.percentage}%`}</title>
+              </path>
             );
 
             acc.angle = endAngle;

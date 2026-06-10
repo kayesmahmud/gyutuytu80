@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { AdminTheme, getThemeColors, getBackgroundGradient } from '@/lib/themes';
@@ -52,7 +53,12 @@ export function DashboardLayout({
   lastLogin,
 }: DashboardLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const router = useRouter();
   const themeColors = getThemeColors(theme);
+
+  // The notifications page currently only exists for editors; show the bell only there.
+  const onNotificationsClick =
+    theme === 'editor' ? () => router.push(`/${lang}/editor/notifications`) : undefined;
 
   const handleSidebarToggle = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -99,6 +105,7 @@ export function DashboardLayout({
           showDashboardButton={theme === 'editor'}
           lastLogin={lastLogin}
           onExportReport={onExportReport}
+          onNotificationsClick={onNotificationsClick}
         />
 
         {/* Content Area */}

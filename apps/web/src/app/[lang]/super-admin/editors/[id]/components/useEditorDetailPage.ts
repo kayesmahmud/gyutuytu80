@@ -153,15 +153,37 @@ export function useEditorDetailPage(lang: string, editorId: number) {
     return years;
   }, []);
 
-  const handleSuspend = () => {
-    console.log('Suspending editor:', editor?.id);
-    setShowSuspendModal(false);
+  const handleSuspend = async () => {
+    if (!editor) return;
+    const suspend = editor.status === 'active';
+    try {
+      const res = await apiClient.suspendEditor(editor.id, suspend);
+      if (res.success) {
+        setShowSuspendModal(false);
+        await loadEditorData();
+      } else {
+        alert(res.message || 'Action failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error toggling editor suspension:', error);
+      alert('Action failed. Please try again.');
+    }
   };
 
-  const handleDelete = () => {
-    console.log('Deleting editor:', editor?.id);
-    setShowDeleteModal(false);
-    router.push(`/${lang}/super-admin/editors`);
+  const handleDelete = async () => {
+    if (!editor) return;
+    try {
+      const res = await apiClient.deleteEditor(editor.id);
+      if (res.success) {
+        setShowDeleteModal(false);
+        router.push(`/${lang}/super-admin/editors`);
+      } else {
+        alert(res.message || 'Failed to delete editor. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting editor:', error);
+      alert('Failed to delete editor. Please try again.');
+    }
   };
 
   const handleApplyFilter = () => {

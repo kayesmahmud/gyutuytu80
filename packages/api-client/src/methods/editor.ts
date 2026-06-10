@@ -184,6 +184,11 @@ export function createEditorMethods(client: AxiosInstance) {
       return response.data;
     },
 
+    async deleteEditor(editorId: number): Promise<ApiResponse<any>> {
+      const response = await client.delete(`/api/editor/editors/${editorId}`);
+      return response.data;
+    },
+
     async verifyUser(userId: number): Promise<ApiResponse<any>> {
       const response = await client.put(`/api/editor/users/${userId}/verify`);
       return response.data;

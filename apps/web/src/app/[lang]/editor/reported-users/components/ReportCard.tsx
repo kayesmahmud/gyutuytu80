@@ -179,12 +179,16 @@ export function ReportCard({
             </>
           )}
 
-          <button
-            onClick={() => alert(`Contact Reporter: ${report.reporterEmail}\nReported User: ${report.reportedUserEmail}`)}
-            className="ml-auto px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          <a
+            href={`mailto:${report.reporterEmail}?subject=${encodeURIComponent(
+              'Regarding your report on Thulobazaar'
+            )}&body=${encodeURIComponent(
+              `Hello,\n\nThis is regarding the report you filed about ${report.reportedUserEmail}.\n\n`
+            )}`}
+            className="ml-auto inline-flex items-center px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
-            Contact
-          </button>
+            Contact Reporter
+          </a>
         </div>
       </div>
     </div>

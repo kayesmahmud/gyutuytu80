@@ -135,6 +135,7 @@ export class ApiClient extends BaseApiClient {
   getEditorAds: ReturnType<typeof createEditorMethods>['getEditorAds'];
   getEditors: ReturnType<typeof createEditorMethods>['getEditors'];
   suspendEditor: ReturnType<typeof createEditorMethods>['suspendEditor'];
+  deleteEditor: ReturnType<typeof createEditorMethods>['deleteEditor'];
   getEditorUsers: ReturnType<typeof createEditorMethods>['getEditorUsers'];
   suspendUser: ReturnType<typeof createEditorMethods>['suspendUser'];
   unsuspendUser: ReturnType<typeof createEditorMethods>['unsuspendUser'];
@@ -275,6 +276,7 @@ export class ApiClient extends BaseApiClient {
     this.getEditorAds = editorMethods.getEditorAds;
     this.getEditors = editorMethods.getEditors;
     this.suspendEditor = editorMethods.suspendEditor;
+    this.deleteEditor = editorMethods.deleteEditor;
     this.getEditorUsers = editorMethods.getEditorUsers;
     this.suspendUser = editorMethods.suspendUser;
     this.unsuspendUser = editorMethods.unsuspendUser;
