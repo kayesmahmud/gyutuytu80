@@ -14,6 +14,15 @@ import 'package:dio/dio.dart';
 class AdService {
   AdService._();
 
+  /// 🔴 MASTER ADS KILL SWITCH.
+  ///
+  /// While `false`, NO ad is loaded, requested, or shown anywhere — in debug
+  /// OR release, regardless of the Super Admin panel / remote config. The whole
+  /// AdMob integration (SDK init, unit IDs, config fetch, banner/interstitial
+  /// code) stays intact, so ads can be turned back on later by flipping this to
+  /// `true` and shipping a new build.
+  static const bool _adsMasterEnabled = false;
+
   static bool _initialized = false;
   static bool _configFetched = false;
   static bool _adsEnabled = false;
@@ -30,7 +39,8 @@ class AdService {
   /// Whether ads are enabled via the admin panel.
   /// In debug mode, always returns true (shows placeholder ads).
   /// In release mode, only returns true when the API confirms ads are enabled.
-  static bool get adsEnabled => kDebugMode || _adsEnabled;
+  static bool get adsEnabled =>
+      _adsMasterEnabled && (kDebugMode || _adsEnabled);
 
   /// How many ad detail views between interstitial ads (from admin panel).
   static int get interstitialInterval => _interstitialInterval;
@@ -139,6 +149,7 @@ class AdService {
 
   /// Get the banner ad unit ID for the current platform.
   static String get _bannerUnitId {
+    if (!_adsMasterEnabled) return '';
     if (kDebugMode) {
       return Platform.isAndroid ? _testBannerAndroid : _testBannerIos;
     }
@@ -152,6 +163,7 @@ class AdService {
 
   /// Get the interstitial ad unit ID for the current platform.
   static String get interstitialUnitId {
+    if (!_adsMasterEnabled) return '';
     if (kDebugMode) {
       return Platform.isAndroid ? _testInterstitialAndroid : _testInterstitialIos;
     }
