@@ -24,9 +24,13 @@ RUN npm install
 
 # npm's macOS-generated lock file doesn't resolve Linux-musl native bindings
 # (npm/cli#4828). Install sharp's musl bindings explicitly for Alpine.
+# PINNED to match sharp@0.34.5 in the lockfile — unversioned pulls @latest, and a
+# newer libvips (cpp.so.8.17.3) mismatches the binary, so `import sharp` throws
+# ERR_DLOPEN_FAILED at startup and the API crash-loops (optimizeImage is imported
+# at module load by editors.routes.ts and others).
 RUN npm install --no-save \
-    @img/sharp-linuxmusl-x64 \
-    @img/sharp-libvips-linuxmusl-x64
+    @img/sharp-linuxmusl-x64@0.34.5 \
+    @img/sharp-libvips-linuxmusl-x64@1.2.4
 
 # ---- Stage 2: Build shared packages + API ----
 FROM node:20-alpine AS builder
