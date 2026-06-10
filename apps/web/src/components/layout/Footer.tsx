@@ -83,10 +83,10 @@ export default function Footer({ lang }: FooterProps) {
           <div className="mb-6">
             <h4 className="text-sm font-semibold text-white mb-3">{t('downloadOurApp')}</h4>
             <div className="flex gap-2">
-              <a href="#" className="hover:opacity-80 transition-opacity">
+              <a href="https://play.google.com/store/apps/details?id=com.thulobazaar.mobile" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
                 <Image src="/PlayStore.png" alt="Get it on Google Play" width={120} height={36} className="h-9 w-auto" />
               </a>
-              <a href="#" className="hover:opacity-80 transition-opacity">
+              <a href="https://apps.apple.com/us/app/thulo-bazaar/id6774762315" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
                 <Image src="/Appstore.png" alt="Download on App Store" width={120} height={36} className="h-9 w-auto" />
               </a>
             </div>
@@ -306,7 +306,9 @@ export default function Footer({ lang }: FooterProps) {
               <p className="text-sm text-gray-400 mb-3">{t('downloadOurApp')}</p>
               <div className="flex flex-col space-y-2">
                 <a
-                  href="#"
+                  href="https://apps.apple.com/us/app/thulo-bazaar/id6774762315"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hover:opacity-80 transition-opacity"
                 >
                   <Image
@@ -318,7 +320,9 @@ export default function Footer({ lang }: FooterProps) {
                   />
                 </a>
                 <a
-                  href="#"
+                  href="https://play.google.com/store/apps/details?id=com.thulobazaar.mobile"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hover:opacity-80 transition-opacity"
                 >
                   <Image

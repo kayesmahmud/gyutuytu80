@@ -26,8 +26,8 @@ export const viewport: Viewport = {
   themeColor: '#6366f1',
 };
 
-// App store constants — update Apple ID when published
-const APP_STORE_ID = ''; // TODO: Add Apple App Store ID (e.g., '1234567890')
+// App store constants
+const APP_STORE_ID = '6774762315';
 const PLAY_STORE_ID = 'com.thulobazaar.mobile';
 
 const supportedLanguages = ['en', 'ne'] as const;

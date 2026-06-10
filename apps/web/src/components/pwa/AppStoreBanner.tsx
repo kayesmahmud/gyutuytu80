@@ -7,7 +7,7 @@ import { X } from 'lucide-react';
 type MobileOS = 'ios' | 'android' | 'other';
 
 const STORE_URLS = {
-  appStore: '', // TODO: Add Apple App Store URL when published
+  appStore: 'https://apps.apple.com/us/app/thulo-bazaar/id6774762315',
   playStore: 'https://play.google.com/store/apps/details?id=com.thulobazaar.mobile',
 };
 

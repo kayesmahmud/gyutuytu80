@@ -5,8 +5,7 @@ import {
 
 const BASE_URL = 'https://thulobazaar.com.np';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.thulobazaar.mobile';
-// TODO: Update when iOS app is published on App Store
-const APP_STORE_URL = '';
+const APP_STORE_URL = 'https://apps.apple.com/us/app/thulo-bazaar/id6774762315';
 
 export function GlobalJsonLd({ lang }: { lang: string }) {
   const orgData = generateOrganizationStructuredData({
