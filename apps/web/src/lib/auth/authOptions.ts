@@ -142,6 +142,13 @@ export const authOptions: NextAuthOptions = {
         loginType: { label: 'Login Type', type: 'text' },
       },
       async authorize(credentials) {
+        // Defensive: clients that serialize credentials via URLSearchParams can turn
+        // an absent code into the literal string "undefined"/"null" (both truthy),
+        // which would skip the 2FA_REQUIRED prompt. Treat those as no code.
+        if (credentials && ['undefined', 'null'].includes((credentials.twoFactorCode || '').trim())) {
+          credentials.twoFactorCode = '';
+        }
+
         const isPhoneLogin = credentials?.loginType === 'phone';
 
         // Phone login for regular users

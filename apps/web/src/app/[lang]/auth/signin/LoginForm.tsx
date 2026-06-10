@@ -133,11 +133,15 @@ export default function LoginForm({ lang }: LoginFormProps) {
       // Use NextAuth signIn directly with phone credentials.
       // The credentials provider throws '2FA_REQUIRED' when the account has 2FA
       // enabled but no code was supplied — we then reveal the 2FA code step.
+      // NOTE: pass an empty string (not undefined) when no code is entered.
+      // NextAuth serializes credentials via URLSearchParams, which turns
+      // `undefined` into the literal string "undefined" (truthy on the server),
+      // skipping the 2FA_REQUIRED branch. An empty string stays falsy.
       const result = await signIn('credentials', {
         redirect: false,
         phone: phoneFormData.phone,
         password: phoneFormData.password,
-        twoFactorCode: twoFactorCode || undefined,
+        twoFactorCode,
         loginType: 'phone',
       });
 
