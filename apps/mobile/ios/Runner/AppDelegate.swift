@@ -35,5 +35,102 @@ import FirebaseMessaging
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+
+    // Native share sheet. share_plus locates the host view controller via the
+    // app's keyWindow, which is nil under the UIScene / implicit-engine
+    // lifecycle, so its share sheet silently never presents. Present
+    // UIActivityViewController ourselves from a scene-aware view controller.
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "NativeShare") {
+      let channel = FlutterMethodChannel(
+        name: "app/native_share",
+        binaryMessenger: registrar.messenger())
+      channel.setMethodCallHandler { call, result in
+        guard call.method == "share" else {
+          result(FlutterMethodNotImplemented)
+          return
+        }
+        let args = call.arguments as? [String: Any]
+        let text = args?["text"] as? String ?? ""
+        let subject = args?["subject"] as? String
+        AppDelegate.presentShareSheet(text: text, subject: subject, result: result)
+      }
+    }
+  }
+
+  /// Top-most presented view controller, found in a UIScene-aware way. Falls
+  /// back to the scene's first window when no window reports `isKeyWindow` —
+  /// the exact case where share_plus returns nil.
+  private static func topViewController() -> UIViewController? {
+    let windowScenes = UIApplication.shared.connectedScenes.compactMap {
+      $0 as? UIWindowScene
+    }
+    let scene =
+      windowScenes.first { $0.activationState == .foregroundActive }
+      ?? windowScenes.first
+    let window = scene?.windows.first { $0.isKeyWindow } ?? scene?.windows.first
+    var top = window?.rootViewController
+    while let presented = top?.presentedViewController {
+      top = presented
+    }
+    return top
+  }
+
+  private static func presentShareSheet(
+    text: String, subject: String?, result: @escaping FlutterResult
+  ) {
+    guard let host = topViewController() else {
+      result(
+        FlutterError(
+          code: "no_view_controller",
+          message: "No view controller to present share sheet from",
+          details: nil))
+      return
+    }
+    let itemSource = ShareItemSource(text: text, subject: subject)
+    let activityVC = UIActivityViewController(
+      activityItems: [itemSource], applicationActivities: nil)
+    // iPad requires a popover anchor; center it on the host view.
+    if let popover = activityVC.popoverPresentationController {
+      popover.sourceView = host.view
+      popover.sourceRect = CGRect(
+        x: host.view.bounds.midX, y: host.view.bounds.midY, width: 0, height: 0)
+      popover.permittedArrowDirections = []
+    }
+    host.present(activityVC, animated: true) {
+      result(nil)
+    }
+  }
+}
+
+/// Supplies the share text and (for mail) a subject the crash-safe way —
+/// UIActivityViewController has no `subject` property, so the KVC hack risks an
+/// NSUnknownKeyException.
+private final class ShareItemSource: NSObject, UIActivityItemSource {
+  private let text: String
+  private let subject: String?
+
+  init(text: String, subject: String?) {
+    self.text = text
+    self.subject = subject
+  }
+
+  func activityViewControllerPlaceholderItem(
+    _ activityViewController: UIActivityViewController
+  ) -> Any {
+    return text
+  }
+
+  func activityViewController(
+    _ activityViewController: UIActivityViewController,
+    itemForActivityType activityType: UIActivity.ActivityType?
+  ) -> Any? {
+    return text
+  }
+
+  func activityViewController(
+    _ activityViewController: UIActivityViewController,
+    subjectForActivityType activityType: UIActivity.ActivityType?
+  ) -> String {
+    return subject ?? ""
   }
 }

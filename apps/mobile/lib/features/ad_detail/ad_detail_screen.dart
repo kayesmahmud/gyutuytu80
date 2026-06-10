@@ -1,6 +1,8 @@
 import 'dart:developer' as developer;
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -43,6 +45,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
   final AdClient _adClient = AdClient();
   final FavoritesClient _favoritesClient = FavoritesClient();
   final ScrollController _scrollController = ScrollController();
+  static const _iosShareChannel = MethodChannel('app/native_share');
 
   AdWithDetails? _ad;
   List<AdWithDetails> _relatedAds = [];
@@ -441,8 +444,8 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   onToggleFavorite: _toggleFavorite,
                   onShare: () {
                     final url = 'https://thulobazaar.com.np/en/ads/${ad.slug}';
-                    Share.share(
-                      '${ad.title} - ${_formatPrice(ad.price)}\n$url',
+                    _shareAd(
+                      text: '${ad.title} - ${_formatPrice(ad.price)}\n$url',
                       subject: ad.title,
                     );
                   },
@@ -991,4 +994,27 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
   // Contact Bar logic extracted to widgets/floating_contact_bar.dart
   String _formatPrice(double price) =>
       formatLocalizedPrice(price, context.locale.languageCode);
+
+  /// Open the native share sheet.
+  ///
+  /// iOS goes through a native channel because share_plus locates the host
+  /// view controller via `keyWindow`, which is nil under this app's UIScene /
+  /// implicit-engine lifecycle — so its share sheet silently never presents.
+  /// Android keeps using share_plus, which works there.
+  Future<void> _shareAd({required String text, required String subject}) async {
+    try {
+      if (Platform.isIOS) {
+        await _iosShareChannel.invokeMethod('share', {
+          'text': text,
+          'subject': subject,
+        });
+      } else {
+        await Share.share(text, subject: subject);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        developer.log('Share failed: $e', name: 'AdDetailScreen');
+      }
+    }
+  }
 }
