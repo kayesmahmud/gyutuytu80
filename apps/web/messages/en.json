@@ -205,7 +205,12 @@
     "oauthCallbackGenericError": "Error in OAuth callback. Please try again.",
     "oauthGoogleError": "Google login failed. Please try again or use phone login.",
     "oauthDefaultError": "Authentication failed. Please try again.",
-    "failedToConnect": "Failed to connect. Please try again."
+    "failedToConnect": "Failed to connect. Please try again.",
+    "twoFactorTitle": "Two-Factor Authentication",
+    "twoFactorPrompt": "Enter the 6-digit code from your authenticator app",
+    "useBackupCode": "You can also use a backup code",
+    "backToLogin": "Back to login",
+    "invalid2FACode": "Invalid code. Please try again."
   },
   "ads": {
     "searchPlaceholder": "Search for anything...",

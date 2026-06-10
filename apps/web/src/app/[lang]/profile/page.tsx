@@ -175,6 +175,7 @@ export default function ProfilePage() {
                 isPhoneVerified={profile.phoneVerified ?? false}
                 currentPhone={profile.phone ?? null}
                 canChangePassword={profile.hasPassword ?? false}
+                isTwoFactorEnabled={profile.twoFactorEnabled ?? false}
                 onPhoneVerified={handleSecuritySuccess}
               />
             )}

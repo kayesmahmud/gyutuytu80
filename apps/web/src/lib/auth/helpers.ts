@@ -24,7 +24,7 @@ interface AuthUser {
   last_login: Date | null;
   two_factor_enabled: boolean | null;
   two_factor_secret: string | null;
-  two_factor_backup_codes: string | null;
+  two_factor_backup_codes: string[] | null;
   deleted_at: Date | null;
   deletion_requested_at: Date | null;
 }
@@ -110,19 +110,22 @@ export async function verify2FA(
     return { valid: true, usedBackupCode: false };
   }
 
-  // Check backup codes
-  if (user.two_factor_backup_codes) {
-    const backupCodes = JSON.parse(user.two_factor_backup_codes as string);
-    if (backupCodes.includes(code.toUpperCase())) {
-      // Remove used backup code
-      const updatedBackupCodes = backupCodes.filter(
-        (c: string) => c !== code.toUpperCase()
-      );
-      await prisma.users.update({
-        where: { id: user.id },
-        data: { two_factor_backup_codes: JSON.stringify(updatedBackupCodes) },
-      });
-      return { valid: true, usedBackupCode: true };
+  // Check backup codes — stored as an array of bcrypt hashes (matches the API backend
+  // in auth.service.ts so codes generated on mobile/web work on either platform).
+  if (Array.isArray(user.two_factor_backup_codes)) {
+    const backupCodes = user.two_factor_backup_codes as string[];
+    for (let i = 0; i < backupCodes.length; i++) {
+      const hash = backupCodes[i];
+      if (hash && (await bcrypt.compare(code, hash))) {
+        // Remove the used backup code (single-use)
+        const updatedBackupCodes = [...backupCodes];
+        updatedBackupCodes.splice(i, 1);
+        await prisma.users.update({
+          where: { id: user.id },
+          data: { two_factor_backup_codes: updatedBackupCodes },
+        });
+        return { valid: true, usedBackupCode: true };
+      }
     }
   }
 

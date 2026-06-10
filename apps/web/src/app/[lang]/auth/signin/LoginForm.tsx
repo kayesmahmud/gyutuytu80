@@ -42,6 +42,10 @@ export default function LoginForm({ lang }: LoginFormProps) {
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  // 2FA step state — shown after password is verified when the account has 2FA enabled
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+
   // Check for OAuth errors in URL
   useEffect(() => {
     const urlError = searchParams.get('error');
@@ -126,16 +130,26 @@ export default function LoginForm({ lang }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      // Use NextAuth signIn directly with phone credentials
+      // Use NextAuth signIn directly with phone credentials.
+      // The credentials provider throws '2FA_REQUIRED' when the account has 2FA
+      // enabled but no code was supplied — we then reveal the 2FA code step.
       const result = await signIn('credentials', {
         redirect: false,
         phone: phoneFormData.phone,
         password: phoneFormData.password,
+        twoFactorCode: twoFactorCode || undefined,
         loginType: 'phone',
       });
 
       if (result?.error) {
-        setError(result.error);
+        if (result.error === '2FA_REQUIRED') {
+          setRequires2FA(true);
+          setError('');
+        } else if (result.error === 'Invalid 2FA code') {
+          setError(t('invalid2FACode'));
+        } else {
+          setError(result.error);
+        }
       } else if (result?.ok) {
         router.push(callbackUrl || `/${lang}`);
         router.refresh();
@@ -146,6 +160,12 @@ export default function LoginForm({ lang }: LoginFormProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBackFromTwoFactor = () => {
+    setRequires2FA(false);
+    setTwoFactorCode('');
+    setError('');
   };
 
   const handleSocialLogin = async () => {
@@ -221,7 +241,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
                 const value = e.target.value.replace(/\D/g, '').slice(0, 10);
                 setPhoneFormData({ ...phoneFormData, phone: value });
               }}
-              disabled={isLoading}
+              disabled={isLoading || requires2FA}
               maxLength={10}
             />
           </div>
@@ -241,7 +261,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
               placeholder={t('enterPassword')}
               value={phoneFormData.password}
               onChange={(e) => setPhoneFormData({ ...phoneFormData, password: e.target.value })}
-              disabled={isLoading}
+              disabled={isLoading || requires2FA}
             />
             <button
               type="button"
@@ -263,32 +283,82 @@ export default function LoginForm({ lang }: LoginFormProps) {
           </div>
         </div>
 
-        {/* Remember me & Forgot password */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
+        {/* 2FA Code (shown after password verification when the account has 2FA enabled) */}
+        {requires2FA && (
+          <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">{t('twoFactorTitle')}</h3>
+                <p className="text-xs text-gray-500">{t('twoFactorPrompt')}</p>
+              </div>
+            </div>
             <input
-              id="remember-phone"
-              type="checkbox"
-              className="h-4 w-4 text-rose-500 border-gray-300 rounded focus:ring-rose-500"
+              id="twoFactorCode"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              maxLength={8}
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 text-center text-2xl tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-shadow"
+              placeholder="000000"
+              value={twoFactorCode}
+              onChange={(e) => setTwoFactorCode(e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 8))}
+              disabled={isLoading}
+              autoFocus
             />
-            <label htmlFor="remember-phone" className="ml-2 block text-sm text-gray-700">
-              {t('rememberMe')}
-            </label>
+            <p className="text-xs text-gray-500 mt-2 text-center">{t('useBackupCode')}</p>
           </div>
-          <Link href={`/${lang}/auth/forgot-password`} className="text-sm text-rose-500 hover:text-rose-600 transition-colors">
-            {t('forgotPassword')}
-          </Link>
-        </div>
+        )}
+
+        {/* Remember me & Forgot password */}
+        {!requires2FA && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-phone"
+                type="checkbox"
+                className="h-4 w-4 text-rose-500 border-gray-300 rounded focus:ring-rose-500"
+              />
+              <label htmlFor="remember-phone" className="ml-2 block text-sm text-gray-700">
+                {t('rememberMe')}
+              </label>
+            </div>
+            <Link href={`/${lang}/auth/forgot-password`} className="text-sm text-rose-500 hover:text-rose-600 transition-colors">
+              {t('forgotPassword')}
+            </Link>
+          </div>
+        )}
 
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isLoading || phoneFormData.phone.length !== 10}
+          disabled={
+            isLoading ||
+            (requires2FA ? twoFactorCode.length < 6 : phoneFormData.phone.length !== 10)
+          }
           className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-rose-500 hover:bg-rose-600 disabled:bg-rose-300 text-white font-semibold rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
         >
           {isLoading && <Spinner className="h-5 w-5" />}
-          {isLoading ? t('signingIn') : t('signIn')}
+          {isLoading
+            ? requires2FA ? t('verifying') : t('signingIn')
+            : requires2FA ? t('verifyCode') : t('signIn')}
         </button>
+
+        {/* Back to login (from 2FA step) */}
+        {requires2FA && !isLoading && (
+          <button
+            type="button"
+            onClick={handleBackFromTwoFactor}
+            className="w-full text-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            ← {t('backToLogin')}
+          </button>
+        )}
       </form>
     </div>
   );

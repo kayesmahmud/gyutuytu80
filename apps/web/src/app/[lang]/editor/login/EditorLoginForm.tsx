@@ -15,9 +15,11 @@ export default function EditorLoginForm({ lang }: EditorLoginFormProps) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    twoFactorCode: '',
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,11 +27,18 @@ export default function EditorLoginForm({ lang }: EditorLoginFormProps) {
     setIsLoading(true);
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(
+        formData.email,
+        formData.password,
+        formData.twoFactorCode || undefined
+      );
 
       if (result.success) {
         // Redirect to editor dashboard
         router.push(`/${lang}/editor/dashboard`);
+      } else if (result.error === '2FA_REQUIRED') {
+        setRequires2FA(true);
+        setError('');
       } else {
         setError(result.error || 'Invalid credentials. Please try again.');
       }
@@ -98,22 +107,58 @@ export default function EditorLoginForm({ lang }: EditorLoginFormProps) {
             placeholder="••••••••••"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            disabled={isLoading}
+            disabled={isLoading || requires2FA}
           />
         </div>
       </div>
 
+      {/* 2FA Code (shown after password verification when the account has 2FA enabled) */}
+      {requires2FA && (
+        <div className="bg-teal-500/20 border border-teal-400/50 rounded-xl p-5 backdrop-blur-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-teal-500/30 flex items-center justify-center">
+              <svg className="w-6 h-6 text-teal-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">Two-Factor Authentication</h3>
+              <p className="text-sm text-teal-200">Enter the 6-digit code from your app</p>
+            </div>
+          </div>
+          <input
+            id="twoFactorCode"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required
+            maxLength={8}
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-center text-2xl tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
+            placeholder="000000"
+            value={formData.twoFactorCode}
+            onChange={(e) => setFormData({ ...formData, twoFactorCode: e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 8) })}
+            disabled={isLoading}
+            autoFocus
+          />
+          <p className="text-xs text-teal-200 mt-3 text-center">
+            You can also use a backup code
+          </p>
+        </div>
+      )}
+
       {/* Remember me */}
-      <div className="flex items-center">
-        <input
-          id="remember"
-          type="checkbox"
-          className="h-4 w-4 text-teal-500 bg-white/10 border-white/20 rounded focus:ring-teal-500 focus:ring-offset-0"
-        />
-        <label htmlFor="remember" className="ml-2 block text-sm text-teal-200">
-          Keep me signed in
-        </label>
-      </div>
+      {!requires2FA && (
+        <div className="flex items-center">
+          <input
+            id="remember"
+            type="checkbox"
+            className="h-4 w-4 text-teal-500 bg-white/10 border-white/20 rounded focus:ring-teal-500 focus:ring-offset-0"
+          />
+          <label htmlFor="remember" className="ml-2 block text-sm text-teal-200">
+            Keep me signed in
+          </label>
+        </div>
+      )}
 
       {/* Submit Button */}
       <button
@@ -136,11 +181,29 @@ export default function EditorLoginForm({ lang }: EditorLoginFormProps) {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
-              <span>Sign In</span>
+              <span>{requires2FA ? 'Verify 2FA Code' : 'Sign In'}</span>
             </>
           )}
         </div>
       </button>
+
+      {/* Back button when in 2FA mode */}
+      {requires2FA && !isLoading && (
+        <button
+          type="button"
+          onClick={() => {
+            setRequires2FA(false);
+            setFormData({ ...formData, twoFactorCode: '' });
+            setError('');
+          }}
+          className="w-full text-center text-sm text-teal-200 hover:text-white underline transition-colors duration-200 flex items-center justify-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Back to login</span>
+        </button>
+      )}
     </form>
   );
 }

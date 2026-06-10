@@ -30,6 +30,7 @@ export interface ProfileData {
   hasPassword?: boolean;
   phoneVerified?: boolean;
   phoneVerifiedAt?: string | Date | null;
+  twoFactorEnabled?: boolean;
 }
 
 interface UseProfileDataOptions {
