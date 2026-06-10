@@ -200,6 +200,11 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
           },
         },
         appLinks: {
+          ios: {
+            app_store_id: '6774762315',
+            url: `${baseUrl}/${lang}/ad/${slug}`,
+            app_name: 'Thulo Bazaar',
+          },
           android: {
             package: 'com.thulobazaar.mobile',
             url: `${baseUrl}/${lang}/ad/${slug}`,
