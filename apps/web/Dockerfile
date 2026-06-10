@@ -24,13 +24,16 @@ RUN npm install
 
 # npm's macOS-generated lock file doesn't resolve Linux-musl native bindings
 # (npm/cli#4828). Install ALL platform-specific packages explicitly.
+# sharp packages are PINNED to match sharp@0.34.5 in the lockfile — leaving them
+# unversioned pulls @latest, and a newer libvips (e.g. cpp.so.8.17.3) mismatches
+# the installed binary, breaking `next build` (ERR_DLOPEN_FAILED on sharp).
 RUN npm install --no-save \
     @next/swc-linux-x64-musl \
     lightningcss-linux-x64-musl \
     @tailwindcss/oxide-linux-x64-musl \
     @unrs/resolver-binding-linux-x64-musl \
-    @img/sharp-linuxmusl-x64 \
-    @img/sharp-libvips-linuxmusl-x64
+    @img/sharp-linuxmusl-x64@0.34.5 \
+    @img/sharp-libvips-linuxmusl-x64@1.2.4
 
 # ---- Stage 2: Build shared packages + Next.js ----
 FROM node:20-alpine AS builder
