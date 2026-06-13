@@ -1,0 +1,42 @@
+'use client';
+
+import * as React from 'react';
+import Image from 'next/image';
+
+interface CategoryIconProps {
+  /** Category slug — maps to /public/category-icons/<slug>.png */
+  slug: string;
+  /** DB emoji, used as fallback if the PNG is missing */
+  emoji?: string | null;
+  /** Category name, used for alt text */
+  name: string;
+  /** Rendered width/height in px */
+  size: number;
+}
+
+/**
+ * Renders the custom category icon (single source of truth in /public/category-icons),
+ * falling back to the database emoji if the image is missing or fails to load.
+ */
+export default function CategoryIcon({ slug, emoji, name, size }: CategoryIconProps) {
+  const [failed, setFailed] = React.useState(false);
+
+  if (failed || !slug) {
+    return (
+      <span style={{ fontSize: size * 0.82, lineHeight: 1 }} aria-hidden="true">
+        {emoji || '📁'}
+      </span>
+    );
+  }
+
+  return (
+    <Image
+      src={`/category-icons/${slug}.png`}
+      alt={name}
+      width={size}
+      height={size}
+      className="object-contain"
+      onError={() => setFailed(true)}
+    />
+  );
+}

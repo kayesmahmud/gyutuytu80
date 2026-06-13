@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AdCard, AdBanner } from '@/components/ads';
 import HeroSearch from './HeroSearch';
 import FeaturedAdsCarousel from './FeaturedAdsCarousel';
+import CategoryIcon from './CategoryIcon';
 
 // Home page content (featured ads, latest ads) can be stale for up to 5 minutes
 export const revalidate = 300;
@@ -367,7 +368,9 @@ export default async function HomePage({ params }: HomePageProps) {
                       className="flex-shrink-0 snap-start"
                     >
                       <div className="w-[72px] flex flex-col items-center justify-center p-3 bg-white border border-gray-200 rounded-xl hover:border-rose-300 hover:shadow-sm transition-all">
-                        <span className="text-2xl mb-1">{category.icon || '📁'}</span>
+                        <div className="mb-1 h-9 flex items-center justify-center">
+                          <CategoryIcon slug={category.slug} emoji={category.icon} name={category.name} size={36} />
+                        </div>
                         <span className="font-medium text-gray-800 text-[10px] text-center leading-tight line-clamp-2">
                           {lang === 'ne' && category.name_ne ? category.name_ne : category.name}
                         </span>
@@ -385,8 +388,8 @@ export default async function HomePage({ params }: HomePageProps) {
                     href={`/${lang}/ads/category/${category.slug}`}
                     className="group bg-white rounded-2xl p-4 sm:p-6 text-center border-2 border-gray-100 hover:border-rose-500 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 no-underline"
                   >
-                    <div className="text-5xl mb-3 transition-transform duration-300 group-hover:scale-110">
-                      {category.icon || '📁'}
+                    <div className="mb-3 h-16 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                      <CategoryIcon slug={category.slug} emoji={category.icon} name={category.name} size={64} />
                     </div>
                     <div className="font-semibold text-gray-900 group-hover:text-rose-500 transition-colors">
                       {lang === 'ne' && category.name_ne ? category.name_ne : category.name}

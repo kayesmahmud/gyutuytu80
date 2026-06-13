@@ -28,7 +28,8 @@
     "test:api": "npm run test:run --workspace=api",
     "test:e2e": "npm run test:e2e --workspace=web",
     "test:coverage": "turbo run test:coverage",
-    "test:a11y": "npm run a11y --workspace=web"
+    "test:a11y": "npm run a11y --workspace=web",
+    "sync:category-icons": "node scripts/sync-category-icons.mjs"
   },
   "devDependencies": {
     "turbo": "^2.6.1",

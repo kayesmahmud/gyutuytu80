@@ -1,0 +1,46 @@
+{
+  "model": "gemini-3-pro-image-preview",
+  "notes": "Nano Banana Pro (Gemini 3 Pro Image) on Vertex AI. Build a final prompt for each icon as: style_prefix + subject + style_suffix. The two style sets share the same 16 subjects so the only difference is look-and-feel. Filenames are keyed by the category slug used in the Thulobazaar database (the single source of truth).",
+  "generation_config": {
+    "response_modalities": ["IMAGE"],
+    "aspect_ratio": "1:1",
+    "image_size": "2K"
+  },
+  "palette": {
+    "primary_accent": "#F43F5E",
+    "dark": "#1F2937",
+    "amber": "#FBBF24",
+    "emerald": "#10B981",
+    "blue": "#3B82F6",
+    "off_white": "#F8FAFC"
+  },
+  "sets": {
+    "flat": {
+      "style_prefix": "Professional flat-design app icon of ",
+      "style_suffix": ", single centered object on a fully transparent background. Bold, friendly, modern flat vector illustration: rounded geometric shapes, clean crisp edges, flat even lighting, NO gradients, NO drop shadows, NO 3D, NO photorealism. Restrict all colors to this exact palette: rose-red #F43F5E as the dominant accent, deep slate #1F2937, warm amber #FBBF24, emerald green #10B981, sky blue #3B82F6, and soft off-white #F8FAFC. The object is perfectly centered and fills about 80% of the square frame with generous even padding. Keep stroke weight, proportions, corner radius and overall visual weight consistent so it belongs to a matching set of 16 marketplace category icons. Fully transparent (alpha) background, no tile, no plate, no scene. Absolutely no text, letters, numbers, words, logos or watermark. Square 1:1, ultra-crisp, high-resolution, premium app-icon quality."
+    },
+    "glossy": {
+      "style_prefix": "Premium soft-3D glossy app icon of ",
+      "style_suffix": ", single centered object floating on a fully transparent background. Smooth rounded three-dimensional forms with a polished glossy finish, gentle lighting from the top-left, subtle smooth gradients, soft white specular highlights, and a soft contact shadow directly beneath the object. High-end iOS-style icon look, but with NO square background tile or plate, only the object and its soft shadow on transparency. Use this cohesive palette: rose-red #F43F5E as the dominant accent, deep slate #1F2937, warm amber #FBBF24, emerald green #10B981, sky blue #3B82F6, with soft white speculars. Keep material, lighting direction, depth, proportions and bevel consistent so it belongs to a matching set of 16 marketplace category icons. The object is centered and fills about 75% of the square frame with even padding. Absolutely no text, letters, numbers, words, logos or watermark. Square 1:1, ultra-crisp, high-resolution, transparent (alpha) background."
+    }
+  },
+  "negative_prompt": "text, letters, numbers, words, captions, watermark, signature, logo, background scene, frame, border, photorealistic, photograph, clutter, extra objects",
+  "icons": [
+    { "slug": "mobiles", "filename": "mobiles.png", "name": "Mobiles", "subject": "a modern smartphone shown straight-on from the front with slim minimal bezels and a simple blank screen" },
+    { "slug": "electronics", "filename": "electronics.png", "name": "Electronics", "subject": "an open laptop computer at a three-quarter angle with a simple glowing screen" },
+    { "slug": "vehicles", "filename": "vehicles.png", "name": "Vehicles", "subject": "a cute compact car seen from a three-quarter front angle with a rounded modern body, visible windshield and two wheels" },
+    { "slug": "home-living", "filename": "home-living.png", "name": "Home & Living", "subject": "a cozy two-seat sofa couch with two back cushions and soft rounded armrests" },
+    { "slug": "property", "filename": "property.png", "name": "Property", "subject": "a modern multi-story residential apartment building with rows of windows and a small key beside it" },
+    { "slug": "pets-animals", "filename": "pets-animals.png", "name": "Pets & Animals", "subject": "a cute happy dog sitting upright and facing forward with friendly eyes and floppy ears" },
+    { "slug": "mens-fashion-grooming", "filename": "mens-fashion-grooming.png", "name": "Men's Fashion & Grooming", "subject": "a men's collared dress shirt on a hanger with a neatly knotted necktie" },
+    { "slug": "womens-fashion-beauty", "filename": "womens-fashion-beauty.png", "name": "Women's Fashion & Beauty", "subject": "an elegant A-line dress on a clothes hanger with a small lipstick beside it" },
+    { "slug": "hobbies-sports-kids", "filename": "hobbies-sports-kids.png", "name": "Hobbies, Sports & Kids", "subject": "a soccer ball next to a small stack of colorful kids toy building blocks" },
+    { "slug": "business-industry", "filename": "business-industry.png", "name": "Business & Industry", "subject": "a factory building with a tall chimney and a large mechanical gear cog overlapping one corner" },
+    { "slug": "education", "filename": "education.png", "name": "Education", "subject": "a graduation mortarboard cap with a tassel resting on top of a small stack of books" },
+    { "slug": "essentials", "filename": "essentials.png", "name": "Essentials", "subject": "a shopping basket filled with a few grocery items such as a bottle, a can and a leafy vegetable" },
+    { "slug": "jobs", "filename": "jobs.png", "name": "Jobs", "subject": "a closed professional business briefcase with a handle and two clasps" },
+    { "slug": "services", "filename": "services.png", "name": "Services", "subject": "a wrench and a screwdriver crossed in an X shape representing repair and maintenance" },
+    { "slug": "agriculture", "filename": "agriculture.png", "name": "Agriculture", "subject": "a young green seedling sprout with two leaves growing from a small rounded mound of soil" },
+    { "slug": "overseas-jobs", "filename": "overseas-jobs.png", "name": "Overseas Jobs", "subject": "a small airplane flying along a curved dotted path that orbits a globe of the earth" }
+  ]
+}

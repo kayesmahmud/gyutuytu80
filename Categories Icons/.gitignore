@@ -1,0 +1,12 @@
+# Raw 2048px Nano Banana generations (~4MB each) — regenerate with generate.py
+/flat/
+/glossy/
+
+# Preview composites used only for visual QA
+*_preview.jpg
+*_preview.png
+
+# Processed sets keep ONLY the active master (flat_processed) in git.
+# Uncomment to also ignore it if you prefer to keep only the synced app copies:
+# /flat_processed/
+/glossy_processed/

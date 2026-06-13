@@ -365,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
             final shortName = context.locale.languageCode == 'ne'
                 ? localizedName
                 : (mockMatch?['shortName'] as String? ?? localizedName);
-            return _buildApiCategoryItem(icon, shortName, apiCat.id, localizedName);
+            return _buildApiCategoryItem(apiCat.slug, icon, shortName, apiCat.id, localizedName);
           }).toList(),
         ),
       );
@@ -378,6 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: MockFilterData.categories
             .map((cat) => _buildStaticEmojiCategoryItem(
+                  cat['slug'] as String?,
                   cat['icon'] as String,
                   (cat['shortName'] ?? cat['name']) as String,
                 ))
@@ -398,6 +399,23 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
     return null;
+  }
+
+  /// Custom category icon (single source of truth in assets/category-icons),
+  /// falling back to the emoji if the image is missing.
+  Widget _categoryIcon(String? slug, String emoji) {
+    if (slug == null || slug.isEmpty) {
+      return Text(emoji, style: const TextStyle(fontSize: 24));
+    }
+    return Image.asset(
+      'assets/category-icons/$slug.png',
+      width: 32,
+      height: 32,
+      fit: BoxFit.contain,
+      cacheWidth: 128,
+      cacheHeight: 128,
+      errorBuilder: (_, _, _) => Text(emoji, style: const TextStyle(fontSize: 24)),
+    );
   }
 
   Widget _buildStaticCategoryItem(IconData icon, String label) {
@@ -430,7 +448,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Category item backed by API data — tap always works
-  Widget _buildApiCategoryItem(String emoji, String name, int categoryId, String categoryName) {
+  Widget _buildApiCategoryItem(String? slug, String emoji, String name, int categoryId, String categoryName) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
       child: TapScale(
@@ -446,7 +464,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Text(emoji, style: const TextStyle(fontSize: 24)),
+              child: _categoryIcon(slug, emoji),
             ),
             const SizedBox(height: 8),
             SizedBox(
@@ -469,7 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Fallback category item shown while loading (no tap action)
-  Widget _buildStaticEmojiCategoryItem(String emoji, String name) {
+  Widget _buildStaticEmojiCategoryItem(String? slug, String emoji, String name) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
       child: Column(
@@ -481,7 +499,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey[200]!),
             ),
-            child: Text(emoji, style: const TextStyle(fontSize: 24)),
+            child: _categoryIcon(slug, emoji),
           ),
           const SizedBox(height: 8),
           SizedBox(
