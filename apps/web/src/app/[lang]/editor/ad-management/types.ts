@@ -1,3 +1,14 @@
+// The seller (user who posted the ad) and their verification status.
+// Editors use this to know WHO posted a pending ad before approving it.
+export interface Seller {
+  id: number;
+  name: string;
+  email?: string;
+  accountType?: string; // 'individual' | 'business'
+  businessVerified: boolean;
+  individualVerified: boolean;
+}
+
 export interface Ad {
   id: number;
   title: string;
@@ -6,12 +17,14 @@ export interface Ad {
   category: string;
   location: string;
   status: string;
-  createdAt: string;
+  createdAt: string; // when the user POSTED the ad (shown to editors)
   updatedAt: string;
+  reviewedAt?: string | null; // when an editor approved/rejected it
   deletedAt?: string | null;
   images?: string[];
   sellerName?: string;
   sellerPhone?: string;
+  seller?: Seller | null;
   condition?: string;
   statusReason?: string;
   suspendedUntil?: string | null;
@@ -37,10 +50,21 @@ export function transformAd(ad: any): Ad {
     status: ad.status,
     createdAt: ad.created_at || ad.createdAt,
     updatedAt: ad.updated_at || ad.updatedAt,
+    reviewedAt: ad.reviewedAt ?? ad.reviewed_at ?? null,
     deletedAt: ad.deleted_at || ad.deletedAt,
     images: ad.images || [],
-    sellerName: ad.seller_name || ad.sellerName,
+    sellerName: ad.seller_name || ad.sellerName || ad.user?.fullName || '',
     sellerPhone: ad.seller_phone || ad.sellerPhone,
+    seller: ad.user
+      ? {
+          id: ad.user.id,
+          name: ad.user.fullName,
+          email: ad.user.email,
+          accountType: ad.user.accountType,
+          businessVerified: Boolean(ad.user.businessVerified),
+          individualVerified: Boolean(ad.user.individualVerified),
+        }
+      : null,
     condition: ad.condition,
     statusReason: ad.status_reason || ad.statusReason,
     suspendedUntil: ad.suspended_until || ad.suspendedUntil,

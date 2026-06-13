@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { getStatusBadge, getAvailableActions } from '@/utils/editorUtils';
 import { getImageUrl } from '@/lib/images/imageUrl';
+import { getSellerBadge } from '../sellerBadge';
 import type { Ad } from '../types';
 
 interface AdCardProps {
@@ -41,6 +42,18 @@ export default function AdCard({
   onHistory,
 }: AdCardProps) {
   const availableActions = getAvailableActions(ad);
+  const sellerBadge = getSellerBadge(ad.seller);
+
+  // The moment the user posted the ad (set at creation, even while pending).
+  // Editors see the exact date + time; the public site shows the approval time.
+  const postedAt = new Date(ad.createdAt).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
 
   return (
     <div
@@ -103,21 +116,33 @@ export default function AdCard({
               </div>
               <div className="text-right text-sm text-gray-500">
                 <div>ID: #{ad.id}</div>
-                <div className="mt-1">
-                  {new Date(ad.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </div>
+                <div className="mt-1 text-[11px] uppercase tracking-wide text-gray-400">Posted</div>
+                <div className="font-medium text-gray-600">{postedAt}</div>
               </div>
             </div>
 
-            {/* Seller Info */}
-            {ad.sellerName && (
-              <div className="mb-3 text-sm text-gray-600">
-                <span className="font-medium">Seller:</span> {ad.sellerName}
-                {ad.sellerPhone && <span className="ml-2">📞 {ad.sellerPhone}</span>}
+            {/* Posted by (seller) — who created this ad + their verification status */}
+            {(ad.seller || ad.sellerName) && (
+              <div className="mb-3 flex items-center gap-2 flex-wrap text-sm">
+                <span className="text-gray-500">Posted by</span>
+                <span className="font-semibold text-gray-900">
+                  {ad.seller?.name || ad.sellerName}
+                </span>
+                {sellerBadge.badgeImage && (
+                  <Image
+                    src={sellerBadge.badgeImage}
+                    alt={sellerBadge.label}
+                    width={16}
+                    height={16}
+                    className="inline-block"
+                  />
+                )}
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${sellerBadge.className}`}>
+                  {sellerBadge.label}
+                </span>
+                {ad.seller?.email && (
+                  <span className="text-gray-400">· {ad.seller.email}</span>
+                )}
               </div>
             )}
 
