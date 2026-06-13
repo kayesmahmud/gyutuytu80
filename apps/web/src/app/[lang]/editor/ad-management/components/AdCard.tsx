@@ -44,16 +44,27 @@ export default function AdCard({
   const availableActions = getAvailableActions(ad);
   const sellerBadge = getSellerBadge(ad.seller);
 
-  // The moment the user posted the ad (set at creation, even while pending).
-  // Editors see the exact date + time; the public site shows the approval time.
-  const postedAt = new Date(ad.createdAt).toLocaleString('en-US', {
+  // Editors see two timestamps: when the user POSTED (created_at, even while
+  // pending) and when an editor REVIEWED it (reviewed_at). The public site
+  // shows only the approval time.
+  const DATE_TIME_OPTS: Intl.DateTimeFormatOptions = {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
-  });
+  };
+  const postedAt = new Date(ad.createdAt).toLocaleString('en-US', DATE_TIME_OPTS);
+  const reviewedAt = ad.reviewedAt
+    ? new Date(ad.reviewedAt).toLocaleString('en-US', DATE_TIME_OPTS)
+    : null;
+  // reviewed_at is set on approve/reject/suspend — label it by what happened.
+  const reviewLabel =
+    ad.status === 'approved' ? 'Approved'
+    : ad.status === 'rejected' ? 'Rejected'
+    : ad.status === 'suspended' ? 'Suspended'
+    : 'Reviewed';
 
   return (
     <div
@@ -118,6 +129,12 @@ export default function AdCard({
                 <div>ID: #{ad.id}</div>
                 <div className="mt-1 text-[11px] uppercase tracking-wide text-gray-400">Posted</div>
                 <div className="font-medium text-gray-600">{postedAt}</div>
+                {reviewedAt && (
+                  <>
+                    <div className="mt-1 text-[11px] uppercase tracking-wide text-gray-400">{reviewLabel}</div>
+                    <div className="font-medium text-gray-600">{reviewedAt}</div>
+                  </>
+                )}
               </div>
             </div>
 
