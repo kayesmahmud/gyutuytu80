@@ -35,7 +35,7 @@ export default function CategoryIcon({ slug, emoji, name, size }: CategoryIconPr
       alt={name}
       width={size}
       height={size}
-      className="object-contain"
+      className="object-contain drop-shadow-[0_5px_4px_rgba(15,23,42,0.22)]"
       onError={() => setFailed(true)}
     />
   );
