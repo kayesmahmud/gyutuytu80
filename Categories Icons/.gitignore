@@ -6,7 +6,5 @@
 *_preview.jpg
 *_preview.png
 
-# Processed sets keep ONLY the active master (flat_processed) in git.
-# Uncomment to also ignore it if you prefer to keep only the synced app copies:
-# /flat_processed/
-/glossy_processed/
+# Processed master sets are kept in git so the active set can be swapped via the
+# sync script without regenerating (flat_processed + glossy_processed).
