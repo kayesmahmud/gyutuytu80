@@ -177,7 +177,13 @@ router.get(
             take: 1,
           },
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: [
+          // Match the website shop page ordering: promotions first, then newest-approved
+          { is_featured: 'desc' },
+          { is_urgent: 'desc' },
+          { is_sticky: 'desc' },
+          { reviewed_at: { sort: 'desc', nulls: 'last' } },
+        ],
         take: limitNum,
         skip: offsetNum,
       }),
