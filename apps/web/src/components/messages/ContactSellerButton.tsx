@@ -10,6 +10,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useBackendToken } from '@/hooks/useBackendToken';
 import { messagingApi } from '@/lib/messaging';
+import { trackLead } from '@/lib/metaPixel';
 
 interface ContactSellerButtonProps {
   sellerId: number;
@@ -64,6 +65,8 @@ export default function ContactSellerButton({
       });
 
       const conversationId = response.data.id;
+
+      trackLead({ adId, adTitle, method: 'message' });
 
       // Redirect to messages page with conversation selected
       router.push(`/messages?conversation=${conversationId}`);

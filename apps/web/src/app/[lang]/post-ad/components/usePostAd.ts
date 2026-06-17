@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useFormTemplate } from '@/hooks/useFormTemplate';
 import { useAdDraft, AdDraft } from '@/hooks/useAdDraft';
 import { apiClient } from '@/lib/api';
+import { trackPostAd } from '@/lib/metaPixel';
 import type { Category, PostAdFormData } from './types';
 import { INITIAL_FORM_DATA } from './types';
 
@@ -390,6 +391,12 @@ export function usePostAd(lang: string) {
 
         if (response.success && response.data) {
           clearCurrentDraft();
+
+          trackPostAd({
+            id: (response.data as { id?: number | string })?.id,
+            title: formData.title,
+            price: formData.price ? parseFloat(formData.price) : null,
+          });
 
           if (!userHasDefaultLocation && formData.locationSlug) {
             try {

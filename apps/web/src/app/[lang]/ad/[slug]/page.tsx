@@ -4,6 +4,7 @@ import { formatPrice, formatRelativeTime } from '@thulobazaar/utils';
 import { prisma } from '@thulobazaar/database';
 import { notFound } from 'next/navigation';
 import AdDetailClient from './AdDetailClient';
+import TrackViewContent from './TrackViewContent';
 import PromoteSection from './PromoteSection';
 import { Breadcrumb } from '@/components/ui';
 import PromotionSuccessToast from './PromotionSuccessToast';
@@ -358,6 +359,14 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
             <div className="hidden sm:flex justify-center mb-6">
               <AdBanner slot="adDetailTop" size="leaderboard" />
             </div>
+
+            {/* Meta Pixel ViewContent */}
+            <TrackViewContent
+              id={ad.id}
+              title={ad.title}
+              price={ad.price ? parseFloat(ad.price.toString()) : null}
+              category={ad.categories?.name ?? null}
+            />
 
             {/* Image Gallery */}
             <AdDetailClient images={images} lang={lang} adTitle={ad.title} />

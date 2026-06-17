@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { trackSearch } from '@/lib/metaPixel';
 
 interface HeroSearchProps {
   lang: string;
@@ -17,6 +18,7 @@ export default function HeroSearch({ lang }: HeroSearchProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSearching(true);
+    trackSearch(query);
 
     // Small delay to show animation before navigation
     setTimeout(() => {

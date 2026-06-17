@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { buildAdUrl } from '@/lib/urls/client';
+import { trackSearch } from '@/lib/metaPixel';
 
 interface AdsSearchBarProps {
   lang: string;
@@ -24,6 +25,8 @@ export default function AdsSearchBar({
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    trackSearch(query);
 
     const queryParams: Record<string, string> = {};
     if (query.trim()) {

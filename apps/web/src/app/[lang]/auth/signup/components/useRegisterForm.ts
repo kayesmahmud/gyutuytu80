@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { trackCompleteRegistration } from '@/lib/metaPixel';
 import type { RegistrationType, PhoneStep, FormData, UseRegisterFormReturn } from './types';
 
 export function useRegisterForm(lang: string): UseRegisterFormReturn {
@@ -212,6 +213,8 @@ export function useRegisterForm(lang: string): UseRegisterFormReturn {
         throw new Error(data.message || 'Registration failed');
       }
 
+      trackCompleteRegistration('email');
+
       const loginResult = await signIn('credentials', {
         redirect: false,
         email: formData.email,
@@ -273,6 +276,8 @@ export function useRegisterForm(lang: string): UseRegisterFormReturn {
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');
       }
+
+      trackCompleteRegistration('phone');
 
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => {

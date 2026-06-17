@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { trackLead } from '@/lib/metaPixel';
 
 interface MaskedPhoneButtonProps {
   phone: string;
@@ -19,6 +20,7 @@ export function MaskedPhoneButton({ phone }: MaskedPhoneButtonProps) {
   const handleClick = () => {
     if (!revealed) {
       setRevealed(true);
+      trackLead({ method: 'phone' });
     } else {
       // If already revealed, make the call
       window.location.href = `tel:${phone}`;
