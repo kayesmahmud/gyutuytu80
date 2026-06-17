@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 
 import 'core/api/dio_client.dart';
@@ -68,16 +69,10 @@ void main() async {
     debugPrint('Push notifications will be disabled');
   }
 
-  // Initialize Google Mobile Ads SDK + fetch remote config — OFF critical path.
-  // Splash doesn't show ads; SDK is ready long before user reaches a banner.
-  // Previously awaited here, which added 1.5–3s to cold-start splash time.
-  unawaited(
-    AdService.initialize().then((_) {
-      AdService.fetchConfig().then((_) {
-        InterstitialAdService.preload();
-      });
-    }).catchError((e) => debugPrint('⚠️ AdMob init failed: $e')),
-  );
+  // Google Mobile Ads init is deferred to ThuloBazaarApp.initState so it runs
+  // AFTER the App Tracking Transparency prompt resolves (Apple requires the ATT
+  // prompt to be shown while the app is active, not during main()). See
+  // _requestTrackingThenInitAds below.
 
   // Initialize notifications only if Firebase is available — OFF critical path.
   // FCM token registration in ThuloBazaarApp.initState already runs after
@@ -85,10 +80,13 @@ void main() async {
   if (_firebaseInitialized) {
     final notificationService = NotificationService();
     unawaited(
-      notificationService.initialize().then((_) {
-        notificationService.onNotificationTap = _handleNotificationTap;
-        debugPrint('✅ Notifications initialized');
-      }).catchError((e) => debugPrint('⚠️ Notifications init failed: $e')),
+      notificationService
+          .initialize()
+          .then((_) {
+            notificationService.onNotificationTap = _handleNotificationTap;
+            debugPrint('✅ Notifications initialized');
+          })
+          .catchError((e) => debugPrint('⚠️ Notifications init failed: $e')),
     );
   }
 
@@ -153,17 +151,13 @@ void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
     case '/ad':
       if (adId != null) {
         navigator.push(
-          MaterialPageRoute(
-            builder: (_) => AdDetailScreen(adId: adId),
-          ),
+          MaterialPageRoute(builder: (_) => AdDetailScreen(adId: adId)),
         );
       }
       break;
     case '/verification':
       navigator.push(
-        MaterialPageRoute(
-          builder: (_) => const VerificationScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const VerificationScreen()),
       );
       break;
     case '/notifications':
@@ -197,10 +191,41 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
   @override
   void initState() {
     super.initState();
+    // Request App Tracking Transparency, then initialize ads (Apple-compliant)
+    _requestTrackingThenInitAds();
     // Register FCM token when user is logged in
     _registerNotificationToken();
     // Check for app updates
     _checkForAppUpdate();
+  }
+
+  /// Show the iOS App Tracking Transparency prompt (once), then initialize the
+  /// Mobile Ads SDK. AdMob reads the resulting authorization status to decide
+  /// between personalized and non-personalized ads. No-op on Android and on
+  /// iOS versions without ATT — the package reports a safe status and ads
+  /// initialize either way.
+  Future<void> _requestTrackingThenInitAds() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final status =
+            await AppTrackingTransparency.trackingAuthorizationStatus;
+        if (status == TrackingStatus.notDetermined) {
+          // Brief delay so the system dialog reliably presents on a cold start.
+          await Future.delayed(const Duration(milliseconds: 200));
+          await AppTrackingTransparency.requestTrackingAuthorization();
+        }
+      } catch (e) {
+        debugPrint('⚠️ ATT request failed: $e');
+      }
+
+      try {
+        await AdService.initialize();
+        await AdService.fetchConfig();
+        InterstitialAdService.preload();
+      } catch (e) {
+        debugPrint('⚠️ AdMob init failed: $e');
+      }
+    });
   }
 
   Future<void> _checkForAppUpdate() async {
@@ -213,12 +238,14 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
 
       switch (result.type) {
         case UpdateType.softPrompt:
-          UpdateDialog.showSoftPrompt(ctx,
+          UpdateDialog.showSoftPrompt(
+            ctx,
             storeUrl: result.storeUrl,
             latestVersion: result.latestVersion,
           );
         case UpdateType.forceUpdate:
-          UpdateDialog.showForceScreen(ctx,
+          UpdateDialog.showForceScreen(
+            ctx,
             storeUrl: result.storeUrl,
             latestVersion: result.latestVersion,
           );
