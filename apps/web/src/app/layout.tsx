@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { GoogleTagManager } from '@next/third-parties/google';
 
+import { MetaPixel } from '@/components/MetaPixel';
 import { Providers } from '@/components/Providers';
 import './globals.css';
 
@@ -20,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <GoogleTagManager gtmId="GTM-NDZQCRKC" />
+      <MetaPixel />
       <body className={inter.className}>
         <Providers>
           {children}
