@@ -25,6 +25,7 @@ import {
 export { sendOtp, verifyOtp, updatePhone } from '@thulobazaar/auth-core';
 import { generateAccessToken, generateRefreshToken } from '../lib/token.js';
 import { getBooleanSetting } from './adLimits.service.js';
+import { generateShopSlug } from '../utils/shopSlug.js';
 import { OAuth2Client } from 'google-auth-library';
 import appleSignin from 'apple-signin-auth';
 import { generateSecret, generateURI, verifySync } from 'otplib';
@@ -217,16 +218,10 @@ export async function registerWithPhone(
     },
   });
 
-  // Auto-generate shop_slug from name + user ID (same as Google OAuth flow)
-  const baseSlug = fullName
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .substring(0, 50);
-  const shopSlug = `${baseSlug}-${user.id}`;
+  // Auto-generate shop_slug from name + user ID
   user = await prisma.users.update({
     where: { id: user.id },
-    data: { shop_slug: shopSlug },
+    data: { shop_slug: generateShopSlug(fullName, user.id) },
   });
 
   // Generate tokens
@@ -356,6 +351,12 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
         },
       });
 
+      // Auto-generate shop_slug (was previously missing on this mobile OAuth path)
+      user = await prisma.users.update({
+        where: { id: user.id },
+        data: { shop_slug: generateShopSlug(user.full_name, user.id) },
+      });
+
       console.log(`✅ New Google user created: ${email} (userId: ${user.id})`);
 
       // Send welcome notification (fire-and-forget)
@@ -481,6 +482,12 @@ export async function verifyAppleToken(
           is_active: true,
           password_hash: await bcrypt.hash(Math.random().toString(36), 10),
         },
+      });
+
+      // Auto-generate shop_slug (was previously missing on this mobile OAuth path)
+      user = await prisma.users.update({
+        where: { id: user.id },
+        data: { shop_slug: generateShopSlug(user.full_name, user.id) },
       });
 
       console.log(`✅ New Apple user created: ${email || appleUserId} (userId: ${user.id})`);

@@ -2,6 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { prisma } from '@thulobazaar/database';
 import config from './index.js';
+import { generateShopSlug } from '../utils/shopSlug.js';
 
 passport.use(
   new GoogleStrategy(
@@ -30,12 +31,6 @@ passport.use(
 
         if (!user) {
           // Create new user with avatar
-          const baseSlug = profile.displayName
-            .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .substring(0, 50);
-
           user = await prisma.users.create({
             data: {
               email,
@@ -51,10 +46,9 @@ passport.use(
           });
 
           // Update with shop_slug that includes user ID
-          const shopSlug = `${baseSlug}-${user.id}`;
           user = await prisma.users.update({
             where: { id: user.id },
-            data: { shop_slug: shopSlug },
+            data: { shop_slug: generateShopSlug(profile.displayName, user.id) },
           });
 
           console.log('🔐 [Passport] New user created:', user.id);
