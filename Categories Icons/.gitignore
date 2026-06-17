@@ -1,6 +1,13 @@
 # Raw 2048px Nano Banana generations (~4MB each) — regenerate with generate.py
 /flat/
 /glossy/
+/realistic/
+
+# U^2-Net model for realistic cutout (~168MB) — re-download, do not commit
+/models/
+
+# Python bytecode cache
+__pycache__/
 
 # Preview composites used only for visual QA
 *_preview.jpg

@@ -67,15 +67,22 @@ def save_image(response, out_path: Path) -> bool:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Thulobazaar category icons")
-    parser.add_argument("--set", required=True, choices=["flat", "glossy"])
+    parser.add_argument("--set", required=True, choices=["flat", "glossy", "realistic"])
     parser.add_argument(
         "--anchor",
         action="store_true",
         help="Use the first generated icon as a style reference for the rest",
     )
+    parser.add_argument(
+        "--ref",
+        default=None,
+        help="External style-reference image applied to EVERY icon (e.g. a bikroy reference) "
+        "so the whole set matches its style/realism. Overrides --anchor.",
+    )
     args = parser.parse_args()
+    ref_bytes = Path(args.ref).read_bytes() if args.ref else None
 
-    client = genai.Client(vertexai=True)  # reads GOOGLE_CLOUD_PROJECT / _LOCATION
+    client = genai.Client(vertexai=True, http_options=types.HttpOptions(timeout=90000))  # 90s timeout per request
 
     out_dir = HERE / args.set
     out_dir.mkdir(exist_ok=True)
@@ -92,14 +99,16 @@ def main() -> None:
                 anchor_bytes = out_path.read_bytes()
             continue
 
-        # Build the request. When --anchor is on and we already have the first
-        # icon, prepend it as a style reference so the rest match it.
+        # Build the request. A style reference (external --ref, else the first generated
+        # icon when --anchor is on) is prepended so the set stays cohesive.
+        style_ref = ref_bytes if ref_bytes is not None else (anchor_bytes if args.anchor else None)
         contents: list = []
-        if args.anchor and anchor_bytes is not None:
-            contents.append(types.Part.from_bytes(data=anchor_bytes, mime_type="image/png"))
+        if style_ref is not None:
+            contents.append(types.Part.from_bytes(data=style_ref, mime_type="image/png"))
             contents.append(
-                "Match the exact art style, color palette, lighting, line weight and "
-                "level of detail of the reference image. " + item["prompt"]
+                "Match the exact art style, rendering, lighting, materials and level of "
+                "realism/detail of the reference image, but depict the subject described here. "
+                + item["prompt"]
             )
         else:
             contents.append(item["prompt"])
@@ -113,13 +122,25 @@ def main() -> None:
         )
 
         print(f"[{i + 1:>2}/{len(prompts)}] generating {item['slug']} ...", flush=True)
-        response = client.models.generate_content(model=MODEL, contents=contents, config=config)
+        for attempt in range(1, 6):
+            try:
+                response = client.models.generate_content(model=MODEL, contents=contents, config=config)
+                break
+            except Exception as e:
+                print(f"           attempt {attempt} failed: {e}", flush=True)
+                if attempt == 5:
+                    print(f"           !! giving up on {item['slug']} after 5 attempts")
+                    response = None
+                    break
+                wait = 30 * attempt
+                print(f"           retrying in {wait}s ...", flush=True)
+                time.sleep(wait)
 
-        if save_image(response, out_path):
+        if response and save_image(response, out_path):
             print(f"           saved -> {out_path}")
             if args.anchor and anchor_bytes is None:
                 anchor_bytes = out_path.read_bytes()  # lock style to the first icon
-        else:
+        elif response:
             print(f"           !! no image returned for {item['slug']} (re-run this one)")
 
         time.sleep(30)  # be gentle with rate limits
