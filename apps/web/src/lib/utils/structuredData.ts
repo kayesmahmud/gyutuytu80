@@ -9,7 +9,7 @@ interface ProductStructuredDataProps {
   image: string[];
   price: number;
   currency: string;
-  condition: 'NewCondition' | 'UsedCondition' | 'RefurbishedCondition';
+  condition?: 'NewCondition' | 'UsedCondition' | 'RefurbishedCondition';
   availability: 'InStock' | 'OutOfStock' | 'PreOrder';
   url: string;
   seller: {
@@ -31,7 +31,9 @@ export function generateProductStructuredData(props: ProductStructuredDataProps)
       '@type': 'Offer',
       price: props.price,
       priceCurrency: props.currency,
-      itemCondition: `https://schema.org/${props.condition}`,
+      // Only assert a condition when the ad actually has one (don't claim "Used"
+      // for listings like rentals where condition doesn't apply).
+      ...(props.condition && { itemCondition: `https://schema.org/${props.condition}` }),
       availability: `https://schema.org/${props.availability}`,
       url: props.url,
       seller: {

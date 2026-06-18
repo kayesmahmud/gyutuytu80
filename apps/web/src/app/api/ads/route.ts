@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     const title = formData.get('title')?.toString();
     const description = formData.get('description')?.toString();
     const priceStr = formData.get('price')?.toString();
-    let condition = formData.get('condition')?.toString();
+    let condition: string | null | undefined = formData.get('condition')?.toString();
     const categoryIdStr = formData.get('categoryId')?.toString();
     const subcategoryIdStr = formData.get('subcategoryId')?.toString();
     const locationIdStr = formData.get('locationId')?.toString();

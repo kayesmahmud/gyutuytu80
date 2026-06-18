@@ -38,13 +38,14 @@ const INITIAL_FORM_DATA: EditAdFormData = {
   isNegotiable: false,
 };
 
-const normalizeConditionForForm = (condition?: string) => {
-  if (!condition) return 'Used';
+const normalizeConditionForForm = (condition?: string | null): string | null => {
+  // No condition on the ad -> leave it unset (don't invent one for rentals/services/etc.)
+  if (!condition || !String(condition).trim()) return null;
 
   const value = String(condition).toLowerCase();
 
   if (value === 'new' || value === 'brand new') return 'Brand New';
-  return 'Used'; // Default everything else to Used
+  return 'Used'; // Any other non-empty value normalizes to Used
 };
 
 export function useEditAd(adId: number, lang: string) {
@@ -230,13 +231,14 @@ export function useEditAd(adId: number, lang: string) {
         extractedCustomFields.condition = ad.condition;
       }
 
-      if (!extractedCustomFields.condition) {
-        extractedCustomFields.condition = 'Brand New';
-      }
-
+      // Pre-fill the existing condition if present; do NOT invent one when the
+      // ad has none (e.g. rentals/services) — otherwise editing would silently
+      // stamp a condition back onto the ad.
       const normalizedCondition = normalizeConditionForForm(extractedCustomFields.condition);
       if (normalizedCondition) {
         extractedCustomFields.condition = normalizedCondition;
+      } else {
+        delete extractedCustomFields.condition;
       }
 
       // Step 5: Get location info (API returns 'locations' plural for the relation)
@@ -438,6 +440,9 @@ export function useEditAd(adId: number, lang: string) {
           attributes: {
             condition: formData.condition,
             ...customFields,
+            // Persist negotiable inside custom_fields so it survives + pre-fills
+            // on edit (mirrors the mobile app; the top-level field is dropped).
+            isNegotiable: formData.isNegotiable,
           },
         };
 

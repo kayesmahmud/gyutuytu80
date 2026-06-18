@@ -327,7 +327,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
         description={ad.description || ''}
         images={images.filter(Boolean)}
         price={ad.price ? parseFloat(ad.price.toString()) : 0}
-        condition={ad.condition || 'used'}
+        condition={ad.condition}
         url={`${baseUrl}/${lang}/ad/${slug}`}
         sellerName={sellerName}
         sellerType={sellerType}
@@ -420,6 +420,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                 adSlug={slug}
                 lang={lang}
                 favoritesCount={favoritesCount}
+                whatsappNumber={(customFields?.whatsapp_number as string) || null}
               />
               <PromoteSection ad={{
                 id: ad.id,
@@ -460,6 +461,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                 adSlug={slug}
                 lang={lang}
                 favoritesCount={favoritesCount}
+                whatsappNumber={(customFields?.whatsapp_number as string) || null}
               />
             </div>
 

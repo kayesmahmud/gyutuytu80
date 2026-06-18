@@ -129,6 +129,7 @@ class DynamicFormFields extends StatelessWidget {
       case FieldType.select:
         return DropdownButtonFormField<String>(
           value: values[field.name],
+          isExpanded: true,
           decoration: _inputDecoration(placeholder ?? 'Select ${field.label}'),
           icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
           onChanged: (val) => onChanged(field.name, val),

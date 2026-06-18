@@ -15,7 +15,12 @@ class AdSpecifications extends StatelessWidget {
     }
 
     // Separate amenities from regular specs (matches web behavior)
-    final filteredKeys = {'isNegotiable', 'amenities', 'condition'};
+    final filteredKeys = {
+      'isNegotiable',
+      'amenities',
+      'condition',
+      'whatsapp_number',
+    };
     final specs = ad.attributes!.entries
         .where((e) =>
             e.value != null &&

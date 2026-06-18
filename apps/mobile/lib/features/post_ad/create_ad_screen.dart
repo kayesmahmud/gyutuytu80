@@ -16,6 +16,7 @@ import 'package:mobile/features/profile/phone_verification_screen.dart';
 import 'package:mobile/core/widgets/app_cached_image.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
+import 'package:mobile/core/api/location_client.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/services/review_service.dart';
 import 'package:mobile/core/widgets/success_checkmark.dart';
@@ -77,6 +78,13 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   LocationDistrict? _selectedDistrict;
   LocationMunicipality? _selectedMunicipality;
   LocationArea? _selectedArea;
+
+  // Location quick-search (type a place, auto-fills the dropdowns below)
+  final LocationClient _locationClient = LocationClient();
+  final _locationSearchController = TextEditingController();
+  Timer? _locationSearchDebounce;
+  List<Location> _locationSearchResults = [];
+  bool _searchingLocation = false;
 
   // Contact Data
   final _whatsappController = TextEditingController();
@@ -248,6 +256,22 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     // Condition is stored separately in DB, not in custom_fields — inject it back
     if (ad.condition != null && !_attributeValues.containsKey('condition')) {
       _attributeValues['condition'] = ad.condition;
+    }
+
+    // Pre-fill WhatsApp: it lives in custom_fields only when the seller set a
+    // number different from their profile phone. Managed via the toggle below,
+    // so keep it out of the dynamic-fields map.
+    final savedWhatsapp =
+        (ad.attributes?['whatsapp_number'] as String?)?.trim();
+    _attributeValues.remove('whatsapp_number');
+    if (savedWhatsapp != null &&
+        savedWhatsapp.isNotEmpty &&
+        savedWhatsapp != _verifiedPhone) {
+      _whatsappSameAsPhone = false;
+      _whatsappController.text = savedWhatsapp;
+    } else {
+      _whatsappSameAsPhone = true;
+      _whatsappController.text = _verifiedPhone;
     }
 
     _editPrefillDone = true;
@@ -444,6 +468,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _locationSearchDebounce?.cancel();
     _titleController.removeListener(_onFormChanged);
     _descriptionController.removeListener(_onFormChanged);
     _priceController.removeListener(_onFormChanged);
@@ -451,11 +476,143 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _whatsappController.dispose();
+    _locationSearchController.dispose();
     super.dispose();
   }
 
   int get _totalImageCount =>
       _existingImagePaths.length + _selectedImages.length;
+
+  // ── Location quick-search ────────────────────────────────────────────────
+  // Type a place name, pick a result, and the cascading dropdowns below
+  // auto-fill from the already-loaded province tree (no extra API calls).
+
+  void _onLocationSearchChanged(String query) {
+    _locationSearchDebounce?.cancel();
+    if (query.trim().length < 2) {
+      setState(() => _locationSearchResults = []);
+      return;
+    }
+    _locationSearchDebounce = Timer(const Duration(milliseconds: 300), () async {
+      setState(() => _searchingLocation = true);
+      final results = await _locationClient.searchAllLocations(query.trim());
+      if (!mounted) return;
+      setState(() {
+        _locationSearchResults = results;
+        _searchingLocation = false;
+      });
+    });
+  }
+
+  /// Locate a flat search result inside the loaded province tree and return its
+  /// full ancestry path. Returns null if the location isn't in the tree.
+  ({
+    LocationProvince p,
+    LocationDistrict? d,
+    LocationMunicipality? m,
+    LocationArea? a,
+  })? _resolveLocationPath(Location loc) {
+    for (final prov in _provinces) {
+      if (loc.type == LocationType.province && prov.id == loc.id) {
+        return (p: prov, d: null, m: null, a: null);
+      }
+      for (final dist in prov.districts) {
+        if (loc.type == LocationType.district && dist.id == loc.id) {
+          return (p: prov, d: dist, m: null, a: null);
+        }
+        for (final muni in dist.municipalities) {
+          if (loc.type == LocationType.municipality && muni.id == loc.id) {
+            return (p: prov, d: dist, m: muni, a: null);
+          }
+          for (final area in muni.areas) {
+            if (loc.type == LocationType.area && area.id == loc.id) {
+              return (p: prov, d: dist, m: muni, a: area);
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  void _selectSearchedLocation(Location loc) {
+    final path = _resolveLocationPath(loc);
+    FocusScope.of(context).unfocus();
+    if (path == null) {
+      // Result isn't in the loaded tree (rare) — let the user pick manually.
+      setState(() => _locationSearchResults = []);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('postAd.locationSearchManual'.tr()),
+      ));
+      return;
+    }
+    setState(() {
+      _selectedProvince = path.p;
+      _selectedDistrict = path.d;
+      _selectedMunicipality = path.m;
+      _selectedArea = path.a;
+      _locationSearchResults = [];
+      _locationSearchController.text = loc.name;
+    });
+    _onFormChanged();
+  }
+
+  /// One-line parent hierarchy for a result, e.g. "Kathmandu Metro, Kathmandu, Bagmati".
+  String _locationPathHint(Location loc) {
+    final path = _resolveLocationPath(loc);
+    if (path == null) return '';
+    final lang = context.locale.languageCode;
+    final parents = <String>[];
+    // Municipality is a parent only when an area was picked.
+    if (loc.type == LocationType.area && path.m != null) {
+      parents.add(path.m!.localizedName(lang));
+    }
+    // District is a parent for areas and municipalities.
+    if ((loc.type == LocationType.area ||
+            loc.type == LocationType.municipality) &&
+        path.d != null) {
+      parents.add(path.d!.localizedName(lang));
+    }
+    // Province is a parent for everything below it.
+    if (loc.type != LocationType.province) {
+      parents.add(path.p.localizedName(lang));
+    }
+    return parents.join(', ');
+  }
+
+  Widget _buildLocationResultTile(Location loc) {
+    final hint = _locationPathHint(loc);
+    return InkWell(
+      onTap: () => _selectSearchedLocation(loc),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            const Icon(LucideIcons.mapPin, size: 16, color: Color(0xFF10B981)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    loc.name,
+                    style: GoogleFonts.inter(
+                        fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  if (hint.isNotEmpty)
+                    Text(
+                      hint,
+                      style: GoogleFonts.inter(
+                          fontSize: 11, color: Colors.grey[600]),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _showImageSourceSheet() {
     if (_totalImageCount >= _maxImages) {
@@ -681,9 +838,23 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     }
   }
 
-  /// Builds the attributes map including isNegotiable (stored in custom_fields like web)
+  /// Builds the attributes map including isNegotiable + a custom WhatsApp number
+  /// (both stored in custom_fields). WhatsApp is only persisted when the seller
+  /// set a number different from their profile phone.
   Map<String, dynamic> _buildSubmitAttributes() {
-    return {..._attributeValues, 'isNegotiable': _priceNegotiable};
+    final attrs = <String, dynamic>{
+      ..._attributeValues,
+      'isNegotiable': _priceNegotiable,
+    };
+    final whatsapp = _whatsappController.text.trim();
+    if (!_whatsappSameAsPhone &&
+        whatsapp.isNotEmpty &&
+        whatsapp != _verifiedPhone) {
+      attrs['whatsapp_number'] = whatsapp;
+    } else {
+      attrs.remove('whatsapp_number');
+    }
+    return attrs;
   }
 
   Future<void> _createNewAd() async {
@@ -699,7 +870,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       'city_id': _selectedMunicipality!.id,
       'area_id': _selectedArea?.id,
       'attributes': jsonEncode(_buildSubmitAttributes()),
-      'whatsapp_number': _whatsappController.text,
     });
 
     for (var image in _selectedImages) {
@@ -1200,6 +1370,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           _buildLabel('postAd.selectCategory'.tr()),
           DropdownButtonFormField<CategoryWithSubcategories>(
             value: _selectedCategory,
+            isExpanded: true,
             hint: Text(
               'postAd.selectCategoryHint'.tr(),
               style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
@@ -1235,6 +1406,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             _buildLabel('postAd.selectSubcategory'.tr()),
             DropdownButtonFormField<Category>(
               value: _selectedSubCategory,
+              isExpanded: true,
               hint: Text(
                 'postAd.selectSubcategoryHint'.tr(),
                 style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
@@ -1475,9 +1647,64 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           ),
           const SizedBox(height: 16),
 
+          // Quick search — type a place name to auto-fill the dropdowns below
+          _buildLabel('postAd.searchLocationLabel'.tr()),
+          TextField(
+            controller: _locationSearchController,
+            onChanged: _onLocationSearchChanged,
+            style: GoogleFonts.inter(fontSize: 14),
+            decoration: _inputDecoration().copyWith(
+              hintText: 'postAd.searchLocationHint'.tr(),
+              hintStyle:
+                  GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+              prefixIcon:
+                  const Icon(LucideIcons.search, size: 18, color: Colors.grey),
+              suffixIcon: _searchingLocation
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : (_locationSearchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(LucideIcons.x,
+                              size: 18, color: Colors.grey),
+                          onPressed: () {
+                            _locationSearchController.clear();
+                            setState(() => _locationSearchResults = []);
+                          },
+                        )
+                      : null),
+            ),
+          ),
+          if (_locationSearchResults.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Column(
+                children: [
+                  for (int i = 0; i < _locationSearchResults.length; i++) ...[
+                    if (i > 0)
+                      Divider(height: 1, color: Colors.grey[200]),
+                    _buildLocationResultTile(_locationSearchResults[i]),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+
           _buildLabel('postAd.provinceLabel'.tr()),
           DropdownButtonFormField<LocationProvince>(
             value: _selectedProvince,
+            isExpanded: true,
             hint: Text(
               'postAd.selectProvince'.tr(),
               style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
@@ -1509,6 +1736,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             _buildLabel('postAd.districtLabel'.tr()),
             DropdownButtonFormField<LocationDistrict>(
               value: _selectedDistrict,
+              isExpanded: true,
               hint: Text(
                 'postAd.selectDistrict'.tr(),
                 style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
@@ -1542,6 +1770,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             _buildLabel('postAd.cityLabel'.tr()),
             DropdownButtonFormField<LocationMunicipality>(
               value: _selectedMunicipality,
+              isExpanded: true,
               hint: Text(
                 'postAd.selectCity'.tr(),
                 style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
@@ -1576,6 +1805,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             _buildLabel('postAd.areaLabel'.tr()),
             DropdownButtonFormField<LocationArea>(
               value: _selectedArea,
+              isExpanded: true,
               hint: Text(
                 'postAd.selectArea'.tr(),
                 style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),

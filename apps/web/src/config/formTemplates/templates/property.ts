@@ -12,11 +12,23 @@ const LAND = ['Land For Sale', 'Land Rentals'];
 const RENTALS = ['Apartment Rentals', 'House Rentals', 'Room Rentals', 'Commercial Property Rentals', 'Land Rentals'];
 const RENTALS_NO_LAND = ['Apartment Rentals', 'House Rentals', 'Room Rentals', 'Commercial Property Rentals'];
 const PARKING_APPLICABLE = [...APARTMENTS_HOUSES, 'Commercial Properties For Sale', 'Commercial Property Rentals'];
+// Condition (Brand New / Used) only makes sense for properties being sold.
+const FOR_SALE = ['Houses For Sale', 'Apartments For Sale', 'Commercial Properties For Sale'];
 
 export const propertyTemplate: FormTemplate = {
   name: 'Property',
   icon: '🏢🏠',
   fields: [
+    {
+      name: 'condition',
+      label: 'Condition',
+      labelNe: 'अवस्था',
+      type: 'select',
+      required: true,
+      options: ['Brand New', 'Used'],
+      optionsNe: ['नयाँ', 'पुरानो'],
+      appliesTo: FOR_SALE,
+    },
     {
       name: 'totalArea',
       label: 'Total Area',

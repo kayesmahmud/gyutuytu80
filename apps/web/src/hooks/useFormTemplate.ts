@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import { FORM_TEMPLATES, getApplicableFields } from '@/config/formTemplates';
 import { getFieldsForSubcategory, hasSubcategoryConfig } from '@/config/formTemplates/subcategories';
+import { getTemplateForCategory } from '@/config/formTemplates/categoryMapping';
 import type { FormField, TemplateName } from '@/config/formTemplates';
 
 interface Category {
@@ -13,6 +14,11 @@ interface Category {
 }
 
 const VALID_TEMPLATES: TemplateName[] = ['electronics', 'vehicles', 'property', 'fashion', 'pets', 'services', 'general'];
+
+// Custom subcategory fields that stay mandatory. Everything else is made
+// optional so users can post without filling extra details (they can add them
+// in the description instead). 'condition' is kept for search quality.
+const ALWAYS_REQUIRED_FIELDS = new Set(['condition']);
 
 function isValidTemplate(value: string): value is TemplateName {
   return VALID_TEMPLATES.includes(value as TemplateName);
@@ -33,9 +39,15 @@ export function useFormTemplate(
   const templateType = useMemo<TemplateName | null>(() => {
     if (!selectedCategory) return null;
 
-    // Get template from category's formTemplate field (matches old site exactly)
-    const template = selectedCategory.formTemplate || selectedCategory.form_template || 'general';
-    return isValidTemplate(template) ? template : 'general';
+    // Prefer the explicit form_template column when present and valid.
+    const explicit = selectedCategory.formTemplate || selectedCategory.form_template;
+    if (explicit && isValidTemplate(explicit)) return explicit;
+
+    // Otherwise derive from the category name. This is robust if the API/DB ever
+    // omits form_template — without it, Property would fall to the 'general'
+    // template whose condition field is appliesTo:'all', leaking Condition onto
+    // every property subcategory (rentals, land, etc.).
+    return getTemplateForCategory(selectedCategory.name, selectedCategory.name);
   }, [selectedCategory]);
 
   // Get the template configuration
@@ -51,13 +63,19 @@ export function useFormTemplate(
 
     // First, check if there's a subcategory-specific configuration
     // This allows us to define exact fields with custom placeholders/options per subcategory
+    let rawFields: FormField[];
     if (hasSubcategoryConfig(selectedSubcategory.name)) {
-      return getFieldsForSubcategory(selectedSubcategory.name);
+      rawFields = getFieldsForSubcategory(selectedSubcategory.name);
+    } else if (!template) {
+      // Fall back to template-based filtering for subcategories without specific configs
+      return [];
+    } else {
+      rawFields = getApplicableFields(templateType || 'general', selectedSubcategory.name);
     }
 
-    // Fall back to template-based filtering for subcategories without specific configs
-    if (!template) return [];
-    return getApplicableFields(templateType || 'general', selectedSubcategory.name);
+    // Kill-switch: make every custom field optional except the allow-listed ones.
+    // Drives asterisks, the HTML `required` attr, and validateFields() below.
+    return rawFields.map(f => ({ ...f, required: ALWAYS_REQUIRED_FIELDS.has(f.name) }));
   }, [template, selectedSubcategory, templateType]);
 
   // Validate custom fields based on template rules

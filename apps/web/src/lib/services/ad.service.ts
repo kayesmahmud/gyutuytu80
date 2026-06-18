@@ -31,7 +31,7 @@ export interface CreateAdInput {
   title: string;
   description: string;
   price: number;
-  condition: string;
+  condition?: string | null;
   categoryId: number;
   locationId: number;
   sellerName?: string;
@@ -296,7 +296,7 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
       title: input.title,
       description: input.description,
       price: input.price,
-      condition: input.condition,
+      condition: input.condition ?? null,
       category_id: input.categoryId,
       location_id: input.locationId,
       seller_name: sellerName || '',
@@ -388,8 +388,12 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
 // Input Parsing
 // ============================================================================
 
-export function normalizeCondition(condition?: string): string {
-  if (!condition) return 'Used';
+export function normalizeCondition(condition?: string | null): string | null {
+  // No condition -> stays null. Condition only applies to some categories
+  // (for-sale property, electronics, vehicles, ...); rentals/services/jobs/etc.
+  // must NOT get a condition. Returning null overrides the column's legacy
+  // "Used" default when written explicitly.
+  if (!condition || !condition.trim()) return null;
 
   const conditionLower = condition.toLowerCase();
   if (conditionLower === 'brand new' || conditionLower === 'new') {
@@ -401,9 +405,9 @@ export function normalizeCondition(condition?: string): string {
 export function parseCustomFields(
   customFieldsStr?: string | null,
   attributesStr?: string | null
-): { customFields: Record<string, unknown>; condition?: string } {
+): { customFields: Record<string, unknown>; condition?: string | null } {
   let customFields: Record<string, unknown> = {};
-  let condition: string | undefined;
+  let condition: string | null | undefined;
 
   if (customFieldsStr) {
     try {

@@ -151,7 +151,18 @@ export const roomsRent: SubcategoryConfig = {
   ],
 };
 
-// Export all property subcategories as a map
+// Export all property subcategories as a map.
+//
+// ⚠️ IMPORTANT: these keys DO NOT match the real DB subcategory names (DB uses
+// 'Apartments For Sale', 'House Rentals', 'Land For Sale', 'Room Rentals',
+// 'New projects on PropertyGuide', etc.). Because hasSubcategoryConfig() does an
+// exact-name lookup, none of these match, so the PROPERTY TEMPLATE (templates/
+// property.ts) is what actually drives every property subcategory form — and
+// that is where the Condition field is correctly gated to the 3 "For Sale"
+// subcategories. If you "fix" these keys to match the DB, these (condition-less)
+// configs would take over and silently drop Condition from Houses/Apartments/
+// Commercial For Sale. Either keep them mismatched, or migrate the template
+// fields (incl. Condition on the for-sale subcats) into these configs first.
 export const propertySubcategories: Record<string, SubcategoryConfig> = {
   'Apartments for Sale': apartments,
   'Apartments for Rent': apartmentsRent,

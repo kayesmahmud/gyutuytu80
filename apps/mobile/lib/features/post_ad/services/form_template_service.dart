@@ -31,6 +31,22 @@ class FormFieldModel {
     this.min,
     this.max,
   });
+
+  FormFieldModel copyWith({bool? required}) {
+    return FormFieldModel(
+      name: name,
+      label: label,
+      labelNe: labelNe,
+      type: type,
+      required: required ?? this.required,
+      placeholder: placeholder,
+      placeholderNe: placeholderNe,
+      options: options,
+      optionsNe: optionsNe,
+      min: min,
+      max: max,
+    );
+  }
 }
 
 class FormTemplateService {
@@ -1639,6 +1655,7 @@ class FormTemplateService {
 
     // ── PROPERTY (parent: Property) ──────────
     'Apartments For Sale': [
+      _condition(),
       _landType('Property Type', [
         'Studio',
         '1BHK',
@@ -1683,6 +1700,7 @@ class FormTemplateService {
       _availableFrom,
     ],
     'Houses For Sale': [
+      _condition(),
       _landType('Property Type', [
         'Single Family',
         'Bungalow',
@@ -1758,6 +1776,7 @@ class FormTemplateService {
       _availableFrom,
     ],
     'Commercial Properties For Sale': [
+      _condition(),
       _landType('Property Type', [
         'Office Space',
         'Shop',
@@ -2315,12 +2334,23 @@ class FormTemplateService {
   /// 1. Try exact subcategory name match
   /// 2. Fall back to category-level config (for Jobs, Overseas Jobs)
   /// 3. Default to just [Condition]
+  /// Custom subcategory fields that stay mandatory. Everything else is made
+  /// optional so users can post without filling extra details (they can add
+  /// them in the description instead). 'condition' is kept for search quality.
+  static const _alwaysRequiredFields = {'condition'};
+
   List<FormFieldModel> getApplicableFields(
     String categoryName,
     String subcategoryName,
   ) {
-    final fields = _subcategoryConfigs[subcategoryName];
-    if (fields != null) return fields;
-    return _categoryFallbacks[categoryName] ?? [_condition()];
+    // No subcategory-specific config and no category fallback -> show no custom
+    // fields at all (do NOT fall back to a lone Condition field).
+    final fields = _subcategoryConfigs[subcategoryName] ??
+        _categoryFallbacks[categoryName] ??
+        const <FormFieldModel>[];
+    // Kill-switch: make every custom field optional except the allow-listed ones.
+    return fields
+        .map((f) => f.copyWith(required: _alwaysRequiredFields.contains(f.name)))
+        .toList();
   }
 }

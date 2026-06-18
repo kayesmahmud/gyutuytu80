@@ -499,7 +499,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                           runSpacing: 8,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            if (ad.condition != null)
+                            if (ad.condition != null && ad.condition!.isNotEmpty)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,

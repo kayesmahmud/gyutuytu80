@@ -385,14 +385,16 @@ function buildAdOrderBy(sortBy: string = 'newest') {
 // ============================================================================
 
 /**
- * Normalize condition to only "Brand New" or "Used"
- * This ensures consistent values in the database regardless of input source
+ * Normalize condition to "Brand New" or "Used" — or null when the ad has no
+ * condition at all. Condition only applies to some categories/subcategories
+ * (e.g. for-sale property, electronics, vehicles); for everything else (rentals,
+ * services, jobs, ...) it must stay null so no condition is stored or displayed.
  */
-function normalizeCondition(condition?: string): string {
-  if (!condition) return 'Used';
+function normalizeCondition(condition?: string | null): string | null {
+  if (!condition || !condition.trim()) return null;
   const lower = condition.toLowerCase();
   if (lower === 'brand new' || lower === 'new') return 'Brand New';
-  return 'Used'; // Default everything else to Used
+  return 'Used'; // Any other non-empty value normalizes to Used
 }
 
 // ============================================================================

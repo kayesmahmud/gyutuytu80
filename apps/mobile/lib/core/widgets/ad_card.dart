@@ -140,7 +140,7 @@ class AdCard extends StatelessWidget {
 
                   // Condition Badge (Bottom Right) - NEW/USED
                   // Floating slightly over the edge in design? No, usually "inside" bottom-right.
-                  if (ad.condition != null)
+                  if (ad.condition != null && ad.condition!.isNotEmpty)
                     Positioned(
                       bottom: 8,
                       right: 8,

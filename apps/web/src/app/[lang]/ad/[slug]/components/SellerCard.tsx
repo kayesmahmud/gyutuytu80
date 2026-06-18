@@ -17,6 +17,7 @@ export async function SellerCard({
   adSlug,
   lang,
   favoritesCount = 0,
+  whatsappNumber = null,
 }: SellerCardProps) {
   const t = await getTranslations('ads');
 
@@ -125,7 +126,7 @@ export async function SellerCard({
           adTitle={adTitle}
           adSlug={adSlug}
           lang={lang}
-          whatsappNumber={seller?.business_phone || seller?.phone || null}
+          whatsappNumber={whatsappNumber || seller?.business_phone || seller?.phone || null}
           phoneNumber={seller?.phone || null}
           showWhatsAppOnly={true}
         />

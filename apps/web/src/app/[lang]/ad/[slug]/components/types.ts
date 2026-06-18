@@ -43,4 +43,6 @@ export interface SellerCardProps {
   adSlug: string;
   lang: string;
   favoritesCount?: number;
+  /** Per-ad WhatsApp number (from custom_fields) when the seller set a custom one. */
+  whatsappNumber?: string | null;
 }

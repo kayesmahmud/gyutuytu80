@@ -9,7 +9,7 @@ interface AdJsonLdProps {
   images: string[];
   price: number;
   currency?: string;
-  condition: 'new' | 'used' | 'refurbished' | string;
+  condition?: string | null;
   url: string;
   sellerName: string;
   sellerType?: 'Person' | 'Organization';
@@ -18,8 +18,12 @@ interface AdJsonLdProps {
   breadcrumbItems: { name: string; url: string }[];
 }
 
-function mapCondition(condition: string): 'NewCondition' | 'UsedCondition' | 'RefurbishedCondition' {
-  switch (condition?.toLowerCase()) {
+function mapCondition(
+  condition?: string | null,
+): 'NewCondition' | 'UsedCondition' | 'RefurbishedCondition' | undefined {
+  // No condition on the ad -> don't assert one in structured data.
+  if (!condition || !condition.trim()) return undefined;
+  switch (condition.toLowerCase()) {
     case 'new':
     case 'brand new':
       return 'NewCondition';

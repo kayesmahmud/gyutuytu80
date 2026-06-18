@@ -63,7 +63,7 @@ class FloatingContactBar extends StatelessWidget {
               LucideIcons.messageSquare,
               "WhatsApp",
               isOwner ? disabledColor : const Color(0xFF25D366),
-              isOwner ? null : () => _launchWhatsApp(ad.userPhone),
+              isOwner ? null : () => _launchWhatsApp(_resolveWhatsappNumber()),
             ),
           ),
         ],
@@ -233,6 +233,13 @@ class FloatingContactBar extends StatelessWidget {
     if (cleaned.startsWith('0')) return '977${cleaned.substring(1)}';
     if (!cleaned.startsWith('977')) return '977$cleaned';
     return cleaned;
+  }
+
+  /// The seller's per-ad WhatsApp number when set (stored in custom_fields),
+  /// otherwise their account phone.
+  String? _resolveWhatsappNumber() {
+    final custom = (ad.attributes?['whatsapp_number'] as String?)?.trim();
+    return (custom != null && custom.isNotEmpty) ? custom : ad.userPhone;
   }
 
   Future<void> _launchWhatsApp(String? phone) async {

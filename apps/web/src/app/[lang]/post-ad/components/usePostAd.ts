@@ -384,6 +384,9 @@ export function usePostAd(lang: string) {
           attributes: {
             condition: formData.condition,
             ...customFields,
+            // Persist negotiable inside custom_fields so it survives + pre-fills
+            // on edit (mirrors the mobile app; the top-level field is dropped).
+            isNegotiable: formData.isNegotiable,
           },
         };
 

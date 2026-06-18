@@ -11,7 +11,7 @@ export async function SpecificationsSection({ customFields, lang }: Specificatio
     return null;
   }
 
-  const filteredKeys = ['isNegotiable', 'amenities', 'condition'];
+  const filteredKeys = ['isNegotiable', 'amenities', 'condition', 'whatsapp_number'];
   const entries = Object.entries(customFields)
     .filter(([key, value]) =>
       !filteredKeys.includes(key) &&
