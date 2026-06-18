@@ -347,6 +347,7 @@ class AuthClient {
   Future<void> _saveTokens(Map<String, dynamic> data) async {
     if (data['token'] != null) {
       await _storage.write(key: 'auth_token', value: data['token']);
+      DioClient.updateAuthToken(data['token'] as String?);
     }
     if (data['refreshToken'] != null) {
       await _storage.write(key: 'refresh_token', value: data['refreshToken']);
@@ -373,5 +374,6 @@ class AuthClient {
   Future<void> logout() async {
     await _storage.delete(key: 'auth_token');
     await _storage.delete(key: 'refresh_token');
+    DioClient.updateAuthToken(null);
   }
 }

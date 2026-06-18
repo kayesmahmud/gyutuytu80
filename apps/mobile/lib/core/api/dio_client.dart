@@ -21,6 +21,21 @@ class DioClient {
   late final Dio dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
+  // In-memory cache of the auth token. Reading secure storage on EVERY request
+  // (the home screen alone fires many in parallel) floods the Android main
+  // thread message queue and can ANR / make token reads lag and return null.
+  // We read storage once, then serve from memory; [updateAuthToken] keeps it in
+  // sync on login / refresh / logout.
+  static String? _cachedAuthToken;
+  static bool _authTokenLoaded = false;
+
+  /// Keep the in-memory auth-token cache in sync. Call on login, token refresh,
+  /// and logout. Pass null to clear it.
+  static void updateAuthToken(String? token) {
+    _cachedAuthToken = token;
+    _authTokenLoaded = true;
+  }
+
   DioClient._() {
     dio = Dio(BaseOptions(
       baseUrl: ApiConfig.baseUrl,
@@ -34,7 +49,12 @@ class DioClient {
 
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'auth_token');
+        if (!_authTokenLoaded) {
+          // Cold start: read secure storage once, then serve from memory.
+          _cachedAuthToken = await _storage.read(key: 'auth_token');
+          _authTokenLoaded = true;
+        }
+        final token = _cachedAuthToken;
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
@@ -58,6 +78,7 @@ class DioClient {
             // Refresh failed — clear tokens and notify auth failure
             await _storage.delete(key: 'auth_token');
             await _storage.delete(key: 'refresh_token');
+            updateAuthToken(null);
             onAuthFailure?.call();
           }
         }
@@ -73,11 +94,19 @@ class DioClient {
     ));
   }
 
-  bool _isRefreshing = false;
+  Future<String?>? _refreshInFlight;
 
-  Future<String?> _tryRefreshToken() async {
-    if (_isRefreshing) return null;
-    _isRefreshing = true;
+  /// Refresh the access token. Concurrent callers (e.g. many home-screen
+  /// requests 401-ing at once) all await the SAME in-flight refresh and receive
+  /// its result — so a successful refresh is never mistaken for a failure (which
+  /// would wrongly clear tokens and log the user out). Returns null only on a
+  /// genuine refresh failure (no refresh token, or the refresh call failed).
+  Future<String?> _tryRefreshToken() {
+    return _refreshInFlight ??=
+        _doRefreshToken().whenComplete(() => _refreshInFlight = null);
+  }
+
+  Future<String?> _doRefreshToken() async {
     try {
       final refreshToken = await _storage.read(key: 'refresh_token');
       if (refreshToken == null) return null;
@@ -97,13 +126,12 @@ class DioClient {
         if (newRefresh != null) {
           await _storage.write(key: 'refresh_token', value: newRefresh);
         }
+        updateAuthToken(newToken);
         developer.log('Token refreshed successfully', name: 'DioClient');
         return newToken;
       }
     } catch (e) {
       developer.log('Token refresh failed: $e', name: 'DioClient');
-    } finally {
-      _isRefreshing = false;
     }
     return null;
   }

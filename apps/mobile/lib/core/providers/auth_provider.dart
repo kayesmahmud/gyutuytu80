@@ -44,6 +44,7 @@ class AuthProvider with ChangeNotifier {
           // Token might be invalid
           _isLoggedIn = false;
           await _storage.delete(key: 'auth_token');
+          DioClient.updateAuthToken(null);
         }
       } catch (e) {
         // Error fetching profile
@@ -91,6 +92,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> login(String token) async {
     await _storage.write(key: 'auth_token', value: token);
+    DioClient.updateAuthToken(token);
     _isLoggedIn = true;
     
     try {
@@ -118,6 +120,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     await _storage.delete(key: 'auth_token');
     await _storage.delete(key: 'refresh_token');
+    DioClient.updateAuthToken(null);
     _isLoggedIn = false;
     _user = null;
     notifyListeners();
