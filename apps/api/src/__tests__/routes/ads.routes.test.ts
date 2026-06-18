@@ -12,6 +12,7 @@ vi.mock('@thulobazaar/database', () => ({
       count: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
     ad_images: {
@@ -223,6 +224,43 @@ describe('Ads Routes', () => {
       expect(prisma.ads.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { price: 'desc' },
+        })
+      );
+    });
+
+    it('should pin urgent then sticky ahead of the sort on filtered listings', async () => {
+      const { prisma } = await import('@thulobazaar/database');
+
+      vi.mocked(prisma.ads.findMany).mockResolvedValue([mockAd] as any);
+      vi.mocked(prisma.ads.count).mockResolvedValue(1);
+
+      // search= makes this a filtered listing, so promotions get pinned on top
+      const response = await request(app).get('/api/ads?search=phone');
+
+      expect(response.status).toBe(200);
+      expect(prisma.ads.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [
+            { is_urgent: 'desc' },
+            { is_sticky: 'desc' },
+            { reviewed_at: { sort: 'desc', nulls: 'last' } },
+          ],
+        })
+      );
+    });
+
+    it('should NOT pin promotions on the unfiltered (home) feed', async () => {
+      const { prisma } = await import('@thulobazaar/database');
+
+      vi.mocked(prisma.ads.findMany).mockResolvedValue([mockAd] as any);
+      vi.mocked(prisma.ads.count).mockResolvedValue(1);
+
+      const response = await request(app).get('/api/ads');
+
+      expect(response.status).toBe(200);
+      expect(prisma.ads.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { reviewed_at: { sort: 'desc', nulls: 'last' } },
         })
       );
     });

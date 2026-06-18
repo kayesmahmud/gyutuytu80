@@ -10,6 +10,34 @@ import { prisma } from '@thulobazaar/database';
 import { sendNotification } from '../services/notification.service.js';
 
 /**
+ * On-demand cleanup of expired promotion flags, called right before any listing
+ * query that pins promotions. Keeps ranking/badges accurate without waiting for
+ * the 5-minute cron. Best-effort: logs and swallows errors so listings never
+ * fail because of cleanup. Mirrors the web app's cleanupExpiredPromotionFlags.
+ */
+export async function clearExpiredPromotionFlags(): Promise<void> {
+  const now = new Date();
+  try {
+    await Promise.all([
+      prisma.ads.updateMany({
+        where: { is_featured: true, featured_until: { lt: now } },
+        data: { is_featured: false, featured_until: null },
+      }),
+      prisma.ads.updateMany({
+        where: { is_urgent: true, urgent_until: { lt: now } },
+        data: { is_urgent: false, urgent_until: null },
+      }),
+      prisma.ads.updateMany({
+        where: { is_sticky: true, sticky_until: { lt: now } },
+        data: { is_sticky: false, sticky_until: null },
+      }),
+    ]);
+  } catch (error) {
+    console.error('[Promotion Cleanup] Failed to clear expired flags:', error);
+  }
+}
+
+/**
  * Deactivate all expired promotions and clear their flags
  */
 export async function cleanupExpiredPromotions(): Promise<{ deactivated: number }> {

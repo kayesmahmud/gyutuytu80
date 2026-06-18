@@ -178,8 +178,8 @@ router.get(
           },
         },
         orderBy: [
-          // Match the website shop page ordering: promotions first, then newest-approved
-          { is_featured: 'desc' },
+          // Match the website shop page ordering: promotions first (Urgent >
+          // Sticky), then newest-approved. Featured is homepage-only, not pinned.
           { is_urgent: 'desc' },
           { is_sticky: 'desc' },
           { reviewed_at: { sort: 'desc', nulls: 'last' } },

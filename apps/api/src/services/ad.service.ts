@@ -5,6 +5,7 @@
 
 import { prisma } from '@thulobazaar/database';
 import { PAGINATION } from '../config/constants.js';
+import { clearExpiredPromotionFlags } from '../jobs/promotionCleanup.js';
 
 // ============================================================================
 // Types
@@ -373,11 +374,20 @@ function buildAdWhereClause(filters: AdFilters) {
   return where;
 }
 
-function buildAdOrderBy(sortBy: string = 'newest') {
-  if (sortBy === 'price-low') return { price: 'asc' };
-  if (sortBy === 'price-high') return { price: 'desc' };
-  if (sortBy === 'oldest') return { reviewed_at: { sort: 'asc', nulls: 'last' } };
-  return { reviewed_at: { sort: 'desc', nulls: 'last' } };
+function buildAdOrderBy(sortBy: string = 'newest', pinPromotions: boolean = false) {
+  let base: any;
+  if (sortBy === 'price-low') base = { price: 'asc' };
+  else if (sortBy === 'price-high') base = { price: 'desc' };
+  else if (sortBy === 'oldest') base = { reviewed_at: { sort: 'asc', nulls: 'last' } };
+  else base = { reviewed_at: { sort: 'desc', nulls: 'last' } };
+
+  // On filtered browse/search listings, pin paid promotions to the top —
+  // urgent above sticky — then apply the chosen sort within each group.
+  // Featured is homepage-only, so it is intentionally not pinned here.
+  if (pinPromotions) {
+    return [{ is_urgent: 'desc' }, { is_sticky: 'desc' }, base];
+  }
+  return base;
 }
 
 // ============================================================================
@@ -524,7 +534,21 @@ export async function getAds(filters: AdFilters) {
   }
 
   const where = buildAdWhereClause(filters);
-  const orderBy = buildAdOrderBy(filters.sortBy);
+
+  // Pin promotions only on filtered browse/search listings (category, location,
+  // or search) — never the home "Latest" feed or the featured carousel, which
+  // both call this with no filters / isFeatured.
+  const pinPromotions =
+    (!!filters.categoryIds?.length || !!filters.locationIds?.length || !!filters.search) &&
+    filters.isFeatured !== 'true';
+
+  // Clear expired promo flags first so an expired ad can't stay pinned during
+  // the gap before the 5-minute cron runs. Only on the paths that actually pin.
+  if (pinPromotions) {
+    await clearExpiredPromotionFlags();
+  }
+
+  const orderBy = buildAdOrderBy(filters.sortBy, pinPromotions);
 
   const limitNum = Math.min(
     parseInt(filters.limit || String(PAGINATION.DEFAULT_LIMIT)) || PAGINATION.DEFAULT_LIMIT,
