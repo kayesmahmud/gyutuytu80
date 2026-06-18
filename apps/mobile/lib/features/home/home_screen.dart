@@ -354,35 +354,47 @@ class _HomeScreenState extends State<HomeScreen> {
     // When API categories are loaded, use them as source of truth
     // This guarantees every tap has a valid category ID
     if (_categories.isNotEmpty) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 16),
-        child: Row(
-          children: _categories.map((apiCat) {
-            final localizedName = apiCat.localizedName(context.locale.languageCode);
-            final mockMatch = _findMockCategory(apiCat.slug, apiCat.name);
-            final icon = mockMatch?['icon'] as String? ?? apiCat.icon ?? '📁';
-            final shortName = context.locale.languageCode == 'ne'
-                ? localizedName
-                : (mockMatch?['shortName'] as String? ?? localizedName);
-            return _buildApiCategoryItem(apiCat.slug, icon, shortName, apiCat.id, localizedName);
-          }).toList(),
-        ),
-      );
+      final items = _categories.map((apiCat) {
+        final localizedName = apiCat.localizedName(context.locale.languageCode);
+        final mockMatch = _findMockCategory(apiCat.slug, apiCat.name);
+        final icon = mockMatch?['icon'] as String? ?? apiCat.icon ?? '📁';
+        final shortName = context.locale.languageCode == 'ne'
+            ? localizedName
+            : (mockMatch?['shortName'] as String? ?? localizedName);
+        return _buildApiCategoryItem(apiCat.slug, icon, shortName, apiCat.id, localizedName);
+      }).toList();
+      return _buildTwoRowCategoryCarousel(items);
     }
 
     // Fallback: show hardcoded categories while loading (taps disabled)
+    final items = MockFilterData.categories
+        .map((cat) => _buildStaticEmojiCategoryItem(
+              cat['slug'] as String?,
+              cat['icon'] as String,
+              (cat['shortName'] ?? cat['name']) as String,
+            ))
+        .toList();
+    return _buildTwoRowCategoryCarousel(items);
+  }
+
+  /// Arrange category items into two rows that scroll horizontally together,
+  /// so each column pairs a top and bottom icon (Bikroy-style).
+  Widget _buildTwoRowCategoryCarousel(List<Widget> items) {
+    final half = (items.length / 2).ceil();
+    final topRow = items.sublist(0, half);
+    final bottomRow = items.sublist(half);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.only(left: 16),
-      child: Row(
-        children: MockFilterData.categories
-            .map((cat) => _buildStaticEmojiCategoryItem(
-                  cat['slug'] as String?,
-                  cat['icon'] as String,
-                  (cat['shortName'] ?? cat['name']) as String,
-                ))
-            .toList(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top-align items so a 2-line label (e.g. "Home & Living") doesn't
+          // center its column and push the icon out of line with its neighbours.
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: topRow),
+          const SizedBox(height: 16),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: bottomRow),
+        ],
       ),
     );
   }
@@ -405,16 +417,16 @@ class _HomeScreenState extends State<HomeScreen> {
   /// falling back to the emoji if the image is missing.
   Widget _categoryIcon(String? slug, String emoji) {
     if (slug == null || slug.isEmpty) {
-      return Text(emoji, style: const TextStyle(fontSize: 24));
+      return Text(emoji, style: const TextStyle(fontSize: 32));
     }
     return Image.asset(
       'assets/category-icons/$slug.png',
-      width: 32,
-      height: 32,
+      width: 42,
+      height: 42,
       fit: BoxFit.contain,
-      cacheWidth: 128,
-      cacheHeight: 128,
-      errorBuilder: (_, _, _) => Text(emoji, style: const TextStyle(fontSize: 24)),
+      cacheWidth: 168,
+      cacheHeight: 168,
+      errorBuilder: (_, _, _) => Text(emoji, style: const TextStyle(fontSize: 32)),
     );
   }
 
@@ -475,10 +487,15 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             SizedBox(
               width: 70,
+              // Reserve 2 lines so 1- and 2-line labels keep every item the
+              // same height — otherwise short labels get vertically centered
+              // and their icons drift out of line with the rest of the row.
+              height: 30,
               child: Text(
                 name,
                 style: GoogleFonts.inter(
                   fontSize: 11,
+                  height: 1.3,
                   color: AppTheme.textDark,
                 ),
                 textAlign: TextAlign.center,
@@ -516,10 +533,14 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           SizedBox(
             width: 70,
+            // Reserve 2 lines so every item stays the same height (see
+            // _buildApiCategoryItem) and icons line up across the row.
+            height: 30,
             child: Text(
               name,
               style: GoogleFonts.inter(
                 fontSize: 11,
+                height: 1.3,
                 color: AppTheme.textDark,
               ),
               textAlign: TextAlign.center,
