@@ -41,6 +41,9 @@ class SearchScreenState extends State<SearchScreen> {
   bool _isOffline = false;
   int _currentPage = 1;
   int _totalPages = 1;
+  // Monotonic id for the latest fetch. A response only applies if its id still
+  // matches, so a stale in-flight request can't overwrite newer results.
+  int _fetchSeq = 0;
 
   // Filters
   SearchFilters _filters = SearchFilters();
@@ -85,6 +88,9 @@ class SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _fetchAds({bool refresh = false}) async {
+    // Claim the latest sequence id; any older in-flight fetch is now stale.
+    final int reqId = ++_fetchSeq;
+
     if (refresh) {
       setState(() {
         _currentPage = 1;
@@ -104,6 +110,9 @@ class SearchScreenState extends State<SearchScreen> {
         limit: 20,
       );
 
+      // A newer fetch started while we were awaiting — drop this result.
+      if (reqId != _fetchSeq || !mounted) return;
+
       if (response.success) {
         setState(() {
           _ads = response.data;
@@ -114,7 +123,7 @@ class SearchScreenState extends State<SearchScreen> {
         // searchAds returns success == false on network failure too (it does
         // not throw), so classify offline vs server error here.
         final offline = await _isOfflineError();
-        if (!mounted) return;
+        if (reqId != _fetchSeq || !mounted) return;
         setState(() {
           _hasError = true;
           _isOffline = offline;
@@ -124,7 +133,7 @@ class SearchScreenState extends State<SearchScreen> {
     } catch (e) {
       // Request threw (no network, host unreachable, timeout) — classify it.
       final offline = await _isOfflineError();
-      if (!mounted) return;
+      if (reqId != _fetchSeq || !mounted) return;
       setState(() {
         _hasError = true;
         _isOffline = offline;
@@ -147,6 +156,10 @@ class SearchScreenState extends State<SearchScreen> {
   Future<void> _loadMoreAds() async {
     if (_isLoadingMore || _currentPage >= _totalPages) return;
 
+    // Tie this page to the current filter set; if filters change mid-load we
+    // must not append a page that belongs to the previous category/query.
+    final int reqId = _fetchSeq;
+
     setState(() {
       _isLoadingMore = true;
     });
@@ -157,6 +170,13 @@ class SearchScreenState extends State<SearchScreen> {
         page: _currentPage + 1,
         limit: 20,
       );
+
+      if (!mounted) return;
+      if (reqId != _fetchSeq) {
+        // A refresh/filter change superseded us — discard this page.
+        setState(() => _isLoadingMore = false);
+        return;
+      }
 
       if (response.success) {
         setState(() {
@@ -170,6 +190,7 @@ class SearchScreenState extends State<SearchScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoadingMore = false;
       });
