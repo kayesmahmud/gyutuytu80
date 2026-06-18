@@ -375,7 +375,7 @@ export default async function HomePage({ params }: HomePageProps) {
                     >
                       <div className="w-[72px] flex flex-col items-center justify-center p-3 bg-white border border-gray-200 rounded-xl hover:border-rose-300 hover:shadow-sm transition-all">
                         <div className="mb-1 w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center">
-                          <CategoryIcon slug={category.slug} emoji={category.icon} name={category.name} size={36} />
+                          <CategoryIcon slug={category.slug} emoji={category.icon} name={category.name} size={40} />
                         </div>
                         <span className="font-medium text-gray-800 text-[10px] text-center leading-tight line-clamp-2">
                           {lang === 'ne' && category.name_ne ? category.name_ne : category.name}
@@ -395,7 +395,7 @@ export default async function HomePage({ params }: HomePageProps) {
                     className="group bg-white rounded-2xl p-4 sm:p-6 text-center border-2 border-gray-100 hover:border-rose-500 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 no-underline"
                   >
                     <div className="mb-3 mx-auto w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                      <CategoryIcon slug={category.slug} emoji={category.icon} name={category.name} size={64} />
+                      <CategoryIcon slug={category.slug} emoji={category.icon} name={category.name} size={70} />
                     </div>
                     <div className="font-semibold text-gray-900 group-hover:text-rose-500 transition-colors">
                       {lang === 'ne' && category.name_ne ? category.name_ne : category.name}

@@ -417,16 +417,18 @@ class _HomeScreenState extends State<HomeScreen> {
   /// falling back to the emoji if the image is missing.
   Widget _categoryIcon(String? slug, String emoji) {
     if (slug == null || slug.isEmpty) {
-      return Text(emoji, style: const TextStyle(fontSize: 32));
+      return Text(emoji, style: const TextStyle(fontSize: 35));
     }
+    // Icon is 10% larger than the box padding implies; the tile keeps its
+    // 66px size because the surrounding padding shrinks to match (12 -> 10).
     return Image.asset(
       'assets/category-icons/$slug.png',
-      width: 42,
-      height: 42,
+      width: 46,
+      height: 46,
       fit: BoxFit.contain,
-      cacheWidth: 168,
-      cacheHeight: 168,
-      errorBuilder: (_, _, _) => Text(emoji, style: const TextStyle(fontSize: 32)),
+      cacheWidth: 184,
+      cacheHeight: 184,
+      errorBuilder: (_, _, _) => Text(emoji, style: const TextStyle(fontSize: 35)),
     );
   }
 
@@ -470,7 +472,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(14),
@@ -516,7 +518,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(14),
