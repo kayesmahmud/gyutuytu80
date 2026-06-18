@@ -129,9 +129,10 @@ export default async function HomePage({ params }: HomePageProps) {
       orderBy: {
         featured_until: 'desc',
       },
-      take: 10,
+      take: 20,
     }),
-    // Get latest 6 approved ads with images (exclude ads from suspended users)
+    // Get latest 60 approved ads with images (exclude suspended users + currently-featured
+    // ads, which already show in the featured grid above — mirrors the Flutter home screen)
     prisma.ads.findMany({
       where: {
         status: 'approved',
@@ -141,6 +142,11 @@ export default async function HomePage({ params }: HomePageProps) {
         },
         users_ads_user_idTousers: {
           is_active: true, // Only show ads from active users
+        },
+        // Exclude active featured ads so they don't repeat in the latest feed
+        NOT: {
+          is_featured: true,
+          featured_until: { gt: new Date() },
         },
       },
       include: {
@@ -195,7 +201,7 @@ export default async function HomePage({ params }: HomePageProps) {
       orderBy: {
         reviewed_at: { sort: 'desc', nulls: 'last' }, // Sort by approval time, nulls last
       },
-      take: 6,
+      take: 60,
     }),
   ]);
   } catch { /* no DB at build time — ISR fills data on first runtime request */ }
@@ -399,6 +405,26 @@ export default async function HomePage({ params }: HomePageProps) {
               </div>
             </div>
 
+            {/* Featured Ads Grid - shown above the latest feed (matches Flutter home screen) */}
+            {featuredAdCards.length > 0 && (
+              <div className="py-6 md:py-12 mb-6 md:mb-8">
+                <div className="flex justify-between items-end mb-4 md:mb-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1 md:mb-2">
+                      <span className="text-xl md:text-2xl">⭐</span>
+                      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
+                        {t('featuredAds')}
+                      </h2>
+                    </div>
+                    <p className="text-gray-500">
+                      {t('featuredAdsSubtitle')}
+                    </p>
+                  </div>
+                </div>
+                <FeaturedAdsCarousel ads={featuredAdCards} lang={lang} />
+              </div>
+            )}
+
             {/* Latest Ads Section */}
             <div className="py-6 sm:py-8 md:py-12 mb-6 sm:mb-8 md:mb-12">
               <div className="flex justify-between items-center mb-4 sm:mb-6 md:mb-8">
@@ -456,26 +482,6 @@ export default async function HomePage({ params }: HomePageProps) {
                 </div>
               )}
             </div>
-
-            {/* Featured Ads Carousel */}
-            {featuredAdCards.length > 0 && (
-              <div className="py-6 md:py-12 mb-6 md:mb-8">
-                <div className="flex justify-between items-end mb-4 md:mb-6">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1 md:mb-2">
-                      <span className="text-xl md:text-2xl">⭐</span>
-                      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
-                        {t('featuredAds')}
-                      </h2>
-                    </div>
-                    <p className="text-gray-500">
-                      {t('featuredAdsSubtitle')}
-                    </p>
-                  </div>
-                </div>
-                <FeaturedAdsCarousel ads={featuredAdCards} lang={lang} />
-              </div>
-            )}
 
             {/* Bottom Banner (336x280) - Before Footer */}
             <div className="flex justify-center mb-12">
