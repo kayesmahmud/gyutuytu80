@@ -150,22 +150,27 @@ function buildWhereClause(filters: AdFilters) {
   return where;
 }
 
-function buildOrderBy(sort: string = 'newest') {
-  switch (sort) {
-    case 'price_low':
-      return { price: 'asc' as const };
-    case 'price_high':
-      return { price: 'desc' as const };
-    case 'popular':
-      return { view_count: 'desc' as const };
-    case 'newest':
-    default:
-      return [
-        { is_urgent: 'desc' as const },
-        { is_sticky: 'desc' as const },
-        { created_at: 'desc' as const },
-      ];
+function buildOrderBy(sort: string = 'newest', applyPromotionPriority = false) {
+  const base =
+    sort === 'price_low'
+      ? { price: 'asc' as const }
+      : sort === 'price_high'
+        ? { price: 'desc' as const }
+        : sort === 'popular'
+          ? { view_count: 'desc' as const }
+          : { reviewed_at: { sort: 'desc' as const, nulls: 'last' as const } };
+
+  // Pin promotions on filtered browse/search listings only — urgent > sticky,
+  // then the chosen sort within each group (pinned even under a price sort).
+  // Featured is homepage-only, never pinned here.
+  if (applyPromotionPriority) {
+    return [
+      { is_urgent: 'desc' as const },
+      { is_sticky: 'desc' as const },
+      base,
+    ];
   }
+  return base;
 }
 
 // ============================================================================
@@ -173,11 +178,20 @@ function buildOrderBy(sort: string = 'newest') {
 // ============================================================================
 
 export async function listAds(filters: AdFilters) {
-  // Clean up expired promotions before querying
-  await cleanupExpiredPromotionFlags();
+  // Pin promotions only on filtered browse/search listings (category, location,
+  // or search); the unfiltered all-ads feed stays chronological.
+  const applyPromotionPriority = Boolean(
+    filters.categoryId || filters.locationId || filters.areaId || filters.search
+  );
+
+  // Clear expired promotion flags before a pinning query so an expired ad can't
+  // stay pinned or badged. Skip it on the unfiltered feed (nothing is pinned).
+  if (applyPromotionPriority) {
+    await cleanupExpiredPromotionFlags();
+  }
 
   const where = buildWhereClause(filters);
-  const orderBy = buildOrderBy(filters.sort);
+  const orderBy = buildOrderBy(filters.sort, applyPromotionPriority);
   const limit = Math.min(filters.limit || 20, 100);
   const page = Math.max(filters.page || 1, 1);
   const offset = (page - 1) * limit;

@@ -22,6 +22,9 @@ interface ShopAdCardProps {
     isFeatured?: boolean;
     isUrgent?: boolean;
     isSticky?: boolean;
+    featuredUntil?: string | Date | null;
+    urgentUntil?: string | Date | null;
+    stickyUntil?: string | Date | null;
     condition?: string | null;
     slug?: string;
     accountType?: string;

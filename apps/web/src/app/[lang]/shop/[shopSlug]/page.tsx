@@ -73,11 +73,11 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
       },
     },
     orderBy: [
-      // Featured > Urgent > Sticky (Featured also shows in homepage section)
-      { is_featured: 'desc' },
+      // Promotions first (Urgent > Sticky), then newest-approved. Featured is a
+      // homepage-only signal and is intentionally not pinned in listings.
       { is_urgent: 'desc' },
       { is_sticky: 'desc' },
-      { reviewed_at: { sort: 'desc', nulls: 'last' } }, // Sort by approval time, nulls last
+      { reviewed_at: { sort: 'desc', nulls: 'last' } }, // approval time, nulls last
     ],
   });
 
@@ -211,6 +211,9 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
                       isFeatured: ad.is_featured || false,
                       isUrgent: ad.is_urgent || false,
                       isSticky: ad.is_sticky || false,
+                      featuredUntil: ad.featured_until || null,
+                      urgentUntil: ad.urgent_until || null,
+                      stickyUntil: ad.sticky_until || null,
                       condition: ad.condition || null,
                       slug: ad.slug || undefined,
                       accountType: shop.accountType || undefined,

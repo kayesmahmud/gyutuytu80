@@ -102,14 +102,13 @@ export function buildAdsWhereClause(options: AdsFilterOptions) {
 export interface OrderByOptions {
   sortBy?: AdsSortBy;
   /**
-   * Apply promotion priority sorting (Urgent > Sticky > newest)
-   * Should only be true for:
-   * - Subcategory pages (not parent categories)
-   * - Shop pages
-   * Should be false for:
-   * - All ads page (/ads)
-   * - Search page (/search)
-   * - Parent category pages
+   * Apply promotion priority sorting (Urgent > Sticky, then the chosen sort).
+   * True for any filtered browse/search listing:
+   * - Category pages (parent AND subcategory)
+   * - Location-filtered pages
+   * - Search pages
+   * False for the unfiltered all-ads page (/ads) and the home "Latest" feed,
+   * which stay chronological.
    */
   applyPromotionPriority?: boolean;
 }
@@ -132,27 +131,26 @@ export function buildAdsOrderBy(options: OrderByOptions | AdsSortBy = 'newest') 
   const sortBy = typeof options === 'string' ? options : (options.sortBy || 'newest');
   const applyPromotionPriority = typeof options === 'string' ? false : (options.applyPromotionPriority || false);
 
-  switch (sortBy) {
-    case 'oldest':
-      return { reviewed_at: 'asc' as const };
-    case 'price_asc':
-      return { price: 'asc' as const };
-    case 'price_desc':
-      return { price: 'desc' as const };
-    case 'newest':
-    default:
-      // Only apply promotion priority on subcategory pages and shop pages
-      if (applyPromotionPriority) {
-        // Promoted ads appear first: Urgent > Sticky, then by approval time
-        return [
-          { is_urgent: 'desc' as const },
-          { is_sticky: 'desc' as const },
-          { reviewed_at: { sort: 'desc' as const, nulls: 'last' as const } },
-        ];
-      }
-      // Default: just sort by approval time (no promotion priority), nulls last
-      return { reviewed_at: { sort: 'desc' as const, nulls: 'last' as const } };
+  const base =
+    sortBy === 'oldest'
+      ? { reviewed_at: { sort: 'asc' as const, nulls: 'last' as const } }
+      : sortBy === 'price_asc'
+        ? { price: 'asc' as const }
+        : sortBy === 'price_desc'
+          ? { price: 'desc' as const }
+          : { reviewed_at: { sort: 'desc' as const, nulls: 'last' as const } };
+
+  // On filtered browse/search listings, pin promoted ads on top — Urgent >
+  // Sticky — then apply the chosen sort within each group (so promotions stay
+  // pinned even under a price sort). Featured is homepage-only, never pinned.
+  if (applyPromotionPriority) {
+    return [
+      { is_urgent: 'desc' as const },
+      { is_sticky: 'desc' as const },
+      base,
+    ];
   }
+  return base;
 }
 
 /**

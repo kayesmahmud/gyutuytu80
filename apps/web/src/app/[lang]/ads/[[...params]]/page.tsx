@@ -89,14 +89,16 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
     userId,
   });
 
-  // Determine if we should apply promotion priority
-  // Only apply on subcategory pages (not parent categories, not all ads, not location-only)
-  const isSubcategoryPage = Boolean(parsed.categoryId && !parsed.isParentCategory);
+  // Pin promotions on any filtered browse/search listing — category (incl.
+  // parent), location, or search. The unfiltered all-ads page and the home
+  // "Latest" feed stay chronological.
+  const applyPromotionPriority =
+    categoryIds.length > 0 || locationIds.length > 0 || Boolean(searchQuery);
 
   // Build order by clause using shared helper
   const orderBy = buildAdsOrderBy({
     sortBy: sortBy as 'newest' | 'oldest' | 'price_asc' | 'price_desc',
-    applyPromotionPriority: isSubcategoryPage,
+    applyPromotionPriority,
   });
 
   // Fetch ads and total count in parallel
@@ -332,6 +334,9 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
                           isFeatured: ad.is_featured || false,
                           isUrgent: ad.is_urgent || false,
                           isSticky: ad.is_sticky || false,
+                          featuredUntil: ad.featured_until || null,
+                          urgentUntil: ad.urgent_until || null,
+                          stickyUntil: ad.sticky_until || null,
                           condition: ad.condition || null,
                           slug: ad.slug || undefined,
                           accountType: ad.users_ads_user_idTousers?.account_type || undefined,

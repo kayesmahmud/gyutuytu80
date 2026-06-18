@@ -23,6 +23,9 @@ interface AdCardProps {
         isFeatured?: boolean;
         isUrgent?: boolean;
         isSticky?: boolean;
+        featuredUntil?: string | Date | null;
+        urgentUntil?: string | Date | null;
+        stickyUntil?: string | Date | null;
         condition?: string | null;
         seoSlug?: string;
         slug?: string;
@@ -32,6 +35,15 @@ interface AdCardProps {
     };
     lang?: string;
     variant?: AdCardVariant;
+}
+
+// A promotion badge shows only while the promotion is still active — mirrors the
+// Flutter app (flag && (until == null || now < until)). Guards against a stale
+// flag the backend cleanup hasn't cleared yet.
+function isPromotionActive(flag?: boolean, until?: string | Date | null): boolean {
+    if (!flag) return false;
+    if (!until) return true;
+    return new Date() < new Date(until);
 }
 
 // Desktop Card Component
@@ -44,17 +56,17 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
             className="group block bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg no-underline text-inherit"
         >
             <div className="relative w-full h-48 bg-gray-100">
-                {ad.isFeatured && (
+                {isPromotionActive(ad.isFeatured, ad.featuredUntil) && (
                     <div className="absolute top-2 left-2 bg-amber-500 text-white rounded font-semibold z-10 px-3 py-1 text-xs">
                         ⭐ {t('featured').toUpperCase()}
                     </div>
                 )}
-                {ad.isUrgent && (
+                {isPromotionActive(ad.isUrgent, ad.urgentUntil) && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white rounded font-semibold z-10 px-3 py-1 text-xs">
                         🔥 {t('urgentSale').toUpperCase()}
                     </div>
                 )}
-                {ad.isSticky && !ad.isFeatured && !ad.isUrgent && (
+                {isPromotionActive(ad.isSticky, ad.stickyUntil) && !isPromotionActive(ad.isFeatured, ad.featuredUntil) && !isPromotionActive(ad.isUrgent, ad.urgentUntil) && (
                     <div className="absolute top-2 left-2 bg-blue-500 text-white rounded font-semibold z-10 px-3 py-1 text-xs">
                         📌 {tc('sticky').toUpperCase()}
                     </div>
@@ -125,13 +137,13 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
             className="group block bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg no-underline text-inherit"
         >
             <div className="relative w-full h-32 sm:h-36 bg-gray-100">
-                {ad.isFeatured && (
+                {isPromotionActive(ad.isFeatured, ad.featuredUntil) && (
                     <div className="absolute top-1.5 left-1.5 bg-amber-500 text-white rounded font-semibold z-10 px-2 py-0.5 text-[10px]">⭐</div>
                 )}
-                {ad.isUrgent && (
+                {isPromotionActive(ad.isUrgent, ad.urgentUntil) && (
                     <div className="absolute top-1.5 right-1.5 bg-red-500 text-white rounded font-semibold z-10 px-2 py-0.5 text-[10px]">🔥</div>
                 )}
-                {ad.isSticky && !ad.isFeatured && !ad.isUrgent && (
+                {isPromotionActive(ad.isSticky, ad.stickyUntil) && !isPromotionActive(ad.isFeatured, ad.featuredUntil) && !isPromotionActive(ad.isUrgent, ad.urgentUntil) && (
                     <div className="absolute top-1.5 left-1.5 bg-blue-500 text-white rounded font-semibold z-10 px-2 py-0.5 text-[10px]">📌</div>
                 )}
                 {ad.condition && (
