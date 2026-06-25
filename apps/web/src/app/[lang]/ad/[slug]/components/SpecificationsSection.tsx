@@ -74,13 +74,26 @@ export async function SpecificationsSection({ customFields, lang }: Specificatio
     return lookup.amenities.optionMap[amenity] || amenity;
   };
 
+  // Merge "Total Area" + "Area Unit" into a single card (e.g. "10 sq ft") so the
+  // measurement and its unit read together. On mobile the grid is one column, so
+  // they otherwise stack as two separate, disconnected cards ("10", then "sq ft").
+  const hasTotalArea = entries.some(([key]) => key === 'totalArea');
+  const areaUnitEntry = hasTotalArea ? entries.find(([key]) => key === 'areaUnit') : undefined;
+  const displayEntries: [string, unknown][] = entries
+    .filter(([key]) => !(key === 'areaUnit' && areaUnitEntry))
+    .map(([key, value]): [string, unknown] =>
+      key === 'totalArea' && areaUnitEntry
+        ? [key, `${getDisplayValue('totalArea', value)} ${getDisplayValue('areaUnit', areaUnitEntry[1])}`.trim()]
+        : [key, value]
+    );
+
   return (
     <div className="mb-6">
       <h2 className="text-xl font-semibold mb-4 text-gray-800">
         {t('specifications')}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {entries.map(([key, value]) => (
+        {displayEntries.map(([key, value]) => (
           <div key={key} className="p-3 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-600 mb-1 capitalize">
               {getDisplayLabel(key)}

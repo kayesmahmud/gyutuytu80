@@ -43,6 +43,23 @@ class AdSpecifications extends StatelessWidget {
 
     final isNe = context.locale.languageCode == 'ne';
 
+    // Merge "Total Area" + "Area Unit" into a single row (e.g. "10 sq ft") so the
+    // measurement and its unit read together instead of as two separate rows.
+    final areaUnitMatches = specs.where((e) => e.key == 'areaUnit');
+    final mergeArea =
+        specs.any((e) => e.key == 'totalArea') && areaUnitMatches.isNotEmpty;
+    final areaUnitRaw = mergeArea ? areaUnitMatches.first.value.toString() : '';
+    final displaySpecs = <MapEntry<String, dynamic>>[];
+    for (final e in specs) {
+      if (mergeArea && e.key == 'areaUnit') continue;
+      if (mergeArea && e.key == 'totalArea') {
+        final unit = isNe ? _localizedValue(areaUnitRaw) : areaUnitRaw;
+        displaySpecs.add(MapEntry(e.key, '${e.value} $unit'));
+      } else {
+        displaySpecs.add(e);
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       decoration: BoxDecoration(
@@ -77,13 +94,13 @@ class AdSpecifications extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              itemCount: specs.length,
+              itemCount: displaySpecs.length,
               separatorBuilder: (_, __) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Divider(height: 1, color: Colors.grey[100]),
               ),
               itemBuilder: (context, index) {
-                final entry = specs[index];
+                final entry = displaySpecs[index];
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
