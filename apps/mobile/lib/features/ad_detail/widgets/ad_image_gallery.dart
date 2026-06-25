@@ -5,6 +5,7 @@ import 'package:like_button/like_button.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/widgets/app_cached_image.dart';
+import 'package:mobile/features/ad_detail/widgets/fullscreen_image_viewer.dart';
 
 class AdImageGallery extends StatefulWidget {
   final AdWithDetails ad;
@@ -28,16 +29,27 @@ class AdImageGallery extends StatefulWidget {
 
 class _AdImageGalleryState extends State<AdImageGallery> {
   final PageController _pageController = PageController();
-  final TransformationController _transformController =
-      TransformationController();
   int _currentImageIndex = 0;
-  bool _isZoomed = false;
 
   @override
   void dispose() {
     _pageController.dispose();
-    _transformController.dispose();
     super.dispose();
+  }
+
+  /// Open the tapped image in a fullscreen viewer where pinch + double-tap
+  /// zoom work reliably. (The inline gallery can't zoom — its InteractiveViewer
+  /// is starved of gestures by the collapsing SliverAppBar it sits inside.)
+  void _openFullscreen(List<String> images, int index) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => FullscreenImageViewer(
+          images: images,
+          initialIndex: index,
+        ),
+      ),
+    );
   }
 
   Widget _buildCircleButton({required Widget child, VoidCallback? onTap}) {
@@ -77,16 +89,7 @@ class _AdImageGalleryState extends State<AdImageGallery> {
         PageView.builder(
           controller: _pageController,
           itemCount: images.length,
-          physics: _isZoomed
-              ? const NeverScrollableScrollPhysics()
-              : const AlwaysScrollableScrollPhysics(),
-          onPageChanged: (idx) {
-            _transformController.value = Matrix4.identity();
-            setState(() {
-              _currentImageIndex = idx;
-              _isZoomed = false;
-            });
-          },
+          onPageChanged: (idx) => setState(() => _currentImageIndex = idx),
           itemBuilder: (context, index) {
             final image = AppCachedImage(
               imageUrl: images[index],
@@ -95,22 +98,16 @@ class _AdImageGalleryState extends State<AdImageGallery> {
               placeholder: Container(color: Colors.grey[200]),
               errorWidget: Container(color: Colors.grey[200]),
             );
-            final zoomable = InteractiveViewer(
-              transformationController: _transformController,
-              minScale: 1.0,
-              maxScale: 3.0,
-              onInteractionEnd: (_) {
-                final scale = _transformController.value.getMaxScaleOnAxis();
-                final zoomed = scale > 1.05;
-                if (zoomed != _isZoomed) setState(() => _isZoomed = zoomed);
-              },
+            // Tap to open the fullscreen, zoomable viewer.
+            final tappable = GestureDetector(
+              onTap: () => _openFullscreen(images, index),
               child: image,
             );
             // Hero only on first image for card→detail transition
             if (index == 0) {
-              return Hero(tag: 'ad-image-${widget.ad.id}', child: zoomable);
+              return Hero(tag: 'ad-image-${widget.ad.id}', child: tappable);
             }
-            return zoomable;
+            return tappable;
           },
         ),
 
