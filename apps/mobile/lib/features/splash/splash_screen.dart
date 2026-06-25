@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../main.dart' show appReadyForDeepLinks, processPendingNotification;
+import '../../main.dart'
+    show appReadyForDeepLinks, processPendingNotification, processPendingDeepLink;
 
 class SplashScreen extends StatefulWidget {
   final Widget nextScreen;
@@ -63,6 +64,7 @@ class _SplashScreenState extends State<SplashScreen>
         appReadyForDeepLinks = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           processPendingNotification();
+          processPendingDeepLink();
         });
       }
     });

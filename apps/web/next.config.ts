@@ -118,6 +118,13 @@ const nextConfig: NextConfig = {
           { key: 'Content-Security-Policy', value: csp },
         ],
       },
+      {
+        // iOS Universal Links: the AASA file has no extension, so force
+        // application/json (the global nosniff header would otherwise let iOS
+        // reject an octet-stream response).
+        source: '/.well-known/apple-app-site-association',
+        headers: [{ key: 'Content-Type', value: 'application/json' }],
+      },
     ];
   },
   async redirects() {

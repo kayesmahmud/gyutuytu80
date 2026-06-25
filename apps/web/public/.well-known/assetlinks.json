@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.thulobazaar.mobile",
+      "sha256_cert_fingerprints": [
+        "61:03:21:94:40:9C:C4:BE:EE:D0:B2:2F:C3:1D:51:E6:7F:A0:AC:37:70:9E:49:70:EF:72:71:9A:1F:4A:E5:D3"
+      ]
+    }
+  }
+]

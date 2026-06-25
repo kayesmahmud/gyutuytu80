@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -90,6 +91,10 @@ void main() async {
     );
   }
 
+  // Start listening for App Links / Universal Links (e.g. shared ad URLs).
+  // Off the critical path — captured links are deferred until the app is ready.
+  unawaited(_initDeepLinks());
+
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('ne')],
@@ -109,6 +114,64 @@ void main() async {
 
 /// Pending notification data when navigator isn't ready (terminated state)
 Map<String, dynamic>? _pendingNotification;
+
+/// App Links / Universal Links handler. Opens https://thulobazaar.com.np
+/// /{lang}/ad/{slug} URLs directly in the app (the OS routes them here when the
+/// app is installed and the domain is verified; otherwise they open in the
+/// browser). Shop/search/other pages are intentionally not claimed.
+final AppLinks _appLinks = AppLinks();
+
+/// Incoming deep link captured before the app was ready to navigate (cold start,
+/// while the splash is still showing). Replayed by [processPendingDeepLink].
+Uri? _pendingDeepLink;
+
+/// Start listening for incoming app links — both the cold-start launch URL and
+/// links that arrive while the app is already running.
+Future<void> _initDeepLinks() async {
+  try {
+    final initial = await _appLinks.getInitialLink();
+    if (initial != null) _handleIncomingLink(initial);
+  } catch (e) {
+    debugPrint('⚠️ getInitialLink failed: $e');
+  }
+  // App-lifetime listener — the stream retains the subscription, so it is not
+  // stored or cancelled.
+  _appLinks.uriLinkStream.listen(
+    _handleIncomingLink,
+    onError: (Object e) => debugPrint('⚠️ uriLinkStream error: $e'),
+  );
+}
+
+/// Parse an incoming URL and, if it points at an ad detail page
+/// (/{lang}/ad/{slug}), open that ad. Defers until the navigator is ready.
+void _handleIncomingLink(Uri uri) {
+  final segments = uri.pathSegments; // e.g. ['en', 'ad', 'my-ad-slug']
+  final adIndex = segments.indexOf('ad');
+  // Guard against the plural '/ads/' search route — indexOf('ad') won't match it.
+  if (adIndex == -1 || adIndex + 1 >= segments.length) return;
+  final slug = segments[adIndex + 1];
+  if (slug.isEmpty) return;
+
+  // Defer until MainNav is the base route (and navigator exists), so a
+  // cold-start link isn't clobbered by the splash transition.
+  if (!appReadyForDeepLinks || navigatorKey.currentState == null) {
+    _pendingDeepLink = uri;
+    return;
+  }
+
+  navigatorKey.currentState!.push(
+    MaterialPageRoute(builder: (_) => AdDetailScreen(slug: slug)),
+  );
+}
+
+/// Replay any deep link that arrived before the app was ready to navigate.
+/// Safe to call multiple times — no-ops when nothing is pending.
+void processPendingDeepLink() {
+  final uri = _pendingDeepLink;
+  if (uri == null) return;
+  _pendingDeepLink = null;
+  _handleIncomingLink(uri);
+}
 
 /// True once SplashScreen has handed off to MainNavScreen. Until then, deep-link
 /// taps are stored and replayed later — otherwise the splash's

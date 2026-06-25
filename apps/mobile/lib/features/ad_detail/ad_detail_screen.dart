@@ -443,7 +443,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   isFavoriteLoading: _isFavoriteLoading,
                   onToggleFavorite: _toggleFavorite,
                   onShare: () {
-                    final url = 'https://thulobazaar.com.np/en/ads/${ad.slug}';
+                    final url = 'https://thulobazaar.com.np/en/ad/${ad.slug}';
                     _shareAd(
                       text: '${ad.title} - ${_formatPrice(ad.price)}\n$url',
                       subject: ad.title,
