@@ -33,6 +33,19 @@ import FirebaseMessaging
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
 
+  // Universal Links: under the UIScene lifecycle iOS can fail to mark a tapped
+  // link as "claimed", so it opens the link in Safari in addition to the app.
+  // Forwarding to super returns `true` for a handled link, which tells iOS not
+  // to fall back to Safari. (Community workaround for flutter/flutter#179452.)
+  override func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    return super.application(
+      application, continue: userActivity, restorationHandler: restorationHandler)
+  }
+
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
 
@@ -134,3 +147,9 @@ private final class ShareItemSource: NSObject, UIActivityItemSource {
     return subject ?? ""
   }
 }
+
+/// Flutter's recommended SceneDelegate. Subclassing FlutterSceneDelegate is all
+/// that's needed — it forwards scene lifecycle events (including the Universal
+/// Link `scene(_:continue:)`) to the registered plugins (e.g. app_links).
+@objc(SceneDelegate)
+class SceneDelegate: FlutterSceneDelegate {}

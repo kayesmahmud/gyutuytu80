@@ -128,14 +128,14 @@ Uri? _pendingDeepLink;
 /// Start listening for incoming app links — both the cold-start launch URL and
 /// links that arrive while the app is already running.
 Future<void> _initDeepLinks() async {
+  // Cold-start link.
   try {
     final initial = await _appLinks.getInitialLink();
     if (initial != null) _handleIncomingLink(initial);
   } catch (e) {
     debugPrint('⚠️ getInitialLink failed: $e');
   }
-  // App-lifetime listener — the stream retains the subscription, so it is not
-  // stored or cancelled.
+  // Warm links — the stream retains the subscription, so it is not cancelled.
   _appLinks.uriLinkStream.listen(
     _handleIncomingLink,
     onError: (Object e) => debugPrint('⚠️ uriLinkStream error: $e'),

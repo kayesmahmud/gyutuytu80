@@ -443,22 +443,10 @@ class _ShopScreenState extends State<ShopScreen> {
             ),
           ),
 
-          // Ads Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-              child: Text(
-                context.locale.languageCode == 'ne'
-                    ? '${_shop!.displayName} का विज्ञापनहरू (${_ads.length})'
-                    : 'Ads from ${_shop!.displayName} (${_ads.length})',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-          ),
+          // Spacer between the profile tabs and the ads grid. The "Ads from
+          // X (N)" heading was removed — it duplicated the "Active Ads" stat
+          // shown in the profile header above.
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
           // Ads Grid
           _ads.isEmpty ? _buildEmptyAds() : _buildAdsGrid(),
