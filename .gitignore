@@ -134,6 +134,9 @@ client_secret_*.json
 
 # Misc
 *.pem
+# Exception: the mobile SSL-pinning bundle is a PUBLIC root cert (no secret) and
+# MUST be tracked so builds pin reproducibly. See apps/mobile/assets/certs/README.md.
+!apps/mobile/assets/certs/api_thulobazaar.pem
 
 # Playwright MCP screenshots
 .playwright-mcp/

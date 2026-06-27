@@ -138,11 +138,17 @@ class DioClient {
 
   /// Call once at app startup (before any API calls) to activate SSL pinning.
   ///
-  /// Loads the pinned certificate from [assets/certs/api_thulobazaar.pem].
+  /// Loads pinned certificates from [assets/certs/api_thulobazaar.pem]. The API
+  /// sits behind Cloudflare, whose edge certificate rotates (~90-day Let's
+  /// Encrypt). To avoid an outage on every rotation, we pin the long-lived
+  /// Let's Encrypt ROOTS (ISRG Root X1, exp 2035 + ISRG Root X2, exp 2040) —
+  /// NOT a leaf or intermediate. Do not replace these with a leaf/intermediate
+  /// cert: it will hard-break every release once Cloudflare rotates.
+  ///
   /// If the file is missing (e.g. dev environment), pinning is silently skipped.
   /// Skipped on web — only applies on iOS and Android.
   ///
-  /// See [assets/certs/README.md] for instructions on obtaining the cert.
+  /// See [assets/certs/README.md] for how to refresh these roots.
   static Future<void> ensureInitialized() async {
     // SSL pinning only applies on mobile platforms
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return;

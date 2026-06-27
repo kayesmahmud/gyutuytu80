@@ -3,22 +3,23 @@ import 'package:flutter/foundation.dart';
 /// API Configuration
 /// Centralized configuration for API endpoints and URLs
 class ApiConfig {
-  // Production API URL (used in release builds)
+  // Production API. Release/store builds are HARD-LOCKED to this — see [baseUrl].
   static const String _productionUrl = 'https://api.thulobazaar.com.np/api';
 
-  // Local development IP — both devices must be on the same WiFi network.
-  // Override per-machine with: flutter run --dart-define=API_URL=http://<your-ip>:5000/api
-  static const String _localIp = '192.168.0.104';
-
   static String get baseUrl {
-    // Check for environment override first
+    // STRICT RULE: every release/store build points at production — ALWAYS.
+    // The API_URL override is ignored in release mode, so it is structurally
+    // impossible to ship a build aimed at localhost / a dev IP again
+    // (root cause of the 1.0.5 outage). Do not weaken this.
+    if (kReleaseMode) return _productionUrl;
+
+    // Debug/profile builds only: opt in to a local dev server at run time, e.g.
+    //   flutter run --dart-define=API_URL=http://192.168.0.104:5000/api
+    // (phone + dev machine on the same WiFi; use your machine's LAN IP).
     const envUrl = String.fromEnvironment('API_URL');
     if (envUrl.isNotEmpty) return envUrl;
 
-    // Use production URL in release mode, local IP in debug mode
-    if (kReleaseMode) return _productionUrl;
-
-    return 'http://$_localIp:5000/api';
+    return _productionUrl;
   }
 
   // Auth endpoints
