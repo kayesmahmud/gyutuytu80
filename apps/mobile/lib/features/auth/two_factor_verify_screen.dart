@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,6 +31,7 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
   final _authClient = AuthClient();
   bool _isLoading = false;
   String? _error;
+  bool _useBackupCode = false;
 
   @override
   void dispose() {
@@ -133,7 +137,9 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
   }
 
   Future<void> _verify() async {
-    final code = _codeController.text.trim();
+    // Backup codes are stored as lowercase hex; normalise so a stray uppercase
+    // character doesn't fail an otherwise-correct code. Harmless for numeric TOTP.
+    final code = _codeController.text.trim().toLowerCase();
     if (code.isEmpty) {
       setState(() => _error = context.locale.languageCode == 'ne'
           ? 'कृपया कोड प्रविष्ट गर्नुहोस्'
@@ -176,7 +182,10 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
       } else {
         setState(() => _error = result['message'] ?? 'Verification failed');
       }
-    } catch (e) {
+    } catch (e, st) {
+      if (kDebugMode) {
+        developer.log('2FA verify failed', name: 'TwoFactorVerify', error: e, stackTrace: st);
+      }
       if (mounted) {
         setState(() => _error = e.toString());
       }
@@ -222,23 +231,30 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              lang == 'ne'
-                  ? 'तपाईंको authenticator एपबाट ६-अंकको कोड प्रविष्ट गर्नुहोस्'
-                  : 'Enter the 6-digit code from your authenticator app',
+              _useBackupCode
+                  ? (lang == 'ne'
+                      ? 'आफ्नो ब्याकअप कोड मध्ये एउटा प्रविष्ट गर्नुहोस्'
+                      : 'Enter one of your 8-character backup codes')
+                  : (lang == 'ne'
+                      ? 'तपाईंको authenticator एपबाट ६-अंकको कोड प्रविष्ट गर्नुहोस्'
+                      : 'Enter the 6-digit code from your authenticator app'),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
             ),
             const SizedBox(height: 32),
             TextField(
               controller: _codeController,
-              keyboardType: TextInputType.number,
+              // Backup codes are 8 hex chars (contain a–f), so they need a text
+              // keyboard to type letters; TOTP codes use the number keyboard.
+              keyboardType:
+                  _useBackupCode ? TextInputType.text : TextInputType.number,
               textAlign: TextAlign.center,
-              maxLength: 8, // Allow backup codes (8 chars)
+              maxLength: 8, // TOTP is 6 digits; backup codes are 8 hex chars
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]'))],
               style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
               decoration: InputDecoration(
                 counterText: '',
-                hintText: '000000',
+                hintText: _useBackupCode ? 'a1b2c3d4' : '000000',
                 hintStyle: GoogleFonts.inter(fontSize: 24, color: Colors.grey[300], letterSpacing: 8),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 enabledBorder: OutlineInputBorder(
@@ -274,12 +290,29 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
                       ),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              lang == 'ne'
-                  ? 'ब्याकअप कोड पनि प्रयोग गर्न सकिन्छ'
-                  : 'You can also use a backup code',
-              style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500]),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: _isLoading
+                  ? null
+                  : () => setState(() {
+                        _useBackupCode = !_useBackupCode;
+                        _codeController.clear();
+                        _error = null;
+                      }),
+              child: Text(
+                _useBackupCode
+                    ? (lang == 'ne'
+                        ? 'बरु authenticator एप प्रयोग गर्नुहोस्'
+                        : 'Use authenticator app instead')
+                    : (lang == 'ne'
+                        ? 'ब्याकअप कोड पनि प्रयोग गर्नुहोस्'
+                        : 'You can also use a backup code'),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
