@@ -12,6 +12,7 @@ export { default as FilterPill } from './FilterPill';
 export { default as AdsFilterWrapper } from './AdsFilterWrapper';
 export { default as RecentlyViewed } from './RecentlyViewed';
 export { default as SortDropdown } from './SortDropdown';
+export { default as AdsPagination } from './AdsPagination';
 
 // Types
 export type { FilterSection } from './MobileFilterDrawer';

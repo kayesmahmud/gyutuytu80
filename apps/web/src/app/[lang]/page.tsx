@@ -3,17 +3,21 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { prisma } from '@thulobazaar/database';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { AdCard, AdBanner } from '@/components/ads';
+import { AdCard, AdBanner, AdsPagination } from '@/components/ads';
 import HeroSearch from './HeroSearch';
 import FeaturedAdsCarousel from './FeaturedAdsCarousel';
 import CategoryIcon from './CategoryIcon';
 
-// Home page content (featured ads, latest ads) can be stale for up to 5 minutes
-export const revalidate = 300;
+// Reading searchParams (?page=N) makes this route render per-request,
+// same as the /ads browse page — revalidate no longer applies.
 
 interface HomePageProps {
   params: Promise<{ lang: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
+
+// Homepage keeps its denser 60-ad grid per page; /ads uses 20.
+const ADS_PER_PAGE = 60;
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
@@ -72,18 +76,40 @@ const CATEGORY_DISPLAY_ORDER = [
   'Business & Industry',
 ];
 
-export default async function HomePage({ params }: HomePageProps) {
+export default async function HomePage({ params, searchParams }: HomePageProps) {
   const { lang } = await params;
   setRequestLocale(lang);
   const t = await getTranslations('home');
   const tc = await getTranslations('common');
 
+  const search = await searchParams;
+  const page = Math.max(1, parseInt(search.page || '1', 10) || 1);
+  const offset = (page - 1) * ADS_PER_PAGE;
+
+  // Latest feed = full catalog: approved ads with images from active users,
+  // minus currently-featured ads (they show in the featured carousel above).
+  const latestAdsWhere = {
+    status: 'approved',
+    deleted_at: null,
+    ad_images: {
+      some: {}, // Only show ads with at least one image
+    },
+    users_ads_user_idTousers: {
+      is_active: true, // Only show ads from active users
+    },
+    // Exclude active featured ads so they don't repeat in the latest feed
+    NOT: {
+      is_featured: true,
+      featured_until: { gt: new Date() },
+    },
+  };
+
   // ✅ Fetch real data from database using Prisma (parallel queries for performance)
   // Try/catch: at Docker build time there is no DB — return empty arrays so prerender succeeds.
-  // ISR (revalidate=300) will populate real data on first runtime request.
   let categories: any[] = [], featuredAds: any[] = [], latestAds: any[] = [];
+  let totalLatestAds = 0;
   try {
-  [categories, featuredAds, latestAds] = await Promise.all([
+  [categories, featuredAds, latestAds, totalLatestAds] = await Promise.all([
     // Get all top-level categories (no parent)
     prisma.categories.findMany({
       where: {
@@ -131,24 +157,9 @@ export default async function HomePage({ params }: HomePageProps) {
       },
       take: 20,
     }),
-    // Get latest 60 approved ads with images (exclude suspended users + currently-featured
-    // ads, which already show in the featured grid above — mirrors the Flutter home screen)
+    // Latest feed: paginated over the full catalog (newest-approved first)
     prisma.ads.findMany({
-      where: {
-        status: 'approved',
-        deleted_at: null,
-        ad_images: {
-          some: {}, // Only show ads with at least one image
-        },
-        users_ads_user_idTousers: {
-          is_active: true, // Only show ads from active users
-        },
-        // Exclude active featured ads so they don't repeat in the latest feed
-        NOT: {
-          is_featured: true,
-          featured_until: { gt: new Date() },
-        },
-      },
+      where: latestAdsWhere,
       include: {
         ad_images: {
           where: { is_primary: true },
@@ -201,10 +212,15 @@ export default async function HomePage({ params }: HomePageProps) {
       orderBy: {
         reviewed_at: { sort: 'desc', nulls: 'last' }, // Sort by approval time, nulls last
       },
-      take: 60,
+      take: ADS_PER_PAGE,
+      skip: offset,
     }),
+    // Total count for pagination
+    prisma.ads.count({ where: latestAdsWhere }),
   ]);
-  } catch { /* no DB at build time — ISR fills data on first runtime request */ }
+  } catch { /* no DB at build time — data loads on first runtime request */ }
+
+  const totalPages = Math.ceil(totalLatestAds / ADS_PER_PAGE);
 
   // Sort categories by custom display order
   const sortedCategories = [...categories].sort((a, b) => {
@@ -425,8 +441,9 @@ export default async function HomePage({ params }: HomePageProps) {
               </div>
             )}
 
-            {/* Latest Ads Section */}
-            <div className="py-6 sm:py-8 md:py-12 mb-6 sm:mb-8 md:mb-12">
+            {/* Latest Ads Section — full catalog, paginated. Anchor keeps
+                page links scrolled to the grid instead of the hero. */}
+            <div id="latest-ads" className="py-6 sm:py-8 md:py-12 mb-6 sm:mb-8 md:mb-12 scroll-mt-20">
               <div className="flex justify-between items-center mb-4 sm:mb-6 md:mb-8">
                 <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900">
                   {t('latestAds')}
@@ -459,27 +476,37 @@ export default async function HomePage({ params }: HomePageProps) {
                   </Link>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
-                  {latestAdCards.map((ad, index) => (
-                    <React.Fragment key={ad.id}>
-                      <AdCard
-                        lang={lang}
-                        ad={ad}
-                      />
-                      {/* In-Feed Ad - Mobile: after 2 cards (index 1), Desktop: after 3 cards (index 2) */}
-                      {index === 1 && (
-                        <div className="md:hidden col-span-2 flex justify-center items-center bg-gray-50 rounded-xl p-4">
-                          <AdBanner slot="homeInFeed" size="mediumRectangle" autoExpand />
-                        </div>
-                      )}
-                      {index === 2 && (
-                        <div className="hidden md:flex col-span-3 justify-center items-center bg-gray-50 rounded-xl p-4">
-                          <AdBanner slot="homeInFeed" size="mediumRectangle" autoExpand />
-                        </div>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
+                    {latestAdCards.map((ad, index) => (
+                      <React.Fragment key={ad.id}>
+                        <AdCard
+                          lang={lang}
+                          ad={ad}
+                        />
+                        {/* In-Feed Ad - Mobile: after 2 cards (index 1), Desktop: after 3 cards (index 2) */}
+                        {index === 1 && (
+                          <div className="md:hidden col-span-2 flex justify-center items-center bg-gray-50 rounded-xl p-4">
+                            <AdBanner slot="homeInFeed" size="mediumRectangle" autoExpand />
+                          </div>
+                        )}
+                        {index === 2 && (
+                          <div className="hidden md:flex col-span-3 justify-center items-center bg-gray-50 rounded-xl p-4">
+                            <AdBanner slot="homeInFeed" size="mediumRectangle" autoExpand />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+
+                  <AdsPagination
+                    page={page}
+                    totalPages={totalPages}
+                    buildHref={(p) =>
+                      p > 1 ? `/${lang}?page=${p}#latest-ads` : `/${lang}#latest-ads`
+                    }
+                  />
+                </>
               )}
             </div>
 
