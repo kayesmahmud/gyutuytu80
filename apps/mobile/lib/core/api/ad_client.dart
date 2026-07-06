@@ -101,8 +101,11 @@ class AdClient {
   }
 
   /// Get latest ads
-  Future<PaginatedResponse<AdWithDetails>> getLatestAds({int limit = 8}) async {
-    return getAds(limit: limit, sortBy: 'date', sortOrder: 'desc');
+  Future<PaginatedResponse<AdWithDetails>> getLatestAds({
+    int page = 1,
+    int limit = 8,
+  }) async {
+    return getAds(page: page, limit: limit, sortBy: 'date', sortOrder: 'desc');
   }
 
   // ==========================================

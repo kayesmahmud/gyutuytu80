@@ -27,15 +27,25 @@ class HomeScreen extends StatefulWidget {
   final void Function(int categoryId, String categoryName)? onCategoryTap;
   final VoidCallback? onViewAllAds;
 
-  const HomeScreen({super.key, this.onSearch, this.onCategoryTap, this.onViewAllAds});
+  const HomeScreen({
+    super.key,
+    this.onSearch,
+    this.onCategoryTap,
+    this.onViewAllAds,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // First page keeps the original dense 60-ad grid; further pages append via
+  // infinite scroll (same pattern as SearchScreen).
+  static const int _latestPageSize = 60;
+
   final AdClient _adClient = AdClient();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final FocusNode _searchFocusNode = FocusNode();
   final LayerLink _searchLayerLink = LayerLink();
   final SearchSuggestionsController _suggestionsController =
@@ -49,6 +59,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AdWithDetails> _displayLatestAds = [];
   List<AdWithDetails> _displayFeaturedAds = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+  int _latestPage = 1;
+  int _latestTotalPages = 1;
+  // Monotonic id for the latest fetch. A response only applies if its id still
+  // matches, so a stale in-flight request can't overwrite newer results.
+  int _fetchSeq = 0;
   // Set when the initial fetch fails, so we can show a retry state instead of
   // the misleading "No ads yet" empty message.
   bool _loadFailed = false;
@@ -58,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchData();
+    _scrollController.addListener(_onScroll);
     _searchFocusNode.addListener(_onSearchFocusChanged);
   }
 
@@ -67,7 +84,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchFocusNode.dispose();
     _suggestionsController.hide();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreLatestAds();
+    }
   }
 
   void _onSearchFocusChanged() {
@@ -95,9 +120,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchData() async {
+    // Claim the latest sequence id; any older in-flight fetch (including a
+    // pending load-more) is now stale.
+    final int reqId = ++_fetchSeq;
+
     setState(() {
       _isLoading = true;
       _loadFailed = false;
+      _latestPage = 1;
     });
 
     try {
@@ -105,8 +135,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final results = await Future.wait([
         _adClient.getCategories(),
         _adClient.getFeaturedAds(limit: 12),
-        _adClient.getLatestAds(limit: 60),
+        _adClient.getLatestAds(page: 1, limit: _latestPageSize),
       ]);
+
+      if (reqId != _fetchSeq || !mounted) return;
 
       final featuredResp = results[1] as PaginatedResponse<AdWithDetails>;
       final latestResp = results[2] as PaginatedResponse<AdWithDetails>;
@@ -117,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // "No ads yet".
       if (!latestResp.success && !featuredResp.success) {
         final offline = await _isOfflineError();
-        if (!mounted) return;
+        if (reqId != _fetchSeq || !mounted) return;
         setState(() {
           _loadFailed = true;
           _isOffline = offline;
@@ -126,30 +158,75 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
 
-      if (mounted) {
+      setState(() {
+        _categories = results[0] as List<CategoryWithSubcategories>;
+        _featuredAds = featuredResp.data;
+        _latestAds = latestResp.data;
+        _latestTotalPages = latestResp.pagination.totalPages;
+        // Featured ads already get their own carousel above, so keep them out
+        // of the Latest feed to avoid showing the same ad twice.
+        _displayLatestAds = _latestAds.where((ad) => !ad.isFeatured).toList();
+        // Up to 6 rows of 2 = 12 cards; the grid shrinks to the real count
+        // (2 ads -> 1 row, 4 ads -> 2 rows, ...).
+        _displayFeaturedAds = _featuredAds.take(12).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      final offline = await _isOfflineError();
+      if (reqId != _fetchSeq || !mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadFailed = true;
+        _isOffline = offline;
+      });
+    }
+  }
+
+  /// Append the next page of the full catalog to the Latest feed when the
+  /// user scrolls near the bottom (same pattern as SearchScreen).
+  Future<void> _loadMoreLatestAds() async {
+    if (_isLoading || _isLoadingMore || _latestPage >= _latestTotalPages) {
+      return;
+    }
+
+    // Tie this page to the current fetch generation; if a refresh happens
+    // mid-load we must not append a page from the previous feed.
+    final int reqId = _fetchSeq;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final response = await _adClient.getLatestAds(
+        page: _latestPage + 1,
+        limit: _latestPageSize,
+      );
+
+      if (!mounted) return;
+      if (reqId != _fetchSeq) {
+        // A refresh superseded us — discard this page.
+        setState(() => _isLoadingMore = false);
+        return;
+      }
+
+      if (response.success) {
         setState(() {
-          _categories = results[0] as List<CategoryWithSubcategories>;
-          _featuredAds = featuredResp.data;
-          _latestAds = latestResp.data;
-          // Featured ads already get their own carousel above, so keep them out
-          // of the Latest feed to avoid showing the same ad twice.
-          _displayLatestAds =
-              _latestAds.where((ad) => !ad.isFeatured).take(60).toList();
-          // Up to 6 rows of 2 = 12 cards; the grid shrinks to the real count
-          // (2 ads -> 1 row, 4 ads -> 2 rows, ...).
-          _displayFeaturedAds = _featuredAds.take(12).toList();
-          _isLoading = false;
+          _latestAds.addAll(response.data);
+          _displayLatestAds = _latestAds.where((ad) => !ad.isFeatured).toList();
+          _latestPage++;
+          _isLoadingMore = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingMore = false;
         });
       }
     } catch (e) {
-      final offline = await _isOfflineError();
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _loadFailed = true;
-          _isOffline = offline;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMore = false;
+      });
     }
   }
 
@@ -184,49 +261,73 @@ class _HomeScreenState extends State<HomeScreen> {
         child: _loadFailed && !_isLoading
             ? _buildErrorState()
             : Skeletonizer(
-          enabled: _isLoading,
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeroSection(context),
+                enabled: _isLoading,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeroSection(context),
 
-                    const SizedBox(height: 24),
-                    _buildSectionHeader('home.browseCategories'.tr(), ""),
-                    const SizedBox(height: 12),
-                    _buildCategoriesList(),
+                          const SizedBox(height: 24),
+                          _buildSectionHeader('home.browseCategories'.tr(), ""),
+                          const SizedBox(height: 12),
+                          _buildCategoriesList(),
 
-                    // Featured ads first — small highlight strip
-                    const SizedBox(height: 24),
-                    _buildFeaturedHeader(),
-                    const SizedBox(height: 12),
-                    _buildFeaturedAdsGrid(
-                      _isLoading ? SkeletonData.fakeAds(6) : _displayFeaturedAds,
+                          // Featured ads first — small highlight strip
+                          const SizedBox(height: 24),
+                          _buildFeaturedHeader(),
+                          const SizedBox(height: 12),
+                          _buildFeaturedAdsGrid(
+                            _isLoading
+                                ? SkeletonData.fakeAds(6)
+                                : _displayFeaturedAds,
+                          ),
+
+                          if (!_isLoading && AdService.adsEnabled)
+                            AdBannerWidget(adUnitId: AdService.homeBannerTopId),
+
+                          // Latest/newest feed below
+                          const SizedBox(height: 24),
+                          _buildSectionHeader(
+                            'home.latestAds'.tr(),
+                            'home.viewAllAds'.tr(),
+                            onTap: widget.onViewAllAds,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ),
                     ),
 
-                    if (!_isLoading && AdService.adsEnabled)
-                      AdBannerWidget(adUnitId: AdService.homeBannerTopId),
+                    // Full catalog as a lazy SliverGrid: off-screen cards (and their
+                    // network images) aren't built until scrolled near the viewport;
+                    // more pages append as the user nears the bottom.
+                    _buildLatestSliverGrid(
+                      _isLoading ? SkeletonData.fakeAds(6) : _displayLatestAds,
+                    ),
 
-                    // Latest/newest feed below
-                    const SizedBox(height: 24),
-                    _buildSectionHeader('home.latestAds'.tr(), 'home.viewAllAds'.tr(), onTap: widget.onViewAllAds),
-                    const SizedBox(height: 12),
+                    if (_isLoadingMore)
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 50)),
                   ],
                 ),
               ),
-
-              // 60 newest ads as a lazy SliverGrid: off-screen cards (and their
-              // network images) aren't built until scrolled near the viewport.
-              _buildLatestSliverGrid(
-                _isLoading ? SkeletonData.fakeAds(6) : _displayLatestAds,
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 50)),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -240,10 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: LoadErrorView(
-              isOffline: _isOffline,
-              onRetry: _fetchData,
-            ),
+            child: LoadErrorView(isOffline: _isOffline, onRetry: _fetchData),
           ),
         );
       },
@@ -319,7 +417,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, String actionText, {VoidCallback? onTap}) {
+  Widget _buildSectionHeader(
+    String title,
+    String actionText, {
+    VoidCallback? onTap,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -361,18 +463,26 @@ class _HomeScreenState extends State<HomeScreen> {
         final shortName = context.locale.languageCode == 'ne'
             ? localizedName
             : (mockMatch?['shortName'] as String? ?? localizedName);
-        return _buildApiCategoryItem(apiCat.slug, icon, shortName, apiCat.id, localizedName);
+        return _buildApiCategoryItem(
+          apiCat.slug,
+          icon,
+          shortName,
+          apiCat.id,
+          localizedName,
+        );
       }).toList();
       return _buildTwoRowCategoryCarousel(items);
     }
 
     // Fallback: show hardcoded categories while loading (taps disabled)
     final items = MockFilterData.categories
-        .map((cat) => _buildStaticEmojiCategoryItem(
-              cat['slug'] as String?,
-              cat['icon'] as String,
-              (cat['shortName'] ?? cat['name']) as String,
-            ))
+        .map(
+          (cat) => _buildStaticEmojiCategoryItem(
+            cat['slug'] as String?,
+            cat['icon'] as String,
+            (cat['shortName'] ?? cat['name']) as String,
+          ),
+        )
         .toList();
     return _buildTwoRowCategoryCarousel(items);
   }
@@ -393,7 +503,10 @@ class _HomeScreenState extends State<HomeScreen> {
           // center its column and push the icon out of line with its neighbours.
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: topRow),
           const SizedBox(height: 16),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: bottomRow),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: bottomRow,
+          ),
         ],
       ),
     );
@@ -428,7 +541,8 @@ class _HomeScreenState extends State<HomeScreen> {
       fit: BoxFit.contain,
       cacheWidth: 184,
       cacheHeight: 184,
-      errorBuilder: (_, _, _) => Text(emoji, style: const TextStyle(fontSize: 35)),
+      errorBuilder: (_, _, _) =>
+          Text(emoji, style: const TextStyle(fontSize: 35)),
     );
   }
 
@@ -462,7 +576,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Category item backed by API data — tap always works
-  Widget _buildApiCategoryItem(String? slug, String emoji, String name, int categoryId, String categoryName) {
+  Widget _buildApiCategoryItem(
+    String? slug,
+    String emoji,
+    String name,
+    int categoryId,
+    String categoryName,
+  ) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
       child: TapScale(
@@ -512,7 +632,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Fallback category item shown while loading (no tap action)
-  Widget _buildStaticEmojiCategoryItem(String? slug, String emoji, String name) {
+  Widget _buildStaticEmojiCategoryItem(
+    String? slug,
+    String emoji,
+    String name,
+  ) {
     return Container(
       margin: const EdgeInsets.only(right: 16),
       child: Column(
@@ -623,19 +747,16 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            // Clamp the stagger index so the last of 60 cards doesn't wait
-            // ~5s (delayPerItem * index); caps the cascade at ~0.5s.
-            return StaggeredFadeIn(
-              index: index.clamp(0, 6),
-              child: RepaintBoundary(
-                child: AdCard(ad: ads[index], heroTagPrefix: 'latest'),
-              ),
-            );
-          },
-          childCount: ads.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          // Clamp the stagger index so the last of 60 cards doesn't wait
+          // ~5s (delayPerItem * index); caps the cascade at ~0.5s.
+          return StaggeredFadeIn(
+            index: index.clamp(0, 6),
+            child: RepaintBoundary(
+              child: AdCard(ad: ads[index], heroTagPrefix: 'latest'),
+            ),
+          );
+        }, childCount: ads.length),
       ),
     );
   }
