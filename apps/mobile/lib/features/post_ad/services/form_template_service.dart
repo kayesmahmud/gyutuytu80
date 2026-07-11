@@ -594,6 +594,15 @@ class FormTemplateService {
     optionsNe: ['तुरुन्तै', '१५ दिन', '१ महिना', '२ महिना', '३ महिना'],
   );
 
+  static const _googleMapsLink = FormFieldModel(
+    name: 'googleMapsLink',
+    label: 'Google Maps',
+    labelNe: 'गुगल म्यापको लिङ्क',
+    type: FieldType.text,
+    placeholder: 'Paste Google Maps link',
+    placeholderNe: 'गुगल म्यापको लिङ्क पेस्ट गर्नुहोस्',
+  );
+
   // ============================================
   // FASHION FIELDS
   // ============================================
@@ -1675,6 +1684,7 @@ class FormTemplateService {
       _facing,
       _amenities(),
       _propertyAge,
+      _googleMapsLink,
     ],
     'Apartment Rentals': [
       _landType('Property Type', [
@@ -1698,6 +1708,7 @@ class FormTemplateService {
       _monthlyRent,
       _securityDeposit,
       _availableFrom,
+      _googleMapsLink,
     ],
     'Houses For Sale': [
       _condition(),
@@ -1719,6 +1730,7 @@ class FormTemplateService {
       _amenities(),
       _roadAccess,
       _propertyAge,
+      _googleMapsLink,
     ],
     'House Rentals': [
       _landType('Property Type', [
@@ -1740,6 +1752,7 @@ class FormTemplateService {
       _monthlyRent,
       _securityDeposit,
       _availableFrom,
+      _googleMapsLink,
     ],
     'Land For Sale': [
       const FormFieldModel(
@@ -1756,6 +1769,7 @@ class FormTemplateService {
       _roadAccess,
       _roadWidth,
       _facing,
+      _googleMapsLink,
     ],
     'Land Rentals': [
       const FormFieldModel(
@@ -1774,6 +1788,7 @@ class FormTemplateService {
       _facing,
       _monthlyRent,
       _availableFrom,
+      _googleMapsLink,
     ],
     'Commercial Properties For Sale': [
       _condition(),
@@ -1793,6 +1808,7 @@ class FormTemplateService {
       _amenities(),
       _roadAccess,
       _propertyAge,
+      _googleMapsLink,
     ],
     'Commercial Property Rentals': [
       _landType('Property Type', [
@@ -1812,6 +1828,7 @@ class FormTemplateService {
       _monthlyRent,
       _securityDeposit,
       _availableFrom,
+      _googleMapsLink,
     ],
     'Room Rentals': [
       _landType('Room Type', [
@@ -1832,8 +1849,9 @@ class FormTemplateService {
       _monthlyRent,
       _securityDeposit,
       _availableFrom,
+      _googleMapsLink,
     ],
-    'New projects on PropertyGuide': [],
+    'New projects on PropertyGuide': [_googleMapsLink],
 
     // ── FASHION (Men's Fashion & Grooming) ───
     'Shirts & T-Shirts': [
@@ -2345,12 +2363,15 @@ class FormTemplateService {
   ) {
     // No subcategory-specific config and no category fallback -> show no custom
     // fields at all (do NOT fall back to a lone Condition field).
-    final fields = _subcategoryConfigs[subcategoryName] ??
+    final fields =
+        _subcategoryConfigs[subcategoryName] ??
         _categoryFallbacks[categoryName] ??
         const <FormFieldModel>[];
     // Kill-switch: make every custom field optional except the allow-listed ones.
     return fields
-        .map((f) => f.copyWith(required: _alwaysRequiredFields.contains(f.name)))
+        .map(
+          (f) => f.copyWith(required: _alwaysRequiredFields.contains(f.name)),
+        )
         .toList();
   }
 }

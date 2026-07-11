@@ -171,5 +171,13 @@ export const propertyTemplate: FormTemplate = {
       options: ['Immediately', '15 days', '1 month', '2 months', '3 months'],
       appliesTo: RENTALS_NO_LAND,
     },
+    {
+      name: 'googleMapsLink',
+      label: 'Google Maps',
+      type: 'text',
+      required: false,
+      placeholder: 'Paste Google Maps link',
+      appliesTo: 'all',
+    },
   ],
 };

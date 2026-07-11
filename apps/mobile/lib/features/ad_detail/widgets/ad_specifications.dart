@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/core/models/models.dart';
 
 class AdSpecifications extends StatelessWidget {
@@ -22,17 +23,23 @@ class AdSpecifications extends StatelessWidget {
       'whatsapp_number',
     };
     final specs = ad.attributes!.entries
-        .where((e) =>
-            e.value != null &&
-            e.value.toString().isNotEmpty &&
-            !filteredKeys.contains(e.key))
+        .where(
+          (e) =>
+              e.value != null &&
+              e.value.toString().isNotEmpty &&
+              !filteredKeys.contains(e.key),
+        )
         .toList();
 
     // Parse amenities (comma-separated string or list)
     final amenitiesRaw = ad.attributes!['amenities'];
     final List<String> amenities;
     if (amenitiesRaw is String && amenitiesRaw.isNotEmpty) {
-      amenities = amenitiesRaw.split(',').map((a) => a.trim()).where((a) => a.isNotEmpty).toList();
+      amenities = amenitiesRaw
+          .split(',')
+          .map((a) => a.trim())
+          .where((a) => a.isNotEmpty)
+          .toList();
     } else if (amenitiesRaw is List) {
       amenities = amenitiesRaw.map((a) => a.toString()).toList();
     } else {
@@ -101,6 +108,7 @@ class AdSpecifications extends StatelessWidget {
               ),
               itemBuilder: (context, index) {
                 final entry = displaySpecs[index];
+                final isGoogleMapsLink = entry.key == 'googleMapsLink';
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -114,15 +122,33 @@ class AdSpecifications extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     Flexible(
-                      child: Text(
-                        isNe ? _localizedValue(entry.value.toString()) : entry.value.toString(),
-                        textAlign: TextAlign.end,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF111827),
-                        ),
-                      ),
+                      child: isGoogleMapsLink
+                          ? GestureDetector(
+                              onTap: () => _launchUrl(entry.value.toString()),
+                              child: Text(
+                                isNe
+                                    ? 'गुगल म्यापमा हेर्नुहोस्'
+                                    : 'View on Google Maps',
+                                textAlign: TextAlign.end,
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF2563EB),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              isNe
+                                  ? _localizedValue(entry.value.toString())
+                                  : entry.value.toString(),
+                              textAlign: TextAlign.end,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF111827),
+                              ),
+                            ),
                     ),
                   ],
                 );
@@ -131,8 +157,7 @@ class AdSpecifications extends StatelessWidget {
 
           // Amenities section (matches web SpecificationsSection)
           if (amenities.isNotEmpty) ...[
-            if (specs.isNotEmpty)
-              Divider(height: 1, color: Colors.grey[200]),
+            if (specs.isNotEmpty) Divider(height: 1, color: Colors.grey[200]),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Text(
@@ -150,7 +175,9 @@ class AdSpecifications extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: amenities.map((amenity) {
-                  final displayName = isNe ? (_valueMapNe[amenity] ?? amenity) : amenity;
+                  final displayName = isNe
+                      ? (_valueMapNe[amenity] ?? amenity)
+                      : amenity;
                   return Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -162,7 +189,11 @@ class AdSpecifications extends StatelessWidget {
                           color: Color(0xFFDCFCE7),
                         ),
                         child: const Center(
-                          child: Icon(Icons.check, size: 14, color: Color(0xFF16A34A)),
+                          child: Icon(
+                            Icons.check,
+                            size: 14,
+                            color: Color(0xFF16A34A),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -189,13 +220,22 @@ class AdSpecifications extends StatelessWidget {
     if (key.isEmpty) return key;
     final formatted = key.replaceAll('_', ' ');
     return formatted[0].toUpperCase() +
-        formatted.substring(1).replaceAllMapped(
-            RegExp(r'[A-Z]'), (m) => ' ${m[0]}');
+        formatted
+            .substring(1)
+            .replaceAllMapped(RegExp(r'[A-Z]'), (m) => ' ${m[0]}');
   }
 
   String _localizedKey(String key) => _keyMapNe[key] ?? _formatKey(key);
 
   String _localizedValue(String value) => _valueMapNe[value] ?? value;
+
+  static Future<void> _launchUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   static const _keyMapNe = {
     'condition': 'अवस्था',
@@ -238,6 +278,7 @@ class AdSpecifications extends StatelessWidget {
     'monthlyRent': 'मासिक भाडा',
     'securityDeposit': 'धरौटी',
     'availableFrom': 'उपलब्ध मिति',
+    'googleMapsLink': 'गुगल म्याप',
     'clothingType': 'लुगा प्रकार',
     'size': 'साइज',
     'fitType': 'फिट प्रकार',

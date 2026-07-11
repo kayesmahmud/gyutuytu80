@@ -98,9 +98,20 @@ export async function SpecificationsSection({ customFields, lang }: Specificatio
             <div className="text-xs text-gray-600 mb-1 capitalize">
               {getDisplayLabel(key)}
             </div>
-            <div className="text-base font-medium text-gray-800">
-              {getDisplayValue(key, value)}
-            </div>
+            {key === 'googleMapsLink' ? (
+              <a
+                href={String(value)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-base font-medium text-blue-600 hover:underline break-words"
+              >
+                {t('viewOnGoogleMaps')}
+              </a>
+            ) : (
+              <div className="text-base font-medium text-gray-800">
+                {getDisplayValue(key, value)}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -190,3 +190,14 @@ export const availableFromField: FormField = {
   optionsNe: ['तुरुन्तै', '१५ दिन', '१ महिना', '२ महिना', '३ महिना'],
   appliesTo: 'all',
 };
+
+export const googleMapsLinkField: FormField = {
+  name: 'googleMapsLink',
+  label: 'Google Maps',
+  labelNe: 'गुगल म्यापको लिङ्क',
+  type: 'text',
+  required: false,
+  placeholder: 'Paste Google Maps link',
+  placeholderNe: 'गुगल म्यापको लिङ्क पेस्ट गर्नुहोस्',
+  appliesTo: 'all',
+};
