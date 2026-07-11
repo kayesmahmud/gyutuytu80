@@ -25,6 +25,15 @@ vi.mock('@/lib/paymentGateways', () => ({
   initiatePayment: vi.fn(),
 }));
 
+// Mock server-authoritative pricing (PAY-4). These route tests exercise
+// orchestration, not the pricing math — the real price logic is tested via
+// priceValidation directly. Default: price validation passes with the same
+// amount the client sent (overridden per-test where needed).
+vi.mock('@/lib/payments/priceValidation', () => ({
+  getAuthoritativeAmount: vi.fn(),
+  AMOUNT_TOLERANCE_NPR: 1,
+}));
+
 // Helper to create mock requests
 function createMockRequest(body: Record<string, unknown>) {
   return new NextRequest('http://localhost:3333/api/payments/initiate', {
@@ -49,8 +58,12 @@ const mockTransaction = {
 };
 
 describe('POST /api/payments/initiate', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Default: price validation passes and the authoritative price equals the
+    // amount the happy-path tests send (100). Individual tests override as needed.
+    const { getAuthoritativeAmount } = await import('@/lib/payments/priceValidation');
+    vi.mocked(getAuthoritativeAmount).mockResolvedValue({ ok: true, expected: 100 });
   });
 
   // ==========================================
