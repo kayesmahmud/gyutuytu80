@@ -7,6 +7,7 @@ import { AdCard, AdBanner, AdsPagination } from '@/components/ads';
 import HeroSearch from './HeroSearch';
 import FeaturedAdsCarousel from './FeaturedAdsCarousel';
 import CategoryIcon from './CategoryIcon';
+import MobileCategoryCarousel from './MobileCategoryCarousel';
 
 // Reading searchParams (?page=N) makes this route render per-request,
 // same as the /ads browse page — revalidate no longer applies.
@@ -380,27 +381,8 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
                 </Link>
               </div>
 
-              {/* Mobile: Horizontal scrollable carousel */}
-              <div className="sm:hidden -mx-4 px-4">
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
-                  {normalizedCategories.map((category) => (
-                    <Link
-                      key={category.id}
-                      href={`/${lang}/ads/${category.slug}`}
-                      className="flex-shrink-0 snap-start"
-                    >
-                      <div className="w-[72px] flex flex-col items-center justify-center p-3 bg-white border border-gray-200 rounded-xl hover:border-rose-300 hover:shadow-sm transition-all">
-                        <div className="mb-1 w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center">
-                          <CategoryIcon slug={category.slug} emoji={category.icon} name={category.name} size={40} />
-                        </div>
-                        <span className="font-medium text-gray-800 text-[10px] text-center leading-tight line-clamp-2">
-                          {lang === 'ne' && category.name_ne ? category.name_ne : category.name}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
+              {/* Mobile: Two-row horizontal carousel with scroll arrows */}
+              <MobileCategoryCarousel categories={normalizedCategories} lang={lang} />
 
               {/* Desktop: Grid layout */}
               <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
