@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '@thulobazaar/database';
 import config from '../../config/index.js';
 import { catchAsync, NotFoundError, ValidationError, AuthenticationError } from '../../middleware/errorHandler.js';
-import { authenticateToken } from '../../middleware/auth.js';
+import { authenticateToken, requireEditorOrAdmin, requireActiveStaff } from '../../middleware/auth.js';
 import { rateLimiters } from '../../middleware/rateLimiter.js';
 import { verifyTwoFactorCode } from '../../services/auth.service.js';
 
@@ -58,7 +58,14 @@ router.post(
 
     // 🔒 API-2: staff 2FA must not be bypassable via the API login path. Single-step
     // (email + password + twoFactorCode), matching the web panel's NextAuth flow.
-    if (user.two_factor_enabled && user.two_factor_secret) {
+    if (user.two_factor_enabled) {
+      // Fail closed on inconsistent state (enabled but secret missing) — mirrors
+      // the disable2FA guard: never downgrade to password-only login.
+      if (!user.two_factor_secret) {
+        throw new AuthenticationError(
+          'Two-factor authentication is in an inconsistent state. Ask a super admin to reset it.'
+        );
+      }
       if (!twoFactorCode) {
         return res.status(401).json({
           success: false,
@@ -117,7 +124,11 @@ router.post(
  */
 router.get(
   '/profile',
+  // 🔒 This router is mounted BEFORE the router-level ACL gate (login must stay
+  // public), so staff-only middleware must be applied here explicitly.
   authenticateToken,
+  requireEditorOrAdmin,
+  requireActiveStaff,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
 

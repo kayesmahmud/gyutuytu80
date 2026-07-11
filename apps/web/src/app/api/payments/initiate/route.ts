@@ -70,6 +70,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    // 🔒 The client's amount only had to clear the floor — what we STORE and
+    // CHARGE is the server-authoritative price, so stored amount, gateway charge,
+    // and verify-time reconciliation all reference the same trusted value.
+    const chargedAmount = priceCheck.expected;
 
     // Generate unique order ID
     const timestamp = Date.now();
@@ -98,7 +102,7 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         payment_type: paymentType,
         payment_gateway: gateway,
-        amount: amount,
+        amount: chargedAmount,
         transaction_id: orderId,
         related_id: relatedId || null,
         status: 'pending',
@@ -113,7 +117,7 @@ export async function POST(request: NextRequest) {
     // Initiate payment with gateway
     const result = await initiatePayment({
       gateway,
-      amount,
+      amount: chargedAmount,
       paymentType,
       orderId,
       orderName: orderName || `ThulobBazaar ${paymentType.replace('_', ' ')}`,
@@ -157,7 +161,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`✅ Payment initiated: ${orderId} via ${gateway}, amount: NPR ${amount}`);
+    console.log(`✅ Payment initiated: ${orderId} via ${gateway}, amount: NPR ${chargedAmount}`);
 
     return NextResponse.json({
       success: true,
@@ -165,7 +169,7 @@ export async function POST(request: NextRequest) {
         transactionId: orderId,
         paymentUrl: result.paymentUrl,
         gateway,
-        amount,
+        amount: chargedAmount,
         pidx: result.pidx,
         expiresAt: result.expiresAt,
       },

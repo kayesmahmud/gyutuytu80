@@ -260,6 +260,10 @@ export async function initiatePaymentTransaction(input: InitiatePaymentInput) {
     );
     return { success: false, error: 'Payment amount does not match the current price. Please refresh and try again.' };
   }
+  // 🔒 The client's amount only had to clear the floor — what we STORE and
+  // CHARGE is the server-authoritative price, so stored amount, gateway charge,
+  // and verify-time reconciliation all reference the same trusted value.
+  const chargedAmount = priceCheck.expected;
 
   const orderId = generateOrderId(paymentType);
   const baseUrl = process.env.APP_URL || 'http://localhost:5000';
@@ -277,7 +281,7 @@ export async function initiatePaymentTransaction(input: InitiatePaymentInput) {
       user_id: userId,
       payment_type: paymentType,
       payment_gateway: gateway,
-      amount: amount,
+      amount: chargedAmount,
       transaction_id: orderId,
       related_id: relatedId || null,
       status: 'pending',
@@ -292,7 +296,7 @@ export async function initiatePaymentTransaction(input: InitiatePaymentInput) {
   // Initiate payment with gateway
   const result = await initiatePayment({
     gateway,
-    amount,
+    amount: chargedAmount,
     paymentType,
     orderId,
     orderName: orderName || `Thulo Bazaar ${paymentType.replace('_', ' ')}`,
@@ -333,7 +337,7 @@ export async function initiatePaymentTransaction(input: InitiatePaymentInput) {
     },
   });
 
-  console.log(`✅ Payment initiated: ${orderId} via ${gateway}, amount: NPR ${amount}`);
+  console.log(`✅ Payment initiated: ${orderId} via ${gateway}, amount: NPR ${chargedAmount}`);
 
   return {
     success: true,
@@ -341,7 +345,7 @@ export async function initiatePaymentTransaction(input: InitiatePaymentInput) {
       transactionId: orderId,
       paymentUrl: result.paymentUrl,
       gateway,
-      amount,
+      amount: chargedAmount,
       pidx: result.pidx,
       expiresAt: result.expiresAt,
     },

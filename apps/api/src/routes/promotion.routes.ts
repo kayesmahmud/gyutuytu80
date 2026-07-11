@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '@thulobazaar/database';
-import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
+import { catchAsync, NotFoundError, ConflictError } from '../middleware/errorHandler.js';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
 
 const router = Router();
@@ -292,21 +292,6 @@ router.post(
       });
     }
 
-    // One payment → one promotion. handleAdPromotionSuccess stores the numeric tx
-    // id; this route stores the orderId — check both to block double-spends.
-    const alreadyConsumed = await prisma.ad_promotions.findFirst({
-      where: {
-        payment_reference: { in: [paymentTx.id.toString(), paymentTx.transaction_id] },
-      },
-      select: { id: true },
-    });
-    if (alreadyConsumed) {
-      return res.status(409).json({
-        success: false,
-        message: 'This payment has already been used for a promotion',
-      });
-    }
-
     // Check for existing active promotion
     const existingPromo = await prisma.ad_promotions.findFirst({
       where: {
@@ -347,6 +332,22 @@ router.post(
 
     // Use transaction to atomically create promotion + update ad flags
     const promotion = await prisma.$transaction(async (tx) => {
+      // 🔒 One payment → one promotion, race-safe: lock the payment row so
+      // concurrent requests serialize, then re-check consumption INSIDE the
+      // transaction (a check outside would be a TOCTOU double-spend window).
+      // handleAdPromotionSuccess stores the numeric tx id; this route stores
+      // the orderId — check both formats.
+      await tx.$queryRaw`SELECT id FROM payment_transactions WHERE id = ${paymentTx.id} FOR UPDATE`;
+      const alreadyConsumed = await tx.ad_promotions.findFirst({
+        where: {
+          payment_reference: { in: [paymentTx.id.toString(), paymentTx.transaction_id] },
+        },
+        select: { id: true },
+      });
+      if (alreadyConsumed) {
+        throw new ConflictError('This payment has already been used for a promotion');
+      }
+
       // If extending, deactivate old promo record
       if (isExtension && existingPromo) {
         await tx.ad_promotions.update({
