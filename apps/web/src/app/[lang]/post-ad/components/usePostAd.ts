@@ -341,6 +341,11 @@ export function usePostAd(lang: string) {
         return;
       }
 
+      if (!formData.locationSlug) {
+        setError('Please select a location');
+        return;
+      }
+
       if (images.length === 0) {
         setError('Please upload at least one image');
         return;

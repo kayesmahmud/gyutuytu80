@@ -196,6 +196,10 @@ router.post(
       throw new ValidationError('Title, description, and category are required');
     }
 
+    if (!locationId) {
+      throw new ValidationError('Location is required');
+    }
+
     // Enforce ad limits from site_settings
     const [limits, activeAdCount, imageLimit] = await Promise.all([
       getAdLimits(),
