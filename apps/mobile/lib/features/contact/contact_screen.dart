@@ -71,7 +71,7 @@ class ContactScreen extends StatelessWidget {
               iconBg: const Color(0xFFDCFCE7),
               title: 'contact.phone'.tr(),
               value: 'contact.phoneNumber'.tr(),
-              onTap: () => _launchUrl('tel:+9771234567890'),
+              onTap: () => _launchUrl('tel:+97715921222'),
             ),
             _ContactCard(
               icon: LucideIcons.mapPin,
