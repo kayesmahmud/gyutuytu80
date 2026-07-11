@@ -145,6 +145,7 @@ export {
   getAvgResponseTimeTrend,
   getTrends,
   getSupportChatCount,
+  markSectionSeen,
   getEditorAnalytics,
 } from './stats';
 

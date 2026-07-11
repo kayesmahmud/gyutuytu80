@@ -861,6 +861,18 @@ model support_messages {
   @@index([created_at(sort: Desc)], map: "idx_support_messages_created_at")
 }
 
+/// Per-editor "last seen" timestamp for dashboard notification sections.
+/// Used to compute "unread" badge counts: a badge clears when the editor opens
+/// the section (last_seen_at bumps to now) and only relights when newer items arrive.
+model editor_section_seen {
+  editor_id    Int
+  section      String   @db.VarChar(50)
+  last_seen_at DateTime @default(now()) @db.Timestamp(6)
+
+  @@id([editor_id, section])
+  @@index([editor_id], map: "idx_editor_section_seen_editor")
+}
+
 /// Verification pricing for individual and business verification
 model verification_pricing {
   id                  Int       @id @default(autoincrement())

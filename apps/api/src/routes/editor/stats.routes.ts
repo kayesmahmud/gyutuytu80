@@ -5,6 +5,35 @@ import { authenticateToken } from '../../middleware/auth.js';
 
 const router = Router();
 
+// ── Notification sections (unread-badge tracking) ────────────────────
+// Editors "see" a section by opening its page; badges then count only items
+// created after that timestamp. Keep these in sync with the client (markSectionSeen).
+const SECTION_REPORTED_ADS = 'reported_ads';
+const SECTION_SUPPORT_CHAT = 'support_chat';
+const VALID_SECTIONS = [SECTION_REPORTED_ADS, SECTION_SUPPORT_CHAT];
+
+// Tickets still needing attention (excludes resolved/closed).
+const ACTIVE_TICKET_STATUSES = ['open', 'in_progress', 'waiting_on_user'] as const;
+
+// When an editor has never opened a section, everything counts as "new".
+const EPOCH = new Date(0);
+
+// Unread Support Chat badge: active tickets that have a *customer* message newer than
+// the editor last opened Support Chat. Covers both brand-new tickets (their initial
+// message) and new customer replies on old tickets. Staff replies (role editor/admin)
+// don't count — only messages from the customer (role 'user') relight the badge.
+function unreadSupportTicketsWhere(seenAt: Date) {
+  return {
+    status: { in: ACTIVE_TICKET_STATUSES as unknown as never },
+    support_messages: {
+      some: {
+        created_at: { gt: seenAt },
+        users: { role: 'user' as const },
+      },
+    },
+  };
+}
+
 // ── Shared helpers ───────────────────────────────────────────────────
 
 function formatAvgHours(avgHours: number): string {
@@ -53,6 +82,17 @@ router.get(
 
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Per-section "last seen" timestamps → drive the unread badge counts below.
+    // Default to EPOCH when the editor has never opened the section (all items are new).
+    const seenRows = await prisma.editor_section_seen.findMany({
+      where: { editor_id: userId },
+      select: { section: true, last_seen_at: true },
+    });
+    const reportedAdsSeenAt =
+      seenRows.find((r) => r.section === SECTION_REPORTED_ADS)?.last_seen_at ?? EPOCH;
+    const supportChatSeenAt =
+      seenRows.find((r) => r.section === SECTION_SUPPORT_CHAT)?.last_seen_at ?? EPOCH;
 
     // Fire ALL queries in parallel
     const [
@@ -135,11 +175,13 @@ router.get(
       prisma.ads.count({ where: { status: 'pending', created_at: { lt: twoDaysAgo } } }),
       prisma.users.count({ where: { business_verification_status: 'pending', created_at: { lt: fiveDaysAgo } } }),
 
-      // ── Support chat ──
-      prisma.ad_reports.count({ where: { status: 'pending', admin_notes: null } }),
+      // ── Support chat (unread badge) — tickets with new customer messages since last seen ──
+      prisma.support_tickets.count({ where: unreadSupportTicketsWhere(supportChatSeenAt) }),
 
-      // ── Reported ads ──
-      prisma.ad_reports.count({ where: { status: 'pending' } }),
+      // ── Reported ads (unread badge) — new pending reports since last seen ──
+      prisma.ad_reports.count({
+        where: { status: 'pending', created_at: { gt: reportedAdsSeenAt } },
+      }),
 
       // ── Verification badge counts ──
       prisma.business_verification_requests.count({ where: { status: 'pending' } }),
@@ -560,23 +602,55 @@ router.get(
 
 /**
  * GET /api/editor/support-chat/count
- * Get support chat count
+ * Unread support-chat badge: active tickets created since the editor last opened
+ * the Support Chat page. Used by the real-time socket refresh on the dashboard.
  */
 router.get(
   '/support-chat/count',
   authenticateToken,
-  catchAsync(async (_req: Request, res: Response) => {
-    const count = await prisma.ad_reports.count({
-      where: {
-        status: 'pending',
-        admin_notes: null,
-      },
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+
+    const seen = await prisma.editor_section_seen.findUnique({
+      where: { editor_id_section: { editor_id: userId, section: SECTION_SUPPORT_CHAT } },
+      select: { last_seen_at: true },
+    });
+
+    const count = await prisma.support_tickets.count({
+      where: unreadSupportTicketsWhere(seen?.last_seen_at ?? EPOCH),
     });
 
     res.json({
       success: true,
       data: { count },
     });
+  })
+);
+
+/**
+ * POST /api/editor/section-seen/:section
+ * Mark a notification section (reported_ads | support_chat) as seen by the current
+ * editor. Bumps last_seen_at to now so the section's badge clears until newer items
+ * arrive. Called when the editor opens the corresponding page.
+ */
+router.post(
+  '/section-seen/:section',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const section = String(req.params.section);
+
+    if (!VALID_SECTIONS.includes(section)) {
+      return res.status(400).json({ success: false, error: 'Invalid section' });
+    }
+
+    await prisma.editor_section_seen.upsert({
+      where: { editor_id_section: { editor_id: userId, section } },
+      update: { last_seen_at: new Date() },
+      create: { editor_id: userId, section },
+    });
+
+    return res.json({ success: true });
   })
 );
 

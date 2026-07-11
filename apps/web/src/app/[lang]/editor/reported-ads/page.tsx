@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback, use } from 'react';
+import { useEffect, useRef, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/admin';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { getEditorNavSections } from '@/lib/navigation';
+import { markSectionSeen } from '@/lib/editorApi';
 import { ReportTabs, StatsCards, SearchBar, ReportsList } from './components';
 import { useReportedAds } from './useReportedAds';
 import { TABS, type TabStatus } from './types';
@@ -36,6 +37,14 @@ export default function ReportedAdsPage({ params: paramsPromise }: { params: Pro
     await logout();
     router.push(`/${params.lang}/editor/login`);
   }, [logout, router, params.lang]);
+
+  // Mark this section as seen once per visit → clears the dashboard "Reported Ads" badge.
+  const markedSeen = useRef(false);
+  useEffect(() => {
+    if (authLoading || !staff || !isEditor || markedSeen.current) return;
+    markedSeen.current = true;
+    markSectionSeen('reported_ads').catch(() => {});
+  }, [authLoading, staff, isEditor]);
 
   useEffect(() => {
     if (authLoading) return;

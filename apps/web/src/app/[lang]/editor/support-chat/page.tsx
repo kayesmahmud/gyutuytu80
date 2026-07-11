@@ -1,9 +1,10 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/admin';
 import { getEditorNavSections } from '@/lib/navigation';
+import { markSectionSeen } from '@/lib/editorApi';
 import {
   useSupportChatPage,
   StatsCards,
@@ -49,6 +50,14 @@ export default function SupportChatPage({ params: paramsPromise }: { params: Pro
     profanityWarning,
     setProfanityWarning,
   } = useSupportChatPage(params.lang);
+
+  // Mark this section as seen once per visit → clears the dashboard "Support Chat" badge.
+  const markedSeen = useRef(false);
+  useEffect(() => {
+    if (authLoading || !staff || markedSeen.current) return;
+    markedSeen.current = true;
+    markSectionSeen('support_chat').catch(() => {});
+  }, [authLoading, staff]);
 
   if (authLoading) {
     return (

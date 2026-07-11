@@ -81,6 +81,26 @@ export async function getSupportChatCount(token?: string): Promise<ApiResponse<S
 }
 
 /**
+ * Notification sections whose dashboard badge tracks "unread" (new-since-last-seen) items.
+ */
+export type EditorNotificationSection = 'reported_ads' | 'support_chat';
+
+/**
+ * Mark a notification section as seen by the current editor.
+ * Clears that section's dashboard badge until newer items arrive.
+ * Call this when the editor opens the corresponding page.
+ */
+export async function markSectionSeen(
+  section: EditorNotificationSection,
+  token?: string
+): Promise<ApiResponse<never>> {
+  return apiRequest<ApiResponse<never>>(`/api/editor/section-seen/${section}`, {
+    method: 'POST',
+    token,
+  });
+}
+
+/**
  * Get per-editor analytics data scoped to the logged-in editor
  */
 export async function getEditorAnalytics(range: string = '30d', token?: string): Promise<ApiResponse<EditorAnalyticsData>> {
