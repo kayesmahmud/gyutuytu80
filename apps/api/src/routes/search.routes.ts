@@ -94,8 +94,11 @@ router.get(
       prisma.ads.count({ where }),
     ]);
 
-    const data = ads.map((ad: any) => ({
-      ...ad,
+    const data = ads.map((ad: any) => {
+      // 🔒 DB-M1: strip internal moderation columns from the public spread.
+      const { status_reason, reviewed_by, deleted_by, deletion_reason, ...safeAd } = ad;
+      return {
+      ...safeAd,
       category_name: ad.categories?.name,
       category_name_ne: ad.categories?.name_ne,
       location_name: ad.locations?.name,
@@ -107,7 +110,8 @@ router.get(
       // publishedAt = when editor approved (use this for "time ago" display)
       publishedAt: ad.reviewed_at || ad.created_at,
       reviewedAt: ad.reviewed_at,
-    }));
+      };
+    });
 
     // Short-lived cache — search results change as ads are approved/expired
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=30');

@@ -131,7 +131,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to report shop',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -246,7 +245,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch shop reports',
-        error: error.message,
       },
       { status: 500 }
     );

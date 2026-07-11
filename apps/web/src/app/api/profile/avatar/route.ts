@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to upload avatar',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -75,7 +74,6 @@ export async function DELETE(request: NextRequest) {
       {
         success: false,
         message: 'Failed to remove avatar',
-        error: error.message,
       },
       { status: 500 }
     );

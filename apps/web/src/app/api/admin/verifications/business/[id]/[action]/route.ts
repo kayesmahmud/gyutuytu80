@@ -215,7 +215,6 @@ export async function POST(
       {
         success: false,
         message: 'Failed to process verification request',
-        error: error.message,
       },
       { status: 500 }
     );

@@ -5,6 +5,7 @@
  * the two can no longer drift apart.
  */
 
+import crypto from 'crypto';
 import { prisma } from '@thulobazaar/database';
 import {
   formatPhoneNumber,
@@ -60,6 +61,15 @@ export interface SendOtpOptions {
  * (including the duplicate-phone check) BEFORE generating or texting a code,
  * so a number that's already in use never costs an SMS.
  */
+// 🔒 AUTH-L2: constant-time comparison for OTP codes (avoid a timing side channel).
+// OTP length is fixed (6 digits), so the length-mismatch early return leaks nothing.
+function timingSafeEqualStr(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 export async function sendOtp(
   phone: string,
   purpose: OtpPurpose,
@@ -86,7 +96,10 @@ export async function sendOtp(
       where: { phone: formattedPhone, phone_verified: true, is_active: true },
     });
     if (!existingUser) {
-      return { success: false, error: 'No account found with this phone number' };
+      // 🔒 AUTH-M2: don't reveal whether an account exists. Return the same success
+      // shape as a real send without generating/texting an OTP — a later verify just
+      // fails, indistinguishable from a wrong code.
+      return { success: true, identifier: formattedPhone, expiresIn: OTP_VALIDITY_SECONDS };
     }
     if (existingUser.is_suspended) {
       return { success: false, error: 'Your account has been suspended. Please contact support.' };
@@ -98,7 +111,8 @@ export async function sendOtp(
       where: { phone: formattedPhone, is_active: true },
     });
     if (!existingUser) {
-      return { success: false, error: 'No account found with this phone number' };
+      // 🔒 AUTH-M2: success-shaped, no OTP sent (see login note above).
+      return { success: true, identifier: formattedPhone, expiresIn: OTP_VALIDITY_SECONDS };
     }
     if (existingUser.is_suspended) {
       return { success: false, error: 'Your account has been suspended. Please contact support.' };
@@ -223,7 +237,7 @@ export async function verifyOtp(
     return { success: false, error: 'Too many failed attempts. Please request a new OTP.' };
   }
 
-  if (otpRecord.otp_code !== otp) {
+  if (!timingSafeEqualStr(otpRecord.otp_code, otp)) {
     await prisma.phone_otps.update({
       where: { id: otpRecord.id },
       data: { attempts: { increment: 1 } },

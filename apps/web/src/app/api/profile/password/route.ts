@@ -104,7 +104,6 @@ export async function PUT(request: NextRequest) {
       {
         success: false,
         message: 'Failed to change password',
-        error: error.message,
       },
       { status: 500 }
     );

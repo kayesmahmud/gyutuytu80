@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to upload cover photo',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -72,7 +71,6 @@ export async function DELETE(request: NextRequest) {
       {
         success: false,
         message: 'Failed to remove cover photo',
-        error: error.message,
       },
       { status: 500 }
     );

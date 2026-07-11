@@ -87,7 +87,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to reject ad',
-        error: error.message,
       },
       { status: 500 }
     );

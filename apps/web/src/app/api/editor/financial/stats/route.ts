@@ -248,7 +248,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, message: 'Failed to fetch financial stats', error: error.message },
+      { success: false, message: 'Failed to fetch financial stats' },
       { status: 500 }
     );
   }

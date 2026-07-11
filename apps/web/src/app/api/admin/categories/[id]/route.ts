@@ -93,7 +93,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to update category',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -183,7 +182,6 @@ export async function DELETE(
       {
         success: false,
         message: 'Failed to delete category',
-        error: error.message,
       },
       { status: 500 }
     );

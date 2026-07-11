@@ -82,7 +82,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to restore ad',
-        error: error.message,
       },
       { status: 500 }
     );

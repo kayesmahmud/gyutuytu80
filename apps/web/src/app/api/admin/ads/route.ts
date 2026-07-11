@@ -160,7 +160,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch ads',
-        error: error.message,
       },
       { status: 500 }
     );

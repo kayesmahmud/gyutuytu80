@@ -103,7 +103,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to calculate price',
-        error: error.message,
       },
       { status: 500 }
     );

@@ -134,7 +134,11 @@ function buildWhereClause(filters: AdFilters) {
   }
 
   if (filters.areaId) {
-    where.area_id = parseInt(filters.areaId, 10);
+    // 🐛 DB-L5: `ads` has no area_id column — an area IS a location (a child in the
+    // location hierarchy), so filter by location_id. Referencing area_id threw a
+    // Prisma validation error (500) on every ?areaId= request. More specific than
+    // locationId, so it's applied last and wins.
+    where.location_id = parseInt(filters.areaId, 10);
   }
 
   if (filters.minPrice || filters.maxPrice) {

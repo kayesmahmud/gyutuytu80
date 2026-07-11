@@ -149,7 +149,6 @@ export async function POST(
       {
         success: false,
         message: 'Failed to restore shop',
-        error: error.message,
       },
       { status: 500 }
     );

@@ -175,7 +175,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Error fetching location hierarchy',
-        error: error.message,
       },
       { status: 500 }
     );

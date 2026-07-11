@@ -56,7 +56,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to check slug availability',
-        error: error.message,
       },
       { status: 500 }
     );

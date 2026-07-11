@@ -36,6 +36,12 @@ import notificationCenterRoutes from './routes/notificationCenter.routes.js';
 export function createApp(): Express {
   const app = express();
 
+  // 🔒 API-1: Behind nginx/Cloudflare, trust the first proxy hop so `req.ip`
+  // resolves to the real client IP (from X-Forwarded-For) instead of the proxy IP.
+  // Without this, all clients share one rate-limit bucket (per-IP protection gone,
+  // and one client can lock out auth platform-wide).
+  app.set('trust proxy', 1);
+
   // Security middleware - Helmet for HTTP headers
   app.use(
     helmet({
@@ -188,7 +194,11 @@ export function createApp(): Express {
   app.use('/api/areas', areasRoutes);
   app.use('/api/promotions', promotionRoutes);
   app.use('/api/promotion-pricing', promotionRoutes);
-  app.use('/api/mock-payment', mockPaymentRoutes);
+  // 🔒 PAY-3: The mock gateway "succeeds" for free and is partly unauthenticated.
+  // Never mount it in production — dev/test only.
+  if (config.NODE_ENV !== 'production') {
+    app.use('/api/mock-payment', mockPaymentRoutes);
+  }
   app.use('/api/payments', paymentRoutes);
   app.use('/api/category-pricing-tiers', categoryPricingTiersRoutes);
   app.use('/api/favorites', favoritesRoutes);
@@ -368,9 +378,11 @@ export function createApp(): Express {
   app.post('/api/internal/broadcast-message', (req, res) => {
     const { secret, messageData, conversationId } = req.body;
 
-    // Simple shared secret to prevent unauthorized broadcasts
-    const internalSecret = process.env.INTERNAL_API_SECRET || 'thulobazaar-internal-2025';
-    if (secret !== internalSecret) {
+    // 🔒 SEC-2: shared secret to prevent unauthorized broadcasts. Fail closed —
+    // if the secret isn't configured, reject (never fall back to a published literal,
+    // and never let unset===unset pass the equality check).
+    const internalSecret = process.env.INTERNAL_API_SECRET;
+    if (!internalSecret || secret !== internalSecret) {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
 

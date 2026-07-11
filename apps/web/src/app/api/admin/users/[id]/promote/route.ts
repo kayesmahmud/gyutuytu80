@@ -84,7 +84,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to promote user',
-        error: error.message,
       },
       { status: 500 }
     );

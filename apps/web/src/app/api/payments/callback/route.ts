@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
   const pidx = searchParams.get('pidx');
   const khaltiStatus = searchParams.get('status');
   const khaltiTxnId = searchParams.get('transaction_id');
-  const khaltiAmount = searchParams.get('amount');
+  // NOTE: the callback's `amount` query param is intentionally ignored (🔒 PAY-1) —
+  // amounts are taken from the stored transaction and the gateway lookup response.
 
   // eSewa params (base64 encoded data)
   const esewaData = searchParams.get('data');
@@ -44,6 +45,8 @@ export async function GET(request: NextRequest) {
         amount: true,
         metadata: true,
         transaction_id: true,
+        related_id: true, // 🔒 PAY-1: success actions bind to the STORED target, not query params
+        status: true,
       },
     });
 
@@ -51,6 +54,17 @@ export async function GET(request: NextRequest) {
       console.error(`Payment callback: Transaction not found: ${orderId}`);
       return NextResponse.redirect(`${baseUrl}/en/payment/failure?error=transaction_not_found`);
     }
+
+    // 🔒 Idempotency: a replayed callback for an already-verified transaction must
+    // not re-run the success handlers (e.g. re-create a promotion).
+    if (transaction.status === 'verified') {
+      return NextResponse.redirect(
+        `${baseUrl}/en/payment/success?orderId=${orderId}&gateway=${gateway}&type=${transaction.payment_type}`
+      );
+    }
+
+    const storedAmount = transaction.amount ? parseFloat(transaction.amount.toString()) : 0;
+    const storedMetadata = JSON.parse((transaction.metadata as string) || '{}');
 
     let verifyResult;
     let parsedEsewaData: Record<string, unknown> | null = null;
@@ -66,39 +80,54 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${baseUrl}/en/payment/failure?error=canceled&orderId=${orderId}`);
       }
 
-      // Verify with Khalti lookup API
+      // Verify with Khalti lookup API.
+      // 🔒 PAY-1: prefer the pidx stored at initiation over the callback's, so the
+      // callback can't substitute the pidx of a different (cheaper) payment; the
+      // client-reported `amount` query param is never used.
       verifyResult = await verifyPayment({
         gateway: 'khalti',
         transactionId: orderId,
-        pidx: pidx || undefined,
-        amount: khaltiAmount ? parseInt(khaltiAmount, 10) / 100 : transaction.amount ? parseFloat(transaction.amount.toString()) : 0,
+        pidx: (storedMetadata.pidx as string) || pidx || undefined,
+        amount: storedAmount,
       });
     } else if (gateway === 'esewa') {
-      // Decode eSewa response
+      // 🔒 PAY-1: the base64 callback payload is CLIENT-CONTROLLED and unsigned in
+      // practice — a forged {"status":"COMPLETE"} must never mark a transaction
+      // paid. Decode for logging only; ALWAYS confirm via eSewa's server-to-server
+      // status-check API, queried with OUR stored orderId + amount.
       if (esewaData) {
         parsedEsewaData = decodeEsewaCallback(esewaData);
       }
 
-      if (parsedEsewaData?.status === 'COMPLETE') {
-        verifyResult = {
-          success: true,
-          status: 'completed' as const,
-          transactionId: orderId,
-          amount: parseFloat(String(parsedEsewaData.total_amount)) || 0,
-          gateway: 'esewa' as const,
-          gatewayTransactionId: String(parsedEsewaData.transaction_code),
-        };
-      } else {
-        // Verify with eSewa status API
-        verifyResult = await verifyPayment({
-          gateway: 'esewa',
-          transactionId: orderId,
-          amount: transaction.amount ? parseFloat(transaction.amount.toString()) : 0,
-        });
-      }
+      verifyResult = await verifyPayment({
+        gateway: 'esewa',
+        transactionId: orderId,
+        amount: storedAmount,
+      });
     } else {
       console.error(`Payment callback: Unknown gateway: ${gateway}`);
       return NextResponse.redirect(`${baseUrl}/en/payment/failure?error=invalid_gateway`);
+    }
+
+    // 🔒 PAY-4: reconcile the amount the GATEWAY says was paid against the amount
+    // stored at initiation (fail closed on missing/mismatched amounts).
+    if (verifyResult.success && verifyResult.status === 'completed') {
+      const gatewayAmount = Number(verifyResult.amount);
+      if (!Number.isFinite(gatewayAmount) || Math.abs(gatewayAmount - storedAmount) > 1) {
+        console.error(
+          `🚫 Payment amount mismatch on ${orderId}: gateway says NPR ${verifyResult.amount}, expected NPR ${storedAmount}`
+        );
+        await prisma.payment_transactions.update({
+          where: { id: transaction.id },
+          data: {
+            status: 'failed',
+            failure_reason: `Amount mismatch: gateway reported ${verifyResult.amount}, expected ${storedAmount}`,
+          },
+        });
+        return NextResponse.redirect(
+          `${baseUrl}/en/payment/failure?orderId=${orderId}&status=failed&error=amount_mismatch`
+        );
+      }
     }
 
     // Update transaction based on verification result
@@ -121,8 +150,9 @@ export async function GET(request: NextRequest) {
 
       console.log(`✅ Payment verified: ${orderId} via ${gateway}`);
 
-      // Handle post-payment actions based on payment type
-      await handlePaymentSuccess(transaction, paymentType, relatedId ? parseInt(relatedId, 10) : null);
+      // 🔒 PAY-1: activate what was PAID FOR (stored payment_type/related_id),
+      // never what the callback query string claims.
+      await handlePaymentSuccess(transaction, transaction.payment_type as PaymentType, transaction.related_id);
 
       // Redirect to success page
       return NextResponse.redirect(

@@ -171,8 +171,10 @@ router.put(
       console.log('📷 Avatar uploaded:', req.file.filename);
     }
 
+    // 🔒 API-M3: only editor accounts may be managed here — never another
+    // admin/super_admin or a regular user.
     const updatedEditor = await prisma.users.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id), role: 'editor' },
       data: updateData,
       select: {
         id: true,
@@ -209,8 +211,9 @@ router.delete(
 
     const { id } = req.params;
 
+    // 🔒 API-M3: only editor accounts may be deleted here.
     await prisma.users.delete({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id), role: 'editor' },
     });
 
     console.log(`✅ Editor deleted: ID ${id}`);
@@ -237,8 +240,9 @@ router.put(
     const { id } = req.params;
     const { suspend } = req.body;
 
+    // 🔒 API-M3: only editor accounts may be suspended here.
     const updatedEditor = await prisma.users.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id), role: 'editor' },
       data: { is_active: !suspend },
       select: {
         id: true,
@@ -274,8 +278,9 @@ router.put(
 
     const { id } = req.params;
 
+    // 🔒 API-M3: only editor accounts' 2FA may be reset here.
     const updatedEditor = await prisma.users.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id), role: 'editor' },
       data: {
         two_factor_enabled: false,
         two_factor_secret: null,

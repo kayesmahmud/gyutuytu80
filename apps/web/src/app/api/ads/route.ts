@@ -32,7 +32,10 @@ export async function GET(request: NextRequest) {
       minPrice: searchParams.get('minPrice'),
       maxPrice: searchParams.get('maxPrice'),
       condition: searchParams.get('condition'),
-      status: searchParams.get('status') || 'approved',
+      // 🔒 DB-2: the public listing must ONLY ever return approved ads. Honoring a
+      // client `?status=pending|rejected` would enumerate every user's unmoderated
+      // ads. Owners view their own non-approved ads via the dedicated /api/ads/my.
+      status: 'approved',
       sort: searchParams.get('sort') || 'newest',
       limit: parseInt(searchParams.get('limit') || '20', 10),
       page: parseInt(searchParams.get('page') || '1', 10),
@@ -229,7 +232,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to create ad',
-        error: error.message,
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }

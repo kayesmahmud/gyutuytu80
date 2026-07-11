@@ -111,7 +111,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to suspend user',
-        error: error.message,
       },
       { status: 500 }
     );

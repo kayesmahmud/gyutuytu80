@@ -114,7 +114,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Search failed',
-        error: error.message,
       },
       { status: 500 }
     );

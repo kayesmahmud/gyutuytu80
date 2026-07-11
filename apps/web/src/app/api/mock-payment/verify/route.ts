@@ -9,6 +9,10 @@ import { mockPaymentService } from '@/lib/paymentGateways';
  * Requires: Authentication
  */
 export async function POST(request: NextRequest) {
+  // 🔒 PAY-3: the mock gateway "succeeds" for free — never serve it in production.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+  }
   try {
     const userId = await requireAuth(request);
     const body = await request.json();
@@ -79,7 +83,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to verify payment',
+        message: 'Failed to verify payment',
       },
       { status: 500 }
     );

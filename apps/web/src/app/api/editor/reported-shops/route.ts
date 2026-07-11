@@ -152,7 +152,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch reported shops',
-        error: error.message,
       },
       { status: 500 }
     );

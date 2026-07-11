@@ -116,7 +116,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to revoke verification',
-        error: error.message,
       },
       { status: 500 }
     );

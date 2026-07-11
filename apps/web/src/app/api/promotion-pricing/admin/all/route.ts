@@ -81,7 +81,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch promotion pricing',
-        error: error.message,
       },
       { status: 500 }
     );

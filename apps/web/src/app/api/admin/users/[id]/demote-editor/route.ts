@@ -81,7 +81,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to demote editor',
-        error: error.message,
       },
       { status: 500 }
     );

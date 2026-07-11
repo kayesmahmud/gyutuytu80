@@ -83,7 +83,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to unsuspend user',
-        error: error.message,
       },
       { status: 500 }
     );

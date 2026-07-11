@@ -149,7 +149,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch dashboard statistics',
-        error: error.message,
       },
       { status: 500 }
     );

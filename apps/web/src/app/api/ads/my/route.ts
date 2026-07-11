@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
       orderBy: {
         created_at: 'desc',
       },
+      take: 200, // 🔒 DB-L6: bound the result set (own-ads can accumulate over time)
     });
 
     // Transform to camelCase with views mapping
@@ -111,7 +112,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch your ads',
-        error: error.message,
       },
       { status: 500 }
     );

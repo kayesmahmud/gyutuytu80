@@ -10,7 +10,7 @@ export const typesenseClient = new Typesense.Client({
       protocol: process.env.TYPESENSE_PROTOCOL || 'http',
     },
   ],
-  apiKey: process.env.TYPESENSE_API_KEY || 'xyz',
+  apiKey: process.env.TYPESENSE_API_KEY || '', // 🔒 SEC-2/SEC-M2: no 'xyz' fallback (fail closed)
   connectionTimeoutSeconds: 5,
 });
 

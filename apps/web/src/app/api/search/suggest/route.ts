@@ -65,7 +65,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to get suggestions',
-        error: error.message,
       },
       { status: 500 }
     );

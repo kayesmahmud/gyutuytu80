@@ -127,7 +127,6 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch favorites',
-      error: error.message,
     });
   }
 });
@@ -208,7 +207,6 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to add to favorites',
-      error: error.message,
     });
   }
 });
@@ -260,7 +258,6 @@ router.delete('/:adId', authenticateToken, async (req: Request, res: Response) =
     res.status(500).json({
       success: false,
       message: 'Failed to remove from favorites',
-      error: error.message,
     });
   }
 });
@@ -303,7 +300,6 @@ router.get('/:adId', authenticateToken, async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to check favorite status',
-      error: error.message,
     });
   }
 });

@@ -7,6 +7,7 @@
  */
 
 import { prisma } from '@thulobazaar/database';
+import crypto from 'crypto';
 import fs from 'fs';
 
 const LOG_FILE = '/tmp/sms_debug.log';
@@ -58,7 +59,9 @@ export function formatPhoneNumber(phone: string): string {
  * Generate a 6-digit OTP code.
  */
 export function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // 🔒 AUTH-M1: use a CSPRNG — Math.random() is predictable from observed outputs,
+  // which would weaken OTP for login / password-reset / account-deletion.
+  return crypto.randomInt(100000, 1000000).toString();
 }
 
 export type OtpPurpose = 'registration' | 'login' | 'password_reset' | 'phone_verification' | 'account_deletion';

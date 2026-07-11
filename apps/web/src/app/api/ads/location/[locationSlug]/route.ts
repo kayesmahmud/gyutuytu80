@@ -165,7 +165,6 @@ export async function GET(
       {
         success: false,
         message: 'Server error while fetching ads by location',
-        error: error.message,
       },
       { status: 500 }
     );

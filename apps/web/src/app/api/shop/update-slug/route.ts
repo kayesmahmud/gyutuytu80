@@ -77,7 +77,6 @@ export async function PUT(request: NextRequest) {
       {
         success: false,
         message: 'Failed to update shop URL',
-        error: error.message,
       },
       { status: 500 }
     );

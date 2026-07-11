@@ -11,6 +11,10 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ transactionId: string }> }
 ) {
+  // 🔒 PAY-3: the mock gateway "succeeds" for free — never serve it in production.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+  }
   try {
     // Authenticate user
     const userId = await requireAuth(request);
@@ -77,7 +81,6 @@ export async function GET(
       {
         success: false,
         message: 'Failed to get payment status',
-        error: error.message,
       },
       { status: 500 }
     );

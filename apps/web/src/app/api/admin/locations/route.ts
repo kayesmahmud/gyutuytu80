@@ -90,7 +90,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch locations',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -200,7 +199,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to create location',
-        error: error.message,
       },
       { status: 500 }
     );

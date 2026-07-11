@@ -107,7 +107,6 @@ export async function POST(
       {
         success: false,
         message: 'Failed to dismiss report',
-        error: error.message,
       },
       { status: 500 }
     );

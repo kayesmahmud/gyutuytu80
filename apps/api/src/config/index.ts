@@ -16,7 +16,7 @@ export const config = {
   DB_USER: process.env.DB_USER || 'elw',
   DB_HOST: process.env.DB_HOST || 'localhost',
   DB_NAME: process.env.DB_NAME || 'thulobazaar',
-  DB_PASSWORD: process.env.DB_PASSWORD || 'postgres',
+  DB_PASSWORD: process.env.DB_PASSWORD || '', // 🔒 SEC-2: no published default; required in prod (see validateConfig)
   DB_PORT: parseInt(process.env.DB_PORT || '5432', 10),
 
   // Security
@@ -81,6 +81,17 @@ export function validateConfig(): void {
   if (!config.GOOGLE_CLIENT_SECRET) {
     console.error('FATAL: GOOGLE_CLIENT_SECRET environment variable is not set!');
     process.exit(1);
+  }
+  // 🔒 SEC-2: secrets that must never fall back to a published default in production.
+  if (config.NODE_ENV === 'production') {
+    if (!config.DB_PASSWORD) {
+      console.error('FATAL: DB_PASSWORD environment variable is not set in production!');
+      process.exit(1);
+    }
+    if (!process.env.INTERNAL_API_SECRET) {
+      console.error('FATAL: INTERNAL_API_SECRET environment variable is not set in production!');
+      process.exit(1);
+    }
   }
 }
 

@@ -149,6 +149,14 @@ router.get('/callback', async (req: Request, res: Response) => {
       return res.redirect(`${frontendUrl}/en/payment/failure?error=transaction_not_found`);
     }
 
+    // 🔒 Idempotency: a replayed callback for an already-verified transaction must
+    // not re-run the success handlers (e.g. re-create/extend a promotion).
+    if (transaction.status === 'verified') {
+      return res.redirect(
+        `${frontendUrl}/en/payment/success?orderId=${orderId}&gateway=${gateway}&type=${transaction.payment_type}`
+      );
+    }
+
     // Handle Khalti user cancellation
     if (gateway === 'khalti' && khaltiStatus === 'User canceled') {
       await markTransactionCanceled(transaction.id, 'User canceled payment');
@@ -157,7 +165,7 @@ router.get('/callback', async (req: Request, res: Response) => {
 
     // Verify payment
     const verifyResult = await verifyGatewayPayment(
-      { ...transaction, payment_gateway: gateway, related_id: null, status: null },
+      { ...transaction, payment_gateway: gateway },
       gateway,
       pidx,
       esewaData
@@ -168,17 +176,25 @@ router.get('/callback', async (req: Request, res: Response) => {
       return res.redirect(`${frontendUrl}/en/payment/failure?error=invalid_gateway`);
     }
 
-    // Update transaction status
+    // Update transaction status (🔒 PAY-4: reconcile gateway amount vs stored amount)
+    const storedAmount = transaction.amount ? parseFloat(transaction.amount.toString()) : 0;
     const verified = await updateTransactionStatus(
       transaction.id,
       verifyResult,
       transaction.metadata,
+      storedAmount,
       { khaltiTxnId, esewaData: verifyResult.parsedEsewaData }
     );
 
     if (verified) {
       console.log(`✅ Payment verified: ${orderId} via ${gateway}`);
-      await handlePaymentSuccess(transaction, paymentType, relatedId ? parseInt(relatedId, 10) : null);
+      // 🔒 PAY-1: activate what was PAID FOR (stored payment_type/related_id),
+      // never what the callback query string claims.
+      await handlePaymentSuccess(
+        transaction,
+        transaction.payment_type as PaymentType,
+        transaction.related_id
+      );
 
       return res.redirect(
         `${frontendUrl}/en/payment/success?orderId=${orderId}&gateway=${gateway}&type=${paymentType}${relatedId ? `&relatedId=${relatedId}` : ''}`
@@ -220,6 +236,16 @@ router.post('/verify', authenticateToken, async (req: Request, res: Response) =>
       });
     }
 
+    // 🔒 API-3: a transaction may only be verified by its owner (prevents IDOR:
+    // verifying/claiming another user's pending transaction). 404, not 403, to
+    // avoid confirming the transaction exists.
+    if (transaction.user_id !== req.user!.userId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found',
+      });
+    }
+
     // Already verified
     if (transaction.status === 'verified') {
       return res.json({
@@ -248,8 +274,14 @@ router.post('/verify', authenticateToken, async (req: Request, res: Response) =>
       });
     }
 
-    // Update transaction
-    const verified = await updateTransactionStatus(transaction.id, verifyResult, transaction.metadata);
+    // Update transaction (🔒 PAY-4: reconcile gateway amount vs stored amount)
+    const storedAmount = transaction.amount ? parseFloat(transaction.amount.toString()) : 0;
+    const verified = await updateTransactionStatus(
+      transaction.id,
+      verifyResult,
+      transaction.metadata,
+      storedAmount
+    );
 
     if (verified) {
       await handlePaymentSuccess(

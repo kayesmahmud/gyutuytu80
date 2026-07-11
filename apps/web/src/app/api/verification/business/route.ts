@@ -511,7 +511,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to submit verification request',
-        error: error.message,
       },
       { status: 500 }
     );

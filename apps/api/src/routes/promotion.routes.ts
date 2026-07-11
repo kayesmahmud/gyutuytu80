@@ -235,6 +235,78 @@ router.post(
       throw new NotFoundError('Ad not found');
     }
 
+    // 🔒 PAY-2: promotions are NEVER granted on the caller's word. Require a
+    // VERIFIED payment transaction that (a) belongs to the caller, (b) was made
+    // for THIS ad and promotion type/duration, and (c) hasn't already been
+    // consumed by another promotion. (The normal flow activates promotions
+    // server-side via the payment-verify path; this endpoint exists for clients
+    // that apply after paying, so it must re-check everything.)
+    if (!paymentReference || typeof paymentReference !== 'string') {
+      return res.status(402).json({
+        success: false,
+        message: 'A verified payment is required to promote an ad',
+      });
+    }
+
+    const paymentTx = await prisma.payment_transactions.findFirst({
+      where: {
+        transaction_id: paymentReference,
+        user_id: userId,
+        status: 'verified',
+        payment_type: 'ad_promotion',
+      },
+      select: { id: true, transaction_id: true, related_id: true, amount: true, metadata: true },
+    });
+
+    if (!paymentTx) {
+      return res.status(402).json({
+        success: false,
+        message: 'No verified payment found for this reference',
+      });
+    }
+
+    if (paymentTx.related_id !== parseInt(adId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'This payment was made for a different ad',
+      });
+    }
+
+    // The payment's stored metadata (validated against promotion_pricing at
+    // initiation — PAY-4) must match what is being requested now.
+    let txMeta: Record<string, unknown> = {};
+    try {
+      txMeta =
+        typeof paymentTx.metadata === 'string'
+          ? JSON.parse(paymentTx.metadata)
+          : (paymentTx.metadata as Record<string, unknown>) || {};
+    } catch {
+      txMeta = {};
+    }
+    const paidType = String(txMeta.promotionType || '');
+    const paidDuration = parseInt(String(txMeta.durationDays ?? ''), 10);
+    if (paidType !== promotionType || paidDuration !== (durationDays || 7)) {
+      return res.status(400).json({
+        success: false,
+        message: 'This payment does not match the requested promotion type or duration',
+      });
+    }
+
+    // One payment → one promotion. handleAdPromotionSuccess stores the numeric tx
+    // id; this route stores the orderId — check both to block double-spends.
+    const alreadyConsumed = await prisma.ad_promotions.findFirst({
+      where: {
+        payment_reference: { in: [paymentTx.id.toString(), paymentTx.transaction_id] },
+      },
+      select: { id: true },
+    });
+    if (alreadyConsumed) {
+      return res.status(409).json({
+        success: false,
+        message: 'This payment has already been used for a promotion',
+      });
+    }
+
     // Check for existing active promotion
     const existingPromo = await prisma.ad_promotions.findFirst({
       where: {
@@ -259,23 +331,15 @@ router.post(
       });
     }
 
-    // Use the payer's account type for pricing
+    // Use the payer's account type for the promotion record
     const user = await prisma.users.findUnique({
       where: { id: userId },
       select: { account_type: true },
     });
 
-    // Get pricing
-    const pricing = await prisma.promotion_pricing.findFirst({
-      where: {
-        promotion_type: promotionType,
-        duration_days: durationDays || 7,
-        account_type: user?.account_type || 'individual',
-        is_active: true,
-      },
-    });
-
-    const pricePaid = pricing?.price || 0;
+    // 🔒 PAY-2: record what was ACTUALLY paid (from the verified transaction),
+    // not a pricing lookup that silently falls back to 0.
+    const pricePaid = paymentTx.amount;
     const duration = durationDays || 7;
     // If extending, add days to existing expiry (so user doesn't lose remaining time)
     const baseDate = isExtension && existingPromo ? existingPromo.expires_at : new Date();
@@ -300,7 +364,7 @@ router.post(
           duration_days: duration,
           price_paid: pricePaid,
           account_type: user?.account_type || 'individual',
-          payment_reference: paymentReference || null,
+          payment_reference: paymentTx.transaction_id,
           starts_at: new Date(),
           expires_at: expiresAt,
         },

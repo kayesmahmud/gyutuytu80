@@ -129,7 +129,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to report ad',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -249,7 +248,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch reports',
-        error: error.message,
       },
       { status: 500 }
     );

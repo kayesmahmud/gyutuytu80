@@ -2,10 +2,18 @@ import { NextRequest } from 'next/server';
 import { jwtVerify, SignJWT } from 'jose';
 import { getToken as getNextAuthToken } from 'next-auth/jwt';
 
-// Get JWT secret from environment
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
-);
+// 🔒 SEC-2: Fail closed — never fall back to a published literal secret.
+// The web app both signs AND verifies session JWTs with this, and the API trusts
+// the same secret, so a hardcoded fallback would let anyone forge tokens for any
+// user/role. Evaluated lazily so a missing build-time env doesn't crash the build,
+// but any real auth call hard-fails when the secret is absent.
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return new TextEncoder().encode(secret);
+}
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || '';
 
 export interface JWTPayload {
@@ -24,7 +32,8 @@ export async function verifyToken(request: NextRequest): Promise<JWTPayload | nu
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
     try {
-      const verified = await jwtVerify(token, JWT_SECRET);
+      // 🔒 AUTH-L3: pin the algorithm so a token can't dictate its own verification alg
+      const verified = await jwtVerify(token, getJwtSecret(), { algorithms: ['HS256'] });
       return verified.payload as unknown as JWTPayload;
     } catch (error) {
       console.error('JWT verification error:', error);
@@ -35,7 +44,8 @@ export async function verifyToken(request: NextRequest): Promise<JWTPayload | nu
   const editorToken = request.cookies.get('editorToken')?.value;
   if (editorToken) {
     try {
-      const verified = await jwtVerify(editorToken, JWT_SECRET);
+      // 🔒 AUTH-L3: pin the algorithm (HS256) here too
+      const verified = await jwtVerify(editorToken, getJwtSecret(), { algorithms: ['HS256'] });
       return verified.payload as unknown as JWTPayload;
     } catch (error) {
       console.error('Editor token verification error:', error);
@@ -69,7 +79,7 @@ export async function createToken(payload: JWTPayload): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('24h')
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 
   return token;
 }

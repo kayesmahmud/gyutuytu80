@@ -72,7 +72,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       {
         success: false,
         message: 'Failed to update location information',
-        error: error.message,
       },
       { status: 500 }
     );

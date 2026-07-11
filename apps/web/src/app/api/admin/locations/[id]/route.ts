@@ -91,7 +91,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to update location',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -196,7 +195,6 @@ export async function DELETE(
       {
         success: false,
         message: 'Failed to delete location',
-        error: error.message,
       },
       { status: 500 }
     );

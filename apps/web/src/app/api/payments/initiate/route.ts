@@ -3,6 +3,7 @@ import { prisma } from '@thulobazaar/database';
 import { requireAuth } from '@/lib/auth';
 import { initiatePayment } from '@/lib/paymentGateways';
 import type { PaymentGateway, PaymentType } from '@/lib/paymentGateways/types';
+import { getAuthoritativeAmount, AMOUNT_TOLERANCE_NPR } from '@/lib/payments/priceValidation';
 
 /**
  * POST /api/payments/initiate
@@ -47,6 +48,25 @@ export async function POST(request: NextRequest) {
     if (!paymentType || !['ad_promotion', 'individual_verification', 'business_verification'].includes(paymentType)) {
       return NextResponse.json(
         { success: false, message: 'Invalid payment type' },
+        { status: 400 }
+      );
+    }
+
+    // 🔒 PAY-4: never trust the client's amount — compute the authoritative price
+    // server-side and reject anything below it.
+    const priceCheck = await getAuthoritativeAmount({ userId, paymentType, relatedId, metadata });
+    if (!priceCheck.ok || priceCheck.expected === undefined) {
+      return NextResponse.json(
+        { success: false, message: priceCheck.error || 'Unable to validate payment amount' },
+        { status: 400 }
+      );
+    }
+    if (amount < priceCheck.expected - AMOUNT_TOLERANCE_NPR) {
+      console.warn(
+        `🚫 Payment amount below authoritative price: got NPR ${amount}, expected NPR ${priceCheck.expected} (user ${userId}, ${paymentType})`
+      );
+      return NextResponse.json(
+        { success: false, message: 'Payment amount does not match the current price. Please refresh and try again.' },
         { status: 400 }
       );
     }

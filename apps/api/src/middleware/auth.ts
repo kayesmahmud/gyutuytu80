@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { prisma } from '@thulobazaar/database';
 import config from '../config/index.js';
 import { AuthenticationError } from './errorHandler.js';
 import { logger } from '../lib/logger.js';
@@ -119,6 +120,41 @@ export const requireEditorOrAdmin = (
     return;
   }
   next();
+};
+
+/**
+ * 🔒 API-2: Re-check that a STAFF account is still active on every staff request.
+ * JWTs live for 24h, so without this a suspended editor's token keeps working
+ * until expiry. Scoped to staff routes only (mounted on the editor router), so
+ * public traffic pays no per-request DB cost.
+ */
+export const requireActiveStaff = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const userId = req.user?.userId;
+  if (!userId) {
+    next(new AuthenticationError('Access token required'));
+    return;
+  }
+
+  prisma.users
+    .findUnique({ where: { id: userId }, select: { is_active: true, role: true } })
+    .then((user) => {
+      if (!user || !user.is_active) {
+        next(new AuthenticationError('Account is deactivated'));
+        return;
+      }
+      // The DB role is authoritative — a demoted staff member's old token must
+      // not keep working for the remainder of its lifetime.
+      if (!['editor', 'admin', 'super_admin'].includes(user.role || '')) {
+        next(new AuthenticationError('Editor or admin access required'));
+        return;
+      }
+      next();
+    })
+    .catch(next);
 };
 
 /**

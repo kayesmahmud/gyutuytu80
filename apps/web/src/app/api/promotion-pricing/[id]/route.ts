@@ -106,7 +106,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to update promotion pricing',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -194,7 +193,6 @@ export async function DELETE(
       {
         success: false,
         message: 'Failed to deactivate promotion pricing',
-        error: error.message,
       },
       { status: 500 }
     );

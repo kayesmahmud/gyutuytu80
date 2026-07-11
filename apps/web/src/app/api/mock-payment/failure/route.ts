@@ -9,6 +9,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3333';
  * This endpoint receives callbacks from the mock payment gateway when payment fails
  */
 export async function GET(request: NextRequest) {
+  // 🔒 PAY-3: the mock gateway "succeeds" for free — never serve it in production.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+  }
   try {
     const searchParams = request.nextUrl.searchParams;
     const txnId = searchParams.get('txnId');

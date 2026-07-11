@@ -47,7 +47,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Error fetching areas',
-        error: error.message,
       },
       { status: 500 }
     );

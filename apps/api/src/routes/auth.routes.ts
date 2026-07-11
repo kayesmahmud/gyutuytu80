@@ -96,9 +96,11 @@ router.post(
         },
       });
     } catch (error: any) {
+      // 🔒 SEC-M1: log server-side, return a generic message (don't leak internals)
+      console.error('Token refresh error:', error);
       res.status(401).json({
         success: false,
-        message: error.message || 'Invalid or expired refresh token',
+        message: 'Invalid or expired refresh token',
       });
     }
   })
@@ -325,11 +327,19 @@ router.post(
     const result = await loginWithPhone(phone, password);
 
     if (!result.success) {
-      const status = result.error?.includes('not found') ? 404 :
-        result.error?.includes('Invalid password') ? 401 : 403;
-      return res.status(status).json({
+      const err = result.error || '';
+      // 🔒 AUTH-M2: return an identical response for unknown-account vs wrong-password
+      // so an attacker can't enumerate which phone numbers have accounts.
+      if (err.includes('not found') || err.includes('Invalid password')) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid phone number or password',
+        });
+      }
+      // Other failures (suspended account, phone not verified, etc.) keep 403.
+      return res.status(403).json({
         success: false,
-        message: result.error,
+        message: err,
       });
     }
 
@@ -380,6 +390,11 @@ router.post(
       throw new ValidationError('Phone, password, and full name are required');
     }
 
+    // 🔒 AUTH-M3: enforce minimum password length at registration too
+    if (password.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters');
+    }
+
     if (!verificationToken) {
       throw new ValidationError('Phone verification is required');
     }
@@ -421,8 +436,9 @@ router.post(
       throw new ValidationError('Verification token is required');
     }
 
-    if (newPassword.length < 6) {
-      throw new ValidationError('Password must be at least 6 characters');
+    // 🔒 AUTH-M3: minimum 8 characters
+    if (newPassword.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters');
     }
 
     const result = await resetPassword(phone, newPassword, verificationToken);
@@ -462,8 +478,9 @@ router.post(
       throw new ValidationError('Current and new password are required');
     }
 
-    if (newPassword.length < 6) {
-      throw new ValidationError('New password must be at least 6 characters');
+    // 🔒 AUTH-M3: minimum 8 characters
+    if (newPassword.length < 8) {
+      throw new ValidationError('New password must be at least 8 characters');
     }
 
     const result = await changePassword(userId, currentPassword, newPassword);

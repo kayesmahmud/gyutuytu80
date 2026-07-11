@@ -235,14 +235,18 @@ router.get(
           totalAds,
           totalViews,
         },
-        ads: ads.map((ad: any) => ({
-          ...ad,
-          category_name: ad.categories?.name,
-          category_name_ne: ad.categories?.name_ne,
-          location_name: ad.locations?.name,
-          location_name_ne: ad.locations?.name_ne,
-          primary_image: ad.ad_images[0]?.filename,
-        })),
+        ads: ads.map((ad: any) => {
+          // 🔒 DB-M1: strip internal moderation columns from the public spread.
+          const { status_reason, reviewed_by, deleted_by, deletion_reason, ...safeAd } = ad;
+          return {
+            ...safeAd,
+            category_name: ad.categories?.name,
+            category_name_ne: ad.categories?.name_ne,
+            location_name: ad.locations?.name,
+            location_name_ne: ad.locations?.name_ne,
+            primary_image: ad.ad_images[0]?.filename,
+          };
+        }),
         pagination: {
           total: totalAds,
           limit: limitNum,

@@ -163,7 +163,12 @@
 - **Square image (feed):** 1080×1080 px — best engagement
 - **Link/horizontal image:** 1200×630 px (1.91:1)
 - **Shop cover photo:** 1600×400 px
-- **Brand colors:** Green (primary CTA) + Amber/Orange (secondary). Blue = individual verification, Gold = business verification.
+- **Brand colors:**
+  - **Primary (logo / brand): Red/Rose** — `#dc2626` / `#ef4444`
+  - **Secondary accent: Amber/Orange** — `#f59e0b`
+  - Green `#059669` = optional success / "free" cue
+  - Dark text `#1f2937`, light background `#f9fafb`
+  - Verification badges: **Blue `#3b82f6` = individual**, **Gold = business**
 - **Always include:** logo + `thulobazaar.com.np` + "Available on Android & iOS" when relevant.
 
 ---

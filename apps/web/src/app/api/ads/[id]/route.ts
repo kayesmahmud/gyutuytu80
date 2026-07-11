@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, optionalAuth } from '@/lib/auth';
 import { generateSlug } from '@/lib/urls';
 import { processMultipleImages, deleteImage } from '@/lib/utils';
 import { indexAd, removeAdFromIndex } from '@/lib/search';
@@ -32,12 +32,21 @@ export async function GET(
       return errorResponse('Invalid ad ID', 400);
     }
 
+    const viewerId = await optionalAuth(request);
+
     const ad = await prisma.ads.findUnique({
       where: { id: adId, deleted_at: null },
       select: adSelectQuery,
     }) as AdWithRelations | null;
 
     if (!ad) {
+      return errorResponse('Ad not found', 404);
+    }
+
+    // 🔒 DB-3: a non-approved ad is only viewable by its owner; everyone else gets
+    // 404 so pending/rejected ads can't be enumerated by sequential ID.
+    const isOwner = viewerId != null && ad.users_ads_user_idTousers?.id === viewerId;
+    if (ad.status !== 'approved' && !isOwner) {
       return errorResponse('Ad not found', 404);
     }
 

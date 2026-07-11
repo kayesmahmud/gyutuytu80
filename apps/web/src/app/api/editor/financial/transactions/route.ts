@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, message: 'Failed to fetch transactions', error: error.message },
+      { success: false, message: 'Failed to fetch transactions' },
       { status: 500 }
     );
   }

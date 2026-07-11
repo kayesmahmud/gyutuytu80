@@ -102,10 +102,11 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const jwt = require('jsonwebtoken');
-          const decoded = jwt.verify(
-            credentials.token,
-            process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
-          );
+          // 🔒 SEC-2: fail closed — no published-literal secret fallback
+          if (!process.env.JWT_SECRET) {
+            throw new Error('JWT_SECRET environment variable is not set');
+          }
+          const decoded = jwt.verify(credentials.token, process.env.JWT_SECRET);
 
           const user = await prisma.users.findUnique({
             where: { id: decoded.userId },

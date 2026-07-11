@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireEditorOrAdmin } from '../middleware/auth.js';
 import { uploadBusinessVerification, uploadIndividualVerification } from '../middleware/upload.js';
 import { optimizeImage } from '../middleware/optimizeImage.js';
 
@@ -551,6 +551,7 @@ router.post(
 router.get(
   '/pending',
   authenticateToken,
+  requireEditorOrAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const { type = 'all', limit = '20', offset = '0' } = req.query;
 
@@ -609,6 +610,7 @@ router.get(
 router.put(
   '/:userId/approve',
   authenticateToken,
+  requireEditorOrAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { type } = req.body; // 'business' or 'individual'
@@ -642,6 +644,7 @@ router.put(
 router.put(
   '/:userId/reject',
   authenticateToken,
+  requireEditorOrAdmin,
   catchAsync(async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { type, reason } = req.body;

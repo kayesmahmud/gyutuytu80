@@ -27,11 +27,22 @@ import { generateAccessToken, generateRefreshToken } from '../lib/token.js';
 import { getBooleanSetting } from './adLimits.service.js';
 import { generateShopSlug } from '../utils/shopSlug.js';
 import { OAuth2Client } from 'google-auth-library';
+
+// 🔒 AUTH-L2: constant-time OTP comparison (avoid a timing side channel). Guards
+// non-string input; a length mismatch returns false without leaking anything useful.
+function timingSafeEqualStr(a: unknown, b: unknown): boolean {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
 import appleSignin from 'apple-signin-auth';
 import { generateSecret, generateURI, verifySync } from 'otplib';
 import QRCode from 'qrcode';
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
+import { SECURITY } from '../config/constants.js'; // 🔒 AUTH-L1: bcrypt cost = 12
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -205,7 +216,7 @@ export async function registerWithPhone(
   }
 
   // Hash password and create user
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, SECURITY.BCRYPT_SALT_ROUNDS);
 
   let user = await prisma.users.create({
     data: {
@@ -289,7 +300,7 @@ export async function resetPassword(
   });
 
   // Update password
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const passwordHash = await bcrypt.hash(newPassword, SECURITY.BCRYPT_SALT_ROUNDS);
   await prisma.users.update({
     where: { id: user.id },
     data: { password_hash: passwordHash },
@@ -347,7 +358,7 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
           // Password hash is required by schema but nullable in some setups?
           // Let's check schema. Schema says password_hash String @db.VarChar(255) (Not optional?)
           // Wait, viewing schema again...
-          password_hash: await bcrypt.hash(Math.random().toString(36), 10), // Random password for OAuth users
+          password_hash: await bcrypt.hash(Math.random().toString(36), SECURITY.BCRYPT_SALT_ROUNDS), // Random password for OAuth users
         },
       });
 
@@ -480,7 +491,7 @@ export async function verifyAppleToken(
           email_verified: emailVerified,
           role: 'user',
           is_active: true,
-          password_hash: await bcrypt.hash(Math.random().toString(36), 10),
+          password_hash: await bcrypt.hash(Math.random().toString(36), SECURITY.BCRYPT_SALT_ROUNDS),
         },
       });
 
@@ -577,7 +588,7 @@ export async function changePassword(userId: number, currentPassword: string, ne
     return { success: false, error: 'Current password is incorrect' };
   }
 
-  const newHash = await bcrypt.hash(newPassword, 10);
+  const newHash = await bcrypt.hash(newPassword, SECURITY.BCRYPT_SALT_ROUNDS);
   await prisma.users.update({
     where: { id: userId },
     data: { password_hash: newHash },
@@ -667,7 +678,7 @@ export async function verify2FASetup(userId: number, code: string) {
   // Generate backup codes
   const plaintextCodes = generateBackupCodes();
   const hashedCodes = await Promise.all(
-    plaintextCodes.map(c => bcrypt.hash(c, 10))
+    plaintextCodes.map(c => bcrypt.hash(c, SECURITY.BCRYPT_SALT_ROUNDS))
   );
 
   await prisma.users.update({
@@ -691,11 +702,15 @@ export async function disable2FA(userId: number, password: string, code: string)
   const isPasswordValid = await bcrypt.compare(password, user.password_hash);
   if (!isPasswordValid) return { success: false, error: 'Invalid password' };
 
-  // Verify TOTP code (skip if secret is missing — corrupted state, password alone suffices)
-  if (user.two_factor_secret) {
-    const isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
-    if (!isValid) return { success: false, error: 'Invalid 2FA code' };
+  // 🔒 AUTH-L5: when 2FA is enabled, ALWAYS require a valid TOTP code to disable it.
+  // A null secret with two_factor_enabled=true is an inconsistent state — do NOT allow
+  // password-alone disabling (that would be a second-factor bypass). Route the user to
+  // an admin 2FA reset (editor `reset-2fa` endpoint) instead.
+  if (!user.two_factor_secret) {
+    return { success: false, error: '2FA is in an inconsistent state. Please contact support to reset it.' };
   }
+  const isValid = verifySync({ secret: user.two_factor_secret, token: code }).valid;
+  if (!isValid) return { success: false, error: 'Invalid 2FA code' };
 
   await prisma.users.update({
     where: { id: userId },
@@ -709,24 +724,15 @@ export async function disable2FA(userId: number, password: string, code: string)
   return { success: true };
 }
 
-export async function verify2FALogin(tempToken: string, code: string): Promise<LoginResult> {
-  // Validate temp token
-  let payload: { userId: number; purpose: string };
-  try {
-    payload = jwt.verify(tempToken, config.JWT_SECRET) as { userId: number; purpose: string };
-  } catch {
-    return { success: false, error: 'Invalid or expired 2FA session. Please login again.' };
-  }
-
-  if (payload.purpose !== '2fa') {
-    return { success: false, error: 'Invalid token purpose' };
-  }
-
-  const user = await prisma.users.findUnique({ where: { id: payload.userId } });
-  if (!user || !user.two_factor_secret) {
-    return { success: false, error: 'User not found or 2FA not configured' };
-  }
-
+/**
+ * Verify a 2FA code against a user's TOTP secret, falling back to (and
+ * consuming) a bcrypt-hashed backup code. Shared by user 2FA login and the
+ * editor/admin API login (🔒 API-2).
+ */
+export async function verifyTwoFactorCode(
+  user: { id: number; two_factor_secret: string; two_factor_backup_codes: unknown },
+  code: string
+): Promise<boolean> {
   // Try TOTP first (wrap in try-catch — verifySync throws for non-6-digit codes
   // like backup codes, instead of returning {valid: false})
   let isValid = false;
@@ -754,6 +760,32 @@ export async function verify2FALogin(tempToken: string, code: string): Promise<L
       }
     }
   }
+
+  return isValid;
+}
+
+export async function verify2FALogin(tempToken: string, code: string): Promise<LoginResult> {
+  // Validate temp token
+  let payload: { userId: number; purpose: string };
+  try {
+    payload = jwt.verify(tempToken, config.JWT_SECRET) as { userId: number; purpose: string };
+  } catch {
+    return { success: false, error: 'Invalid or expired 2FA session. Please login again.' };
+  }
+
+  if (payload.purpose !== '2fa') {
+    return { success: false, error: 'Invalid token purpose' };
+  }
+
+  const user = await prisma.users.findUnique({ where: { id: payload.userId } });
+  if (!user || !user.two_factor_secret) {
+    return { success: false, error: 'User not found or 2FA not configured' };
+  }
+
+  const isValid = await verifyTwoFactorCode(
+    { id: user.id, two_factor_secret: user.two_factor_secret, two_factor_backup_codes: user.two_factor_backup_codes },
+    code
+  );
 
   if (!isValid) {
     return { success: false, error: 'Invalid verification code' };
@@ -894,7 +926,7 @@ export async function confirmAccountDeletion(userId: number, otp: string) {
     return { success: false, error: 'Too many failed attempts. Please request a new code.' };
   }
 
-  if (otpRecord.otp_code !== otp) {
+  if (!timingSafeEqualStr(otpRecord.otp_code, otp)) {
     await prisma.phone_otps.update({
       where: { id: otpRecord.id },
       data: { attempts: { increment: 1 } },

@@ -10,6 +10,10 @@ import { prisma } from '@thulobazaar/database';
  * - amount: payment amount
  */
 export async function GET(request: NextRequest) {
+  // 🔒 PAY-3: the mock gateway "succeeds" for free — never serve it in production.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+  }
   try {
     const { searchParams } = new URL(request.url);
     const txnId = searchParams.get('txnId');
@@ -104,7 +108,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to process payment',
-        error: error.message,
       },
       { status: 500 }
     );

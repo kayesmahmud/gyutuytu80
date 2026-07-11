@@ -150,7 +150,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch messages',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -296,7 +295,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to send message',
-        error: error.message,
       },
       { status: 500 }
     );

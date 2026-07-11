@@ -32,11 +32,29 @@ const router = Router();
 // Input Parsers
 // ============================================================================
 
+// 🔒 API-M1: bound the free-form attributes payload — it's stored verbatim into
+// custom_fields and echoed on the detail response, so an unbounded/oversized blob
+// is a payload-DoS + stored-data surface.
+const MAX_ATTRIBUTES_BYTES = 8 * 1024; // 8KB
+const MAX_ATTRIBUTE_KEYS = 50;
+
 function parseAttributes(attributesStr?: string): Record<string, unknown> {
   if (!attributesStr) return {};
+  if (Buffer.byteLength(attributesStr, 'utf8') > MAX_ATTRIBUTES_BYTES) {
+    throw new ValidationError('Attributes payload is too large');
+  }
   try {
-    return JSON.parse(attributesStr);
+    const parsed = JSON.parse(attributesStr);
+    // Only accept a flat-ish plain object; reject arrays/primitives/null.
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+    if (Object.keys(parsed).length > MAX_ATTRIBUTE_KEYS) {
+      throw new ValidationError('Too many attributes');
+    }
+    return parsed as Record<string, unknown>;
   } catch (err) {
+    if (err instanceof ValidationError) throw err;
     console.error('❌ Failed to parse attributes:', err);
     return {};
   }
@@ -114,7 +132,7 @@ router.get(
   optionalAuth,
   catchAsync(async (req: Request, res: Response) => {
     const { slug } = req.params;
-    const ad = await getAdBySlug(slug);
+    const ad = await getAdBySlug(slug, req.user?.userId);
 
     if (!ad) {
       throw new NotFoundError('Ad not found');
@@ -141,8 +159,8 @@ router.get(
     const { id } = req.params;
 
     const ad = !isNaN(Number(id))
-      ? await getAdById(parseInt(id))
-      : await getAdBySlug(id);
+      ? await getAdById(parseInt(id), req.user?.userId)
+      : await getAdBySlug(id, req.user?.userId);
 
     if (!ad) {
       throw new NotFoundError('Ad not found');
@@ -217,6 +235,16 @@ router.post(
       throw new ValidationError(`You can upload a maximum of ${imageLimit} images per ad`);
     }
 
+    // 🔒 API-M2: validate price is a non-negative finite number (0 = free).
+    // Prevents negative/NaN prices being persisted.
+    let parsedPrice: number | undefined;
+    if (price !== undefined && price !== null && price !== '') {
+      parsedPrice = parseFloat(price);
+      if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+        throw new ValidationError('Price must be a valid non-negative number');
+      }
+    }
+
     // Parse attributes
     const parsedAttributes = parseAttributes(attributes);
     const condition = (parsedAttributes.condition as string) || undefined;
@@ -226,7 +254,7 @@ router.post(
     const ad = await createAd(userId, {
       title,
       description,
-      price: price ? parseFloat(price) : undefined,
+      price: parsedPrice,
       categoryId: parseInt(categoryId),
       subcategoryId: subcategoryId ? parseInt(subcategoryId) : undefined,
       locationId: locationId ? parseInt(locationId) : undefined,

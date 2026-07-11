@@ -59,8 +59,10 @@ router.delete('/fcm-token', authenticateToken, async (req: Request, res: Respons
       return res.status(400).json({ success: false, message: 'fcmToken is required' });
     }
 
+    // 🔒 API-L3: scope the delete to the caller so one user can't delete another
+    // user's push token (which would silently disable their notifications).
     await prisma.fcm_tokens.deleteMany({
-      where: { token: fcmToken },
+      where: { token: fcmToken, user_id: req.user!.userId },
     });
 
     res.json({ success: true });

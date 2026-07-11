@@ -66,7 +66,6 @@ export async function DELETE(
       {
         success: false,
         message: 'Failed to remove from favorites',
-        error: error.message,
       },
       { status: 500 }
     );
@@ -125,7 +124,6 @@ export async function GET(
       {
         success: false,
         message: 'Failed to check favorite status',
-        error: error.message,
       },
       { status: 500 }
     );

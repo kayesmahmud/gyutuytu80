@@ -80,7 +80,6 @@ export async function PUT(
       {
         success: false,
         message: 'Failed to toggle featured status',
-        error: error.message,
       },
       { status: 500 }
     );

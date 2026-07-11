@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Error searching areas',
-        error: error.message,
       },
       { status: 500 }
     );

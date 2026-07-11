@@ -6,6 +6,14 @@ import { censorProfanity } from '../utils/profanityFilter.js';
 
 const router = Router();
 
+// 🔒 API-M4: define staff POSITIVELY. Checking `role === 'user'` treats a null/
+// unknown role as staff (IDOR — a user with a null role could read others' tickets
+// and internal messages). Only these roles are staff; everything else is a user.
+const STAFF_ROLES = ['editor', 'admin', 'super_admin'];
+function isStaffRole(role?: string | null): boolean {
+  return STAFF_ROLES.includes(role ?? '');
+}
+
 function generateTicketNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -233,13 +241,13 @@ router.get(
       return;
     }
 
-    if (ticket.user_id !== userId && userRole === 'user') {
+    const isStaff = isStaffRole(userRole);
+    if (ticket.user_id !== userId && !isStaff) {
       res.status(403).json({ success: false, message: 'Access denied' });
       return;
     }
 
     // Filter out internal messages for regular users
-    const isStaff = userRole !== 'user';
     const messages = ticket.support_messages
       .filter((msg) => isStaff || !msg.is_internal)
       .map((msg) => ({
@@ -481,9 +489,8 @@ router.get(
   '/macros',
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
-    // Basic permissions check for staff roles
-    const userRole = req.user!.role;
-    if (userRole === 'user') {
+    // Basic permissions check for staff roles (🔒 API-M4: positive staff check)
+    if (!isStaffRole(req.user!.role)) {
       res.status(403).json({ success: false, message: 'Access denied' });
       return;
     }
@@ -504,8 +511,8 @@ router.post(
   '/macros',
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
-    const userRole = req.user!.role;
-    if (userRole === 'user') {
+    // 🔒 API-M4: positive staff check
+    if (!isStaffRole(req.user!.role)) {
       res.status(403).json({ success: false, message: 'Access denied' });
       return;
     }

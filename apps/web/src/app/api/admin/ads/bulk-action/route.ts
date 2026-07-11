@@ -163,7 +163,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to perform bulk action',
-        error: error.message,
       },
       { status: 500 }
     );

@@ -151,7 +151,6 @@ export async function POST(
       {
         success: false,
         message: 'Failed to suspend shop',
-        error: error.message,
       },
       { status: 500 }
     );

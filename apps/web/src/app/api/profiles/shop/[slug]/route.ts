@@ -31,7 +31,8 @@ export async function GET(
       select: {
         id: true,
         full_name: true,
-        email: true,
+        // 🔒 DB-1: email is the login identifier — never expose on a public shop
+        // profile (harvestable via sitemap slugs). Express equivalent already omits it.
         phone: true,
         avatar: true,
         cover_photo: true,
@@ -70,13 +71,19 @@ export async function GET(
       );
     }
 
+    // 🔒 DB-M5: bound the list (a shop could have thousands of ads) and compute
+    // stats with aggregate/count instead of scanning every row into JS.
+    const adsWhere = {
+      user_id: user.id,
+      status: 'approved',
+      deleted_at: null,
+    };
+    const SHOP_ADS_LIMIT = 100;
+
     // Get ads with basic info (for shop page)
     const ads = await prisma.ads.findMany({
-      where: {
-        user_id: user.id,
-        status: 'approved',
-        deleted_at: null,
-      },
+      where: adsWhere,
+      take: SHOP_ADS_LIMIT,
       select: {
         id: true,
         title: true,
@@ -117,10 +124,17 @@ export async function GET(
       ],
     });
 
-    // Calculate stats
-    const totalAds = ads.length;
-    const featuredAds = ads.filter(ad => ad.is_featured).length;
-    const totalViews = ads.reduce((sum, ad) => sum + (ad.view_count || 0), 0);
+    // Calculate stats over the FULL approved set (not just the capped page).
+    const [stats, featuredAds] = await Promise.all([
+      prisma.ads.aggregate({
+        where: adsWhere,
+        _count: { _all: true },
+        _sum: { view_count: true },
+      }),
+      prisma.ads.count({ where: { ...adsWhere, is_featured: true } }),
+    ]);
+    const totalAds = stats._count._all;
+    const totalViews = stats._sum.view_count || 0;
 
     // Transform ads to camelCase
     const transformedAds = ads.map((ad) => ({
@@ -147,7 +161,6 @@ export async function GET(
     const shopData = {
       id: user.id,
       fullName: user.full_name,
-      email: user.email,
       phone: user.phone,
       avatar: user.avatar,
       coverPhoto: user.cover_photo,
@@ -191,7 +204,6 @@ export async function GET(
       {
         success: false,
         message: 'Server error while fetching shop profile',
-        error: error.message,
       },
       { status: 500 }
     );

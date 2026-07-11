@@ -152,8 +152,17 @@ export async function transformAdForDetail(ad: any) {
     ? await prisma.locations.findUnique({ where: { id: ad.location_id }, select: { type: true } })
     : null;
 
+  // 🔒 DB-3: never leak internal moderation columns on the public detail response.
+  const {
+    status_reason: _statusReason,
+    reviewed_by: _reviewedBy,
+    deleted_by: _deletedBy,
+    deletion_reason: _deletionReason,
+    ...safeAd
+  } = ad;
+
   return {
-    ...ad,
+    ...safeAd,
     status: ad.status === 'approved' ? 'active' : ad.status,
     latitude: ad.latitude ? Number(ad.latitude) : null,
     longitude: ad.longitude ? Number(ad.longitude) : null,
@@ -589,27 +598,38 @@ export async function getUserAds(userId: number) {
       },
     },
     orderBy: { created_at: 'desc' },
+    take: 200, // 🔒 DB-L6: bound the result set (own-ads can accumulate over time)
   });
 
   return ads.map(transformAdForDashboard);
 }
 
-export async function getAdBySlug(slug: string) {
+// 🔒 DB-3: a non-approved or soft-deleted ad may only be viewed by its owner.
+// Everyone else (incl. anonymous) gets null → 404, preventing enumeration of
+// pending/rejected/deleted ads via sequential IDs or guessed slugs.
+function isAdViewable(ad: { status: string | null; deleted_at: Date | null; user_id: number }, viewerUserId?: number): boolean {
+  if (viewerUserId && ad.user_id === viewerUserId) return true;
+  return ad.status === 'approved' && ad.deleted_at == null;
+}
+
+export async function getAdBySlug(slug: string, viewerUserId?: number) {
   const ad = await prisma.ads.findFirst({
     where: { slug },
     ...adDetailSelect,
   });
 
-  return ad ? await transformAdForDetail(ad) : null;
+  if (!ad || !isAdViewable(ad, viewerUserId)) return null;
+  return await transformAdForDetail(ad);
 }
 
-export async function getAdById(id: number) {
+export async function getAdById(id: number, viewerUserId?: number) {
   const ad = await prisma.ads.findUnique({
     where: { id },
     ...adDetailSelect,
   });
 
-  return ad ? await transformAdForDetail(ad) : null;
+  if (!ad || !isAdViewable(ad, viewerUserId)) return null;
+  return await transformAdForDetail(ad);
 }
 
 export async function incrementAdViews(adId: number) {

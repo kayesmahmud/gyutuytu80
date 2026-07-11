@@ -74,7 +74,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Failed to fetch editors',
-        error: error.message,
       },
       { status: 500 }
     );

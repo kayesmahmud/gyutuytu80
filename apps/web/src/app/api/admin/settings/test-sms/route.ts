@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, message: error.message || 'Failed to send test SMS' },
+      { success: false, message: 'Failed to send test SMS' },
       { status: 500 }
     );
   }

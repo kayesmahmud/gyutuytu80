@@ -349,7 +349,7 @@ export async function POST(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        secret: process.env.INTERNAL_API_SECRET || 'thulobazaar-internal-2025',
+        secret: process.env.INTERNAL_API_SECRET, // 🔒 SEC-2: no published-literal fallback
         messageData,
         conversationId,
       }),

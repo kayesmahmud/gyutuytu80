@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: 'Cleanup failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Unknown error',
       },
       { status: 500 }
     );

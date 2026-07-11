@@ -12,6 +12,10 @@ import { requireAuth } from '@/lib/auth';
  * - amount: number (optional)
  */
 export async function POST(request: NextRequest) {
+  // 🔒 PAY-3: the mock gateway "succeeds" for free — never serve it in production.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+  }
   try {
     // Authenticate user
     const userId = await requireAuth(request);
@@ -84,7 +88,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: 'Failed to verify payment',
-        error: error.message,
       },
       { status: 500 }
     );

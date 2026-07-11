@@ -10,14 +10,22 @@ import statsRoutes from './stats.routes.js';
 import reportsRoutes from './reports.routes.js';
 import categoriesRoutes from './categories.routes.js';
 import notificationsRoutes from './notifications.routes.js';
+import { authenticateToken, requireEditorOrAdmin, requireActiveStaff } from '../../middleware/auth.js';
 
 const router = Router();
 
-// Auth routes: /auth/login
+// Auth routes: /auth/login (login must stay public; /profile self-authenticates)
 router.use('/auth', authRoutes);
 
 // Profile route is directly on auth routes
 router.use('/', authRoutes);
+
+// 🔒 ACL-1: Authorize EVERY route below as editor/admin/super_admin.
+// authenticateToken alone only proves identity — regular user tokens are signed
+// with the same JWT_SECRET and would otherwise reach all editor/admin handlers.
+// 🔒 API-2: requireActiveStaff re-checks is_active + role in the DB per request,
+// so suspending/demoting a staff member takes effect immediately (not at token expiry).
+router.use(authenticateToken, requireEditorOrAdmin, requireActiveStaff);
 
 // Stats routes: /stats (main), /notifications/count, /system-alerts, /avg-response-time, /trends, /support-chat/count, /avg-response-time/trend, /my-work-today
 router.use('/', statsRoutes);

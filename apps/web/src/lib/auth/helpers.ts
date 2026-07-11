@@ -139,9 +139,11 @@ export async function generateBackendToken(user: {
   phone: string | null;
   role: string;
 }): Promise<string> {
-  const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production'
-  );
+  // 🔒 SEC-2: fail closed — no published-literal secret fallback
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
   return new SignJWT({
     userId: user.id,
