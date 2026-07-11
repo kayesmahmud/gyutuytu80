@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -46,6 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final AdClient _adClient = AdClient();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _categoryScrollController = ScrollController();
+  bool _categoryArrowsVisible = false;
+  bool _categoryCanScrollLeft = false;
+  bool _categoryCanScrollRight = false;
+  Timer? _categoryArrowHideTimer;
   final FocusNode _searchFocusNode = FocusNode();
   final LayerLink _searchLayerLink = LayerLink();
   final SearchSuggestionsController _suggestionsController =
@@ -85,6 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _suggestionsController.hide();
     _searchController.dispose();
     _scrollController.dispose();
+    _categoryScrollController.dispose();
+    _categoryArrowHideTimer?.cancel();
     super.dispose();
   }
 
@@ -171,6 +179,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _displayFeaturedAds = _featuredAds.take(12).toList();
         _isLoading = false;
       });
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _updateCategoryScrollEdges(),
+      );
     } catch (e) {
       final offline = await _isOfflineError();
       if (reqId != _fetchSeq || !mounted) return;
@@ -493,7 +504,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final half = (items.length / 2).ceil();
     final topRow = items.sublist(0, half);
     final bottomRow = items.sublist(half);
-    return SingleChildScrollView(
+    final content = SingleChildScrollView(
+      controller: _categoryScrollController,
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.only(left: 16),
       child: Column(
@@ -510,6 +522,103 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+
+    return Listener(
+      onPointerDown: (_) => _pingCategoryActivity(),
+      onPointerMove: (_) => _pingCategoryActivity(),
+      onPointerUp: (_) => _pingCategoryActivity(),
+      onPointerCancel: (_) => _pingCategoryActivity(),
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (_) {
+          _pingCategoryActivity();
+          return false;
+        },
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            content,
+            _buildCategoryArrowButton(isLeft: true),
+            _buildCategoryArrowButton(isLeft: false),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Translucent round scroll-hint arrow, shown only while the category row
+  /// is being touched/scrolled and only on the side there's more to see.
+  Widget _buildCategoryArrowButton({required bool isLeft}) {
+    final canScroll = isLeft ? _categoryCanScrollLeft : _categoryCanScrollRight;
+    final visible = _categoryArrowsVisible && canScroll;
+    return Positioned(
+      left: isLeft ? 4 : null,
+      right: isLeft ? null : 4,
+      child: IgnorePointer(
+        ignoring: !visible,
+        child: AnimatedOpacity(
+          opacity: visible ? 1 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: GestureDetector(
+            onTap: () => _scrollCategoryRow(isLeft: isLeft),
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withValues(alpha: 0.35),
+              ),
+              child: Icon(
+                isLeft ? Icons.chevron_left : Icons.chevron_right,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Reveal the scroll arrows on any touch/scroll of the category row, and
+  /// always (re)arm a single idle timer so they reliably fade out ~1.5s after
+  /// the last activity — no reliance on perfectly paired pointer-up/scroll-end
+  /// events, which scrollables can swallow and leave the arrows stuck visible.
+  void _pingCategoryActivity() {
+    _updateCategoryScrollEdges();
+    if (!_categoryArrowsVisible) {
+      setState(() => _categoryArrowsVisible = true);
+    }
+    _categoryArrowHideTimer?.cancel();
+    _categoryArrowHideTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _categoryArrowsVisible = false);
+    });
+  }
+
+  void _updateCategoryScrollEdges() {
+    if (!_categoryScrollController.hasClients) return;
+    final position = _categoryScrollController.position;
+    final canLeft = position.pixels > 4;
+    final canRight = position.pixels < position.maxScrollExtent - 4;
+    if (canLeft != _categoryCanScrollLeft ||
+        canRight != _categoryCanScrollRight) {
+      setState(() {
+        _categoryCanScrollLeft = canLeft;
+        _categoryCanScrollRight = canRight;
+      });
+    }
+  }
+
+  void _scrollCategoryRow({required bool isLeft}) {
+    if (!_categoryScrollController.hasClients) return;
+    const jump = 160.0;
+    final target = (_categoryScrollController.offset + (isLeft ? -jump : jump))
+        .clamp(0.0, _categoryScrollController.position.maxScrollExtent);
+    _categoryScrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+    _pingCategoryActivity();
   }
 
   /// Find matching hardcoded category by slug or name for icon/shortName lookup
