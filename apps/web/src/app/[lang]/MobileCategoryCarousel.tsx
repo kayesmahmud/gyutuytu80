@@ -71,11 +71,12 @@ export default function MobileCategoryCarousel({ categories, lang }: MobileCateg
       href={`/${lang}/ads/${category.slug}`}
       className="flex-shrink-0"
     >
-      <div className="w-[72px] flex flex-col items-center justify-center p-3 bg-white border border-gray-200 rounded-xl hover:border-rose-300 hover:shadow-sm transition-all">
-        <div className="mb-1 w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center">
+      <div className="w-[72px] flex flex-col items-center">
+        <div className="w-14 h-14 rounded-2xl bg-gray-100 shadow-sm flex items-center justify-center">
           <CategoryIcon slug={category.slug} emoji={category.icon} name={category.name} size={40} />
         </div>
-        <span className="font-medium text-gray-800 text-[10px] text-center leading-tight line-clamp-2">
+        {/* Reserve two lines so 1- and 2-line labels keep every icon aligned. */}
+        <span className="mt-2 h-[26px] font-medium text-gray-800 text-[10px] text-center leading-tight line-clamp-2">
           {lang === 'ne' && category.name_ne ? category.name_ne : category.name}
         </span>
       </div>
