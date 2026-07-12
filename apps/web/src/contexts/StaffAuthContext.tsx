@@ -26,6 +26,9 @@ interface StaffAuthProviderProps {
 export function StaffAuthProvider({ children }: StaffAuthProviderProps) {
   const { data: session, status, update } = useSession();
   const wasAuthenticated = useRef(false);
+  // Remember the staff role while authenticated: by the time the logout effect
+  // runs, `session`/`user` are already null, so we can't read the role there.
+  const lastStaffRole = useRef<string | null>(null);
 
   // Convert NextAuth session to User type with backendToken
   // Memoized to prevent unnecessary re-renders
@@ -64,13 +67,15 @@ export function StaffAuthProvider({ children }: StaffAuthProviderProps) {
   useEffect(() => {
     if (status === 'authenticated' && session && isStaff) {
       wasAuthenticated.current = true;
+      lastStaffRole.current = user.role;
     }
 
     // If was authenticated but now session is null (expired), force logout
     if (wasAuthenticated.current && status === 'unauthenticated' && !session) {
       console.log('🔐 [StaffAuth] Session expired, logging out...');
-      // Redirect based on role - super_admin goes to super-admin login, editors to editor login
-      const redirectUrl = user?.role === 'super_admin' ? '/en/super-admin/login' : '/en/editor/login';
+      // Redirect based on the remembered role — super_admin → super-admin login,
+      // editors → editor login (user is already null here, so use the ref).
+      const redirectUrl = lastStaffRole.current === 'super_admin' ? '/en/super-admin/login' : '/en/editor/login';
       signOut({ redirect: true, callbackUrl: redirectUrl });
       wasAuthenticated.current = false;
     }
