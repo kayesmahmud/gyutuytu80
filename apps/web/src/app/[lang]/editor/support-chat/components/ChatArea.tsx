@@ -21,6 +21,8 @@ interface ChatAreaProps {
   onSendMessage: () => void;
   profanityWarning?: string | null;
   onDismissProfanityWarning?: () => void;
+  /** Mobile master-detail: return to the ticket list (hidden on lg+). */
+  onBack?: () => void;
 }
 
 export function ChatArea({
@@ -39,6 +41,7 @@ export function ChatArea({
   onSendMessage,
   profanityWarning,
   onDismissProfanityWarning,
+  onBack,
 }: ChatAreaProps) {
   if (!selectedTicket) {
     return (
@@ -60,6 +63,7 @@ export function ChatArea({
         ticket={selectedTicket}
         staffId={staffId}
         onUpdateTicket={onUpdateTicket}
+        onBack={onBack}
       />
 
       {/* Messages */}
@@ -123,19 +127,34 @@ interface ChatHeaderProps {
   ticket: TicketDetail;
   staffId?: number;
   onUpdateTicket: (updates: { status?: string; priority?: string; assignedTo?: number | null }) => void;
+  onBack?: () => void;
 }
 
-function ChatHeader({ ticket, staffId, onUpdateTicket }: ChatHeaderProps) {
+function ChatHeader({ ticket, staffId, onUpdateTicket, onBack }: ChatHeaderProps) {
   return (
     <div className="p-4 border-b border-gray-200 bg-gray-50">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="font-bold text-gray-900">{ticket.subject}</h3>
-          <p className="text-sm text-gray-600">
-            {ticket.user.fullName} • {ticket.user.email}
-          </p>
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <div className="flex items-start gap-2 min-w-0">
+          {/* Back to ticket list — mobile only */}
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="lg:hidden -ml-1 mt-0.5 p-1.5 text-gray-600 hover:bg-gray-200 rounded-lg flex-shrink-0"
+              aria-label="Back to tickets"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+          <div className="min-w-0">
+            <h3 className="font-bold text-gray-900 truncate">{ticket.subject}</h3>
+            <p className="text-sm text-gray-600 truncate">
+              {ticket.user.fullName} • {ticket.user.email}
+            </p>
+          </div>
         </div>
-        <div className="text-right">
+        <div className="text-right flex-shrink-0">
           <div className="text-xs text-gray-500">{ticket.ticketNumber}</div>
         </div>
       </div>

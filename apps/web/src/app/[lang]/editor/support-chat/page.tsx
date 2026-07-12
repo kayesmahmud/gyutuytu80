@@ -44,6 +44,7 @@ export default function SupportChatPage({ params: paramsPromise }: { params: Pro
     isConnected,
     stats,
     handleSelectTicket,
+    handleBackToList,
     handleSendMessage,
     handleUpdateTicket,
     handleMessageInputChange,
@@ -82,10 +83,13 @@ export default function SupportChatPage({ params: paramsPromise }: { params: Pro
       onLogout={handleLogout}
     >
       <div className="space-y-6">
+        {/* On mobile, a selected conversation takes over the screen: the header,
+            stats, filters and list collapse so the editor sees only the chat.
+            On lg+ everything stays visible side-by-side. */}
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${selectedTicket ? 'hidden lg:flex' : ''}`}>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Support Chat</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Support Chat</h1>
             <p className="text-gray-600 mt-1">Manage user support tickets and conversations</p>
           </div>
         </div>
@@ -99,48 +103,57 @@ export default function SupportChatPage({ params: paramsPromise }: { params: Pro
         )}
 
         {/* Stats */}
-        <StatsCards stats={stats} />
+        <div className={selectedTicket ? 'hidden lg:block' : ''}>
+          <StatsCards stats={stats} />
+        </div>
 
         {/* Filters */}
-        <TicketFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          priorityFilter={priorityFilter}
-          setPriorityFilter={setPriorityFilter}
-          assignedFilter={assignedFilter}
-          setAssignedFilter={setAssignedFilter}
-        />
+        <div className={selectedTicket ? 'hidden lg:block' : ''}>
+          <TicketFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            priorityFilter={priorityFilter}
+            setPriorityFilter={setPriorityFilter}
+            assignedFilter={assignedFilter}
+            setAssignedFilter={setAssignedFilter}
+          />
+        </div>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Tickets List */}
-          <TicketsList
-            tickets={filteredTickets}
-            selectedTicket={selectedTicket}
-            loading={loading}
-            onSelectTicket={handleSelectTicket}
-          />
+          {/* Tickets List — hidden on mobile once a conversation is open */}
+          <div className={`lg:col-span-1 ${selectedTicket ? 'hidden lg:block' : ''}`}>
+            <TicketsList
+              tickets={filteredTickets}
+              selectedTicket={selectedTicket}
+              loading={loading}
+              onSelectTicket={handleSelectTicket}
+            />
+          </div>
 
-          {/* Chat Area */}
-          <ChatArea
-            selectedTicket={selectedTicket}
-            isConnected={isConnected}
-            isOtherTyping={isOtherTyping}
-            typingUserName={typingUserName}
-            messagesEndRef={messagesEndRef}
-            newMessage={newMessage}
-            isInternal={isInternal}
-            setIsInternal={setIsInternal}
-            sendingMessage={sendingMessage}
-            staffId={staff?.id}
-            onUpdateTicket={handleUpdateTicket}
-            onMessageInputChange={handleMessageInputChange}
-            onSendMessage={handleSendMessage}
-            profanityWarning={profanityWarning}
-            onDismissProfanityWarning={() => setProfanityWarning(null)}
-          />
+          {/* Chat Area — hidden on mobile until a conversation is open */}
+          <div className={`lg:col-span-2 ${selectedTicket ? '' : 'hidden lg:block'}`}>
+            <ChatArea
+              selectedTicket={selectedTicket}
+              isConnected={isConnected}
+              isOtherTyping={isOtherTyping}
+              typingUserName={typingUserName}
+              messagesEndRef={messagesEndRef}
+              newMessage={newMessage}
+              isInternal={isInternal}
+              setIsInternal={setIsInternal}
+              sendingMessage={sendingMessage}
+              staffId={staff?.id}
+              onUpdateTicket={handleUpdateTicket}
+              onMessageInputChange={handleMessageInputChange}
+              onSendMessage={handleSendMessage}
+              profanityWarning={profanityWarning}
+              onDismissProfanityWarning={() => setProfanityWarning(null)}
+              onBack={handleBackToList}
+            />
+          </div>
         </div>
       </div>
     </DashboardLayout>

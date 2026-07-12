@@ -221,6 +221,12 @@ export function useSupportChatPage(lang: string) {
     loadTicketDetail(ticket.id);
   };
 
+  // Mobile master-detail: clear the open conversation to return to the list.
+  // The join/leave effect handles leaving the socket room when this goes null.
+  const handleBackToList = () => {
+    setSelectedTicket(null);
+  };
+
   const [profanityWarning, setProfanityWarning] = useState<string | null>(null);
 
   const handleSendMessage = async () => {
@@ -377,6 +383,7 @@ export function useSupportChatPage(lang: string) {
     isConnected,
     stats,
     handleSelectTicket,
+    handleBackToList,
     handleSendMessage,
     handleUpdateTicket,
     handleMessageInputChange,
