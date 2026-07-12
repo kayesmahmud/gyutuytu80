@@ -9,6 +9,26 @@ import { getSession, signOut } from 'next-auth/react';
  * baseURL points to the Express backend for API calls
  * Editor/admin routes like /api/editor/* are on the Express backend
  */
+// Staff (editor/super-admin) and consumers use different login pages. Redirect
+// a signed-out user back to the login that matches where they were, so an
+// editor logging out doesn't get bounced to the consumer sign-in page.
+function loginRedirectPath(): string {
+  if (typeof window === 'undefined') return '/en/auth/signin';
+  const path = window.location.pathname;
+  const langMatch = path.match(/^\/([a-z]{2})(?:\/|$)/);
+  const lang = langMatch ? langMatch[1] : 'en';
+  if (/\/super-admin(\/|$)/.test(path)) return `/${lang}/super-admin/login`;
+  if (/\/editor(\/|$)/.test(path)) return `/${lang}/editor/login`;
+  return '/en/auth/signin';
+}
+
+// Already on any login page → don't redirect (avoids loops during logout).
+function isOnLoginPage(): boolean {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname;
+  return path.includes('/auth/signin') || /\/(editor|super-admin)\/login(\/|$)/.test(path);
+}
+
 export const apiClient = createApiClient({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
 
@@ -21,7 +41,7 @@ export const apiClient = createApiClient({
 
       // If the token refresh failed, sign out immediately
       if ((session as any)?.error === 'RefreshAccessTokenError') {
-        signOut({ redirect: true, callbackUrl: '/en/auth/signin' });
+        if (!isOnLoginPage()) signOut({ redirect: true, callbackUrl: loginRedirectPath() });
         return null;
       }
 
@@ -35,7 +55,7 @@ export const apiClient = createApiClient({
   // Handle unauthorized access — try refreshing the session before signing out
   onUnauthorized: async () => {
     if (typeof window === 'undefined') return;
-    if (window.location.pathname.includes('/auth/signin')) return;
+    if (isOnLoginPage()) return;
 
     // Try refreshing the session (triggers NextAuth jwt callback which attempts token refresh)
     try {
@@ -48,7 +68,7 @@ export const apiClient = createApiClient({
       // Refresh failed
     }
 
-    console.log('🔐 [API] Unauthorized - signing out and redirecting to signin');
-    signOut({ redirect: true, callbackUrl: '/en/auth/signin' });
+    console.log('🔐 [API] Unauthorized - signing out and redirecting to login');
+    signOut({ redirect: true, callbackUrl: loginRedirectPath() });
   },
 });
