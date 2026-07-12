@@ -3,14 +3,8 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Shopping bag body -->
+    <!-- White block "E", centered in the adaptive-icon safe zone -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,50 L70,50 L67.5,82 A2,2 0 0 1 65.5,84 L42.5,84 A2,2 0 0 1 40.5,82 Z" />
-    <!-- Bag handle -->
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4.5"
-        android:fillColor="#00000000"
-        android:pathData="M46,52 L46,46 A8,8 0 0 1 62,46 L62,52" />
+        android:pathData="M40,36 L70,36 L70,44 L49,44 L49,50 L65,50 L65,57.5 L49,57.5 L49,64 L70,64 L70,72 L40,72 Z" />
 </vector>
