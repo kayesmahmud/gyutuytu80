@@ -116,18 +116,19 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Super Admin routes - require super_admin role
+  // Super Admin routes - require super_admin role. Send unauthenticated staff to
+  // the staff login, NOT the consumer sign-in page.
   if (isSuperAdminRoute) {
     if (!token || token.role !== 'super_admin') {
-      return NextResponse.redirect(new URL(`/${lang}/auth/signin`, req.url));
+      return NextResponse.redirect(new URL(`/${lang}/super-admin/login`, req.url));
     }
     return NextResponse.next();
   }
 
-  // Editor routes - require editor or super_admin role
+  // Editor routes - require editor or super_admin role. Unauthenticated → editor login.
   if (isEditorRoute) {
     if (!token || (token.role !== 'editor' && token.role !== 'super_admin')) {
-      return NextResponse.redirect(new URL(`/${lang}/auth/signin`, req.url));
+      return NextResponse.redirect(new URL(`/${lang}/editor/login`, req.url));
     }
     return NextResponse.next();
   }
