@@ -54,9 +54,13 @@ export function UserAuthProvider({ children }: UserAuthProviderProps) {
   const isRegularUser = user?.role === 'user';
   const isLoading = status === 'loading';
 
-  // Monitor session expiration and force logout
+  // Monitor session expiration and force logout.
+  // Only track REGULAR users here — editor/super_admin sessions are handled by
+  // StaffAuthContext, which redirects to the staff login. Without this role
+  // guard, an editor logging out also tripped this effect and its consumer
+  // redirect (/auth/signin) raced (and won over) the staff one.
   useEffect(() => {
-    if (status === 'authenticated' && session) {
+    if (status === 'authenticated' && session && isRegularUser) {
       wasAuthenticated.current = true;
     }
 
@@ -66,7 +70,7 @@ export function UserAuthProvider({ children }: UserAuthProviderProps) {
       signOut({ redirect: true, callbackUrl: '/en/auth/signin' });
       wasAuthenticated.current = false;
     }
-  }, [session, status]);
+  }, [session, status, isRegularUser]);
 
   const login = async (email: string, password: string) => {
     try {
