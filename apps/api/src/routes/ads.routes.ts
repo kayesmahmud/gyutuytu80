@@ -24,7 +24,7 @@ import {
   calculateExpiresAt,
   getBooleanSetting,
 } from '../services/adLimits.service.js';
-import { sendNotification } from '../services/notification.service.js';
+import { sendNotification, notifyEditors } from '../services/notification.service.js';
 
 const router = Router();
 
@@ -267,6 +267,15 @@ router.post(
     if (files && files.length > 0) {
       await createAdImages(ad.id, files);
     }
+
+    // Notify editors that a new ad is pending review (editor APK push + desktop bell)
+    notifyEditors({
+      type: 'new_ad_pending',
+      title: 'New ad pending review',
+      body: `"${ad.title}" was just posted and needs review.`,
+      data: { route: '/editor/ad-management', adId: String(ad.id) },
+      referenceId: ad.id,
+    }).catch((err) => console.error('New-ad editor notification error:', err));
 
     res.status(201).json({
       success: true,

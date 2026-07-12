@@ -84,6 +84,21 @@ export async function sendNotification({
 }
 
 /**
+ * Resolve recipient user IDs for editor/staff operational alerts.
+ * Editors are rows in the users table (role = 'editor'). Only editors who
+ * installed the editor APK and logged in will actually have FCM tokens, so
+ * pushes are naturally scoped to installed devices; the DB notification is
+ * still written for the desktop notification center.
+ */
+export async function getEditorRecipientIds(): Promise<number[]> {
+  const rows = await prisma.users.findMany({
+    where: { role: 'editor' },
+    select: { id: true },
+  });
+  return rows.map((r) => r.id);
+}
+
+/**
  * Check if a notification was already sent (for rate limiting)
  */
 export async function canSendNotification(
@@ -102,6 +117,38 @@ export async function canSendNotification(
     },
   });
   return !existing;
+}
+
+/**
+ * Convenience: send an operational alert to all editors (push + DB + socket).
+ * Resolves editor recipient IDs and, when cooldownMinutes is set, drops any
+ * editor who already got the same (type, referenceId) within the window so a
+ * burst on one ticket/ad doesn't spam. Fire-and-forget friendly.
+ */
+export async function notifyEditors(params: {
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+  referenceId?: number;
+  cooldownMinutes?: number;
+}): Promise<void> {
+  const { cooldownMinutes, ...rest } = params;
+  let recipientUserIds = await getEditorRecipientIds();
+  if (recipientUserIds.length === 0) return;
+
+  if (cooldownMinutes && cooldownMinutes > 0) {
+    const allowed: number[] = [];
+    for (const id of recipientUserIds) {
+      if (await canSendNotification(id, rest.type, rest.referenceId, cooldownMinutes)) {
+        allowed.push(id);
+      }
+    }
+    recipientUserIds = allowed;
+  }
+  if (recipientUserIds.length === 0) return;
+
+  await sendNotification({ recipientUserIds, ...rest });
 }
 
 /**

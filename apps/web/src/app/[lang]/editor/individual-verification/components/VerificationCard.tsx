@@ -24,8 +24,8 @@ export function VerificationCard({
 }: VerificationCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-      <div className="p-6">
-        <div className="flex gap-6">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
           {/* User Avatar */}
           <div className="flex-shrink-0">
             <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center">
@@ -37,8 +37,8 @@ export function VerificationCard({
 
           {/* Verification Details */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-2 sm:gap-4 mb-3">
+              <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-bold text-gray-900 mb-1">
                   {verification.fullName}
                 </h3>
@@ -47,7 +47,7 @@ export function VerificationCard({
                     <span>✨</span> Seller Name: {verification.verifiedSellerName}
                   </div>
                 )}
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
                   <span className="flex items-center gap-1">
                     <span>📧</span> {verification.email}
                   </span>
@@ -289,7 +289,7 @@ function ActionButtons({
   onReject: (verification: IndividualVerification) => void;
 }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-wrap gap-3">
       {activeTab === 'pending' && (
         <>
           <button

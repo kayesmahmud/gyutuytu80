@@ -68,7 +68,7 @@ export default function EditorDashboard({ params }: { params: Promise<{ lang: st
 
       {/* Quick Actions Grid */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Quick Actions</h2>
           <span className="text-sm text-gray-500 font-medium">Click any action to get started</span>
         </div>

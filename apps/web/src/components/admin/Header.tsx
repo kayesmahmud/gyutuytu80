@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import type { AdminTheme } from '@/lib/themes';
 
 interface HeaderProps {
@@ -40,6 +41,9 @@ export function Header({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const isEditorDashboard = !!pathname && pathname.endsWith('/editor/dashboard');
 
   const alertColors = {
     warning: {
@@ -65,21 +69,40 @@ export function Header({
   const alert = systemAlert ? alertColors[systemAlert.type || 'warning'] : null;
 
   return (
-    <header className="h-[72px] bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40 backdrop-blur-sm bg-white/95">
+    <header className="h-[72px] bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40 backdrop-blur-sm bg-white/95">
       {/* Left Section */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        {/* Menu (opens drawer) — top-left on mobile */}
         <button
           onClick={onSidebarToggle}
-          className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 lg:hidden"
-          aria-label="Toggle sidebar"
+          className="flex-shrink-0 p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 lg:hidden"
+          aria-label="Open menu"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
 
-        {/* Search Bar */}
-        <div className="relative w-[420px] max-md:w-[220px]">
+        {/* Editor: a back button next to the menu on sub-pages */}
+        {theme === 'editor' && !isEditorDashboard && (
+          <button
+            onClick={() => router.back()}
+            className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 active:scale-95 lg:hidden"
+            aria-label="Back"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+
+        {/* Editor brand — mobile only (slim header, no search) */}
+        {theme === 'editor' && (
+          <span className="lg:hidden text-lg font-bold text-gray-900 flex-shrink-0">Editor</span>
+        )}
+
+        {/* Search Bar — hidden on mobile for the editor's slim header */}
+        <div className={`relative w-full max-w-[420px] min-w-0 ${theme === 'editor' ? 'hidden lg:block' : ''}`}>
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -135,11 +158,11 @@ export function Header({
           </div>
         )}
 
-        {/* System Alert */}
+        {/* System Alert — hidden on mobile so it doesn't crowd out the menu button */}
         {systemAlert && alert && (
           <div
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+              hidden md:flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
               ${alert.bg} ${alert.text}
             `}
           >

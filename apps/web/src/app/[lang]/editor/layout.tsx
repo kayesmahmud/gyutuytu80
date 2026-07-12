@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { NativeFcmBridge } from '@/components/editor/NativeFcmBridge';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,5 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function EditorLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      {children}
+      <NativeFcmBridge />
+    </>
+  );
 }

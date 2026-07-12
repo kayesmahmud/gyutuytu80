@@ -2,15 +2,13 @@ import { notFound } from 'next/navigation';
 import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
-import { Header, Footer, BottomNav } from '@/components/layout';
+import { ChromeShell } from '@/components/layout';
 import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext';
 import { MaintenanceGate } from '@/components/MaintenanceGate';
 import { prisma } from '@thulobazaar/database';
 import GoogleAdSense from '@/components/ads/GoogleAdSense';
 import { AdConfigProvider, type AdConfig } from '@/contexts/AdConfigContext';
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
-import InstallPrompt from '@/components/pwa/InstallPrompt';
-import AppStoreBanner from '@/components/pwa/AppStoreBanner';
 import { GlobalJsonLd } from '@/components/seo/GlobalJsonLd';
 
 // Force dynamic rendering for all pages — Prisma, next-intl, and auth contexts
@@ -207,16 +205,11 @@ export default async function LanguageLayout({
         <AdConfigProvider config={adConfig}>
           <MaintenanceGate isMaintenanceMode={isMaintenanceMode} lang={lang}>
             <ServiceWorkerRegister />
-            <InstallPrompt />      {/* Desktop PWA install */}
-            <AppStoreBanner />     {/* Mobile App Store/Play Store redirect */}
             <GoogleAdSense enabled={adConfig.enabled} clientId={adConfig.clientId} />
             <GlobalJsonLd lang={lang} />
-            <Header lang={lang} />
-            <div className="pb-20 lg:pb-0">
+            <ChromeShell lang={lang}>
               {children}
-            </div>
-            <Footer lang={lang} />
-            <BottomNav lang={lang} />
+            </ChromeShell>
           </MaintenanceGate>
         </AdConfigProvider>
       </SiteSettingsProvider>

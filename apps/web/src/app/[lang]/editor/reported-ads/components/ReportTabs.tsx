@@ -11,12 +11,12 @@ interface ReportTabsProps {
 
 export default function ReportTabs({ tabs, activeTab, tabCounts, onTabChange }: ReportTabsProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 flex gap-1">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 grid grid-cols-2 gap-1 sm:flex">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
+          className={`sm:flex-1 flex items-center justify-center gap-2 text-sm px-2 sm:px-4 py-3 rounded-lg font-medium transition-all ${
             activeTab === tab.id
               ? tab.id === 'pending'
                 ? 'bg-red-500 text-white shadow-md'

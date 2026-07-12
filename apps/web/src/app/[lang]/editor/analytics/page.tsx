@@ -102,7 +102,7 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">My Analytics</h1>
             <p className="text-gray-600 mt-1">Your personal moderation performance and statistics</p>
@@ -118,12 +118,6 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
               <option value="90d">Last 90 Days</option>
               <option value="all">All Time</option>
             </select>
-            <button
-              onClick={() => router.push(`/${params.lang}/editor/dashboard`)}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              ← Back to Dashboard
-            </button>
           </div>
         </div>
 

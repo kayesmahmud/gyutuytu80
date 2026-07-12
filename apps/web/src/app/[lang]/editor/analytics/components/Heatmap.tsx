@@ -13,7 +13,7 @@ export default function Heatmap({ data }: HeatmapProps) {
   const maxValue = Math.max(...data.map((d) => d.count));
 
   return (
-    <div className="grid grid-cols-12 gap-2">
+    <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-12 gap-2">
       {data.map((item) => {
         const intensity = (item.count / maxValue) * 100;
         const bgColor =

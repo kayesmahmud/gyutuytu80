@@ -62,17 +62,11 @@ export default function ReportedShopsPage({ params: paramsPromise }: { params: P
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Reported Shops</h1>
             <p className="text-gray-600 mt-1">Review and manage shop/seller reports</p>
           </div>
-          <button
-            onClick={() => router.push(`/${lang}/editor/dashboard`)}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            ← Back to Dashboard
-          </button>
         </div>
 
         {/* Tabs */}

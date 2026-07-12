@@ -516,7 +516,11 @@ export type NotificationType =
   | 'trending_area'
   | 'nearby_seller'
   | 'welcome'
-  | 'announcement';
+  | 'announcement'
+  // Editor/staff operational alerts (editor APK + desktop notification center)
+  | 'new_ad_pending'
+  | 'verification_requested'
+  | 'support_message';
 
 export interface AppNotification {
   id: number;

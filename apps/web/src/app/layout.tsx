@@ -20,9 +20,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <GoogleTagManager gtmId="GTM-NDZQCRKC" />
-      <MetaPixel />
       <body className={inter.className}>
+        {/* Analytics must live inside <body> — rendering the GTM/Pixel <noscript>
+            between <html> and <body> is an invalid document position (Next 16). */}
+        <GoogleTagManager gtmId="GTM-NDZQCRKC" />
+        <MetaPixel />
         <Providers>
           {children}
         </Providers>

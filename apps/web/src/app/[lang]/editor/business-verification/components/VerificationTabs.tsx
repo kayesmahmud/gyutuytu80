@@ -17,12 +17,12 @@ export function VerificationTabs({ activeTab, setActiveTab, count }: Verificatio
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
-      <div className="flex gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:flex">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+            className={`sm:flex-1 text-sm sm:text-base px-2 sm:px-6 py-3 rounded-lg font-semibold transition-all ${
               activeTab === tab.key
                 ? `bg-gradient-to-r ${tab.activeStyle} text-white shadow-lg`
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

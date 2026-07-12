@@ -56,6 +56,10 @@ interface SidebarProps {
   userAvatar?: string;
   isCollapsed?: boolean;
   onToggle?: () => void;
+  /** Mobile off-canvas drawer open state (ignored on lg+) */
+  isOpen?: boolean;
+  /** Close the mobile drawer (e.g. from the header X button) */
+  onClose?: () => void;
   navSections: NavSection[];
   theme?: AdminTheme;
 }
@@ -100,6 +104,8 @@ export function Sidebar({
   userEmail = 'editor@thulobazaar.com.np',
   userAvatar,
   isCollapsed = false,
+  isOpen = false,
+  onClose,
   navSections,
   theme = 'editor',
 }: SidebarProps) {
@@ -109,11 +115,14 @@ export function Sidebar({
   return (
     <aside
       className={`
-        ${isCollapsed ? 'w-20' : 'w-72'}
+        fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:static lg:z-auto lg:translate-x-0 lg:overflow-visible
+        ${isCollapsed ? 'lg:w-20' : 'lg:w-72'}
         bg-gradient-to-b from-gray-50 to-white
         border-r border-gray-200
         shadow-xl
-        transition-all duration-300 ease-in-out
         flex flex-col min-h-screen
       `}
     >
@@ -139,6 +148,17 @@ export function Sidebar({
               </p>
             </div>
           )}
+
+          {/* Close button — mobile drawer only */}
+          <button
+            onClick={onClose}
+            className="ml-auto p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
+            aria-label="Close menu"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -158,6 +178,7 @@ export function Sidebar({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onClose}
                     className={`
                       relative flex items-center gap-3 px-4 py-3.5 rounded-xl
                       transition-all duration-200

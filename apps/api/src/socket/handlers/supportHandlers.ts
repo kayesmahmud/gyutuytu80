@@ -2,6 +2,10 @@ import { Server } from 'socket.io';
 import { prisma } from '@thulobazaar/database';
 import type { AuthenticatedSocket } from '../types.js';
 import { censorProfanity } from '../../utils/profanityFilter.js';
+import { notifyEditors } from '../../services/notification.service.js';
+
+// Cooldown (minutes) for support-message editor alerts, per editor per ticket.
+const SUPPORT_ALERT_COOLDOWN_MINUTES = 2;
 
 export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocket): void {
   const userId = socket.userId;
@@ -148,6 +152,19 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
           createdAt: message.created_at,
         },
       });
+
+      // Push/desktop-bell alert to editors only for inbound customer messages
+      // (online staff already got the real-time socket event above).
+      if (!isStaff && !actualIsInternal) {
+        notifyEditors({
+          type: 'support_message',
+          title: 'New support reply',
+          body: sanitizedContent.slice(0, 140),
+          data: { route: '/editor/support-chat', ticketId: String(ticketId) },
+          referenceId: ticketId,
+          cooldownMinutes: SUPPORT_ALERT_COOLDOWN_MINUTES,
+        }).catch((err) => console.error('Support socket editor notification error:', err));
+      }
 
       callback({ success: true, message: messageData });
     } catch (error) {

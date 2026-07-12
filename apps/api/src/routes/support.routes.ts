@@ -3,8 +3,13 @@ import { prisma } from '@thulobazaar/database';
 import { catchAsync } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { censorProfanity } from '../utils/profanityFilter.js';
+import { notifyEditors } from '../services/notification.service.js';
 
 const router = Router();
+
+// Cooldown (minutes) for support-message editor alerts, per editor per ticket,
+// so a burst of messages on one ticket doesn't spam every editor's phone.
+const SUPPORT_ALERT_COOLDOWN_MINUTES = 2;
 
 // 🔒 API-M4: define staff POSITIVELY. Checking `role === 'user'` treats a null/
 // unknown role as staff (IDOR — a user with a null role could read others' tickets
@@ -161,6 +166,16 @@ router.post(
         sla_breach_at: true,
       },
     });
+
+    // Notify editors of a new support ticket (editor APK push + desktop bell)
+    notifyEditors({
+      type: 'support_message',
+      title: `New support ticket: ${ticket.subject}`.slice(0, 120),
+      body: message.trim().slice(0, 140),
+      data: { route: '/editor/support-chat', ticketId: String(ticket.id) },
+      referenceId: ticket.id,
+      cooldownMinutes: SUPPORT_ALERT_COOLDOWN_MINUTES,
+    }).catch((err) => console.error('Support ticket editor notification error:', err));
 
     res.status(201).json({
       success: true,
@@ -401,6 +416,17 @@ router.post(
         data: { updated_at: new Date() },
       });
     }
+
+    // This route is owner-only (403 above), so every message here is from a
+    // customer → notify editors (editor APK push + desktop bell)
+    notifyEditors({
+      type: 'support_message',
+      title: 'New support reply',
+      body: message.content.slice(0, 140),
+      data: { route: '/editor/support-chat', ticketId: String(ticketId) },
+      referenceId: ticketId,
+      cooldownMinutes: SUPPORT_ALERT_COOLDOWN_MINUTES,
+    }).catch((err) => console.error('Support message editor notification error:', err));
 
     res.status(201).json({
       success: true,

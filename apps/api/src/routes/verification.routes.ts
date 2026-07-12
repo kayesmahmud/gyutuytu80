@@ -4,6 +4,7 @@ import { catchAsync, NotFoundError } from '../middleware/errorHandler.js';
 import { authenticateToken, requireEditorOrAdmin } from '../middleware/auth.js';
 import { uploadBusinessVerification, uploadIndividualVerification } from '../middleware/upload.js';
 import { optimizeImage } from '../middleware/optimizeImage.js';
+import { notifyEditors } from '../services/notification.service.js';
 
 const router = Router();
 
@@ -478,6 +479,15 @@ router.post(
 
     console.log(`✅ Business verification submitted by user ${userId}`);
 
+    // Notify editors of a new business verification request (editor APK push + desktop bell)
+    notifyEditors({
+      type: 'verification_requested',
+      title: 'New business verification request',
+      body: `${businessName || 'A business'} submitted documents for verification.`,
+      data: { route: '/editor/business-verification', kind: 'business' },
+      referenceId: businessRequest.id,
+    }).catch((err) => console.error('Business verification editor notification error:', err));
+
     res.json({
       success: true,
       message: 'Business verification request submitted successfully',
@@ -535,6 +545,15 @@ router.post(
     });
 
     console.log(`✅ Individual verification submitted by user ${userId}`);
+
+    // Notify editors of a new individual verification request (editor APK push + desktop bell)
+    notifyEditors({
+      type: 'verification_requested',
+      title: 'New individual verification request',
+      body: `${fullName || 'A user'} submitted documents for verification.`,
+      data: { route: '/editor/individual-verification', kind: 'individual' },
+      referenceId: individualRequest.id,
+    }).catch((err) => console.error('Individual verification editor notification error:', err));
 
     res.json({
       success: true,

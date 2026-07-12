@@ -1,0 +1,56 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
+}
+
+android {
+    namespace 'com.thulobazaar.editor'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.thulobazaar.editor"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    // Release signing — point these at your keystore (see README). Falls back to
+    // an unsigned release build if the env vars are not set.
+    signingConfigs {
+        release {
+            def storePath = System.getenv("EDITOR_KEYSTORE")
+            if (storePath != null) {
+                storeFile file(storePath)
+                storePassword System.getenv("EDITOR_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("EDITOR_KEY_ALIAS")
+                keyPassword System.getenv("EDITOR_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (System.getenv("EDITOR_KEYSTORE") != null) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:33.1.2')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'androidx.core:core-ktx:1.13.1'
+}

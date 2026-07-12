@@ -72,8 +72,8 @@ export default function AdCard({
         ad.deletedAt ? 'border-gray-400 opacity-75' : 'border-gray-200 hover:shadow-md'
       }`}
     >
-      <div className="p-6">
-        <div className="flex gap-6">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
           {/* Ad Image */}
           <div className="flex-shrink-0">
             {ad.images && ad.images.length > 0 ? (
@@ -83,10 +83,10 @@ export default function AdCard({
                 width={192}
                 height={144}
                 unoptimized
-                className="object-cover rounded-lg"
+                className="object-cover rounded-lg w-full h-48 sm:w-48 sm:h-36"
               />
             ) : (
-              <div className="w-48 h-36 bg-gray-200 rounded-lg flex items-center justify-center">
+              <div className="w-full h-48 sm:w-48 sm:h-36 bg-gray-200 rounded-lg flex items-center justify-center">
                 <span className="text-4xl">📷</span>
               </div>
             )}
@@ -94,8 +94,8 @@ export default function AdCard({
 
           {/* Ad Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-2 sm:gap-4 mb-3">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
                   <h3 className="text-xl font-bold text-gray-900">{ad.title}</h3>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(ad.status)}`}>
@@ -125,7 +125,7 @@ export default function AdCard({
                   {ad.condition && <span className="flex items-center gap-1">📦 {ad.condition}</span>}
                 </div>
               </div>
-              <div className="text-right text-sm text-gray-500">
+              <div className="text-left sm:text-right text-sm text-gray-500 flex-shrink-0">
                 <div>ID: #{ad.id}</div>
                 <div className="mt-1 text-[11px] uppercase tracking-wide text-gray-400">Posted</div>
                 <div className="font-medium text-gray-600">{postedAt}</div>
