@@ -17,7 +17,6 @@ export default function EditorDashboard({ params }: { params: Promise<{ lang: st
     loading,
     avatarUrl,
     lastLogin,
-    systemAlert,
     notificationCount,
     avgResponseTimeTrendText,
     quickActions,
@@ -49,7 +48,6 @@ export default function EditorDashboard({ params }: { params: Promise<{ lang: st
       userName={staff?.fullName || 'Editor User'}
       userEmail={staff?.email || 'editor@thulobazaar.com.np'}
       navSections={navSections}
-      systemAlert={systemAlert ?? undefined}
       notificationCount={notificationCount}
       theme="editor"
       onLogout={handleLogout}

@@ -110,6 +110,11 @@ export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}
           icon: 'Bell',
           label: 'Notifications',
         },
+        {
+          href: `/${lang}/editor/broadcast`,
+          icon: 'Send',
+          label: 'Send Broadcast',
+        },
       ],
     },
     {

@@ -33,6 +33,7 @@ import {
   Gift,
   Layers,
   Lock,
+  Send,
   type LucideIcon,
 } from 'lucide-react';
 import { AdminTheme, getRoleLabel } from '@/lib/themes';
@@ -96,6 +97,7 @@ const iconMap: Record<string, LucideIcon> = {
   Gift,
   Layers,
   Lock,
+  Send,
 };
 
 export function Sidebar({

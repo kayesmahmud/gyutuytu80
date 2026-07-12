@@ -170,6 +170,15 @@ export {
 } from './notifications';
 export type { ScheduledNotification } from './notifications';
 
+// Editor inbox (own incoming alerts — same rows that drive APK push)
+export {
+  getInboxNotifications,
+  getInboxUnreadCount,
+  markInboxNotificationRead,
+  markAllInboxNotificationsRead,
+  deleteInboxNotification,
+} from './inbox';
+
 // ============================================
 // Helper utilities
 // ============================================

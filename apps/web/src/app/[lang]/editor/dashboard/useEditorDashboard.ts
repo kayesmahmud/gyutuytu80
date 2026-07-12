@@ -8,6 +8,7 @@ import {
   getDashboardData,
   getEditorProfile,
   getSupportChatCount,
+  getInboxUnreadCount,
 } from '@/lib/editorApi';
 import { getEditorNavSections } from '@/lib/navigation';
 import type { DashboardStats, MyWorkToday, BadgeCounts, SystemAlert, QuickActionConfig } from './types';
@@ -87,7 +88,11 @@ export function useEditorDashboard(lang: string): UseEditorDashboardReturn {
         });
 
         setBadgeCounts(d.badgeCounts);
-        setNotificationCount(d.notifications.count);
+        // Bell badge = unread items in the editor's own inbox (the same rows
+        // that drive the APK push), so the number matches what opening it shows.
+        getInboxUnreadCount()
+          .then((res) => { if (res.success) setNotificationCount(res.data.count); })
+          .catch(() => {});
         setMyWorkToday(d.myWorkToday);
         setAvgResponseTimeTrendText(d.avgResponseTimeTrend.formattedText);
 
