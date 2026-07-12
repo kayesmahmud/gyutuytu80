@@ -104,7 +104,7 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Analytics</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Analytics</h1>
             <p className="text-gray-600 mt-1">Your personal moderation performance and statistics</p>
           </div>
           <div className="flex gap-3">
@@ -126,9 +126,9 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
 
         {/* Daily Activity Trend */}
         {analytics.dailyStats.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Daily Activity Trend</h3>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-gray-600 mb-4 sm:mb-6">
               Your approved vs rejected ads over time
             </p>
             <LineChart data={analytics.dailyStats} />
@@ -136,12 +136,12 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
         )}
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Category Breakdown */}
           {analytics.categoryBreakdown.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Category Distribution</h3>
-              <p className="text-sm text-gray-600 mb-6">Ads you reviewed by category</p>
+              <p className="text-sm text-gray-600 mb-4 sm:mb-6">Ads you reviewed by category</p>
               <PieChart
                 data={analytics.categoryBreakdown.map((cat, index) => ({
                   category: cat.category,
@@ -154,9 +154,9 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
 
           {/* Rejection Reasons */}
           {analytics.rejectionReasons.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Top Rejection Reasons</h3>
-              <p className="text-sm text-gray-600 mb-6">Most common reasons you rejected ads</p>
+              <p className="text-sm text-gray-600 mb-4 sm:mb-6">Most common reasons you rejected ads</p>
               <BarChart
                 data={analytics.rejectionReasons.map((reason) => ({
                   label: reason.reason,
@@ -169,9 +169,9 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
         </div>
 
         {/* Hourly Activity Heatmap */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Hourly Activity Heatmap</h3>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-gray-600 mb-4 sm:mb-6">
             Your moderation activity by hour of day (0-23)
           </p>
           <Heatmap data={analytics.hourlyActivity} />
@@ -191,6 +191,7 @@ export default function ModerationAnalyticsPage({ params: paramsPromise }: { par
         <InsightsSection
           avgResponseTime={analytics.overview.avgResponseTime}
           approvalRate={analytics.overview.approvalRate}
+          hourlyActivity={analytics.hourlyActivity}
         />
       </div>
     </DashboardLayout>

@@ -23,8 +23,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Visibility rule (unified with the editor Templates manager): every editor
+    // sees GLOBAL templates plus their own PRIVATE ones. Most-used first.
     const macros = await prisma.support_macros.findMany({
-      orderBy: { title: 'asc' },
+      where: {
+        is_active: true,
+        OR: [{ visibility: 'global' }, { created_by: userId }],
+      },
+      orderBy: [{ usage_count: 'desc' }, { title: 'asc' }],
     });
 
     return NextResponse.json({

@@ -180,6 +180,24 @@ export {
 } from './inbox';
 
 // ============================================
+// Response Templates Functions
+// ============================================
+export {
+  getTemplates,
+  createTemplate,
+  updateTemplate,
+  deleteTemplate,
+  incrementTemplateUsage,
+} from './templates';
+export type {
+  ApiTemplate,
+  TemplateInput,
+  TemplateCategory,
+  TemplateVisibility,
+  GetTemplatesParams,
+} from './templates';
+
+// ============================================
 // Helper utilities
 // ============================================
 export { getBadgeClasses, getTimeAgo, getStatusBadgeVariant, getPriorityBadgeClasses, formatNumber, truncateText } from './editorHelpers';

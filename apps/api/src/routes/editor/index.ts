@@ -10,6 +10,7 @@ import statsRoutes from './stats.routes.js';
 import reportsRoutes from './reports.routes.js';
 import categoriesRoutes from './categories.routes.js';
 import notificationsRoutes from './notifications.routes.js';
+import templatesRoutes from './templates.routes.js';
 import { authenticateToken, requireEditorOrAdmin, requireActiveStaff } from '../../middleware/auth.js';
 
 const router = Router();
@@ -50,5 +51,8 @@ router.use('/categories', categoriesRoutes);
 
 // Notifications routes: /notifications/broadcast, /notifications/schedule, /notifications/scheduled
 router.use('/notifications', notificationsRoutes);
+
+// Response templates routes: /templates (list/create/update/delete/:id/use)
+router.use('/templates', templatesRoutes);
 
 export default router;

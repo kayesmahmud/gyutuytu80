@@ -521,8 +521,14 @@ router.get(
       return;
     }
 
+    // Visibility rule (unified with the editor Templates manager): every editor
+    // sees GLOBAL templates plus their own PRIVATE ones. Most-used first.
     const macros = await prisma.support_macros.findMany({
-      orderBy: { title: 'asc' },
+      where: {
+        is_active: true,
+        OR: [{ visibility: 'global' }, { created_by: req.user!.userId }],
+      },
+      orderBy: [{ usage_count: 'desc' }, { title: 'asc' }],
     });
 
     res.json({ success: true, data: macros });

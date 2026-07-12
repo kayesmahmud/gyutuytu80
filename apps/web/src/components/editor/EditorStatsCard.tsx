@@ -4,9 +4,14 @@ interface EditorStatsCardProps {
   icon: string;
   subtitle?: string;
   color: 'blue' | 'green' | 'red' | 'purple' | 'teal' | 'orange' | 'yellow' | 'indigo' | 'pink' | 'gray';
+  /**
+   * Compact mode: tighter padding + smaller type so several cards fit in a
+   * 2-column grid on mobile instead of stacking as full-height tiles.
+   */
+  compact?: boolean;
 }
 
-export function EditorStatsCard({ label, value, icon, subtitle, color }: EditorStatsCardProps) {
+export function EditorStatsCard({ label, value, icon, subtitle, color, compact = false }: EditorStatsCardProps) {
   const colorClasses = {
     blue: 'from-blue-50 to-blue-100 border-blue-200 text-blue-700 text-blue-900',
     green: 'from-green-50 to-green-100 border-green-200 text-green-700 text-green-900',
@@ -26,15 +31,20 @@ export function EditorStatsCard({ label, value, icon, subtitle, color }: EditorS
   const labelColor = colors[3];
   const valueColor = colors[4];
 
+  const padding = compact ? 'p-3 sm:p-4' : 'p-6';
+  const valueSize = compact ? 'text-xl sm:text-2xl' : 'text-3xl';
+  const iconSize = compact ? 'text-2xl sm:text-3xl' : 'text-4xl';
+  const labelSize = compact ? 'text-xs' : 'text-sm';
+
   return (
-    <div className={`bg-gradient-to-br ${bgGradient} border-2 ${border} rounded-xl p-6`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <div className={`text-sm font-medium ${labelColor} mb-1`}>{label}</div>
-          <div className={`text-3xl font-bold ${valueColor}`}>{value}</div>
-          {subtitle && <div className={`text-xs ${labelColor} mt-1`}>{subtitle}</div>}
+    <div className={`bg-gradient-to-br ${bgGradient} border-2 ${border} rounded-xl ${padding}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className={`${labelSize} font-medium ${labelColor} mb-1 truncate`}>{label}</div>
+          <div className={`${valueSize} font-bold ${valueColor} truncate`}>{value}</div>
+          {subtitle && <div className={`text-xs ${labelColor} mt-1 truncate`}>{subtitle}</div>}
         </div>
-        <div className="text-4xl">{icon}</div>
+        <div className={`${iconSize} flex-shrink-0`}>{icon}</div>
       </div>
     </div>
   );

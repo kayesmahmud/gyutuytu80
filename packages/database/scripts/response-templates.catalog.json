@@ -1,0 +1,240 @@
+{
+  "categories": [
+    {
+      "category": "ad_rejection",
+      "templates": [
+        {
+          "title_en": "Blurry / low-quality photos",
+          "title_ne": "धमिलो वा कम गुणस्तरको फोटो",
+          "content_en": "Hi {name}, we couldn't approve your ad because the photos are too blurry to see clearly. Please take clear, well-lit photos of the actual {item} from a few angles and upload them again. Good photos attract more buyers! — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, तपाईंको विज्ञापनका फोटो धेरै धमिला भएकाले हामीले अप्रुभ गर्न सकेनौं। कृपया तपाईंले बेच्न लाग्नुभएको {item} लाई राम्रो उज्यालोमा, स्पष्ट देखिने गरी केही कोणबाट फोटो खिचेर फेरि अपलोड गर्नुहोस्। राम्रो फोटोले धेरै ग्राहक तान्छ! — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Wrong category chosen",
+          "title_ne": "गलत क्याटेगोरी छनोट",
+          "content_en": "Hi {name}, your ad was posted in the wrong category, so buyers may not find it. Please edit your ad and move it to the correct category: {category}. Once done, resubmit and we'll approve it quickly. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, तपाईंको विज्ञापन गलत क्याटेगोरीमा राखिएकाले खोज्ने ग्राहकले भेट्न नसक्ने सम्भावना छ। कृपया विज्ञापन एडिट गरेर सही क्याटेगोरी {category} मा सार्नुहोस्। सारेपछि फेरि पठाउनुहोस्, हामी छिट्टै अप्रुभ गरिदिन्छौं। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Prohibited / illegal item",
+          "title_ne": "निषेधित वा गैरकानुनी वस्तु",
+          "content_en": "Hi {name}, we're sorry, but your ad can't be published because {item} isn't allowed to be sold on Thulo Bazaar. This falls under our prohibited-items policy. You're welcome to post any other items you'd like to sell. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, माफ गर्नुहोस्, तपाईंको विज्ञापन प्रकाशित गर्न मिलेन किनकि {item} थुलो बजारमा बिक्री गर्न अनुमति छैन। यो हाम्रो निषेधित वस्तुसम्बन्धी नीति अन्तर्गत पर्छ। तपाईंले बेच्न चाहनुभएका अन्य सामान भने सजिलै पोस्ट गर्न सक्नुहुन्छ। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Duplicate listing",
+          "title_ne": "डुप्लिकेट विज्ञापन",
+          "content_en": "Hi {name}, this looks like a duplicate of an ad you've already posted, so we couldn't approve it. Please keep just one active ad per item — you can edit the existing one anytime to update details. Duplicate posts can actually lower your visibility. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, यो विज्ञापन तपाईंले पहिले नै हालिसक्नुभएको विज्ञापनसँग मिल्दो (डुप्लिकेट) देखिएकाले हामीले अप्रुभ गर्न सकेनौं। कृपया एउटै सामानको एउटै मात्र विज्ञापन सक्रिय राख्नुहोस् — विवरण अपडेट गर्न पुरानै विज्ञापन जहिले पनि एडिट गर्न सकिन्छ। डुप्लिकेट पोस्ट गर्दा उल्टै तपाईंको भिजिबिलिटी घट्न सक्छ। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Misleading / wrong price",
+          "title_ne": "भ्रामक वा गलत मूल्य",
+          "content_en": "Hi {name}, we couldn't approve your ad because the price doesn't match the actual item (for example, a very low price just to attract clicks). Please enter the real selling price and resubmit. Honest pricing builds trust with buyers. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, मूल्य वास्तविक सामानसँग मेल नखाएकाले (जस्तै, क्लिक तान्न धेरै कम मूल्य राखेको जस्तो) हामीले तपाईंको विज्ञापन अप्रुभ गर्न सकेनौं। कृपया वास्तविक बिक्री मूल्य राखेर फेरि पठाउनुहोस्। सही मूल्यले ग्राहकसँग विश्वास बढाउँछ। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Spam / repetitive posting",
+          "title_ne": "स्प्याम वा बारम्बार पोस्ट",
+          "content_en": "Hi {name}, we've noticed the same ad being posted again and again, which counts as spam, so we can't approve it. Please post each item just once and wait for it to be reviewed. If you have many different items, post them separately. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, एउटै विज्ञापन बारम्बार पोस्ट भइरहेको हामीले देख्यौं, जुन स्प्याम मानिने भएकाले अप्रुभ गर्न मिलेन। कृपया प्रत्येक सामान एकपटक मात्र पोस्ट गरी रिभ्यु हुने पर्खनुहोस्। फरक-फरक धेरै सामान छन् भने ती अलग-अलग गरी पोस्ट गर्नुहोस्। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Incomplete / vague description",
+          "title_ne": "अपुरो वा अस्पष्ट विवरण",
+          "content_en": "Hi {name}, your ad needs a bit more detail before we can approve it. Please add key information like the condition, brand/model, and why you're selling {item}. A clear description helps buyers decide faster and cuts down on back-and-forth. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, अप्रुभ गर्नुअघि तपाईंको विज्ञापनमा अलिकति थप विवरण चाहिन्छ। कृपया {item} को अवस्था, ब्रान्ड/मोडल र बेच्नुको कारणजस्ता मुख्य जानकारी थप्नुहोस्। स्पष्ट विवरणले ग्राहकलाई छिटो निर्णय गर्न सजिलो बनाउँछ र बारम्बार सोधपुछ घटाउँछ। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Contact number shown in photo",
+          "title_ne": "फोटोमा फोन नम्बर देखिएको",
+          "content_en": "Hi {name}, we couldn't approve your ad because your phone number is shown inside the photo. For your safety and to prevent misuse, contact details must stay out of images — buyers can already reach you through the ad. Please upload clean photos and resubmit. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, फोटोभित्रै तपाईंको फोन नम्बर देखिएकाले हामीले विज्ञापन अप्रुभ गर्न सकेनौं। तपाईंकै सुरक्षा र दुरुपयोग रोक्न फोटोमा सम्पर्क विवरण राख्न मिल्दैन — ग्राहकले विज्ञापनमार्फत नै तपाईंलाई सम्पर्क गर्न सक्छन्। कृपया नम्बर नभएको सफा फोटो अपलोड गरेर फेरि पठाउनुहोस्। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Counterfeit / replica goods",
+          "title_ne": "नक्कली वा रेप्लिका सामान",
+          "content_en": "Hi {name}, we can't approve this ad because the item appears to be a replica or counterfeit branded product, which isn't allowed on Thulo Bazaar. If it's genuine, please say so clearly and add proof like a bill or box. If it's a copy, you may list it without using the brand name. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, यो सामान नक्कली वा रेप्लिका ब्रान्डेड प्रोडक्ट देखिएकाले हामीले अप्रुभ गर्न सकेनौं, जुन थुलो बजारमा अनुमति छैन। सामान असली हो भने कृपया स्पष्ट रूपमा उल्लेख गरी बिल वा बक्सजस्ता प्रमाण थप्नुहोस्। कपी हो भने ब्रान्डको नाम प्रयोग नगरी लिस्ट गर्न सक्नुहुन्छ। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "We edited your ad and approved it",
+          "title_ne": "हामीले विज्ञापन मिलाएर अप्रुभ गर्‍यौं",
+          "content_en": "Hi {name}, good news — your ad is now live! We made a small edit ({reason}) so it follows our guidelines and reaches more buyers. Please take a look and update anything if needed. Thanks for selling on Thulo Bazaar! — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, खुसीको खबर — तपाईंको विज्ञापन अब लाइभ भयो! हाम्रा नियम मिलोस् र धेरै ग्राहकसम्म पुगोस् भनेर हामीले सानो एडिट ({reason}) गर्‍यौं। कृपया एकपटक हेर्नुहोस्, आवश्यक भए जुनसुकै कुरा अपडेट गर्न सक्नुहुन्छ। थुलो बजारमा बिक्री गर्नुभएकोमा धन्यवाद! — थुलो बजार सपोर्ट टिम"
+        }
+      ]
+    },
+    {
+      "category": "verification_rejection",
+      "templates": [
+        {
+          "title_en": "Business verified — welcome",
+          "title_ne": "व्यवसाय भेरिफाइड — स्वागत छ",
+          "content_en": "Congratulations {name}! Your business is now verified on Thulo Bazaar and your verified badge is live. Buyers can now see that {business} is a trusted seller, which builds confidence and brings you more responses. Thank you for being part of Thulo Bazaar. — Support Team",
+          "content_ne": "बधाई छ {name}! तपाईंको व्यवसाय थुलो बजारमा भेरिफाई भइसक्यो र भेरिफाइड ब्याज अब लाइभ भएको छ। अब ग्राहकहरूले {business} लाई विश्वसनीय बिक्रेताको रूपमा देख्न सक्नेछन्, जसले तपाईंप्रति भरोसा बढाउँछ र थप रेस्पोन्स दिलाउँछ। थुलो बजारसँग जोडिनुभएकोमा धन्यवाद। — सपोर्ट टिम"
+        },
+        {
+          "title_en": "Business doc — blurry/unreadable",
+          "title_ne": "व्यवसाय डकुमेन्ट — धमिलो",
+          "content_en": "Hi {name}, thank you for submitting your business documents. The {document} you uploaded is too blurry to read clearly, so we could not complete the verification. Please re-upload a clear, well-lit photo where all text and details are fully visible, and we will review it again within {days} days. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, व्यवसायको डकुमेन्ट पठाउनुभएकोमा धन्यवाद। तपाईंले अपलोड गर्नुभएको {document} साह्रै धमिलो भएकाले हामीले स्पष्ट पढ्न सकेनौं, त्यसैले भेरिफिकेसन पूरा गर्न सकिएन। कृपया राम्रो उज्यालोमा सबै अक्षर र विवरण स्पष्ट देखिने गरी सफा फोटो फेरि अपलोड गर्नुहोस्, हामी {days} दिनभित्र पुनः जाँच गर्नेछौं। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Business name mismatch",
+          "title_ne": "व्यवसायको नाम मिलेन",
+          "content_en": "Hi {name}, we reviewed your verification request, but the business name on your profile ({business}) does not match the name on the document you submitted. Please make your Thulo Bazaar profile name exactly match your registration document and resubmit — or upload a document that shows the correct business name. We are happy to help if you have any questions. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, हामीले तपाईंको भेरिफिकेसन अनुरोध जाँच्यौं, तर तपाईंको प्रोफाइलमा भएको व्यवसायको नाम ({business}) र पठाउनुभएको डकुमेन्टको नाम मिलेन। कृपया थुलो बजार प्रोफाइलको नाम दर्ता डकुमेन्टसँग बिलकुल मिल्ने बनाएर फेरि पठाउनुहोस् — वा सही व्यवसायको नाम देखिने डकुमेन्ट अपलोड गर्नुहोस्। कुनै प्रश्न भए हामी सहयोगका लागि तयार छौं। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Document expired",
+          "title_ne": "डकुमेन्टको म्याद सकियो",
+          "content_en": "Hi {name}, thank you for your submission. The {document} you provided has expired, so we cannot use it for verification. Please upload a valid, up-to-date document and we will review your request again within {days} days. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, डकुमेन्ट पठाउनुभएकोमा धन्यवाद। तपाईंले दिनुभएको {document} को म्याद सकिएकाले हामी यसलाई भेरिफिकेसनका लागि प्रयोग गर्न सक्दैनौं। कृपया म्याद नसकिएको नयाँ डकुमेन्ट अपलोड गर्नुहोस्, हामी {days} दिनभित्र तपाईंको अनुरोध पुनः जाँच गर्नेछौं। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Additional document needed",
+          "title_ne": "थप डकुमेन्ट चाहियो",
+          "content_en": "Hi {name}, your verification is almost complete — we just need one more document to confirm your business. Please upload a {document} so we can finish the review. Once we receive it, we will process your verification within {days} days. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, तपाईंको भेरिफिकेसन लगभग पूरा भइसक्यो — व्यवसाय पुष्टि गर्न हामीलाई थप एउटा डकुमेन्ट मात्र चाहिएको छ। कृपया {document} अपलोड गर्नुहोस् ताकि हामी जाँच पूरा गर्न सकौं। प्राप्त भएपछि हामी {days} दिनभित्र तपाईंको भेरिफिकेसन प्रोसेस गर्नेछौं। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Individual ID rejected — blurry/cropped",
+          "title_ne": "व्यक्तिगत आईडी अस्वीकृत — धमिलो/काटिएको",
+          "content_en": "Hi {name}, thank you for submitting your ID for verification. The photo is blurry or cropped and some details are not fully visible, so we could not verify it. Please re-upload a clear photo of your full ID with all four corners and text visible, and avoid glare. We will review again within {days} days. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, भेरिफिकेसनका लागि आईडी पठाउनुभएकोमा धन्यवाद। फोटो धमिलो वा काटिएको भएर केही विवरण पूरै देखिएन, त्यसैले हामी भेरिफाई गर्न सकेनौं। कृपया आफ्नो पूरा आईडीको चारै कुना र अक्षर स्पष्ट देखिने सफा फोटो फेरि अपलोड गर्नुहोस्, र चमक (ग्लेयर) नपर्ने गरी खिच्नुहोस्। हामी {days} दिनभित्र पुनः जाँच गर्नेछौं। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Selfie does not match ID",
+          "title_ne": "सेल्फी आईडीसँग मिलेन",
+          "content_en": "Hi {name}, thank you for your verification request. The selfie you uploaded does not clearly match the photo on your ID, so we could not confirm it is you. Please take a new selfie in good lighting, facing the camera with your face fully visible (no mask, cap, or sunglasses), and upload it again. We will review within {days} days. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, भेरिफिकेसन अनुरोधका लागि धन्यवाद। तपाईंले अपलोड गर्नुभएको सेल्फी आईडीको फोटोसँग स्पष्ट रूपमा मिलेन, त्यसैले यो तपाईं नै हो भनी पुष्टि गर्न सकिएन। कृपया राम्रो उज्यालोमा अनुहार पूरै देखिने गरी (मास्क, टोपी वा कालो चस्मा नलगाई) सिधै क्यामेरातिर हेरेर नयाँ सेल्फी खिच्नुहोस् र फेरि अपलोड गर्नुहोस्। हामी {days} दिनभित्र जाँच गर्नेछौं। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "ID name/details mismatch",
+          "title_ne": "आईडीको नाम/विवरण मिलेन",
+          "content_en": "Hi {name}, we reviewed your verification, but the name or details on your ID do not match your Thulo Bazaar profile. Please update your profile so it exactly matches your ID (name and date of birth), then resubmit for verification. Feel free to reach out if you need any help. — Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, हामीले तपाईंको भेरिफिकेसन जाँच्यौं, तर आईडीमा भएको नाम वा विवरण थुलो बजार प्रोफाइलको जानकारीसँग मिलेन। कृपया प्रोफाइललाई आफ्नो आईडीसँग बिलकुल मिल्ने गरी (नाम र जन्म मिति) अपडेट गर्नुहोस्, त्यसपछि भेरिफिकेसनका लागि फेरि पठाउनुहोस्। कुनै सहयोग चाहिए हामीलाई सम्पर्क गर्न नहिचकिचाउनुहोस्। — थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Individual verified — approved",
+          "title_ne": "व्यक्तिगत भेरिफिकेसन स्वीकृत",
+          "content_en": "Good news {name} — your identity is now verified on Thulo Bazaar! Your verified badge is active, which helps buyers trust your listings and reach out with confidence. Thank you for helping keep Thulo Bazaar safe. — Thulo Bazaar Support Team",
+          "content_ne": "खुसीको खबर {name} — तपाईंको परिचय थुलो बजारमा भेरिफाई भइसक्यो! तपाईंको भेरिफाइड ब्याज अब एक्टिभ भएको छ, जसले ग्राहकहरूलाई तपाईंका विज्ञापनमाथि भरोसा गरी सहजै सम्पर्क गर्न मद्दत गर्छ। थुलो बजारलाई सुरक्षित राख्न सहयोग गर्नुभएकोमा धन्यवाद। — थुलो बजार सपोर्ट टिम"
+        }
+      ]
+    },
+    {
+      "category": "support",
+      "templates": [
+        {
+          "title_en": "Warm welcome / greeting",
+          "title_ne": "न्यानो स्वागत",
+          "content_en": "Hello {name}, welcome to Thulo Bazaar and thank you for reaching out. We're here to help with anything — posting ads, payments, your account, or verification. Just tell us what you need and we'll guide you step by step.",
+          "content_ne": "नमस्ते {name}, थुलो बजारमा तपाईंलाई स्वागत छ र सम्पर्क गर्नुभएकोमा धन्यवाद। विज्ञापन हाल्ने, पेमेन्ट, अकाउन्ट वा भेरिफिकेसन — जुनसुकै कुरामा हामी सहयोग गर्न तयार छौं। तपाईंलाई के चाहिएको हो भन्नुहोस्, हामी एक-एक गरेर बुझाइदिन्छौं।"
+        },
+        {
+          "title_en": "How to post an ad",
+          "title_ne": "विज्ञापन कसरी हाल्ने",
+          "content_en": "To post an ad, log in and tap 'Post Ad', then pick the right {category} and add clear photos, a title, price, and your location. Good photos and an honest description help your ad sell faster. After you submit, it goes for a quick review before appearing publicly.",
+          "content_ne": "विज्ञापन हाल्न लगइन गरेर 'Post Ad' बटनमा थिच्नुहोस्, त्यसपछि सही {category} छान्नुहोस् र स्पष्ट फोटो, टाइटल, मूल्य र आफ्नो लोकेसन हाल्नुहोस्। राम्रो फोटो र सही विवरणले तपाईंको सामान छिटो बिक्न मद्दत गर्छ। सबमिट गरेपछि विज्ञापन सार्वजनिक हुनुअघि छोटो रिभ्यूमा जान्छ।"
+        },
+        {
+          "title_en": "Promote / feature ad + payment help",
+          "title_ne": "विज्ञापन प्रमोट + पेमेन्ट सहयोग",
+          "content_en": "To get more views, open your ad and tap 'Promote' or 'Feature' to push it to the top of {category}. You can pay easily with eSewa or Khalti right inside the app. If a payment fails or the boost doesn't show up within a few minutes, send us the transaction ID and we'll sort it out.",
+          "content_ne": "बढी भ्यू पाउन आफ्नो विज्ञापन खोलेर 'Promote' वा 'Feature' मा थिच्नुहोस्, यसले तपाईंको विज्ञापनलाई {category} को माथि देखाउँछ। तपाईं eSewa वा Khalti बाट एपभित्रै सजिलै पेमेन्ट गर्न सक्नुहुन्छ। पेमेन्ट फेल भयो वा केही मिनेटभित्र बुस्ट नदेखिए, ट्रान्जेक्सन आईडी पठाउनुहोस्, हामी मिलाइदिन्छौं।"
+        },
+        {
+          "title_en": "Account recovery / password reset",
+          "title_ne": "अकाउन्ट रिकभरी / पासवर्ड रिसेट",
+          "content_en": "No worries — reset your password from the login page by tapping 'Forgot Password' and following the link we send to your registered email or phone. If the code doesn't arrive, check your spam folder or wait a minute and try again. Still stuck? Reply with your registered email or phone number and we'll help you get back in.",
+          "content_ne": "चिन्ता नलिनुहोस् — लगइन पेजमा 'Forgot Password' थिचेर, तपाईंको रजिस्टर्ड इमेल वा फोनमा आउने लिंक पछ्याएर पासवर्ड रिसेट गर्न सक्नुहुन्छ। कोड नआए स्पाम फोल्डर हेर्नुहोस् वा एकछिन पर्खेर फेरि प्रयास गर्नुहोस्। अझै समस्या भए, रजिस्टर्ड इमेल वा फोन नम्बर रिप्लाई गर्नुहोस्, हामी अकाउन्ट फिर्ता ल्याउन मद्दत गर्छौं।"
+        },
+        {
+          "title_en": "Your ad is under review",
+          "title_ne": "तपाईंको विज्ञापन रिभ्यूमा छ",
+          "content_en": "Thanks for posting on Thulo Bazaar! Every ad goes through a short review to keep the platform safe and spam-free, which usually takes up to {hours} hours. You don't need to do anything — you'll get a notification the moment it's approved. If it takes longer than expected, just let us know and we'll check it for you.",
+          "content_ne": "थुलो बजारमा विज्ञापन हाल्नुभएकोमा धन्यवाद! प्लेटफर्मलाई सुरक्षित र स्पाममुक्त राख्न हरेक विज्ञापन छोटो रिभ्यूमा जान्छ, जसमा सामान्यतया {hours} घण्टासम्म लाग्छ। तपाईंले केही गर्नुपर्दैन — अप्रुभ भएको बित्तिकै नोटिफिकेसन आउँछ। सोचेभन्दा ढिलो भए हामीलाई भन्नुहोस्, हामी जाँचिदिन्छौं।"
+        },
+        {
+          "title_en": "How to edit or delete an ad",
+          "title_ne": "विज्ञापन एडिट वा डिलिट गर्ने",
+          "content_en": "To change or remove an ad, go to 'My Ads' in your profile, open the ad, and choose 'Edit' or 'Delete'. Edited ads may go through a quick review again before the changes show up. If your item sold, marking it as sold or deleting it keeps your listings tidy for other buyers.",
+          "content_ne": "विज्ञापन परिवर्तन वा हटाउन प्रोफाइलको 'My Ads' मा गएर विज्ञापन खोल्नुहोस् र 'Edit' वा 'Delete' छान्नुहोस्। एडिट गरेको विज्ञापन परिवर्तन देखिनुअघि फेरि छोटो रिभ्यूमा जान सक्छ। सामान बिक्री भइसकेको भए 'sold' मार्क गर्नुहोस् वा डिलिट गर्नुहोस्, यसले अरू खरिदकर्तालाई तपाईंको लिस्टिङ सफा राख्छ।"
+        },
+        {
+          "title_en": "Issue resolved / closing the ticket",
+          "title_ne": "समस्या समाधान / टिकट बन्द",
+          "content_en": "Great news — your issue has been resolved, so we're closing this ticket now. If anything comes up again, just reply here or open a new request anytime and we'll be happy to help. Thank you for using Thulo Bazaar!",
+          "content_ne": "खुसीको कुरा — तपाईंको समस्या समाधान भएकोले हामी अहिले यो टिकट बन्द गर्दैछौं। फेरि कुनै कुरा आइपरे यहीँ रिप्लाई गर्नुहोस् वा जुनसुकै बेला नयाँ रिक्वेस्ट खोल्नुहोस्, हामी सहयोग गर्न पाउँदा खुसी हुन्छौं। थुलो बजार प्रयोग गर्नुभएकोमा धन्यवाद!"
+        },
+        {
+          "title_en": "Escalation to a specialist",
+          "title_ne": "विशेषज्ञकहाँ पठाइँदै",
+          "content_en": "Thank you for the details. This one needs a closer look, so we've passed it to our specialist team that handles {issue}. They'll get back to you within {days} days — you don't need to do anything in the meantime. Thanks for your patience while we get this fully sorted.",
+          "content_ne": "विवरण दिनुभएकोमा धन्यवाद। यो कुरालाई अझ राम्ररी हेर्नुपर्ने भएकाले हामीले {issue} हेर्ने हाम्रो विशेषज्ञ टिमलाई पठाएका छौं। उहाँहरूले {days} दिनभित्र तपाईंलाई सम्पर्क गर्नुहुनेछ — त्यतिन्जेल तपाईंले केही गर्नुपर्दैन। पूरै मिलाउने क्रममा तपाईंले देखाउनुभएको धैर्यका लागि हामी आभारी छौं।"
+        },
+        {
+          "title_en": "Thanks for your patience (holding reply)",
+          "title_ne": "धैर्यको लागि धन्यवाद (होल्डिङ)",
+          "content_en": "Thank you for reaching out — we've received your request and our team is looking into it. We want to give you the right answer, so please allow us a little more time. We'll update you as soon as we have news, and we appreciate your patience.",
+          "content_ne": "सम्पर्क गर्नुभएकोमा धन्यवाद — तपाईंको रिक्वेस्ट हामीले पायौं र हाम्रो टिम यसमा हेरिरहेको छ। तपाईंलाई सही जवाफ दिन चाहेकाले कृपया हामीलाई अलिकति थप समय दिनुहोस्। जानकारी आउनासाथ हामी तपाईंलाई अपडेट गर्नेछौं, र तपाईंको धैर्यका लागि आभारी छौं।"
+        },
+        {
+          "title_en": "Need more info to help",
+          "title_ne": "थप जानकारी चाहियो",
+          "content_en": "Thanks for writing in! To fix this quickly, could you send a bit more detail — a screenshot of the problem, the ad link, and what happens when you try? The more we can see, the faster we can solve it for you. We'll pick it right back up as soon as you reply.",
+          "content_ne": "लेख्नुभएकोमा धन्यवाद! यसलाई छिटो मिलाउन कृपया अलि थप विवरण पठाउनुहोस् — समस्याको स्क्रिनसट, विज्ञापनको लिंक, र प्रयास गर्दा के हुन्छ। जति धेरै देख्न पायौं, त्यति छिटो समाधान गर्न सक्छौं। तपाईंले रिप्लाई गर्नासाथ हामी तुरुन्तै अघि बढाउँछौं।"
+        }
+      ]
+    },
+    {
+      "category": "suspension",
+      "templates": [
+        {
+          "title_en": "First warning — spam activity",
+          "title_ne": "पहिलो चेतावनी — स्पाम गतिविधि",
+          "content_en": "Hi {name}, we've noticed spam-like activity on your account — such as posting the same ad again and again or sending bulk messages. Please stop this and follow our posting rules, as continued spam can get your account suspended. If you think this is a mistake, just reply to this message and we'll look into it.\n\n— Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, तपाईंको अकाउन्टमा स्पामजस्तो गतिविधि देखियो — जस्तै एउटै विज्ञापन पटक-पटक हाल्ने वा एकसाथ धेरै जनालाई म्यासेज पठाउने। कृपया यस्तो नगर्नुहोस् र हाम्रा नियम पालना गर्नुहोस्, किनकि लगातार स्पाम गर्दा तपाईंको अकाउन्ट सस्पेन्ड हुन सक्छ। यो गल्ती हो जस्तो लाग्छ भने यही म्यासेजमा जवाफ दिनुहोस्, हामी हेर्छौं।\n\n— थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Temporary suspension",
+          "title_ne": "अस्थायी सस्पेन्सन",
+          "content_en": "Hi {name}, your account has been temporarily suspended for {days} days due to a policy violation: {reason}. During this time you won't be able to post or manage ads, but your account and data are safe. It will reactivate automatically after {days} days — if you have any questions, just reply here.\n\n— Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, नियम उल्लङ्घन ({reason}) भएकाले तपाईंको अकाउन्ट {days} दिनका लागि अस्थायी रूपमा सस्पेन्ड गरिएको छ। यस अवधिमा तपाईंले विज्ञापन हाल्न वा व्यवस्थापन गर्न सक्नुहुन्न, तर तपाईंको अकाउन्ट र डेटा सुरक्षित छ। {days} दिनपछि अकाउन्ट आफैं फेरि सक्रिय हुन्छ — केही सोध्नु छ भने यहीं जवाफ दिनुहोस्।\n\n— थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Final warning before suspension",
+          "title_ne": "सस्पेन्सन अघिको अन्तिम चेतावनी",
+          "content_en": "Hi {name}, this is a final warning about {reason}. We've contacted you before, but the issue is still going on, and the next step will be suspension of your account. Please fix this right away to keep your account active — reply here if you need help understanding what to correct.\n\n— Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, यो {reason} सम्बन्धी अन्तिम चेतावनी हो। हामीले पहिले पनि सम्पर्क गरिसकेका थियौं, तर समस्या अझै जारी छ, र अबको कदम भनेको तपाईंको अकाउन्ट सस्पेन्ड गर्ने हो। अकाउन्ट सक्रिय राख्न कृपया तुरुन्तै सच्याउनुहोस् — के सुधार्ने हो बुझ्न सहयोग चाहिएमा यहीं जवाफ दिनुहोस्।\n\n— थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Fraudulent activity notice",
+          "title_ne": "ठगी गतिविधि सम्बन्धी सूचना",
+          "content_en": "Hi {name}, we've detected activity on your account that looks fraudulent, so we've temporarily restricted it to protect our users. To restore access, please reply with details and any documents that verify your identity and the ads in question. We take fraud seriously, but we also want to give genuine users a fair chance to clear things up.\n\n— Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, तपाईंको अकाउन्टमा ठगीजस्तो देखिने गतिविधि भेटिएकाले अन्य प्रयोगकर्ताको सुरक्षाका लागि हामीले यसलाई अस्थायी रूपमा रोकेका छौं। एक्सेस फिर्ता पाउन कृपया आफ्नो पहिचान र सम्बन्धित विज्ञापन पुष्टि गर्ने विवरण तथा डकुमेन्टसहित जवाफ दिनुहोस्। ठगीलाई हामी गम्भीरतापूर्वक लिन्छौं, तर साँचो प्रयोगकर्तालाई कुरा स्पष्ट पार्ने उचित मौका पनि दिन चाहन्छौं।\n\n— थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Permanent ban",
+          "title_ne": "स्थायी प्रतिबन्ध",
+          "content_en": "Hi {name}, after review, your account has been permanently banned due to {reason}. This follows repeated or serious violations of our rules, and you'll no longer be able to use this account on Thulo Bazaar. If you believe this was a mistake, you may reply once with an explanation and we'll review it one final time.\n\n— Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, समीक्षापछि {reason} का कारण तपाईंको अकाउन्ट स्थायी रूपमा प्रतिबन्धित गरिएको छ। यो निर्णय नियमको बारम्बार वा गम्भीर उल्लङ्घनका कारण गरिएको हो, र अब तपाईंले यो अकाउन्ट थुलो बजारमा प्रयोग गर्न सक्नुहुन्न। यो गल्तीले भएको हो जस्तो लाग्छ भने एकपटक स्पष्टीकरणसहित जवाफ दिन सक्नुहुन्छ, हामी अन्तिम पटक फेरि हेर्छौं।\n\n— थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Account reinstatement approved",
+          "title_ne": "अकाउन्ट पुनःसक्रिय स्वीकृत",
+          "content_en": "Good news, {name} — we've reviewed and reinstated your account, and you can now log in and post ads as usual. Thank you for your patience and cooperation. Please keep following our posting rules so your account stays in good standing.\n\n— Thulo Bazaar Support Team",
+          "content_ne": "खुसीको खबर, {name} — तपाईंको अकाउन्ट समीक्षा गरी पुनः सक्रिय गरिएको छ, अब तपाईं सधैंझैं लगइन गरेर विज्ञापन हाल्न सक्नुहुन्छ। धैर्य गर्नुभएकोमा र सहयोग गर्नुभएकोमा धन्यवाद। अकाउन्ट राम्रो अवस्थामा रहोस् भन्नाका लागि कृपया हाम्रा नियम पालना गरिरहनुहोस्।\n\n— थुलो बजार सपोर्ट टिम"
+        },
+        {
+          "title_en": "Multiple/duplicate accounts warning",
+          "title_ne": "धेरै अकाउन्ट सम्बन्धी चेतावनी",
+          "content_en": "Hi {name}, our system shows more than one account linked to you, which is against our rules and can confuse buyers. Please keep just one account and stop using the others, or reply here to tell us which one you'd like to keep. Continuing with duplicate accounts may lead to all of them being suspended.\n\n— Thulo Bazaar Support Team",
+          "content_ne": "नमस्ते {name}, हाम्रो सिस्टमले तपाईंसँग जोडिएको एकभन्दा बढी अकाउन्ट देखाउँछ, जुन हाम्रो नियम विपरीत हो र किन्नेहरूलाई अलमल पार्न सक्छ। कृपया एउटा मात्र अकाउन्ट राख्नुहोस् र अरू प्रयोग नगर्नुहोस्, वा कुन अकाउन्ट राख्न चाहनुहुन्छ भनेर यहीं जवाफ दिनुहोस्। धेरै अकाउन्ट चलाइरहनुभयो भने ती सबै सस्पेन्ड हुन सक्छन्।\n\n— थुलो बजार सपोर्ट टिम"
+        }
+      ]
+    }
+  ]
+}

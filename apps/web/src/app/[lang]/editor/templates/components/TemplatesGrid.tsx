@@ -9,7 +9,7 @@ interface TemplatesGridProps {
   templates: Template[];
   activeCategory: CategoryType;
   searchTerm: string;
-  onCopy: (content: string) => void;
+  onCopy: (content: string, id: number) => void;
   onEdit: (template: Template) => void;
   onDelete: (id: number) => void;
 }
@@ -36,7 +36,7 @@ export default function TemplatesGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
       {templates.map((template) => (
         <TemplateCard
           key={template.id}
