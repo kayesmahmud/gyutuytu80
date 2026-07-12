@@ -126,7 +126,7 @@ export default function NotificationsInboxPage({ params: paramsPromise }: { para
     >
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <Bell className="w-6 h-6 text-emerald-600" />

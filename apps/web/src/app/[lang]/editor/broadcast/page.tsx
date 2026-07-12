@@ -207,7 +207,7 @@ export default function NotificationsPage({ params: paramsPromise }: { params: P
     >
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Send className="w-6 h-6 text-emerald-600" />
             Send Broadcast
@@ -230,7 +230,7 @@ export default function NotificationsPage({ params: paramsPromise }: { params: P
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-6">
+        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-4 sm:mb-6">
           <button
             onClick={() => { setActiveTab('broadcast'); clearMessages(); }}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
@@ -257,7 +257,7 @@ export default function NotificationsPage({ params: paramsPromise }: { params: P
 
         {/* Broadcast Tab */}
         {activeTab === 'broadcast' && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Send Broadcast</h2>
 
             <div className="space-y-4">
@@ -323,7 +323,7 @@ export default function NotificationsPage({ params: paramsPromise }: { params: P
         {activeTab === 'scheduled' && (
           <div className="space-y-6">
             {/* Create new scheduled notification */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Plus className="w-5 h-5" />
                 Schedule New Notification
@@ -416,11 +416,11 @@ export default function NotificationsPage({ params: paramsPromise }: { params: P
               </div>
 
               {loadingScheduled ? (
-                <div className="p-8 text-center">
+                <div className="p-5 sm:p-8 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
                 </div>
               ) : scheduled.length === 0 ? (
-                <div className="p-8 text-center text-sm text-gray-400">
+                <div className="p-5 sm:p-8 text-center text-sm text-gray-400">
                   No scheduled notifications
                 </div>
               ) : (
@@ -492,7 +492,7 @@ export default function NotificationsPage({ params: paramsPromise }: { params: P
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                 <input

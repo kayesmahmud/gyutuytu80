@@ -44,21 +44,21 @@ export function StatsCard({ title, value, icon, trend, color = 'primary', theme 
       <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/30 rounded-full blur-2xl" />
 
       {/* Content */}
-      <div className="relative p-6">
-        <div className="flex justify-between items-start mb-6">
+      <div className="relative p-4 sm:p-6">
+        <div className="flex justify-between items-start mb-4 sm:mb-6">
           <div>
             <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">
               {title}
             </p>
-            <h3 className="text-4xl font-bold text-gray-900 tracking-tight">
+            <h3 className="text-2xl sm:text-4xl font-bold text-gray-900 tracking-tight">
               {value}
             </h3>
           </div>
 
           <div
             className={`
-              w-14 h-14 rounded-xl ${colors.iconBg} ${colors.iconShadow}
-              flex items-center justify-center text-2xl
+              w-11 h-11 sm:w-14 sm:h-14 rounded-xl ${colors.iconBg} ${colors.iconShadow}
+              flex items-center justify-center text-xl sm:text-2xl
               transform transition-transform duration-300
               group-hover:scale-110 group-hover:rotate-3
             `}
@@ -85,7 +85,7 @@ export function StatsCard({ title, value, icon, trend, color = 'primary', theme 
               <span>{trend.value}</span>
             </div>
             {trend.label && (
-              <span className="text-sm text-gray-600 font-medium">{trend.label}</span>
+              <span className="hidden sm:inline text-sm text-gray-600 font-medium">{trend.label}</span>
             )}
           </div>
         )}

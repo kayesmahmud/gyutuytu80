@@ -64,7 +64,7 @@ export default function ReportedShopsPage({ params: paramsPromise }: { params: P
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Reported Shops</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Reported Shops</h1>
             <p className="text-gray-600 mt-1">Review and manage shop/seller reports</p>
           </div>
         </div>

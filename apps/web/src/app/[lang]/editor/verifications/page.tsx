@@ -159,7 +159,7 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">All Verifications</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">All Verifications</h1>
             <p className="text-gray-600 mt-1">
               View and filter all verification requests
             </p>
@@ -167,7 +167,7 @@ export default function AllVerificationsPage({ params: paramsPromise }: { params
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm space-y-4">
           {/* Status Tabs */}
           <div className="flex gap-2 flex-wrap">
             {(['all', 'pending', 'approved', 'rejected'] as const).map((tab) => (

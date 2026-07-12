@@ -11,8 +11,8 @@ interface WelcomeSectionProps {
 
 export default function WelcomeSection({ staffName, avatarUrl, myWorkToday }: WelcomeSectionProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-      <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4 sm:gap-6">
         {/* Left: Profile and Welcome */}
         <div className="flex items-center gap-4 flex-shrink-0">
           {/* Profile Picture */}

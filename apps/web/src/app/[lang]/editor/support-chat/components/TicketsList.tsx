@@ -19,12 +19,12 @@ export function TicketsList({ tickets, selectedTicket, loading, onSelectTicket }
       </div>
       <div className="overflow-y-auto max-h-[600px]">
         {loading ? (
-          <div className="p-8 text-center">
+          <div className="p-5 sm:p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
           </div>
         ) : tickets.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <div className="text-4xl mb-2">📭</div>
+          <div className="p-5 sm:p-8 text-center text-gray-500">
+            <div className="text-2xl sm:text-4xl mb-2">📭</div>
             <p>No tickets found</p>
           </div>
         ) : (

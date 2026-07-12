@@ -67,7 +67,7 @@ export default function IndividualVerificationPage({ params: paramsPromise }: { 
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Individual Verification</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Individual Verification</h1>
             <p className="text-gray-600 mt-1">
               Review and approve individual seller verification requests
             </p>

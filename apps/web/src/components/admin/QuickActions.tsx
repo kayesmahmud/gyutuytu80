@@ -21,7 +21,7 @@ interface QuickActionsProps {
 
 export function QuickActions({ actions, theme = 'editor' }: QuickActionsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
       {actions.map((action, index) => {
         // Get colors based on action color and theme
         const colors = action.color === 'primary'
@@ -36,7 +36,7 @@ export function QuickActions({ actions, theme = 'editor' }: QuickActionsProps) {
               relative overflow-hidden
               bg-white rounded-xl
               border-2 border-gray-100 ${colors.hoverBorder}
-              p-6
+              p-4 sm:p-6
               transition-all duration-300 ease-out
               hover:shadow-lg hover:scale-[1.03] hover:-translate-y-1
               group
@@ -48,13 +48,13 @@ export function QuickActions({ actions, theme = 'editor' }: QuickActionsProps) {
               <div className="absolute inset-0 bg-gradient-to-br from-transparent via-gray-900 to-transparent" />
             </div>
 
-            <div className="relative flex flex-col items-center text-center gap-4">
+            <div className="relative flex flex-col items-center text-center gap-3 sm:gap-4">
               {/* Icon Container */}
               <div className="relative">
                 <div
                   className={`
-                    w-16 h-16 rounded-2xl ${colors.icon}
-                    flex items-center justify-center text-2xl
+                    w-12 h-12 sm:w-16 sm:h-16 rounded-2xl ${colors.icon}
+                    flex items-center justify-center text-xl sm:text-2xl
                     shadow-lg
                     transform transition-all duration-300
                     group-hover:scale-110 group-hover:rotate-6

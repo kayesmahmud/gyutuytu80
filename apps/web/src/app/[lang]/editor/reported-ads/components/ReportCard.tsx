@@ -59,7 +59,7 @@ export default function ReportCard({
           : 'border-gray-100'
       }`}
     >
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Report Header */}
         <div className="flex items-start justify-between mb-4 pb-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -96,7 +96,7 @@ export default function ReportCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Left: Ad Details */}
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">

@@ -176,7 +176,7 @@ function PaymentDurationInfo({ verification }: { verification: BusinessVerificat
   }
 
   return (
-    <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
       {verification.durationDays && (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="text-xs text-blue-600 font-medium mb-1">Duration</div>

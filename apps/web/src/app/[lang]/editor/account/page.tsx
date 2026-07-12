@@ -36,7 +36,7 @@ export default function EditorAccountPage({ params: paramsPromise }: { params: P
       onLogout={handleLogout}
     >
       <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Lock className="w-6 h-6 text-emerald-600" />
             Account Security
