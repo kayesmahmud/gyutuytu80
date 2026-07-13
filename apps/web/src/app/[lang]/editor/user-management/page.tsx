@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/admin';
 import { getEditorNavSections } from '@/lib/navigation';
 import { useUserManagement } from './useUserManagement';
-import { getUserStats } from './types';
 import {
   StatsCards,
   FilterBar,
@@ -21,6 +20,7 @@ export default function UserManagementPage({ params: paramsPromise }: { params: 
     staff,
     handleLogout,
     users,
+    stats,
     loading,
     actionLoading,
     page,
@@ -41,8 +41,6 @@ export default function UserManagementPage({ params: paramsPromise }: { params: 
     handleSuspend,
     handleUnsuspend,
   } = useUserManagement(params.lang);
-
-  const stats = getUserStats(users);
 
   if (loading) {
     return (

@@ -4,7 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { getUsers, suspendUser, unsuspendUser } from '@/lib/editorApi';
+import type { UserManagementStats } from '@/lib/editorApi';
 import type { User, StatusFilter } from './types';
+
+const EMPTY_STATS: UserManagementStats = { total: 0, active: 0, suspended: 0, verified: 0 };
 
 interface UseUserManagementReturn {
   // Auth
@@ -13,6 +16,7 @@ interface UseUserManagementReturn {
 
   // Data
   users: User[];
+  stats: UserManagementStats;
   loading: boolean;
   actionLoading: boolean;
 
@@ -47,6 +51,7 @@ export function useUserManagement(lang: string): UseUserManagementReturn {
   const { staff, isLoading: authLoading, isEditor, logout } = useStaffAuth();
 
   const [users, setUsers] = useState<User[]>([]);
+  const [stats, setStats] = useState<UserManagementStats>(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -77,6 +82,9 @@ export function useUserManagement(lang: string): UseUserManagementReturn {
         setUsers(response.data);
         if (response.pagination) {
           setTotalPages(response.pagination.totalPages);
+        }
+        if (response.stats) {
+          setStats(response.stats);
         }
       } else {
         setUsers([]);
@@ -164,6 +172,7 @@ export function useUserManagement(lang: string): UseUserManagementReturn {
     staff,
     handleLogout,
     users,
+    stats,
     loading,
     actionLoading,
     page,

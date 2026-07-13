@@ -42,10 +42,3 @@ export const getUserStatusLabel = (user: User): string => {
   if (user.individual_verified) return '✓ Verified Individual Seller';
   return '👤 Seller';
 };
-
-export const getUserStats = (users: User[]) => ({
-  total: users.length,
-  active: users.filter(u => !u.is_suspended).length,
-  suspended: users.filter(u => u.is_suspended).length,
-  verified: users.filter(u => u.business_verification_status === 'approved' || u.individual_verified).length,
-});

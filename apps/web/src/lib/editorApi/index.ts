@@ -24,6 +24,7 @@ export type {
   // Base types
   ApiResponse,
   PaginationInfo,
+  UserManagementStats,
   // Dashboard & Stats
   DashboardData,
   DashboardStats,

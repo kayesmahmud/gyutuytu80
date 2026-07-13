@@ -49,7 +49,17 @@ router.get(
       where.AND = andClauses;
     }
 
-    const [users, total] = await Promise.all([
+    // Platform-wide stat cards — counted across ALL users, independent of the
+    // current search/status filter and pagination (a page slice can't be trusted
+    // to reflect platform totals).
+    const verifiedWhere = {
+      OR: [
+        { business_verification_status: 'approved' },
+        { individual_verified: true },
+      ],
+    };
+
+    const [users, total, platformTotal, activeCount, suspendedCount, verifiedCount] = await Promise.all([
       prisma.users.findMany({
         where,
         select: {
@@ -85,6 +95,10 @@ router.get(
         skip: offset,
       }),
       prisma.users.count({ where }),
+      prisma.users.count(),
+      prisma.users.count({ where: { is_suspended: false } }),
+      prisma.users.count({ where: { is_suspended: true } }),
+      prisma.users.count({ where: verifiedWhere }),
     ]);
 
     const suspendedByIds = users
@@ -132,6 +146,12 @@ router.get(
         page: parseInt(page as string),
         limit: parseInt(limit as string),
         totalPages: Math.ceil(total / parseInt(limit as string)),
+      },
+      stats: {
+        total: platformTotal,
+        active: activeCount,
+        suspended: suspendedCount,
+        verified: verifiedCount,
       },
     });
   })

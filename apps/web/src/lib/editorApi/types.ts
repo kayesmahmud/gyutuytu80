@@ -11,6 +11,14 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   pagination?: PaginationInfo;
+  stats?: UserManagementStats;
+}
+
+export interface UserManagementStats {
+  total: number;
+  active: number;
+  suspended: number;
+  verified: number;
 }
 
 export interface PaginationInfo {
