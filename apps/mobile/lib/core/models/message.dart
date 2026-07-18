@@ -42,23 +42,29 @@ class Message {
     final senderObj = json['sender'] != null
         ? MessageSender.fromJson(json['sender'] as Map<String, dynamic>)
         : null;
-        
+
     final sId = json['senderId'] as int? ?? json['sender_id'] as int? ?? 0;
 
     return Message(
       id: json['id'] as int,
-      conversationId: json['conversationId'] as int? ?? json['conversation_id'] as int?,
+      conversationId:
+          json['conversationId'] as int? ?? json['conversation_id'] as int?,
       senderId: (sId == 0 && senderObj != null) ? senderObj.id : sId,
       recipientId: json['recipientId'] as int? ?? json['recipient_id'] as int?,
       adId: json['adId'] as int? ?? json['ad_id'] as int?,
       content: json['content'] as String? ?? json['message'] as String? ?? '',
       type: _parseMessageType(json['type']),
-      attachmentUrl: json['attachmentUrl'] as String? ?? json['attachment_url'] as String?,
-      isEdited: json['isEdited'] as bool? ?? json['is_edited'] as bool? ?? false,
-      isDeleted: json['isDeleted'] as bool? ?? json['is_deleted'] as bool? ?? false,
+      attachmentUrl:
+          json['attachmentUrl'] as String? ?? json['attachment_url'] as String?,
+      isEdited:
+          json['isEdited'] as bool? ?? json['is_edited'] as bool? ?? false,
+      isDeleted:
+          json['isDeleted'] as bool? ?? json['is_deleted'] as bool? ?? false,
       isRead: json['isRead'] as bool? ?? json['is_read'] as bool? ?? false,
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
-      updatedAt: _parseDateTimeNullable(json['updatedAt'] ?? json['updated_at']),
+      updatedAt: _parseDateTimeNullable(
+        json['updatedAt'] ?? json['updated_at'],
+      ),
       sender: senderObj,
     );
   }
@@ -128,11 +134,7 @@ class MessageSender {
   final String name;
   final String? avatar;
 
-  MessageSender({
-    required this.id,
-    required this.name,
-    this.avatar,
-  });
+  MessageSender({required this.id, required this.name, this.avatar});
 
   factory MessageSender.fromJson(Map<String, dynamic> json) {
     return MessageSender(
@@ -143,11 +145,7 @@ class MessageSender {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'avatar': avatar,
-    };
+    return {'id': id, 'name': name, 'avatar': avatar};
   }
 }
 
@@ -167,7 +165,10 @@ class TypingUser {
     return TypingUser(
       id: json['userId'] as int? ?? json['id'] as int? ?? 0,
       name: json['userName'] as String? ?? json['name'] as String? ?? 'Unknown',
-      conversationId: json['conversationId'] as int? ?? json['conversation_id'] as int? ?? 0,
+      conversationId:
+          json['conversationId'] as int? ??
+          json['conversation_id'] as int? ??
+          0,
     );
   }
 }
@@ -198,6 +199,9 @@ class Conversation {
   final int? adId;
   final String? adImage;
 
+  /// Server-computed: true when the other participant is Thulo Bazaar staff.
+  final bool otherUserIsStaff;
+
   Conversation({
     required this.id,
     required this.otherUserId,
@@ -209,13 +213,21 @@ class Conversation {
     this.adTitle,
     this.adId,
     this.adImage,
+    this.otherUserIsStaff = false,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
     // Extract other user from flat fields or participants array
-    int otherUserId = json['otherUserId'] as int? ?? json['other_user_id'] as int? ?? 0;
-    String otherUserName = json['otherUserName'] as String? ?? json['other_user_name'] as String? ?? 'Unknown';
-    String? otherUserAvatar = json['otherUserAvatar'] as String? ?? json['other_user_avatar'] as String?;
+    int otherUserId =
+        json['otherUserId'] as int? ?? json['other_user_id'] as int? ?? 0;
+    String otherUserName =
+        json['otherUserName'] as String? ??
+        json['other_user_name'] as String? ??
+        'Unknown';
+    String? otherUserAvatar =
+        json['otherUserAvatar'] as String? ??
+        json['other_user_avatar'] as String?;
+    bool otherUserIsStaff = json['otherUserIsStaff'] as bool? ?? false;
 
     // Fallback: extract from participants array (Express format)
     if (otherUserId == 0 && json['participants'] is List) {
@@ -223,8 +235,12 @@ class Conversation {
       if (participants.isNotEmpty) {
         final other = participants[0] as Map<String, dynamic>;
         otherUserId = other['id'] as int? ?? 0;
-        otherUserName = other['fullName'] as String? ?? other['full_name'] as String? ?? 'Unknown';
+        otherUserName =
+            other['fullName'] as String? ??
+            other['full_name'] as String? ??
+            'Unknown';
         otherUserAvatar = other['avatar'] as String?;
+        otherUserIsStaff = other['isStaff'] as bool? ?? otherUserIsStaff;
       }
     }
 
@@ -242,11 +258,15 @@ class Conversation {
       otherUserName: otherUserName,
       otherUserAvatar: otherUserAvatar,
       lastMessage: lastMessage,
-      lastMessageAt: _parseDateTime(json['lastMessageAt'] ?? json['last_message_at']),
-      unreadCount: json['unreadCount'] as int? ?? json['unread_count'] as int? ?? 0,
+      lastMessageAt: _parseDateTime(
+        json['lastMessageAt'] ?? json['last_message_at'],
+      ),
+      unreadCount:
+          json['unreadCount'] as int? ?? json['unread_count'] as int? ?? 0,
       adTitle: json['adTitle'] as String? ?? json['ad_title'] as String?,
       adId: json['adId'] as int? ?? json['ad_id'] as int?,
       adImage: json['adImage'] as String? ?? json['ad_image'] as String?,
+      otherUserIsStaff: otherUserIsStaff,
     );
   }
 
@@ -262,6 +282,7 @@ class Conversation {
       'adTitle': adTitle,
       'adId': adId,
       'adImage': adImage,
+      'otherUserIsStaff': otherUserIsStaff,
     };
   }
 
@@ -279,6 +300,7 @@ class Conversation {
     String? adTitle,
     int? adId,
     String? adImage,
+    bool? otherUserIsStaff,
   }) {
     return Conversation(
       id: id ?? this.id,
@@ -291,6 +313,7 @@ class Conversation {
       adTitle: adTitle ?? this.adTitle,
       adId: adId ?? this.adId,
       adImage: adImage ?? this.adImage,
+      otherUserIsStaff: otherUserIsStaff ?? this.otherUserIsStaff,
     );
   }
 }

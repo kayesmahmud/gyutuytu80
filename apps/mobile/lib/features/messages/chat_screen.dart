@@ -20,6 +20,7 @@ import '../../core/api/message_client.dart';
 import '../../core/utils/localized_helpers.dart';
 import '../../core/utils/profanity_check.dart';
 import '../../core/models/message.dart';
+import '../../core/widgets/team_badge.dart';
 import '../../features/ad_detail/ad_detail_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers/auth_provider.dart';
@@ -39,6 +40,9 @@ class ChatScreen extends StatefulWidget {
   final String? initialMessage;
   final int? otherUserId;
 
+  /// Server-computed: the person being chatted with is Thulo Bazaar staff.
+  final bool recipientIsStaff;
+
   const ChatScreen({
     super.key,
     required this.conversationId,
@@ -48,6 +52,7 @@ class ChatScreen extends StatefulWidget {
     this.adId,
     this.initialMessage,
     this.otherUserId,
+    this.recipientIsStaff = false,
   });
 
   @override
@@ -348,7 +353,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Resolve the current user id live from AuthProvider so message alignment
     // never relies on a stale/null local copy (iOS recreates state on resume).
-    final currentUserId = context.watch<AuthProvider>().userId ?? _currentUserId;
+    final currentUserId =
+        context.watch<AuthProvider>().userId ?? _currentUserId;
 
     if (chatProvider.isLoading &&
         chatProvider.getMessages(widget.conversationId).isEmpty) {
@@ -536,15 +542,25 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.recipientName,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.recipientName,
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (widget.recipientIsStaff) ...[
+                            const SizedBox(width: 6),
+                            const TeamBadge(compact: true),
+                          ],
+                        ],
                       ),
                       if (isOnline)
                         Row(
@@ -644,14 +660,21 @@ class _ChatScreenState extends State<ChatScreen> {
               Expanded(
                 child: Text(
                   'messages.aboutAd'.tr(args: [widget.adTitle!]),
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700]),
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Colors.grey[700],
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (tappable) ...[
                 const SizedBox(width: 8),
-                Icon(LucideIcons.chevronRight, size: 16, color: Colors.grey[400]),
+                Icon(
+                  LucideIcons.chevronRight,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
               ],
             ],
           ),

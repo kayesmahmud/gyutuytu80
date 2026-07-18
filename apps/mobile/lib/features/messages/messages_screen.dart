@@ -11,6 +11,7 @@ import '../../core/models/message.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/chat_provider.dart';
 import '../../core/widgets/main_app_bar.dart';
+import '../../core/widgets/team_badge.dart';
 import '../../core/widgets/main_drawer.dart';
 import '../../core/widgets/login_required_widget.dart';
 import '../../core/utils/localized_helpers.dart';
@@ -201,6 +202,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               adTitle: conversation.adTitle,
               adId: conversation.adId,
               otherUserId: conversation.otherUserId,
+              recipientIsStaff: conversation.otherUserIsStaff,
             ),
           ),
         ).then((_) {
@@ -260,17 +262,27 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(
-                          conversation.otherUserName,
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: conversation.hasUnread
-                                ? FontWeight.w700
-                                : FontWeight.w600,
-                            color: const Color(0xFF111827),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                conversation.otherUserName,
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: conversation.hasUnread
+                                      ? FontWeight.w700
+                                      : FontWeight.w600,
+                                  color: const Color(0xFF111827),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (conversation.otherUserIsStaff) ...[
+                              const SizedBox(width: 6),
+                              const TeamBadge(compact: true),
+                            ],
+                          ],
                         ),
                       ),
                       Text(
