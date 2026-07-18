@@ -233,6 +233,8 @@ export async function getShopProfile(shopSlug: string): Promise<ShopProfile | nu
   const shopBySlug = await prisma.users.findFirst({
     where: {
       is_active: true, // Only show active shops
+      // Staff accounts (editors/admins) are moderators, not sellers — no shop page
+      NOT: { role: { in: ['editor', 'super_admin'] } },
       OR: [
         { shop_slug: shopSlug },
         { custom_shop_slug: shopSlug },
@@ -256,6 +258,7 @@ export async function getShopProfile(shopSlug: string): Promise<ShopProfile | nu
     where: {
       id: userId,
       is_active: true, // Only show active shops
+      NOT: { role: { in: ['editor', 'super_admin'] } },
     },
     select: SHOP_SELECT,
   });

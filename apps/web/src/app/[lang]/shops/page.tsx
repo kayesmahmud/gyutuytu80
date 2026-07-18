@@ -111,10 +111,12 @@ export default async function ShopsPage({ params, searchParams }: ShopsPageProps
     locationIds = [selectedLocation.id, ...childLocations];
   }
 
-  // Build where clause for shops (exclude soft-deleted users)
+  // Build where clause for shops (exclude soft-deleted users and staff —
+  // editors/admins are moderators, not sellers)
   const where: any = {
     is_active: true,
     deleted_at: null,
+    NOT: { role: { in: ['editor', 'super_admin'] } },
   };
 
   // Filter by category (either default_category_id or default_subcategory_id)

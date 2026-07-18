@@ -14,7 +14,7 @@ const router = Router();
 router.get(
   '/check-slug/:slug',
   catchAsync(async (req: Request, res: Response) => {
-    const { slug } = req.params;
+    const slug = String(req.params.slug);
 
     const existing = await prisma.users.findFirst({
       where: {
@@ -105,20 +105,24 @@ router.put(
 router.get(
   '/:slug',
   catchAsync(async (req: Request, res: Response) => {
-    const { slug } = req.params;
+    const slug = String(req.params.slug);
     const { limit = '20', offset = '0' } = req.query;
 
     // Find user by custom_shop_slug, shop_slug, or user-{id} fallback
     const userIdMatch = slug.match(/^user-(\d+)$/);
     const user = await prisma.users.findFirst({
-      where: userIdMatch
-        ? { id: parseInt(userIdMatch[1], 10) }
-        : {
-            OR: [
-              { custom_shop_slug: slug },
-              { shop_slug: slug },
-            ],
-          },
+      where: {
+        // Staff accounts (editors/admins) are moderators, not sellers — no shop page
+        NOT: { role: { in: ['editor', 'super_admin'] } },
+        ...(userIdMatch
+          ? { id: parseInt(userIdMatch[1], 10) }
+          : {
+              OR: [
+                { custom_shop_slug: slug },
+                { shop_slug: slug },
+              ],
+            }),
+      },
       select: {
         id: true,
         full_name: true,

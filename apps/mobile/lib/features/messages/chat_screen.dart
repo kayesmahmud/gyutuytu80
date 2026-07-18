@@ -515,7 +515,9 @@ class _ChatScreenState extends State<ChatScreen> {
         builder: (context, chatProvider, child) {
           final isOnline = chatProvider.isUserOnline(widget.conversationId);
           return InkWell(
-            onTap: _effectiveOtherUserId != null ? _openShop : null,
+            onTap: _effectiveOtherUserId != null && !widget.recipientIsStaff
+                ? _openShop
+                : null,
             child: Row(
               children: [
                 CircleAvatar(
