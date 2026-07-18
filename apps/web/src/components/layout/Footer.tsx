@@ -39,10 +39,7 @@ export default function Footer({ lang }: FooterProps) {
             <div>
               <h4 className="text-sm font-semibold text-white mb-3">{t('quickLinks')}</h4>
               <ul className="space-y-2">
-                <li><Link href={`/${lang}/ads`} className="text-sm text-gray-400 hover:text-rose-400">{t('searchAllAds')}</Link></li>
-                <li><Link href={`/${lang}/post-ad`} className="text-sm text-gray-400 hover:text-rose-400">{t('postFreeAd')}</Link></li>
                 <li><Link href={`/${lang}/shops`} className="text-sm text-gray-400 hover:text-rose-400">{t('verifiedShops')}</Link></li>
-                <li><Link href={`/${lang}/dashboard`} className="text-sm text-gray-400 hover:text-rose-400">{t('myDashboard')}</Link></li>
                 <li><Link href={`/${lang}/verification`} className="text-sm text-gray-400 hover:text-rose-400">{t('getVerified')}</Link></li>
                 <li><Link href={`/${lang}/blog`} className="text-sm text-gray-400 hover:text-rose-400">{t('blog')}</Link></li>
               </ul>
@@ -180,38 +177,11 @@ export default function Footer({ lang }: FooterProps) {
             <ul className="space-y-2.5">
               <li>
                 <Link
-                  href={`/${lang}/ads`}
-                  className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
-                >
-                  <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  {t('searchAllAds')}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`/${lang}/post-ad`}
-                  className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
-                >
-                  <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  {t('postFreeAd')}
-                </Link>
-              </li>
-              <li>
-                <Link
                   href={`/${lang}/shops`}
                   className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                   {t('verifiedShops')}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`/${lang}/dashboard`}
-                  className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
-                >
-                  <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  {t('myDashboard')}
                 </Link>
               </li>
               <li>
