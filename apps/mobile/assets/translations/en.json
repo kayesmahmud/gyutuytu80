@@ -282,6 +282,8 @@
     "uncheckNote": "Uncheck to enter a different number",
     "postAdNow": "Post Ad Now",
     "adPosted": "Ad posted successfully!",
+    "adPostedReviewNote": "Please wait — our team will review your ad and it will be published within 2 hours.",
+    "adPostedReviewNoteLatin": "Kripaya parkhanuhos — hamro team le tapaiko ad review garera 2 ghanta bhitra publish garnechha.",
     "selectCategoryError": "Please select a category",
     "selectSubcategoryError": "Please select a subcategory",
     "addImageError": "Please add at least one image",

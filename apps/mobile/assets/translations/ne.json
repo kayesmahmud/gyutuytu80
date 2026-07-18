@@ -242,6 +242,8 @@
     "uncheckNote": "फरक नम्बर हाल्न अनचेक गर्नुहोस्",
     "postAdNow": "अहिले विज्ञापन पोस्ट गर्नुहोस्",
     "adPosted": "विज्ञापन सफलतापूर्वक पोस्ट भयो!",
+    "adPostedReviewNote": "कृपया पर्खनुहोस् — हाम्रो टोलीले तपाईंको विज्ञापन समीक्षा गरी २ घण्टाभित्र प्रकाशित गर्नेछ।",
+    "adPostedReviewNoteLatin": "Kripaya parkhanuhos — hamro team le tapaiko ad review garera 2 ghanta bhitra publish garnechha.",
     "selectCategoryError": "कृपया कोटि छान्नुहोस्",
     "selectSubcategoryError": "कृपया उपकोटि छान्नुहोस्",
     "addImageError": "कृपया कम्तिमा एउटा फोटो थप्नुहोस्",

@@ -26,6 +26,7 @@ export function usePostAd(lang: string) {
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [adPosted, setAdPosted] = useState(false);
 
   // User state
   const [userHasDefaultLocation, setUserHasDefaultLocation] = useState(false);
@@ -449,7 +450,8 @@ export function usePostAd(lang: string) {
             }
           }
 
-          router.push(`/${lang}/dashboard?tab=pending`);
+          // Show the "under review" modal; redirect happens when the user closes it.
+          setAdPosted(true);
         }
       } catch (err: any) {
         console.error('Error creating ad:', err);
@@ -473,6 +475,10 @@ export function usePostAd(lang: string) {
       lang,
     ]
   );
+
+  const handleAdPostedClose = useCallback(() => {
+    router.push(`/${lang}/dashboard?tab=pending`);
+  }, [router, lang]);
 
   return {
     // Auth status
@@ -511,6 +517,8 @@ export function usePostAd(lang: string) {
     handleCategoryChange,
     handleCustomFieldChange,
     handleSubmit,
+    adPosted,
+    handleAdPostedClose,
     // Verification status for image limits
     isUserVerified:
       session?.user?.businessVerificationStatus === 'approved' ||

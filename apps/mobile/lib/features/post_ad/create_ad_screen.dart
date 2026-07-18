@@ -92,8 +92,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
   // Contact phone + verification status come from the logged-in user profile.
   Map<String, dynamic>? get _authUser => context.read<AuthProvider>().user;
-  String get _verifiedPhone =>
-      (_authUser?['phone'] as String?)?.trim() ?? '';
+  String get _verifiedPhone => (_authUser?['phone'] as String?)?.trim() ?? '';
   bool get _isPhoneVerified => _authUser?['phoneVerified'] == true;
 
   // Edit mode: track if initial prefill is done (to avoid clearing attributes)
@@ -261,8 +260,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     // Pre-fill WhatsApp: it lives in custom_fields only when the seller set a
     // number different from their profile phone. Managed via the toggle below,
     // so keep it out of the dynamic-fields map.
-    final savedWhatsapp =
-        (ad.attributes?['whatsapp_number'] as String?)?.trim();
+    final savedWhatsapp = (ad.attributes?['whatsapp_number'] as String?)
+        ?.trim();
     _attributeValues.remove('whatsapp_number');
     if (savedWhatsapp != null &&
         savedWhatsapp.isNotEmpty &&
@@ -493,15 +492,18 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       setState(() => _locationSearchResults = []);
       return;
     }
-    _locationSearchDebounce = Timer(const Duration(milliseconds: 300), () async {
-      setState(() => _searchingLocation = true);
-      final results = await _locationClient.searchAllLocations(query.trim());
-      if (!mounted) return;
-      setState(() {
-        _locationSearchResults = results;
-        _searchingLocation = false;
-      });
-    });
+    _locationSearchDebounce = Timer(
+      const Duration(milliseconds: 300),
+      () async {
+        setState(() => _searchingLocation = true);
+        final results = await _locationClient.searchAllLocations(query.trim());
+        if (!mounted) return;
+        setState(() {
+          _locationSearchResults = results;
+          _searchingLocation = false;
+        });
+      },
+    );
   }
 
   /// Locate a flat search result inside the loaded province tree and return its
@@ -511,7 +513,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     LocationDistrict? d,
     LocationMunicipality? m,
     LocationArea? a,
-  })? _resolveLocationPath(Location loc) {
+  })?
+  _resolveLocationPath(Location loc) {
     for (final prov in _provinces) {
       if (loc.type == LocationType.province && prov.id == loc.id) {
         return (p: prov, d: null, m: null, a: null);
@@ -541,9 +544,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     if (path == null) {
       // Result isn't in the loaded tree (rare) — let the user pick manually.
       setState(() => _locationSearchResults = []);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('postAd.locationSearchManual'.tr()),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('postAd.locationSearchManual'.tr())),
+      );
       return;
     }
     setState(() {
@@ -597,13 +600,17 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   Text(
                     loc.name,
                     style: GoogleFonts.inter(
-                        fontSize: 14, fontWeight: FontWeight.w500),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   if (hint.isNotEmpty)
                     Text(
                       hint,
                       style: GoogleFonts.inter(
-                          fontSize: 11, color: Colors.grey[600]),
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
                     ),
                 ],
               ),
@@ -798,9 +805,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   Future<void> _submitAd() async {
     // Phone must be verified before posting (mirrors the web post-ad flow).
     if (!_isPhoneVerified) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('postAd.verifyBeforePost'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('postAd.verifyBeforePost'.tr())));
       return;
     }
 
@@ -889,7 +896,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       await ReviewService.recordSignificantAction();
       await ReviewService.maybeRequestReview();
       if (mounted) {
-        await showSuccessDialog(context, message: 'postAd.adPosted'.tr());
+        final isNepali = context.locale.languageCode == 'ne';
+        await showSuccessDialog(
+          context,
+          message: 'postAd.adPosted'.tr(),
+          subtitle: 'postAd.adPostedReviewNote'.tr(),
+          subtitleTransliteration: isNepali
+              ? null
+              : 'postAd.adPostedReviewNoteLatin'.tr(),
+        );
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -1655,10 +1670,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             style: GoogleFonts.inter(fontSize: 14),
             decoration: _inputDecoration().copyWith(
               hintText: 'postAd.searchLocationHint'.tr(),
-              hintStyle:
-                  GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-              prefixIcon:
-                  const Icon(LucideIcons.search, size: 18, color: Colors.grey),
+              hintStyle: GoogleFonts.inter(
+                color: Colors.grey[400],
+                fontSize: 14,
+              ),
+              prefixIcon: const Icon(
+                LucideIcons.search,
+                size: 18,
+                color: Colors.grey,
+              ),
               suffixIcon: _searchingLocation
                   ? const Padding(
                       padding: EdgeInsets.all(12),
@@ -1669,15 +1689,18 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                       ),
                     )
                   : (_locationSearchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(LucideIcons.x,
-                              size: 18, color: Colors.grey),
-                          onPressed: () {
-                            _locationSearchController.clear();
-                            setState(() => _locationSearchResults = []);
-                          },
-                        )
-                      : null),
+                        ? IconButton(
+                            icon: const Icon(
+                              LucideIcons.x,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              _locationSearchController.clear();
+                              setState(() => _locationSearchResults = []);
+                            },
+                          )
+                        : null),
             ),
           ),
           if (_locationSearchResults.isNotEmpty) ...[
@@ -1691,8 +1714,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               child: Column(
                 children: [
                   for (int i = 0; i < _locationSearchResults.length; i++) ...[
-                    if (i > 0)
-                      Divider(height: 1, color: Colors.grey[200]),
+                    if (i > 0) Divider(height: 1, color: Colors.grey[200]),
                     _buildLocationResultTile(_locationSearchResults[i]),
                   ],
                 ],

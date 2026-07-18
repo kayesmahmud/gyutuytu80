@@ -8,7 +8,7 @@ import { ImageUpload } from '@/components/forms';
 import DynamicFormFields from '@/components/post-ad/DynamicFormFields';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
 import { Button } from '@/components/ui';
-import { usePostAd, DraftsList, PhoneVerificationBanner } from './components';
+import { usePostAd, DraftsList, PhoneVerificationBanner, AdPostedModal } from './components';
 
 interface PostAdPageProps {
   params: Promise<{ lang: string }>;
@@ -49,6 +49,8 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     handleCategoryChange,
     handleCustomFieldChange,
     handleSubmit,
+    adPosted,
+    handleAdPostedClose,
     isUserVerified,
   } = usePostAd(lang);
 
@@ -360,6 +362,8 @@ export default function PostAdPage({ params }: PostAdPageProps) {
           </>
         )}
       </div>
+
+      {adPosted && <AdPostedModal lang={lang} onClose={handleAdPostedClose} />}
     </div>
   );
 }

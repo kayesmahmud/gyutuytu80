@@ -40,8 +40,7 @@ class _SuccessCheckmarkState extends State<SuccessCheckmark>
         // Circle scales in during first 40%
         final circleProgress = (_controller.value / 0.4).clamp(0.0, 1.0);
         // Check draws during 40%-100%
-        final checkProgress =
-            ((_controller.value - 0.4) / 0.6).clamp(0.0, 1.0);
+        final checkProgress = ((_controller.value - 0.4) / 0.6).clamp(0.0, 1.0);
 
         return Transform.scale(
           scale: Curves.elasticOut.transform(circleProgress),
@@ -104,18 +103,12 @@ class _CheckmarkPainter extends CustomPainter {
     if (progress <= 0.5) {
       // First stroke (down-right)
       final t = progress / 0.5;
-      path.lineTo(
-        startX + (midX - startX) * t,
-        startY + (midY - startY) * t,
-      );
+      path.lineTo(startX + (midX - startX) * t, startY + (midY - startY) * t);
     } else {
       // First stroke complete + second stroke (up-right)
       path.lineTo(midX, midY);
       final t = (progress - 0.5) / 0.5;
-      path.lineTo(
-        midX + (endX - midX) * t,
-        midY + (endY - midY) * t,
-      );
+      path.lineTo(midX + (endX - midX) * t, midY + (endY - midY) * t);
     }
 
     canvas.drawPath(path, checkPaint);
@@ -127,38 +120,101 @@ class _CheckmarkPainter extends CustomPainter {
 }
 
 /// Shows a success dialog with animated checkmark.
-/// Auto-dismisses after [autoDismiss] duration.
+///
+/// Without [subtitle], auto-dismisses after [autoDismiss].
+/// With [subtitle], stays open until the user taps the red close button —
+/// used after posting an ad so the review-time note is actually read.
+/// [subtitleTransliteration] renders below the subtitle in italic
+/// (romanized Nepali for the English locale).
 Future<void> showSuccessDialog(
   BuildContext context, {
   required String message,
+  String? subtitle,
+  String? subtitleTransliteration,
   Duration autoDismiss = const Duration(milliseconds: 1800),
 }) {
+  final manualDismiss = subtitle != null;
   return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (ctx) {
-      Future.delayed(autoDismiss, () {
-        if (ctx.mounted) Navigator.of(ctx).pop();
-      });
+      if (!manualDismiss) {
+        Future.delayed(autoDismiss, () {
+          if (ctx.mounted) Navigator.of(ctx).pop();
+        });
+      }
       return Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SuccessCheckmark(),
-              const SizedBox(height: 20),
-              Text(
-                message,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(
+                top: manualDismiss ? 40 : 32,
+                bottom: 32,
+                left: 24,
+                right: 24,
               ),
-            ],
-          ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SuccessCheckmark(),
+                  const SizedBox(height: 20),
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: Colors.grey.shade700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  if (subtitleTransliteration != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      subtitleTransliteration,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey.shade600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (manualDismiss)
+              Positioned(
+                top: -12,
+                right: -12,
+                child: Material(
+                  color: const Color(0xFFEF4444),
+                  shape: const CircleBorder(),
+                  elevation: 3,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => Navigator.of(ctx).pop(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(9),
+                      child: Icon(Icons.close, color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       );
     },
