@@ -8,6 +8,7 @@ import { sendMessagePushNotification } from '../services/pushNotification.js';
 import { isUserOnline } from '../socket/index.js';
 import { containsProfanity, getDetectedWords, censorProfanity } from '../utils/profanityFilter.js';
 import { isBlockedBetween, getBlockStatus } from '../utils/blockCheck.js';
+import { isStaffRole } from '../utils/staffRoles.js';
 
 const router = Router();
 
@@ -49,7 +50,7 @@ router.delete(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const blockedId = parseInt(req.params.userId, 10);
+    const blockedId = parseInt(String(req.params.userId), 10);
 
     if (!blockedId || Number.isNaN(blockedId)) {
       return res.status(400).json({ success: false, message: 'Invalid userId' });
@@ -86,6 +87,7 @@ router.get(
                     id: true,
                     full_name: true,
                     avatar: true,
+                    role: true,
                   },
                 },
               },
@@ -125,6 +127,7 @@ router.get(
           id: p.users.id,
           fullName: p.users.full_name,
           avatar: p.users.avatar,
+          isStaff: isStaffRole(p.users.role),
         }));
       const other = otherParticipants[0];
       const lastMessage = conv.messages[0];
@@ -138,6 +141,7 @@ router.get(
         otherUserId: other?.id ?? 0,
         otherUserName: other?.fullName ?? 'Unknown',
         otherUserAvatar: other?.avatar ?? null,
+        otherUserIsStaff: other?.isStaff ?? false,
         lastMessage: lastMessage?.content ?? '',
         lastMessageAt: conv.last_message_at,
         unreadCount: unreadMap.get(conv.id) ?? 0,
@@ -162,7 +166,7 @@ router.get(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { limit = '50', before } = req.query;
     console.log(`📩 GET /conversations/${id} messages for user ${userId} (limit: ${limit})`);
 
@@ -182,6 +186,7 @@ router.get(
                 id: true,
                 full_name: true,
                 avatar: true,
+                role: true,
               },
             },
           },
@@ -210,6 +215,7 @@ router.get(
             id: true,
             full_name: true,
             avatar: true,
+            role: true,
           },
         },
       },
@@ -235,6 +241,7 @@ router.get(
         id: p.users.id,
         fullName: p.users.full_name,
         avatar: p.users.avatar,
+        isStaff: isStaffRole(p.users.role),
       }));
 
     // Block status relative to the other participant (drives mobile menu + composer)
@@ -252,6 +259,7 @@ router.get(
           title: conversationData.title,
           participants: otherParticipants,
           otherUserId: otherUser?.id ?? null,
+          otherUserIsStaff: otherUser?.isStaff ?? false,
           blockedByMe: blockStatus.blockedByMe,
           blockedMe: blockStatus.blockedMe,
           lastMessageAt: conversationData.last_message_at,
@@ -265,6 +273,7 @@ router.get(
             id: msg.users.id,
             fullName: msg.users.full_name,
             avatar: msg.users.avatar,
+            isStaff: isStaffRole(msg.users.role),
           },
           content: msg.content,
           type: msg.type,
@@ -449,7 +458,7 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
-    const conversationId = parseInt(req.params.id);
+    const conversationId = parseInt(String(req.params.id));
     const { content, type = 'text', attachmentUrl } = req.body;
 
     if (!content && type === 'text') {
@@ -489,7 +498,7 @@ router.post(
         attachment_url: attachmentUrl || null,
       },
       include: {
-        users: { select: { id: true, full_name: true, avatar: true } },
+        users: { select: { id: true, full_name: true, avatar: true, role: true } },
       },
     });
 
@@ -507,7 +516,7 @@ router.post(
       id: message.id,
       conversationId: message.conversation_id,
       senderId: message.sender_id,
-      sender: { id: message.users.id, fullName: message.users.full_name, avatar: message.users.avatar },
+      sender: { id: message.users.id, fullName: message.users.full_name, avatar: message.users.avatar, isStaff: isStaffRole(message.users.role) },
       content: message.content,
       type: message.type,
       attachmentUrl: message.attachment_url,

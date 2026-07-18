@@ -17,14 +17,18 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val title = message.notification?.title ?: message.data["title"] ?: "Thulobazaar Editor"
         val body = message.notification?.body ?: message.data["body"] ?: ""
         val route = message.data["route"]
+        val conversationId = message.data["conversationId"]
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             route?.let { putExtra("route", it) }
+            conversationId?.let { putExtra("conversationId", it) }
         }
         val pending = PendingIntent.getActivity(
             this,
-            route?.hashCode() ?: 0,
+            // Distinct request code per target, else FLAG_UPDATE_CURRENT would
+            // overwrite the extras of a pending tap for a different conversation.
+            (route + ":" + conversationId).hashCode(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )

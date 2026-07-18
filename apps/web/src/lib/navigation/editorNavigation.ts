@@ -106,6 +106,13 @@ export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}
       title: 'Communication',
       items: [
         {
+          // The editor's own user↔user chats (started from ad cards) — lives on
+          // the public /messages page, authenticated by the same staff session.
+          href: `/${lang}/messages`,
+          icon: 'MessagesSquare',
+          label: 'User Messages',
+        },
+        {
           href: `/${lang}/editor/notifications`,
           icon: 'Bell',
           label: 'Notifications',

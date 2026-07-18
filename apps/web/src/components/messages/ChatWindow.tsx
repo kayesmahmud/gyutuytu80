@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { TeamBadge } from './TeamBadge';
 import { checkProfanity } from '@/utils/profanityCheck';
 
 // Constants for image upload
@@ -288,8 +289,9 @@ export default function ChatWindow({
 
             {/* Name and status */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
                 {conversation.title || otherParticipant?.fullName || 'Unknown User'}
+                {otherParticipant?.isStaff && <TeamBadge />}
               </h3>
               {/* Only show online status when real-time messaging is enabled */}
               {connected && (
@@ -366,7 +368,10 @@ export default function ChatWindow({
                   <div className={`flex flex-col max-w-[75%] sm:max-w-xs md:max-w-md ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                     {/* Sender name (only for received messages) */}
                     {!isOwnMessage && showAvatar && (
-                      <span className="text-xs text-gray-600 mb-1 ml-1">{message.sender?.fullName}</span>
+                      <span className="text-xs text-gray-600 mb-1 ml-1 flex items-center gap-1">
+                        {message.sender?.fullName}
+                        {message.sender?.isStaff && <TeamBadge compact />}
+                      </span>
                     )}
 
                     {/* Message content */}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { requireAuth } from '@/lib/auth';
+import { isStaffRole } from '@/lib/staffRoles';
 
 /**
  * GET /api/messages/conversations
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
                     id: true,
                     full_name: true,
                     avatar: true,
+                    role: true,
                   },
                 },
               },
@@ -129,6 +131,7 @@ export async function GET(request: NextRequest) {
             id: u.id,
             fullName: u.full_name,
             avatar: u.avatar,
+            isStaff: isStaffRole(u.role),
           })),
           lastMessage: lastMessage
             ? {
@@ -249,6 +252,7 @@ export async function POST(request: NextRequest) {
                   id: true,
                   full_name: true,
                   avatar: true,
+                  role: true,
                 },
               },
             },
@@ -257,6 +261,18 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingConversation) {
+        // Re-point the chat at the ad being discussed now (e.g. an editor
+        // messaging the same seller about a different ad), so the ad shown
+        // in the conversation matches the current topic.
+        let currentAdId = existingConversation.ad_id;
+        if (adId && currentAdId !== adId) {
+          await prisma.conversations.update({
+            where: { id: existingConversation.id },
+            data: { ad_id: adId },
+          });
+          currentAdId = adId;
+        }
+
         const otherParticipants = existingConversation.conversation_participants.map(
           (cp) => cp.users
         );
@@ -268,12 +284,13 @@ export async function POST(request: NextRequest) {
               id: existingConversation.id,
               type: existingConversation.type,
               title: existingConversation.title,
-              adId: existingConversation.ad_id,
+              adId: currentAdId,
               createdAt: existingConversation.created_at,
               participants: otherParticipants.map((u) => ({
                 id: u.id,
                 fullName: u.full_name,
                 avatar: u.avatar,
+                isStaff: isStaffRole(u.role),
               })),
               isExisting: true,
             },
@@ -311,6 +328,7 @@ export async function POST(request: NextRequest) {
                 id: true,
                 full_name: true,
                 avatar: true,
+                role: true,
               },
             },
           },
@@ -335,6 +353,7 @@ export async function POST(request: NextRequest) {
             id: u.id,
             fullName: u.full_name,
             avatar: u.avatar,
+            isStaff: isStaffRole(u.role),
           })),
           isExisting: false,
         },

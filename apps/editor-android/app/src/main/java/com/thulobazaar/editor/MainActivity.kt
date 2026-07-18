@@ -118,7 +118,13 @@ class MainActivity : Activity() {
     /** Build a deep-link URL from a notification's "route" extra (e.g. /editor/ad-management). */
     private fun routeUrlFromIntent(intent: Intent?): String? {
         val route = intent?.getStringExtra("route")?.takeIf { it.isNotBlank() } ?: return null
-        val path = if (route.startsWith("/")) route else "/$route"
+        var path = if (route.startsWith("/")) route else "/$route"
+        // Chat pushes come from the shared consumer payload (route "/chat" is a
+        // Flutter-app route); on the web that conversation lives on /messages.
+        if (path == "/chat") {
+            val conversationId = intent.getStringExtra("conversationId")?.takeIf { it.isNotBlank() }
+            path = if (conversationId != null) "/messages?conversation=$conversationId" else "/messages"
+        }
         return "$BASE_URL/en$path"
     }
 

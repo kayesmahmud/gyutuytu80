@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   CheckCircle,
   XCircle,
@@ -10,6 +12,7 @@ import {
   AlertTriangle,
   Eye,
   History,
+  MessageCircle,
 } from 'lucide-react';
 import { getStatusBadge, getAvailableActions } from '@/utils/editorUtils';
 import { getImageUrl } from '@/lib/images/imageUrl';
@@ -43,6 +46,36 @@ export default function AdCard({
 }: AdCardProps) {
   const availableActions = getAvailableActions(ad);
   const sellerBadge = getSellerBadge(ad.seller);
+  const router = useRouter();
+  const [messageLoading, setMessageLoading] = useState(false);
+
+  // Open (or create) the editor↔seller chat linked to THIS ad, then jump to it.
+  // Auth rides on the editor's NextAuth session cookie — same-origin fetch.
+  const handleMessageSeller = async () => {
+    if (!ad.seller?.id) return;
+    setMessageLoading(true);
+    try {
+      const res = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participantIds: [ad.seller.id],
+          type: 'direct',
+          adId: ad.id,
+        }),
+      });
+      const data = await res.json();
+      if (data?.success && data.data?.id) {
+        router.push(`/${lang}/messages?conversation=${data.data.id}`);
+      } else {
+        alert(data?.message || 'Could not open the conversation. Please try again.');
+      }
+    } catch {
+      alert('Could not open the conversation. Please try again.');
+    } finally {
+      setMessageLoading(false);
+    }
+  };
 
   // Editors see two timestamps: when the user POSTED (created_at, even while
   // pending) and when an editor REVIEWED it (reviewed_at). The public site
@@ -206,6 +239,17 @@ export default function AdCard({
                 <History size={16} />
                 History
               </button>
+
+              {ad.seller?.id && (
+                <button
+                  onClick={handleMessageSeller}
+                  disabled={messageLoading}
+                  className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  <MessageCircle size={16} />
+                  {messageLoading ? 'Opening…' : 'Message'}
+                </button>
+              )}
 
               {availableActions.includes('approve') && (
                 <button

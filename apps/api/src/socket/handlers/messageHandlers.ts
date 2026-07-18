@@ -5,6 +5,7 @@ import { sendMessagePushNotification } from '../../services/pushNotification.js'
 import { sendNotification, canSendNotification } from '../../services/notification.service.js';
 import { censorProfanity } from '../../utils/profanityFilter.js';
 import { isBlockedBetween } from '../../utils/blockCheck.js';
+import { isStaffRole } from '../../utils/staffRoles.js';
 
 // Safe callback helper — prevents crashes when client emits without a callback
 function safeCallback(callback: unknown, data: Record<string, unknown>) {
@@ -68,7 +69,7 @@ export function initializeMessageHandlers(
       // Get sender info
       const sender = await prisma.users.findUnique({
         where: { id: userId },
-        select: { id: true, full_name: true, avatar: true },
+        select: { id: true, full_name: true, avatar: true, role: true },
       });
 
       // Build complete message object
@@ -80,6 +81,7 @@ export function initializeMessageHandlers(
           id: sender?.id,
           fullName: sender?.full_name,
           avatar: sender?.avatar,
+          isStaff: isStaffRole(sender?.role),
         },
         content: message.content,
         type: message.type,

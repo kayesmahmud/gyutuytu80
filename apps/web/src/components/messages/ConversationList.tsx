@@ -7,6 +7,7 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { TeamBadge } from './TeamBadge';
 
 interface ConversationListProps {
   conversations: any[];
@@ -101,6 +102,9 @@ export default function ConversationList({
                       <div className="flex items-center justify-between">
                         <p className={`text-sm font-medium text-gray-900 truncate ${hasUnread ? 'font-bold' : ''}`}>
                           {conversation.title || otherParticipant?.fullName || 'Unknown User'}
+                          {otherParticipant?.isStaff && (
+                            <span className="ml-1.5"><TeamBadge compact /></span>
+                          )}
                         </p>
                         {(conversation.lastMessage?.createdAt || conversation.last_message?.createdAt) && (
                           <p className="text-xs text-gray-500">

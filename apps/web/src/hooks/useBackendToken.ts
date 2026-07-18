@@ -17,8 +17,10 @@ export function useBackendToken() {
 
   useEffect(() => {
     async function fetchBackendToken() {
-      // First, try to get token from session (if NextAuth worked)
-      const sessionToken = (session as any)?.backendToken;
+      // First, try to get token from session (if NextAuth worked).
+      // Staff sessions (editor panel) carry it on session.user instead.
+      const sessionToken =
+        (session as any)?.backendToken || (session as any)?.user?.backendToken;
       if (sessionToken) {
         setBackendToken(sessionToken);
         localStorage.setItem('backend_jwt_token', sessionToken);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { requireAuth } from '@/lib/auth';
+import { isStaffRole } from '@/lib/staffRoles';
 
 /**
  * GET /api/messages/conversations/:id
@@ -82,6 +83,7 @@ export async function GET(
                 id: true,
                 full_name: true,
                 avatar: true,
+                role: true,
               },
             },
           },
@@ -115,6 +117,7 @@ export async function GET(
             id: true,
             full_name: true,
             avatar: true,
+            role: true,
           },
         },
       },
@@ -172,6 +175,7 @@ export async function GET(
         id: p.users.id,
         fullName: p.users.full_name,
         avatar: p.users.avatar,
+        isStaff: isStaffRole(p.users.role),
         isCurrentUser: p.user_id === userId,
       })),
       messages: messages.reverse().map((m) => ({
@@ -188,6 +192,7 @@ export async function GET(
           id: m.users.id,
           fullName: m.users.full_name,
           avatar: m.users.avatar,
+          isStaff: isStaffRole(m.users.role),
         },
         isOwnMessage: m.sender_id === userId,
       })),
@@ -305,6 +310,7 @@ export async function POST(
             id: true,
             full_name: true,
             avatar: true,
+            role: true,
           },
         },
       },
@@ -336,6 +342,7 @@ export async function POST(
         id: message.users.id,
         fullName: message.users.full_name,
         avatar: message.users.avatar,
+        isStaff: isStaffRole(message.users.role),
       },
       content: message.content,
       type: message.type,
@@ -369,6 +376,7 @@ export async function POST(
             id: message.users.id,
             fullName: message.users.full_name,
             avatar: message.users.avatar,
+            isStaff: isStaffRole(message.users.role),
           },
           isOwnMessage: true,
         },
