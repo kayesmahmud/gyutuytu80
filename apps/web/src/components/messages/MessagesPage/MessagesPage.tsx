@@ -48,7 +48,7 @@ export default function MessagesPage() {
   const isRealtimeConfigured = typeof window !== 'undefined' && !!(process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_HOSTNAME);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="relative flex h-full bg-gray-50 overflow-hidden">
       {/* Connection status */}
       {isRealtimeConfigured && !connected && socketError && (
         <div className="absolute top-0 left-0 right-0 bg-yellow-100 border-b border-yellow-300 px-4 py-2 text-sm text-yellow-800 text-center z-50">
