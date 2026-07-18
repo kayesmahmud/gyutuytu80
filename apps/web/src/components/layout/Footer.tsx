@@ -67,6 +67,7 @@ export default function Footer({ lang }: FooterProps) {
               <ul className="space-y-2">
                 <li><Link href={`/${lang}/support/privacy-policy`} className="text-sm text-gray-400 hover:text-rose-400">{t('privacyPolicy')}</Link></li>
                 <li><Link href={`/${lang}/support/terms-of-service`} className="text-sm text-gray-400 hover:text-rose-400">{t('termsAndConditions')}</Link></li>
+                <li><Link href={`/${lang}/work-with-us`} className="text-sm text-gray-400 hover:text-rose-400">{t('workWithUs')}</Link></li>
               </ul>
             </div>
             {/* Contact */}
@@ -229,6 +230,15 @@ export default function Footer({ lang }: FooterProps) {
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                   {t('blog')}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`/${lang}/work-with-us`}
+                  className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
+                >
+                  <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  {t('workWithUs')}
                 </Link>
               </li>
             </ul>

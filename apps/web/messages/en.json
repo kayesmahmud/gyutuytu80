@@ -110,7 +110,8 @@
     "downloadOurApp": "Download Our App",
     "companyDescription": "Nepal's leading classifieds marketplace. Buy, sell, and rent across Nepal with ease.",
     "kathmandu": "Kathmandu, Nepal",
-    "blog": "Blog"
+    "blog": "Blog",
+    "workWithUs": "Work With Us"
   },
   "auth": {
     "signIn": "Sign In",
@@ -838,6 +839,31 @@
     "safetyQ4": "Why do some users have verification badges?",
     "safetyA4": "Verification badges indicate the user has verified their identity. Blue checkmarks mean phone/email verified. Green badges indicate verified businesses. These help you identify trustworthy users."
   },
+  "workWithUs": {
+    "title": "Work With Us",
+    "subtitle": "Join the team building Nepal's leading online marketplace",
+    "introTitle": "Be Part of Something Big",
+    "introText": "Thulo Bazaar connects buyers and sellers across all 77 districts of Nepal. We're a small, fast-moving team, and every person who joins has a real impact on how millions of Nepalis buy, sell, and rent online. If you're driven, curious, and want your work to matter, we'd love to hear from you.",
+    "whyTitle": "Why Work With Us",
+    "whyOwnershipTitle": "Real Ownership",
+    "whyOwnershipDesc": "No red tape. Your ideas ship fast and you see the impact immediately.",
+    "whyImpactTitle": "Nationwide Impact",
+    "whyImpactDesc": "Build products used by people in every corner of Nepal, from Kathmandu to Karnali.",
+    "whyGrowthTitle": "Learn & Grow",
+    "whyGrowthDesc": "Work closely with an experienced team and take on real responsibility early.",
+    "whyTeamTitle": "A Team That Cares",
+    "whyTeamDesc": "We're local, we're friendly, and we back each other up.",
+    "areasTitle": "Where You Could Fit In",
+    "areasSubtitle": "We're always open to meeting talented people across these areas, reach out even if you don't see an exact match.",
+    "areaMarketingTitle": "Marketing & Growth",
+    "areaMarketingDesc": "Social media, content, performance marketing, and brand.",
+    "areaSupportTitle": "Customer Support & Operations",
+    "areaSupportDesc": "Ad moderation, user support, and day-to-day operations.",
+    "applyTitle": "How to Apply",
+    "applyText": "Send your CV, along with a short note about what you'd like to do, to the email below. We personally review every application and will reach out if there's a fit.",
+    "applyEmailLabel": "Email your CV to",
+    "applyButton": "Email Your CV"
+  },
   "verification": {
     "loadingStatus": "Loading verification status...",
     "heroTitle": "Build Trust, Grow Faster",
@@ -906,6 +932,8 @@
     "contactDescription": "Get in touch with Thulo Bazaar. Contact us for support, partnerships, advertising, or general inquiries.",
     "faqTitle": "FAQ | Thulo Bazaar",
     "faqDescription": "Frequently asked questions about Thulo Bazaar - buying, selling, payments, and more.",
+    "workWithUsTitle": "Work With Us | Thulo Bazaar",
+    "workWithUsDescription": "Join the Thulo Bazaar team. Send your CV to hrd@thulobazaar.com.np and help us build Nepal's leading online marketplace.",
     "messagesTitle": "Messages | Thulo Bazaar",
     "messagesDescription": "Real-time messaging system",
     "signinTitle": "Login - Thulo Bazaar",
