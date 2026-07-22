@@ -11,6 +11,9 @@ import { prisma } from '@thulobazaar/database';
 
 const RECOVERY_DAYS = 30;
 
+// users.password_hash is NOT NULL, so scrub with a value bcrypt can never match
+const UNUSABLE_PASSWORD_HASH = 'DELETED_ACCOUNT';
+
 /**
  * Permanently purge accounts past the 30-day recovery window
  */
@@ -65,7 +68,7 @@ export async function purgeDeletedAccounts(): Promise<{ purged: number }> {
               email: null,
               phone: null,
               full_name: 'Deleted User',
-              password_hash: null,
+              password_hash: UNUSABLE_PASSWORD_HASH,
               avatar: null,
               bio: null,
               business_name: null,
@@ -92,7 +95,13 @@ export async function purgeDeletedAccounts(): Promise<{ purged: number }> {
       }
     }
 
-    console.log(`🎉 [Cron] Account purge complete: ${purgedCount}/${expiredAccounts.length} accounts purged`);
+    if (purgedCount < expiredAccounts.length) {
+      console.error(
+        `❌ [Cron] Account purge INCOMPLETE: ${purgedCount}/${expiredAccounts.length} purged — ${expiredAccounts.length - purgedCount} account(s) failed and will retry tomorrow`
+      );
+    } else {
+      console.log(`🎉 [Cron] Account purge complete: ${purgedCount}/${expiredAccounts.length} accounts purged`);
+    }
 
     return { purged: purgedCount };
   } catch (error) {
