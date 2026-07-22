@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
         prisma.users.count({
           where: {
             OR: [
+              { is_suspended: true },
               { is_active: false },
               { business_verification_status: 'rejected' },
             ],

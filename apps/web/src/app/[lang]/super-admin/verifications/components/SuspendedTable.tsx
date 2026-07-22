@@ -1,7 +1,14 @@
 'use client';
 
-import type { SuspendedUser } from '../types';
-import { formatDate } from '../types';
+import type { AccountState, SuspendedUser } from '../types';
+import { formatDate, getAccountState } from '../types';
+
+const STATE_BADGES: Record<AccountState, { label: string; className: string }> = {
+  suspended: { label: '🚫 Suspended', className: 'bg-red-100 text-red-700' },
+  'deletion-pending': { label: '🗑️ Deletion Pending', className: 'bg-amber-100 text-amber-700' },
+  deactivated: { label: '💤 Deactivated', className: 'bg-gray-100 text-gray-700' },
+  rejected: { label: '❌ Rejected', className: 'bg-orange-100 text-orange-700' },
+};
 
 interface SuspendedTableProps {
   users: SuspendedUser[];
@@ -11,7 +18,7 @@ export default function SuspendedTable({ users }: SuspendedTableProps) {
   return (
     <>
       <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-rose-50 to-red-50">
-        <h2 className="text-lg font-bold text-gray-900">Suspended & Rejected Accounts</h2>
+        <h2 className="text-lg font-bold text-gray-900">Inactive & Rejected Accounts</h2>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -28,26 +35,21 @@ export default function SuspendedTable({ users }: SuspendedTableProps) {
             {users.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
-                  No suspended or rejected accounts
+                  No inactive or rejected accounts
                 </td>
               </tr>
             ) : (
               users.map((u) => (
                 <tr key={u.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    {!u.isActive ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                        🚫 Suspended
-                      </span>
-                    ) : u.businessVerificationStatus === 'rejected' ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
-                        ❌ Rejected
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
-                        Unknown
-                      </span>
-                    )}
+                    {(() => {
+                      const badge = STATE_BADGES[getAccountState(u)];
+                      return (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${badge.className}`}>
+                          {badge.label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{u.fullName || 'N/A'}</div>

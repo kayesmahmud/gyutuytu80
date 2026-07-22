@@ -85,11 +85,15 @@ router.get(
     const where: any = {};
 
     if (type === 'suspended') {
-      where.is_active = false;
+      where.is_suspended = true;
     } else if (type === 'rejected') {
       where.business_verification_status = 'rejected';
     } else {
-      where.OR = [{ is_active: false }, { business_verification_status: 'rejected' }];
+      where.OR = [
+        { is_suspended: true },
+        { is_active: false },
+        { business_verification_status: 'rejected' },
+      ];
     }
 
     if (search) {
@@ -113,6 +117,8 @@ router.get(
           email: true,
           phone: true,
           is_active: true,
+          is_suspended: true,
+          deleted_at: true,
           business_verification_status: true,
           created_at: true,
           shop_slug: true,
@@ -133,6 +139,8 @@ router.get(
         email: u.email,
         phone: u.phone,
         isActive: u.is_active,
+        isSuspended: u.is_suspended,
+        deletedAt: u.deleted_at,
         businessVerificationStatus: u.business_verification_status,
         createdAt: u.created_at,
         shopSlug: u.shop_slug,

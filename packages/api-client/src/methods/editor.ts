@@ -67,6 +67,8 @@ export function createEditorMethods(client: AxiosInstance) {
           email: string;
           phone: string | null;
           isActive: boolean;
+          isSuspended: boolean;
+          deletedAt: string | null;
           businessVerificationStatus: string | null;
           createdAt: string;
           shopSlug: string | null;

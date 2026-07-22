@@ -25,10 +25,21 @@ export interface SuspendedUser {
   email: string;
   phone: string | null;
   isActive: boolean;
+  isSuspended: boolean;
+  deletedAt: string | null;
   businessVerificationStatus: string | null;
   createdAt: string;
   shopSlug: string | null;
   adCount: number;
+}
+
+export type AccountState = 'suspended' | 'deletion-pending' | 'deactivated' | 'rejected';
+
+export function getAccountState(u: SuspendedUser): AccountState {
+  if (u.isSuspended) return 'suspended';
+  if (u.deletedAt) return 'deletion-pending';
+  if (!u.isActive) return 'deactivated';
+  return 'rejected';
 }
 
 export interface VerificationStats {

@@ -16,12 +16,16 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     if (type === 'suspended') {
-      where.is_active = false;
+      where.is_suspended = true;
     } else if (type === 'rejected') {
       where.business_verification_status = 'rejected';
     } else {
-      // Default to "all" - both suspended and rejected
-      where.OR = [{ is_active: false }, { business_verification_status: 'rejected' }];
+      // Default to "all" - suspended, deactivated/deletion-pending, and rejected
+      where.OR = [
+        { is_suspended: true },
+        { is_active: false },
+        { business_verification_status: 'rejected' },
+      ];
     }
 
     if (search) {
@@ -45,6 +49,8 @@ export async function GET(request: NextRequest) {
           email: true,
           phone: true,
           is_active: true,
+          is_suspended: true,
+          deleted_at: true,
           business_verification_status: true,
           created_at: true,
           shop_slug: true,
@@ -65,6 +71,8 @@ export async function GET(request: NextRequest) {
         email: u.email,
         phone: u.phone,
         isActive: u.is_active,
+        isSuspended: u.is_suspended,
+        deletedAt: u.deleted_at,
         businessVerificationStatus: u.business_verification_status,
         createdAt: u.created_at,
         shopSlug: u.shop_slug,

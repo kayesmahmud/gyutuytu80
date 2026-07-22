@@ -70,7 +70,7 @@ export default function VerificationsPage({ params: paramsPromise }: { params: P
     { id: 'pending', label: 'Pending', count: tabCounts.pending, icon: '⏳', color: 'amber' },
     { id: 'verified-business', label: 'Verified Business', count: tabCounts.verifiedBusiness, icon: '👔', color: 'blue' },
     { id: 'verified-individual', label: 'Verified Individual', count: tabCounts.verifiedIndividual, icon: '👤', color: 'emerald' },
-    { id: 'suspended-rejected', label: 'Suspended/Rejected', count: tabCounts.suspendedRejected, icon: '🚫', color: 'rose' },
+    { id: 'suspended-rejected', label: 'Inactive/Rejected', count: tabCounts.suspendedRejected, icon: '🚫', color: 'rose' },
   ];
 
   if (authLoading || loading) {
