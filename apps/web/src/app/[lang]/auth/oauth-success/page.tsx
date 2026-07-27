@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
+import { trackCompleteRegistration } from '@/lib/analytics';
+
 export default function OAuthSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -45,6 +47,11 @@ export default function OAuthSuccessPage() {
 
         if (result?.ok) {
           console.log('Successfully signed in with OAuth token');
+          // Only a first-time OAuth login is a registration. Fired after the
+          // session is confirmed so a failed sign-in never counts as a signup.
+          if (searchParams.get('isNewUser') === 'true') {
+            trackCompleteRegistration('google');
+          }
           setStatus('Success! Redirecting...');
           router.push('/en');
         } else {

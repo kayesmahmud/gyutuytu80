@@ -65,6 +65,9 @@ export async function GET(request: NextRequest) {
     console.log('✅ User found:', user.email);
 
     const refreshToken = searchParams.get('refreshToken');
+    // Forwarded from the backend so oauth-success can fire a sign_up
+    // conversion for real registrations only, not for returning logins.
+    const isNewUser = searchParams.get('isNewUser') === 'true';
 
     const userData = encodeURIComponent(JSON.stringify({
       id: user.id,
@@ -80,7 +83,7 @@ export async function GET(request: NextRequest) {
 
     // Redirect to client-side handler that stores the token
     return NextResponse.redirect(
-      new URL(`/en/auth/oauth-success?token=${token}&refreshToken=${refreshToken}&user=${userData}`, baseUrl)
+      new URL(`/en/auth/oauth-success?token=${token}&refreshToken=${refreshToken}&user=${userData}&isNewUser=${isNewUser}`, baseUrl)
     );
   } catch (error) {
     console.error('❌ OAuth callback error:', error);

@@ -29,6 +29,11 @@ passport.use(
           where: { email },
         });
 
+        // Google OAuth registers on first login, so the frontend cannot tell a
+        // signup from a returning login without being told. Counting returning
+        // logins as signups would inflate the conversion ad platforms bid on.
+        const isNewUser = !user;
+
         if (!user) {
           // Create new user with avatar
           user = await prisma.users.create({
@@ -82,6 +87,7 @@ passport.use(
           userId: user.id,
           email: user.email,
           role: user.role || 'user',
+          isNewUser,
         });
       } catch (error) {
         console.error('🔐 [Passport] OAuth error:', error);

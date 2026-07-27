@@ -70,6 +70,12 @@ export interface LoginResult {
   tempToken?: string;
   accountPendingDeletion?: boolean;
   deletionDate?: string;
+  /**
+   * True only when this call created the account (OAuth paths register on
+   * first login). Clients gate their sign_up conversion on this so returning
+   * users are not counted as new registrations.
+   */
+  isNewUser?: boolean;
   user?: {
     id: number;
     email: string | null;
@@ -336,12 +342,18 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
       },
     });
 
+    // Whether this call registered someone rather than logging them back in.
+    // Clients report sign_up conversions off this flag — counting returning
+    // users as signups would inflate the metric ad platforms bid against.
+    let isNewUser = false;
+
     if (!user) {
       // Check if registration is enabled before creating new user
       const registrationAllowed = await getBooleanSetting('allow_registration', true);
       if (!registrationAllowed) {
         return { success: false, error: 'New user registration is currently disabled' };
       }
+      isNewUser = true;
 
       // Create new user
       user = await prisma.users.create({
@@ -418,6 +430,7 @@ export async function verifyGoogleToken(idToken: string): Promise<LoginResult> {
       success: true,
       token: accessToken,
       refreshToken,
+      isNewUser,
       ...(isPendingDeletion && {
         accountPendingDeletion: true,
         deletionDate: user.deletion_requested_at!.toISOString(),
@@ -474,11 +487,14 @@ export async function verifyAppleToken(
       },
     });
 
+    let isNewUser = false;
+
     if (!user) {
       const registrationAllowed = await getBooleanSetting('allow_registration', true);
       if (!registrationAllowed) {
         return { success: false, error: 'New user registration is currently disabled' };
       }
+      isNewUser = true;
 
       const composedName = [fullName?.givenName, fullName?.familyName].filter(Boolean).join(' ').trim();
 
@@ -544,6 +560,7 @@ export async function verifyAppleToken(
       success: true,
       token: accessToken,
       refreshToken,
+      isNewUser,
       ...(isPendingDeletion && {
         accountPendingDeletion: true,
         deletionDate: user.deletion_requested_at!.toISOString(),

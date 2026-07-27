@@ -139,7 +139,9 @@ router.get(
 
     console.log(`✅ Google OAuth success for: ${user.email}`);
 
-    res.redirect(`${config.FRONTEND_URL}/api/auth/oauth-callback?token=${accessToken}&refreshToken=${refreshToken}&provider=google`);
+    // isNewUser lets the frontend fire a sign_up conversion for genuine
+    // registrations only — OAuth creates the account on first login.
+    res.redirect(`${config.FRONTEND_URL}/api/auth/oauth-callback?token=${accessToken}&refreshToken=${refreshToken}&provider=google&isNewUser=${user.isNewUser === true}`);
   }
 );
 
@@ -172,6 +174,8 @@ router.post(
       token: result.token,
       refreshToken: result.refreshToken,
       user: result.user,
+      // Lets the client fire a sign_up conversion only for genuine registrations.
+      isNewUser: result.isNewUser === true,
       ...(result.accountPendingDeletion && {
         accountPendingDeletion: true,
         deletionDate: result.deletionDate,
@@ -209,6 +213,8 @@ router.post(
       token: result.token,
       refreshToken: result.refreshToken,
       user: result.user,
+      // Lets the client fire a sign_up conversion only for genuine registrations.
+      isNewUser: result.isNewUser === true,
       ...(result.accountPendingDeletion && {
         accountPendingDeletion: true,
         deletionDate: result.deletionDate,
