@@ -2,7 +2,8 @@
 
 > **Purpose:** Single source of truth for creating marketing content (Facebook, Instagram, ads, blog, etc.).
 > Read this before writing any promotional content so messaging stays consistent and accurate.
-> _Last updated: 2026-06-15_
+> **This file is the only copy.** A duplicate in `../Marketing/` drifted and contradicted it; it is now a pointer.
+> _Last updated: 2026-07-27_
 
 ---
 
@@ -170,6 +171,105 @@
   - Dark text `#1f2937`, light background `#f9fafb`
   - Verification badges: **Blue `#3b82f6` = individual**, **Gold = business**
 - **Always include:** logo + `thulobazaar.com.np` + "Available on Android & iOS" when relevant.
+
+---
+
+## 9b. Traction (use as social proof)
+
+_Verify before reuse — these are point-in-time figures, last checked 2026-07-27._
+
+| Metric | Figure |
+|---|---|
+| Play Store downloads | **10,000+** |
+| Registered users | ~1,000 |
+| Ads posted by users | ~900 |
+
+**Use "10,000+ downloads" freely** — it is the strongest proof point we have and
+it appears in none of the older creative. "Join 10,000+ Nepalis" outperforms
+abstract claims like "Nepal's leading marketplace" because it is specific and
+checkable.
+
+**Do NOT advertise the user or ad counts.** ~900 listings reads as empty for a
+nationwide marketplace. Talk about downloads and categories, never inventory
+size, until listings are well into five figures.
+
+**The real problem these numbers describe:** only ~10% of installs ever register.
+Creative aimed at installs alone makes this worse — it buys more of the 90%. Ads
+should set the expectation that you sign up and post, not just browse.
+
+---
+
+## 9c. Google Ads Asset Specs & Copy Bank
+
+**Limits** — Performance Max / RSA:
+
+| Asset | Limit | Count |
+|---|---|---|
+| Headline | 30 chars | up to 5 (15 for RSA) |
+| Long headline | 90 chars | up to 5 |
+| Description | 90 chars | up to 5 |
+| Images | 1200×1200 (1:1), 1200×628 (1.91:1) | **up to 20** |
+| Logo | 1200×1200 + 1200×300 | up to 5 |
+| Video | 10s+ , vertical/square/horizontal | up to 5 |
+
+**Asset shortage is the top priority.** The account currently runs ~6 images and
+1 video against slots for 20 and 5. Ad Strength sits at "Average" and the
+algorithm has almost nothing to rotate, which is why one headline absorbed 75%
+of impressions.
+
+### What actually won
+
+`List in 2 Min, Reach Nepal` took ~75% of headline impressions. The pattern is
+**concrete time claim + reach promise** — not the free/cheap angle. Build
+variants on that shape rather than on "free".
+
+Note: winning on *serving* is not the same as winning on *conversions*. The four
+"Low"-rated headlines had higher CTR (up to 11.39% vs 8.24%). Do not delete
+assets on the Best/Good/Low label alone — that label reflects how often Google
+chose to serve an asset, which is self-reinforcing.
+
+### Headlines (≤30)
+
+- List in 2 Min, Reach Nepal ← proven
+- Post Free Ad in 2 Minutes
+- Sell in 2 Min, Free Always
+- 10,000+ Nepalis Buy & Sell
+- Your Ad Live in 2 Minutes
+
+### Long headlines (≤90)
+
+- Post your ad free in 2 minutes and reach buyers across all 7 provinces of Nepal
+- Join 10,000+ Nepalis buying and selling — free to post, no commission ever
+- Mobiles, vehicles, property and more. Post in 2 minutes, reach all of Nepal
+
+### Descriptions (≤90)
+
+- Free to post, always. Mobiles, vehicles, property & more. Verified sellers.
+- Join 10,000+ Nepalis buying and selling. Post free in 2 minutes. No commission.
+- Nepal's marketplace. Post an ad in 2 minutes and reach buyers nationwide.
+
+---
+
+## 9d. Conversion Tracking (what is wired)
+
+Creative cannot be optimised against signals that are not collected. Current state:
+
+| Channel | Status |
+|---|---|
+| Meta Pixel (web) | ✅ `988432024000859` — ViewContent, Search, Lead, CompleteRegistration, PostAd |
+| GTM dataLayer (web) | ✅ `sign_up`, `post_ad`, `generate_lead`, `view_item`, `search`, `page_view` |
+| Firebase Analytics (app) | ✅ same event vocabulary via `AnalyticsService` |
+| Product feeds | ✅ `/feeds/meta-catalog`, `/feeds/google-dynamic` |
+| Google Ads conversion actions | ⏳ needs `AW-` ID + labels configured in the GTM UI |
+| Meta App Events (app) | ⏳ needs a Meta App ID + Client Token |
+| Firebase → Google Ads link | ⏳ needs admin on both accounts |
+
+Container/pixel IDs are env-driven (`GTM_CONTAINER_ID`, `META_PIXEL_ID`), read at
+request time — swapping either is an env change plus restart, no rebuild.
+
+**Join key:** the numeric `ads.id` is used identically by the pixel
+(`content_ids`), the dataLayer (`ecomm_prodid`), the feeds (`id`) and the app
+(`item_id`). Dynamic remarketing serves nothing if these ever diverge.
 
 ---
 
