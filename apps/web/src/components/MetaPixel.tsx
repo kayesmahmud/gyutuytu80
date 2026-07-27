@@ -4,8 +4,6 @@ import Script from 'next/script';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef } from 'react';
 
-const META_PIXEL_ID = '988432024000859';
-
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void;
@@ -34,7 +32,13 @@ function PixelPageView() {
   return null;
 }
 
-export function MetaPixel() {
+/**
+ * @param pixelId Resolved server-side by lib/analytics/config.ts so the pixel
+ *   can be swapped via env var without a rebuild. Renders nothing when unset.
+ */
+export function MetaPixel({ pixelId }: { pixelId: string | null }) {
+  if (!pixelId) return null;
+
   return (
     <>
       <Script id="meta-pixel" strategy="afterInteractive">
@@ -47,7 +51,7 @@ export function MetaPixel() {
           t.src=v;s=b.getElementsByTagName(e)[0];
           s.parentNode.insertBefore(t,s)}(window, document,'script',
           'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '${META_PIXEL_ID}');
+          fbq('init', '${pixelId}');
           fbq('track', 'PageView');
         `}
       </Script>
@@ -57,7 +61,7 @@ export function MetaPixel() {
           height="1"
           width="1"
           style={{ display: 'none' }}
-          src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
+          src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
           alt=""
         />
       </noscript>

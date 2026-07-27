@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { trackCompleteRegistration } from '@/lib/metaPixel';
+import { trackCompleteRegistration } from '@/lib/analytics';
 import type { RegistrationType, PhoneStep, FormData, UseRegisterFormReturn } from './types';
 
 export function useRegisterForm(lang: string): UseRegisterFormReturn {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { trackSearch } from '@/lib/metaPixel';
+import { trackSearch } from '@/lib/analytics';
 
 interface HeroSearchProps {
   lang: string;

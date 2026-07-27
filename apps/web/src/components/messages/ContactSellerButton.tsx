@@ -10,7 +10,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useBackendToken } from '@/hooks/useBackendToken';
 import { messagingApi } from '@/lib/messaging';
-import { trackLead } from '@/lib/metaPixel';
+import { trackLead } from '@/lib/analytics';
 
 interface ContactSellerButtonProps {
   sellerId: number;

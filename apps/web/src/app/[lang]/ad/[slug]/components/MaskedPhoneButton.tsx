@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { trackLead } from '@/lib/metaPixel';
+import { trackLead } from '@/lib/analytics';
 
 interface MaskedPhoneButtonProps {
   phone: string;

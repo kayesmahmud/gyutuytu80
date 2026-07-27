@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useFormTemplate } from '@/hooks/useFormTemplate';
 import { useAdDraft, AdDraft } from '@/hooks/useAdDraft';
 import { apiClient } from '@/lib/api';
-import { trackPostAd } from '@/lib/metaPixel';
+import { trackPostAd } from '@/lib/analytics';
 import type { Category, PostAdFormData } from './types';
 import { INITIAL_FORM_DATA } from './types';
 

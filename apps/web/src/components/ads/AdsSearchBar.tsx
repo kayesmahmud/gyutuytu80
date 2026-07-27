@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { buildAdUrl } from '@/lib/urls/client';
-import { trackSearch } from '@/lib/metaPixel';
+import { trackSearch } from '@/lib/analytics';
 
 interface AdsSearchBarProps {
   lang: string;
