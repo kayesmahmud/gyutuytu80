@@ -64,11 +64,23 @@ export function csvCell(value: unknown): string {
   return `"${text.replace(/\r?\n/g, ' ').replace(/"/g, '""')}"`;
 }
 
+/**
+ * Feed image URL — always a JPEG rendition, never the stored file.
+ *
+ * Ad images are stored as AVIF, which Meta's catalog ingester rejects (it
+ * accepts JPEG/PNG only). Routing through /feeds/image converts on the fly, so
+ * both platforms get a format they accept without re-encoding storage or
+ * changing the upload pipeline. Externally-hosted images are passed through
+ * untouched — we cannot re-serve those.
+ */
 export function absoluteImageUrl(filePath: string): string {
   if (/^https?:\/\//i.test(filePath)) return filePath;
-  const clean = filePath.replace(/^\/+/, '');
-  const withPrefix = clean.startsWith('uploads/') ? clean : `uploads/ads/${clean}`;
-  return `${FEED_BASE_URL}/${withPrefix}`;
+
+  // Stored paths may be bare filenames or prefixed with uploads/ads.
+  const name = filePath.replace(/^\/+/, '').split('/').pop();
+  if (!name) return '';
+
+  return `${FEED_BASE_URL}/feeds/image/${name}`;
 }
 
 export function adUrl(slug: string): string {

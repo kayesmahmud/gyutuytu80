@@ -93,6 +93,10 @@ export async function GET() {
     const price = ad.price === null ? null : Number(ad.price);
     if (price === null || Number.isNaN(price)) continue;
 
+    // A row with a blank Image URL is rejected on ingest — skip instead.
+    const imageUrl = absoluteImageUrl(primaryImage);
+    if (!imageUrl) continue;
+
     rows.push(
       [
         csvCell(ad.id),
@@ -100,7 +104,7 @@ export async function GET() {
         csvCell(ad.description?.slice(0, 2000) || ad.title),
         csvCell(ad.categories?.name || 'Classifieds'),
         csvCell(`${price.toFixed(2)} ${FEED_CURRENCY}`),
-        csvCell(absoluteImageUrl(primaryImage)),
+        csvCell(imageUrl),
         csvCell(ad.locations?.name || 'Nepal'),
         csvCell(adUrl(ad.slug)),
         csvCell(androidAppLink(ad.slug)),
