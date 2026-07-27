@@ -38,6 +38,11 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - AAKASH_SMS_TOKEN=${AAKASH_SMS_TOKEN}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://thulobazaar.com.np}
+      # Analytics container IDs. Read at request time (not build time), so
+      # swapping a pixel/container is an .env edit + `up -d web` — no rebuild.
+      # Empty falls back to the current live IDs; "off" disables that tag.
+      - GTM_CONTAINER_ID=${GTM_CONTAINER_ID:-}
+      - META_PIXEL_ID=${META_PIXEL_ID:-}
       - KHALTI_ENV=${KHALTI_ENV:-sandbox}
       - KHALTI_SECRET_KEY=${KHALTI_SECRET_KEY}
       - KHALTI_PUBLIC_KEY=${KHALTI_PUBLIC_KEY}
