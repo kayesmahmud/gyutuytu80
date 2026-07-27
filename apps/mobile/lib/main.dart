@@ -15,6 +15,7 @@ import 'core/theme/app_theme.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/providers/chat_provider.dart';
 import 'core/providers/notification_provider.dart';
+import 'core/services/analytics_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/interstitial_ad_service.dart';
@@ -64,6 +65,7 @@ void main() async {
   try {
     await Firebase.initializeApp();
     _firebaseInitialized = true;
+    AnalyticsService.initialize();
     debugPrint('✅ Firebase initialized successfully');
   } catch (e) {
     debugPrint('⚠️ Firebase not configured: $e');

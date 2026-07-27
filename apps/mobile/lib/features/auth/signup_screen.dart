@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/api/auth_client.dart';
+import '../../core/services/analytics_service.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/auth_provider.dart';
 import '../main_nav/main_nav_screen.dart';
@@ -130,6 +131,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (result['success'] == true) {
         final token = result['token'];
+        // OAuth registers on first login, so only a brand-new account counts
+        // as a sign_up conversion — returning users would inflate the metric.
+        if (result['isNewUser'] == true) {
+          AnalyticsService.logSignUp('google');
+        }
         await context.read<AuthProvider>().login(token);
 
         if (mounted) {
@@ -197,6 +203,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (result['success'] == true) {
         final token = result['token'];
+        if (result['isNewUser'] == true) {
+          AnalyticsService.logSignUp('apple');
+        }
         await context.read<AuthProvider>().login(token);
 
         if (mounted) {
@@ -423,6 +432,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (registerResult['success'] == true) {
         final authToken = registerResult['token'];
+
+        // Phone registration is unambiguous: this endpoint only ever creates.
+        AnalyticsService.logSignUp('phone');
 
         if (authToken != null) {
           await context.read<AuthProvider>().login(authToken);

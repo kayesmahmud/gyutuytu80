@@ -18,6 +18,7 @@ import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/api/location_client.dart';
 import 'package:mobile/core/models/models.dart';
+import 'package:mobile/core/services/analytics_service.dart';
 import 'package:mobile/core/services/review_service.dart';
 import 'package:mobile/core/widgets/success_checkmark.dart';
 import 'package:mobile/features/dashboard/dashboard_screen.dart';
@@ -892,6 +893,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
     if (result.success) {
       await _deleteDraftAfterPost();
+      AnalyticsService.logPostAd(
+        adId: result.data?.id ?? 0,
+        title: _titleController.text.trim(),
+        price: double.tryParse(_priceController.text.trim()),
+      );
       // Positive moment: record it and maybe ask for a store review.
       await ReviewService.recordSignificantAction();
       await ReviewService.maybeRequestReview();
