@@ -170,3 +170,10 @@ packages/database/_vt.mjs
 packages/database/verify_tables.mjs
 /*.png
 /*.sql
+
+# Local DB backup dumps
+.tmp-backups/
+
+# Playwright artifacts
+apps/web/test-results/
+apps/web/playwright-report/
