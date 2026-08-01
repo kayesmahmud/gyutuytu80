@@ -88,6 +88,24 @@ model ad_review_history {
   @@index([action], map: "idx_ad_review_history_action")
 }
 
+/// Ad edit history - snapshot of the ad before each owner edit (Facebook-style version history)
+model ad_edit_history {
+  id               Int       @id @default(autoincrement())
+  ad_id            Int
+  edited_by        Int
+  /// Ad content BEFORE this edit: title, description, price, category_id, location_id, condition, custom_fields, image paths
+  previous_data    Json
+  /// Status the ad ended up in after this edit: 'pending' (re-review) or 'approved' (trusted live edit)
+  resulting_status String    @db.VarChar(20)
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  ads              ads       @relation(fields: [ad_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ad_edit_history_ad")
+  users            users     @relation(fields: [edited_by], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ad_edit_history_user")
+
+  @@index([ad_id], map: "idx_ad_edit_history_ad_id")
+  @@index([created_at(sort: Desc)], map: "idx_ad_edit_history_created_at")
+  @@index([resulting_status], map: "idx_ad_edit_history_resulting_status")
+}
+
 /// Phone OTPs - for phone number verification
 model phone_otps {
   id         Int      @id @default(autoincrement())
@@ -227,6 +245,7 @@ model ads {
   suspended_until              DateTime?          @db.Timestamp(6)
   expires_at                   DateTime?          @db.Timestamp(6)
   ad_images                    ad_images[]
+  ad_edit_history              ad_edit_history[]
   ad_review_history            ad_review_history[]
   ad_promotions                ad_promotions[]
   ad_reports                   ad_reports[]
@@ -563,6 +582,12 @@ model users {
   deleted_at                                                                           DateTime?                          @db.Timestamp(6)
   /// When deletion was requested (for 30-day recovery window)
   deletion_requested_at                                                                DateTime?                          @db.Timestamp(6)
+  /// When true, a business-verified user loses the direct-publish privilege (edits/new ads go back to editor review)
+  direct_edit_revoked                                                                  Boolean?                           @default(false)
+  direct_edit_revoked_at                                                               DateTime?                          @db.Timestamp(6)
+  direct_edit_revoked_by                                                               Int?
+  direct_edit_revoke_reason                                                            String?
+  ad_edit_history                                                                      ad_edit_history[]
   ad_promotions                                                                        ad_promotions[]
   ad_reports                                                                           ad_reports[]
   ad_review_history                                                                    ad_review_history[]

@@ -19,6 +19,7 @@ import 'package:mobile/features/promotion/promote_ad_screen.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:mobile/core/widgets/count_up_text.dart';
 import 'package:mobile/core/widgets/floating_widget.dart';
+import 'package:mobile/core/widgets/edit_ad_warning_dialog.dart';
 import 'package:mobile/core/widgets/load_error_view.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -806,9 +807,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           if (isActive) const SizedBox(height: 10),
 
-          // Edit & Resubmit Button (only for pending/rejected ads)
+          // Edit button (pending/rejected/active; live ads confirm first)
           if (ad.status == AdStatus.pending ||
-              ad.status == AdStatus.rejected) ...[
+              ad.status == AdStatus.rejected ||
+              ad.status == AdStatus.active) ...[
             _buildActionButton(
               icon: LucideIcons.edit,
               label: ad.status == AdStatus.rejected
@@ -821,6 +823,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   : Colors.indigo,
               filled: true,
               onTap: () async {
+                final proceed = await confirmAdEdit(
+                  context,
+                  adClient: _adClient,
+                  ad: ad,
+                );
+                if (!proceed) return;
+                if (!mounted) return;
                 await Navigator.push(
                   context,
                   MaterialPageRoute(

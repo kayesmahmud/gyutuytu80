@@ -44,9 +44,14 @@ export async function getAdLimits(): Promise<AdLimits> {
       if (s.setting_value) map[s.setting_key] = s.setting_value;
     }
 
+    // ad_expiry_days: 0 is meaningful ("never expires"), so || won't do — but
+    // parseInt('') is NaN and NaN ?? default stays NaN, which crashed ad
+    // creation with an Invalid Date whenever the setting row was missing.
+    const parsedExpiryDays = parseInt(map.ad_expiry_days || '', 10);
+
     return {
       maxAdsPerUser: parseInt(map.max_ads_per_user || '', 10) || DEFAULTS.maxAdsPerUser,
-      adExpiryDays: parseInt(map.ad_expiry_days || '', 10) ?? DEFAULTS.adExpiryDays,
+      adExpiryDays: Number.isFinite(parsedExpiryDays) ? parsedExpiryDays : DEFAULTS.adExpiryDays,
       freeAdsLimit: parseInt(map.free_ads_limit || '', 10) || DEFAULTS.freeAdsLimit,
       maxImagesPerAd: parseInt(map.max_images_per_ad || '', 10) || DEFAULTS.maxImagesPerAd,
       maxImagesVerified: parseInt(map.max_images_verified_users || '', 10) || DEFAULTS.maxImagesVerified,

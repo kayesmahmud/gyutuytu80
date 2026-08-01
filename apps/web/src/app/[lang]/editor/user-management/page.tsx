@@ -3,6 +3,7 @@
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/admin';
+import { RevokeDirectEditModal } from '@/components/editor';
 import { getEditorNavSections } from '@/lib/navigation';
 import { useUserManagement } from './useUserManagement';
 import {
@@ -40,6 +41,11 @@ export default function UserManagementPage({ params: paramsPromise }: { params: 
     closeSuspendModal,
     handleSuspend,
     handleUnsuspend,
+    revokeTargetUser,
+    openRevokeDirectEditModal,
+    closeRevokeDirectEditModal,
+    handleRevokeDirectEdit,
+    handleRestoreDirectEdit,
   } = useUserManagement(params.lang);
 
   if (loading) {
@@ -104,6 +110,8 @@ export default function UserManagementPage({ params: paramsPromise }: { params: 
           onPageChange={setPage}
           onSuspend={openSuspendModal}
           onUnsuspend={handleUnsuspend}
+          onRevokeDirectEdit={openRevokeDirectEditModal}
+          onRestoreDirectEdit={handleRestoreDirectEdit}
         />
       </div>
 
@@ -118,6 +126,15 @@ export default function UserManagementPage({ params: paramsPromise }: { params: 
           loading={actionLoading}
           onClose={closeSuspendModal}
           onConfirm={handleSuspend}
+        />
+      )}
+
+      {/* Revoke Direct Publish Modal */}
+      {revokeTargetUser && (
+        <RevokeDirectEditModal
+          userName={revokeTargetUser.business_name || revokeTargetUser.full_name}
+          onConfirm={handleRevokeDirectEdit}
+          onCancel={closeRevokeDirectEditModal}
         />
       )}
     </DashboardLayout>

@@ -16,7 +16,13 @@ import {
   updateAd,
   updateAdImages,
   deleteAd,
+  getDirectPublishInfo,
+  recordAdEditSnapshot,
+  countLiveEditsThisMonth,
+  getAdEditHistoryForOwner,
+  MAX_LIVE_EDITS_PER_MONTH,
 } from '../services/ad.service.js';
+import { logReviewHistory } from '../utils/responseHelpers.js';
 import {
   getAdLimits,
   getImageLimitForUser,
@@ -250,6 +256,9 @@ router.post(
     const condition = (parsedAttributes.condition as string) || undefined;
     const { condition: _cond, ...customFields } = parsedAttributes;
 
+    // Trusted business users (verified, not expired, not revoked) publish directly
+    const publishInfo = await getDirectPublishInfo(userId);
+
     // Create ad with expiry
     const ad = await createAd(userId, {
       title,
@@ -261,27 +270,99 @@ router.post(
       condition,
       customFields,
       expiresAt: calculateExpiresAt(limits.adExpiryDays),
-    });
+    }, { directPublish: publishInfo.canDirectPublish });
 
     // Handle uploaded images
     if (files && files.length > 0) {
       await createAdImages(ad.id, files);
     }
 
-    // Notify editors that a new ad is pending review (editor APK push + desktop bell)
-    notifyEditors({
-      type: 'new_ad_pending',
-      title: 'New ad pending review',
-      body: `"${ad.title}" was just posted and needs review.`,
-      data: { route: '/editor/ad-management', adId: String(ad.id) },
-      referenceId: ad.id,
-    }).catch((err) => console.error('New-ad editor notification error:', err));
+    if (publishInfo.canDirectPublish) {
+      logReviewHistory(ad.id, 'owner_direct_publish', userId, 'user', null, 'Published live by verified business user (no editor review)')
+        .catch((err) => console.error('Review history error:', err));
+      // Editors still get notified so abuse of the privilege is visible
+      notifyEditors({
+        type: 'ad_live_posted',
+        title: 'Business ad went live',
+        body: `"${ad.title}" was published directly by a verified business (no review).`,
+        data: { route: '/editor/ad-management', adId: String(ad.id) },
+        referenceId: ad.id,
+      }).catch((err) => console.error('Live-ad editor notification error:', err));
+    } else {
+      // Notify editors that a new ad is pending review (editor APK push + desktop bell)
+      notifyEditors({
+        type: 'new_ad_pending',
+        title: 'New ad pending review',
+        body: `"${ad.title}" was just posted and needs review.`,
+        data: { route: '/editor/ad-management', adId: String(ad.id) },
+        referenceId: ad.id,
+      }).catch((err) => console.error('New-ad editor notification error:', err));
+    }
 
     res.status(201).json({
       success: true,
-      message: 'Ad created successfully. It will be reviewed by our team shortly.',
+      message: publishInfo.canDirectPublish
+        ? 'Ad published successfully. It is now live.'
+        : 'Ad created successfully. It will be reviewed by our team shortly.',
       data: ad,
+      resultingStatus: ad.status,
     });
+  })
+);
+
+/**
+ * GET /api/ads/:id/edit-context
+ * Owner-only: tells the client what will happen if this ad is edited,
+ * so the right warning can be shown BEFORE the edit form opens.
+ */
+router.get(
+  '/:id/edit-context',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const existingAd = await getAdForEdit(parseInt(String(req.params.id)), userId);
+
+    if (!existingAd) {
+      throw new NotFoundError('Ad not found or you do not have permission to edit it');
+    }
+
+    const [publishInfo, editsUsed] = await Promise.all([
+      getDirectPublishInfo(userId),
+      countLiveEditsThisMonth(existingAd.id),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        status: existingAd.status,
+        canDirectPublish: publishInfo.canDirectPublish,
+        // Editing an approved ad takes it offline for re-review unless the user is trusted
+        willGoToPending: existingAd.status === 'approved' ? !publishInfo.canDirectPublish : true,
+        editLimit: MAX_LIVE_EDITS_PER_MONTH,
+        editsUsed,
+        editsRemaining: Math.max(0, MAX_LIVE_EDITS_PER_MONTH - editsUsed),
+      },
+    });
+  })
+);
+
+/**
+ * GET /api/ads/:id/edit-history
+ * Owner-only: this ad's edit versions (what the editor panel also sees).
+ */
+router.get(
+  '/:id/edit-history',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const existingAd = await getAdForEdit(parseInt(String(req.params.id)), userId);
+
+    if (!existingAd) {
+      throw new NotFoundError('Ad not found or you do not have permission to view its history');
+    }
+
+    const rows = await getAdEditHistoryForOwner(existingAd.id);
+    res.json({ success: true, data: rows });
   })
 );
 
@@ -312,9 +393,19 @@ router.put(
       throw new NotFoundError('Ad not found or you do not have permission to edit it');
     }
 
-    // Check if ad is approved
-    if (existingAd.status === 'approved') {
-      throw new ValidationError('Approved ads cannot be edited. Please contact support if you need to make changes.');
+    // Editing an approved (live) ad: trusted business users stay live,
+    // everyone else goes back to pending for editor re-review.
+    const editingApproved = existingAd.status === 'approved';
+    const publishInfo = editingApproved ? await getDirectPublishInfo(userId) : null;
+    const directPublish = publishInfo?.canDirectPublish === true;
+
+    if (editingApproved) {
+      const editsUsed = await countLiveEditsThisMonth(existingAd.id);
+      if (editsUsed >= MAX_LIVE_EDITS_PER_MONTH) {
+        throw new ValidationError(
+          `You have reached the monthly edit limit (${MAX_LIVE_EDITS_PER_MONTH}) for this ad. You can edit it again next month.`
+        );
+      }
     }
 
     // Parse attributes
@@ -335,7 +426,34 @@ router.put(
       locationId: locationId ? parseInt(locationId) : undefined,
       condition,
       customFields,
-    });
+    }, { directPublish });
+
+    // Every owner edit is snapshotted (Facebook-style version history)
+    recordAdEditSnapshot(existingAd, userId, newStatus)
+      .catch((err) => console.error('Edit snapshot error:', err));
+
+    if (editingApproved) {
+      logReviewHistory(
+        ad.id,
+        directPublish ? 'owner_edit_live' : 'owner_edit_resubmit',
+        userId,
+        'user',
+        null,
+        directPublish
+          ? 'Live ad edited by verified business user (stayed live)'
+          : 'Live ad edited by owner — sent back to pending for re-review'
+      ).catch((err) => console.error('Review history error:', err));
+
+      notifyEditors({
+        type: directPublish ? 'ad_live_edited' : 'new_ad_pending',
+        title: directPublish ? 'Live ad edited by business' : 'Edited ad needs re-review',
+        body: directPublish
+          ? `"${ad.title}" was edited by a verified business and is still live.`
+          : `"${ad.title}" was edited by its owner and went back to pending.`,
+        data: { route: '/editor/ad-management', adId: String(ad.id) },
+        referenceId: ad.id,
+      }).catch((err) => console.error('Edit editor notification error:', err));
+    }
 
     // Track price changes and notify favorites on price drop
     const newPrice = price !== undefined ? parseFloat(price) : undefined;
@@ -375,8 +493,13 @@ router.put(
 
     res.json({
       success: true,
-      message: newStatus === 'pending' ? 'Ad updated and resubmitted for review' : 'Ad updated successfully',
+      message: newStatus === 'pending'
+        ? 'Ad updated and resubmitted for review'
+        : editingApproved && directPublish
+          ? 'Ad updated and is still live'
+          : 'Ad updated successfully',
       data: ad,
+      resultingStatus: newStatus,
     });
   })
 );

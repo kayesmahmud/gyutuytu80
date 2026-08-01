@@ -40,10 +40,13 @@ export default function AdActions({
   const [copied, setCopied] = useState(false);
   const [justLiked, setJustLiked] = useState(false);
 
-  // Get the ad URL for sharing
-  const adUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/${lang}/ad/${adSlug}`
-    : `https://thulobazaar.com.np/${lang}/ad/${adSlug}`;
+  // Get the ad URL for sharing. Server and first client render must match
+  // (hydration), so start with the canonical domain and swap in the real
+  // origin after mount — matters on localhost/LAN where origins differ.
+  const [adUrl, setAdUrl] = useState(`https://thulobazaar.com.np/${lang}/ad/${adSlug}`);
+  useEffect(() => {
+    setAdUrl(`${window.location.origin}/${lang}/ad/${adSlug}`);
+  }, [lang, adSlug]);
 
   const checkFavoriteStatus = useCallback(async () => {
     try {

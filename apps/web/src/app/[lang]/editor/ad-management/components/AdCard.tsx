@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Eye,
   History,
+  FileClock,
   MessageCircle,
 } from 'lucide-react';
 import { getStatusBadge, getAvailableActions } from '@/utils/editorUtils';
@@ -33,6 +34,7 @@ interface AdCardProps {
   onSuspend: (ad: Ad) => void;
   onPermanentDelete: (ad: Ad) => void;
   onHistory: (ad: Ad) => void;
+  onEditHistory: (ad: Ad) => void;
 }
 
 export default function AdCard({
@@ -43,6 +45,7 @@ export default function AdCard({
   onSuspend,
   onPermanentDelete,
   onHistory,
+  onEditHistory,
 }: AdCardProps) {
   const availableActions = getAvailableActions(ad);
   const sellerBadge = getSellerBadge(ad.seller);
@@ -238,6 +241,14 @@ export default function AdCard({
               >
                 <History size={16} />
                 History
+              </button>
+
+              <button
+                onClick={() => onEditHistory(ad)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+              >
+                <FileClock size={16} />
+                Edit History
               </button>
 
               {ad.seller?.id && (

@@ -64,6 +64,8 @@ export class ApiClient extends BaseApiClient {
   getAdBySlug: ReturnType<typeof createAdMethods>['getAdBySlug'];
   searchAds: ReturnType<typeof createAdMethods>['searchAds'];
   createAd: ReturnType<typeof createAdMethods>['createAd'];
+  getAdEditContext: ReturnType<typeof createAdMethods>['getAdEditContext'];
+  getMyAdEditHistory: ReturnType<typeof createAdMethods>['getMyAdEditHistory'];
   updateAd: ReturnType<typeof createAdMethods>['updateAd'];
   deleteAd: ReturnType<typeof createAdMethods>['deleteAd'];
   incrementAdView: ReturnType<typeof createAdMethods>['incrementAdView'];
@@ -198,6 +200,8 @@ export class ApiClient extends BaseApiClient {
     this.getAdBySlug = adMethods.getAdBySlug;
     this.searchAds = adMethods.searchAds;
     this.createAd = adMethods.createAd;
+    this.getAdEditContext = adMethods.getAdEditContext;
+    this.getMyAdEditHistory = adMethods.getMyAdEditHistory;
     this.updateAd = adMethods.updateAd;
     this.deleteAd = adMethods.deleteAd;
     this.incrementAdView = adMethods.incrementAdView;

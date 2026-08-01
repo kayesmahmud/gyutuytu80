@@ -7,6 +7,7 @@ import { optimizeImage } from '../middleware/optimizeImage.js';
 import { unlink } from 'fs/promises';
 import path from 'path';
 import config from '../config/index.js';
+import { computeCanDirectPublish } from '../services/ad.service.js';
 
 const router = Router();
 
@@ -34,6 +35,8 @@ async function getCurrentUserProfile(userId: number) {
         custom_shop_slug: true,
         business_name: true,
         business_verification_status: true,
+        business_verification_expires_at: true,
+        direct_edit_revoked: true,
         individual_verified: true,
         created_at: true,
         locations: true,
@@ -68,6 +71,8 @@ async function getCurrentUserProfile(userId: number) {
     businessName: user.business_name,
     businessVerificationStatus: user.business_verification_status,
     individualVerified: user.individual_verified,
+    // Direct-publish privilege: currently business-verified, not expired, not revoked
+    canDirectPublish: computeCanDirectPublish(user),
     createdAt: user.created_at,
     oauthProvider: user.oauth_provider,
     hasPassword: !!passwordCheck?.password_hash,

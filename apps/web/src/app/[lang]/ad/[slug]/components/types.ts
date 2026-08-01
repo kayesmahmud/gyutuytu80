@@ -1,4 +1,5 @@
 export interface AdBadgesProps {
+  lastEditedAt?: Date | string | null;
   condition: string | null;
   isNegotiable: boolean;
   fullCategory: string;

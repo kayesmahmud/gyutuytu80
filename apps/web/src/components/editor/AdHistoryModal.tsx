@@ -19,6 +19,9 @@ const ACTION_STYLES: Record<string, { label: string; dot: string }> = {
   deleted: { label: 'Deleted', dot: 'bg-gray-600' },
   restored: { label: 'Restored', dot: 'bg-teal-500' },
   permanently_deleted: { label: 'Permanently Deleted', dot: 'bg-red-900' },
+  owner_edit_live: { label: 'Owner Edited Live Ad', dot: 'bg-purple-500' },
+  owner_edit_resubmit: { label: 'Owner Edited (Sent to Review)', dot: 'bg-yellow-500' },
+  owner_direct_publish: { label: 'Owner Edit Published Directly', dot: 'bg-emerald-500' },
 };
 
 function formatDate(value: string) {

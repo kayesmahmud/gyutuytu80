@@ -318,6 +318,28 @@ jobs:
             aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin "$ECR_REGISTRY"
             docker compose -f docker-compose.prod.yml pull web api nginx
 
+            # ---- Database backup BEFORE migrations ------------------------
+            # Hard rule: never run `migrate deploy` without a restorable dump.
+            # pg_dump runs inside the postgres container (its port is not
+            # host-published) using the container's own credentials env.
+            # Custom format (-Fc) restores with:
+            #   docker compose -f docker-compose.prod.yml exec -T postgres \
+            #     pg_restore -U thulobazaar -d thulobazaar --clean < dump
+            echo "Backing up production database"
+            mkdir -p db-backups
+            docker compose -f docker-compose.prod.yml exec -T postgres \
+              sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' \
+              > "db-backups/thulobazaar_prod_$STAMP.dump"
+            # An empty dump means the backup silently failed — abort the deploy.
+            if [ ! -s "db-backups/thulobazaar_prod_$STAMP.dump" ]; then
+              echo "ERROR: database backup is empty — aborting deploy"
+              exit 1
+            fi
+            # Keep the newest 14 dumps so the disk doesn't fill over time.
+            ls -1t db-backups/thulobazaar_prod_*.dump 2>/dev/null | tail -n +15 | xargs -r rm --
+            echo "DB backup saved: db-backups/thulobazaar_prod_$STAMP.dump ($(du -h "db-backups/thulobazaar_prod_$STAMP.dump" | cut -f1))"
+            # ---------------------------------------------------------------
+
             # Migrate BEFORE the new containers take traffic.
             # Ordering matters: the currently-running API is the OLD image and
             # does not contain the new migration files, so this uses a throwaway

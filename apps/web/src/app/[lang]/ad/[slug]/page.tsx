@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import AdDetailClient from './AdDetailClient';
 import TrackViewContent from './TrackViewContent';
 import PromoteSection from './PromoteSection';
+import OwnerEditButton from './OwnerEditButton';
 import { Breadcrumb } from '@/components/ui';
 import PromotionSuccessToast from './PromotionSuccessToast';
 import AdBanner from '@/components/ads/AdBanner';
@@ -87,6 +88,9 @@ const getAdBySlug = cache(async (slug: string) => {
           file_path: true,
           is_primary: true,
         },
+      },
+      ad_edit_history: {
+        select: { created_at: true },
       },
       categories: {
         select: {
@@ -385,11 +389,24 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                 </div>
               </div>
 
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-4">
-                {ad.price ? formatPrice(parseFloat(ad.price.toString())) : t('priceOnRequest')}
+              <div className="flex justify-between items-center gap-3 mb-4">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600">
+                  {ad.price ? formatPrice(parseFloat(ad.price.toString())) : t('priceOnRequest')}
+                </div>
+                <OwnerEditButton
+                  adId={ad.id}
+                  sellerId={ad.user_id || 0}
+                  adTitle={ad.title}
+                  editCount={ad.ad_edit_history.length}
+                />
               </div>
 
               <AdBadges
+                lastEditedAt={
+                  ad.ad_edit_history.length > 0
+                    ? new Date(Math.max(...ad.ad_edit_history.map((e) => new Date(e.created_at || 0).getTime())))
+                    : null
+                }
                 condition={ad.condition}
                 isNegotiable={customFields?.isNegotiable || false}
                 fullCategory={fullCategory}

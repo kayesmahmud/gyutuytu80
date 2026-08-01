@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import type { AdBadgesProps } from './types';
 
 export async function AdBadges({
+  lastEditedAt,
   condition,
   isNegotiable,
   fullCategory,
@@ -16,6 +17,16 @@ export async function AdBadges({
 
   return (
     <div className="flex gap-2 mb-8 flex-wrap">
+      {/* Edited Badge (owner edited the ad after it went live) */}
+      {lastEditedAt && (
+        <span
+          className="px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm bg-gray-100 text-gray-700 inline-flex items-center gap-1"
+          title={new Date(lastEditedAt).toLocaleString()}
+        >
+          ✏️ {t('edited')}
+        </span>
+      )}
+
       {/* Condition Badge */}
       {condition && (
         condition.toLowerCase() === 'brand new' ? (

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
-import { getUsers, suspendUser, unsuspendUser } from '@/lib/editorApi';
+import { getUsers, suspendUser, unsuspendUser, setDirectEditPrivilege } from '@/lib/editorApi';
 import type { UserManagementStats } from '@/lib/editorApi';
 import type { User, StatusFilter } from './types';
 
@@ -44,6 +44,13 @@ interface UseUserManagementReturn {
   closeSuspendModal: () => void;
   handleSuspend: () => Promise<void>;
   handleUnsuspend: (user: User) => Promise<void>;
+
+  // Direct-publish privilege
+  revokeTargetUser: User | null;
+  openRevokeDirectEditModal: (user: User) => void;
+  closeRevokeDirectEditModal: () => void;
+  handleRevokeDirectEdit: (reason: string) => Promise<void>;
+  handleRestoreDirectEdit: (user: User) => Promise<void>;
 }
 
 export function useUserManagement(lang: string): UseUserManagementReturn {
@@ -62,6 +69,7 @@ export function useUserManagement(lang: string): UseUserManagementReturn {
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
   const [suspendDuration, setSuspendDuration] = useState<number | undefined>(undefined);
+  const [revokeTargetUser, setRevokeTargetUser] = useState<User | null>(null);
 
   const handleLogout = useCallback(async () => {
     await logout();
@@ -168,6 +176,77 @@ export function useUserManagement(lang: string): UseUserManagementReturn {
     }
   };
 
+  const openRevokeDirectEditModal = (user: User) => {
+    setRevokeTargetUser(user);
+  };
+
+  const closeRevokeDirectEditModal = () => {
+    setRevokeTargetUser(null);
+  };
+
+  // Merge the PUT response into local state — the users list endpoint doesn't
+  // return direct_edit fields, so the response is our source of truth here.
+  const applyDirectEditResult = (updated: {
+    id: number;
+    direct_edit_revoked: boolean;
+    direct_edit_revoked_at: string | null;
+    direct_edit_revoke_reason: string | null;
+  }) => {
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === updated.id
+          ? {
+              ...u,
+              direct_edit_revoked: updated.direct_edit_revoked,
+              direct_edit_revoked_at: updated.direct_edit_revoked_at,
+              direct_edit_revoke_reason: updated.direct_edit_revoke_reason,
+            }
+          : u
+      )
+    );
+  };
+
+  const handleRevokeDirectEdit = async (reason: string) => {
+    if (!revokeTargetUser || !reason.trim()) return;
+
+    try {
+      setActionLoading(true);
+      const response = await setDirectEditPrivilege(revokeTargetUser.id, true, reason);
+
+      if (response.success && response.data) {
+        applyDirectEditResult(response.data);
+        closeRevokeDirectEditModal();
+      } else {
+        alert(response.message || 'Failed to revoke direct publish');
+      }
+    } catch (error) {
+      console.error('Error revoking direct publish:', error);
+      alert('Error revoking direct publish');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRestoreDirectEdit = async (user: User) => {
+    if (!confirm(`Restore direct publish for ${user.full_name}?`)) return;
+
+    try {
+      setActionLoading(true);
+      const response = await setDirectEditPrivilege(user.id, false);
+
+      if (response.success && response.data) {
+        applyDirectEditResult(response.data);
+      } else {
+        alert(response.message || 'Failed to restore direct publish');
+      }
+    } catch (error) {
+      console.error('Error restoring direct publish:', error);
+      alert('Error restoring direct publish');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return {
     staff,
     handleLogout,
@@ -192,5 +271,10 @@ export function useUserManagement(lang: string): UseUserManagementReturn {
     closeSuspendModal,
     handleSuspend,
     handleUnsuspend,
+    revokeTargetUser,
+    openRevokeDirectEditModal,
+    closeRevokeDirectEditModal,
+    handleRevokeDirectEdit,
+    handleRestoreDirectEdit,
   };
 }

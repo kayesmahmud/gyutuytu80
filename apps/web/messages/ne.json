@@ -359,7 +359,16 @@
     "applyPriceFilter": "मूल्य फिल्टर लागू गर्नुहोस्",
     "reset": "रिसेट",
     "showResults": "नतिजा देखाउनुहोस्",
-    "clearSearch": "खोज हटाउनुहोस्"
+    "clearSearch": "खोज हटाउनुहोस्",
+    "editThisAd": "यो विज्ञापन सम्पादन गर्नुहोस्",
+    "edited": "सम्पादित",
+    "viewEditHistory": "इतिहास हेर्नुहोस्",
+    "editHistory": "सम्पादन इतिहास",
+    "noEditsYet": "अहिलेसम्म कुनै सम्पादन छैन।",
+    "wentLiveDirectly": "सिधै लाइभ भयो",
+    "sentToReview": "समीक्षामा पठाइयो",
+    "previousTitle": "अघिल्लो शीर्षक",
+    "previousPrice": "अघिल्लो मूल्य"
   },
   "dashboard": {
     "title": "ड्यासबोर्ड",

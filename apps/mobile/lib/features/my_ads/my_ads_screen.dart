@@ -14,6 +14,7 @@ import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/utils/page_transitions.dart';
 import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 import 'package:mobile/features/post_ad/create_ad_screen.dart';
+import 'package:mobile/core/widgets/edit_ad_warning_dialog.dart';
 import 'package:mobile/core/widgets/load_error_view.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -455,6 +456,13 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                           );
                           break;
                         case 'edit':
+                          final proceed = await confirmAdEdit(
+                            context,
+                            adClient: _adClient,
+                            ad: ad,
+                          );
+                          if (!proceed) break;
+                          if (!mounted) break;
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -475,7 +483,8 @@ class _MyAdsScreenState extends State<MyAdsScreen>
                         child: Text('myAds.viewAd'.tr()),
                       ),
                       if (ad.status == AdStatus.pending ||
-                          ad.status == AdStatus.rejected)
+                          ad.status == AdStatus.rejected ||
+                          ad.status == AdStatus.active)
                         PopupMenuItem(
                           value: 'edit',
                           child: Text(

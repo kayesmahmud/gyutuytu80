@@ -215,19 +215,41 @@ class AdClient {
   // CREATE/UPDATE/DELETE ADS
   // ==========================================
 
+  /// Get edit context for an ad (owner-only). Tells whether editing will
+  /// send the ad back to pending review or publish instantly.
+  Future<ApiResponse<AdEditContext>> getEditContext(int adId) async {
+    try {
+      final response = await _dio.get('/ads/$adId/edit-context');
+
+      if (response.data['success'] == true) {
+        return ApiResponse.success(
+          AdEditContext.fromMap(response.data['data'] as Map<String, dynamic>),
+        );
+      }
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Failed to load edit info',
+      );
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['error'] ?? 'Failed to load edit info',
+      );
+    }
+  }
+
   /// Create a new ad
-  Future<ApiResponse<Ad>> createAd(FormData formData) async {
+  Future<AdSubmitResult> createAd(FormData formData) async {
     try {
       final response = await _dio.post('/ads', data: formData);
       if (kDebugMode)
         developer.log('createAd response: ${response.data}', name: 'AdClient');
 
       if (response.data['success'] == true) {
-        return ApiResponse.success(
+        return AdSubmitResult.success(
           Ad.fromJson(response.data['data'] as Map<String, dynamic>),
+          resultingStatus: response.data['resultingStatus'] as String?,
         );
       }
-      return ApiResponse.failure(
+      return AdSubmitResult.failure(
         response.data['error'] is String
             ? response.data['error']
             : response.data['message'] ?? 'Failed to create ad',
@@ -247,25 +269,26 @@ class AdClient {
         }
       }
 
-      return ApiResponse.failure(errorMessage);
+      return AdSubmitResult.failure(errorMessage);
     }
   }
 
   /// Update an existing ad
-  Future<ApiResponse<Ad>> updateAd(int adId, FormData formData) async {
+  Future<AdSubmitResult> updateAd(int adId, FormData formData) async {
     try {
       final response = await _dio.put('/ads/$adId', data: formData);
 
       if (response.data['success'] == true) {
-        return ApiResponse.success(
+        return AdSubmitResult.success(
           Ad.fromJson(response.data['data'] as Map<String, dynamic>),
+          resultingStatus: response.data['resultingStatus'] as String?,
         );
       }
-      return ApiResponse.failure(
+      return AdSubmitResult.failure(
         response.data['error'] ?? 'Failed to update ad',
       );
     } on DioException catch (e) {
-      return ApiResponse.failure(
+      return AdSubmitResult.failure(
         e.response?.data?['error'] ?? 'Failed to update ad',
       );
     }
@@ -447,6 +470,61 @@ class AdClient {
       return const AdLimitsResponse();
     }
   }
+}
+
+/// Edit context for an ad, from GET /ads/:id/edit-context.
+/// [status] is the raw DB status ('approved' | 'pending' | ...).
+class AdEditContext {
+  final String status;
+  final bool canDirectPublish;
+  final bool willGoToPending;
+
+  const AdEditContext({
+    required this.status,
+    required this.canDirectPublish,
+    required this.willGoToPending,
+  });
+
+  factory AdEditContext.fromMap(Map<String, dynamic> map) {
+    return AdEditContext(
+      status: map['status'] as String? ?? '',
+      canDirectPublish: map['canDirectPublish'] == true,
+      willGoToPending: map['willGoToPending'] == true,
+    );
+  }
+}
+
+/// Result of creating/updating an ad. [resultingStatus] is the raw DB status
+/// ('approved' | 'pending') the ad ended up in — 'approved' means it is live.
+class AdSubmitResult {
+  final bool success;
+  final Ad? data;
+  final String? error;
+  final String? resultingStatus;
+
+  const AdSubmitResult({
+    required this.success,
+    this.data,
+    this.error,
+    this.resultingStatus,
+  });
+
+  factory AdSubmitResult.success(Ad data, {String? resultingStatus}) {
+    return AdSubmitResult(
+      success: true,
+      data: data,
+      resultingStatus: resultingStatus,
+    );
+  }
+
+  factory AdSubmitResult.failure(String error) {
+    return AdSubmitResult(success: false, error: error);
+  }
+
+  /// True when the ad is live after this submit (verified business user).
+  bool get isLive => resultingStatus == 'approved';
+
+  String get errorMessage => error ?? 'Unknown error';
 }
 
 /// Ad limits response from server

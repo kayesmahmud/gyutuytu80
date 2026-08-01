@@ -19,7 +19,16 @@ export interface User {
   suspended_by_name: string | null;
   ad_count: number;
   shop_slug: string | null;
+  // Direct-publish privilege (business users). Optional: the users list may not
+  // include these yet — treated as active until the API says otherwise.
+  direct_edit_revoked?: boolean;
+  direct_edit_revoked_at?: string | null;
+  direct_edit_revoke_reason?: string | null;
 }
+
+export const isVerifiedBusiness = (user: User): boolean =>
+  user.business_verification_status === 'approved' ||
+  user.business_verification_status === 'verified';
 
 export type StatusFilter =
   | 'all'

@@ -545,4 +545,63 @@ router.delete(
   })
 );
 
+/**
+ * GET /api/editor/ads/edit-history/recent
+ * Feed of owner edits across all ads (Facebook-style version history).
+ * ?resulting_status=approved → only live edits by trusted business users.
+ */
+router.get(
+  '/edit-history/recent',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const page = Math.max(1, parseInt(String(req.query.page)) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit)) || 20));
+    const resultingStatus = req.query.resulting_status ? String(req.query.resulting_status) : undefined;
+
+    const where = resultingStatus ? { resulting_status: resultingStatus } : {};
+
+    const [rows, total] = await Promise.all([
+      prisma.ad_edit_history.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          ads: { select: { id: true, title: true, slug: true, status: true } },
+          users: { select: { id: true, full_name: true, business_name: true, direct_edit_revoked: true } },
+        },
+      }),
+      prisma.ad_edit_history.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  })
+);
+
+/**
+ * GET /api/editor/ads/:id/edit-history
+ * All edit versions of one ad (previous_data snapshots, newest first).
+ */
+router.get(
+  '/:id/edit-history',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const adId = parseInt(String(req.params.id));
+
+    const rows = await prisma.ad_edit_history.findMany({
+      where: { ad_id: adId },
+      orderBy: { created_at: 'desc' },
+      include: {
+        users: { select: { id: true, full_name: true, business_name: true } },
+      },
+    });
+
+    res.json({ success: true, data: rows });
+  })
+);
+
 export default router;

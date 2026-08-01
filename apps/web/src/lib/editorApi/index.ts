@@ -83,11 +83,19 @@ export {
   unsuspendAd,
   permanentDeleteAd,
   getAdHistory,
+  getAdEditHistory,
+  getRecentOwnerEdits,
   getReportedAds,
   getReportedAdsCount,
   dismissReport,
 } from './ads';
-export type { AdHistoryEntry } from './ads';
+export type {
+  AdHistoryEntry,
+  AdEditSnapshot,
+  AdEditHistoryEntry,
+  RecentOwnerEdit,
+  RecentOwnerEditsParams,
+} from './ads';
 
 // ============================================
 // Verifications Functions
@@ -111,7 +119,9 @@ export {
   getUsers,
   suspendUser,
   unsuspendUser,
+  setDirectEditPrivilege,
 } from './users';
+export type { DirectEditPrivilege } from './users';
 
 // ============================================
 // Shops Functions

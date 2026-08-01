@@ -1,7 +1,7 @@
 'use client';
 
 import type { User } from '../types';
-import { getUserBadge, getUserStatusLabel } from '../types';
+import { getUserBadge, getUserStatusLabel, isVerifiedBusiness } from '../types';
 
 interface UsersTableProps {
   users: User[];
@@ -12,6 +12,8 @@ interface UsersTableProps {
   onPageChange: (page: number) => void;
   onSuspend: (user: User) => void;
   onUnsuspend: (user: User) => void;
+  onRevokeDirectEdit: (user: User) => void;
+  onRestoreDirectEdit: (user: User) => void;
 }
 
 export default function UsersTable({
@@ -23,6 +25,8 @@ export default function UsersTable({
   onPageChange,
   onSuspend,
   onUnsuspend,
+  onRevokeDirectEdit,
+  onRestoreDirectEdit,
 }: UsersTableProps) {
   const handleViewShop = (user: User) => {
     if (user.shop_slug) {
@@ -77,6 +81,27 @@ export default function UsersTable({
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getUserBadge(user)}`}>
                       {getUserStatusLabel(user)}
                     </span>
+                    {isVerifiedBusiness(user) && (
+                      <div className="mt-2 max-w-xs">
+                        {user.direct_edit_revoked ? (
+                          <>
+                            <span className="px-2 py-0.5 inline-flex text-xs font-medium rounded-full border bg-red-100 text-red-800 border-red-200">
+                              Direct publish: Revoked
+                            </span>
+                            {user.direct_edit_revoke_reason && (
+                              <div className="text-xs text-gray-700 mt-1 bg-red-50 p-2 rounded border border-red-200">
+                                <span className="font-semibold">Reason:</span>{' '}
+                                {user.direct_edit_revoke_reason}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="px-2 py-0.5 inline-flex text-xs font-medium rounded-full border bg-green-100 text-green-800 border-green-200">
+                            Direct publish: Active
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {user.is_suspended && (
                       <div className="mt-2 max-w-xs">
                         {user.suspended_until ? (
@@ -118,6 +143,24 @@ export default function UsersTable({
                         Suspend
                       </button>
                     )}
+                    {isVerifiedBusiness(user) &&
+                      (user.direct_edit_revoked ? (
+                        <button
+                          onClick={() => onRestoreDirectEdit(user)}
+                          disabled={actionLoading}
+                          className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                        >
+                          Restore Direct Publish
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onRevokeDirectEdit(user)}
+                          disabled={actionLoading}
+                          className="text-orange-600 hover:text-orange-900 disabled:opacity-50"
+                        >
+                          Revoke Direct Publish
+                        </button>
+                      ))}
                     <button
                       onClick={() => handleViewShop(user)}
                       className="text-blue-600 hover:text-blue-900"

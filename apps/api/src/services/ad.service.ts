@@ -158,8 +158,15 @@ export async function transformAdForDetail(ad: any) {
     reviewed_by: _reviewedBy,
     deleted_by: _deletedBy,
     deletion_reason: _deletionReason,
+    ad_edit_history: _editHistory,
     ...safeAd
   } = ad;
+
+  // Owner-edit history (Facebook-style "Edited" indicator)
+  const editTimes: number[] = (ad.ad_edit_history || [])
+    .map((e: any) => (e.created_at ? new Date(e.created_at).getTime() : 0))
+    .filter((t: number) => t > 0);
+  const lastEditedAt = editTimes.length ? new Date(Math.max(...editTimes)) : null;
 
   return {
     ...safeAd,
@@ -180,11 +187,15 @@ export async function transformAdForDetail(ad: any) {
     locationName: locName,
     publishedAt: ad.reviewed_at || ad.created_at,
     reviewedAt: ad.reviewed_at,
+    editCount: editTimes.length,
+    edit_count: editTimes.length,
+    lastEditedAt,
+    last_edited_at: lastEditedAt,
     userName: ad.users_ads_user_idTousers?.full_name,
     userAvatar: ad.users_ads_user_idTousers?.avatar,
     userPhone: ad.users_ads_user_idTousers?.phone,
     googleMapsLink: ad.users_ads_user_idTousers?.google_maps_link,
-    userVerified: ad.users_ads_user_idTousers?.business_verification_status === 'verified' || ad.users_ads_user_idTousers?.individual_verified,
+    userVerified: ['approved', 'verified'].includes(ad.users_ads_user_idTousers?.business_verification_status) || ad.users_ads_user_idTousers?.individual_verified,
     businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status,
     individualVerified: ad.users_ads_user_idTousers?.individual_verified,
     shopSlug: ad.users_ads_user_idTousers?.shop_slug,
@@ -517,6 +528,9 @@ const adDetailSelect = {
     ad_images: {
       orderBy: [{ is_primary: 'desc' as const }, { created_at: 'asc' as const }],
     },
+    ad_edit_history: {
+      select: { created_at: true },
+    },
   },
 };
 
@@ -639,7 +653,91 @@ export async function incrementAdViews(adId: number) {
   });
 }
 
-export async function createAd(userId: number, input: CreateAdInput) {
+/**
+ * Direct-publish policy: currently business-verified users (not expired, not revoked)
+ * can publish new ads and edits without editor review. Single source of truth —
+ * clients only display what this decides.
+ */
+export function computeCanDirectPublish(user: {
+  business_verification_status: string | null;
+  business_verification_expires_at: Date | null;
+  direct_edit_revoked: boolean | null;
+} | null): boolean {
+  if (!user) return false;
+  const businessActive =
+    ['approved', 'verified'].includes(user.business_verification_status || '') &&
+    (!user.business_verification_expires_at || user.business_verification_expires_at > new Date());
+  return businessActive && user.direct_edit_revoked !== true;
+}
+
+export async function getDirectPublishInfo(userId: number) {
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    select: {
+      business_verification_status: true,
+      business_verification_expires_at: true,
+      direct_edit_revoked: true,
+    },
+  });
+
+  return { canDirectPublish: computeCanDirectPublish(user) };
+}
+
+/** Live-ad edits are limited per calendar month to prevent bait-and-switch churn. */
+export const MAX_LIVE_EDITS_PER_MONTH = 4;
+
+/** How many times this ad was edited WHILE LIVE during the current calendar month. */
+export async function countLiveEditsThisMonth(adId: number): Promise<number> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  return prisma.ad_edit_history.count({
+    where: {
+      ad_id: adId,
+      created_at: { gte: monthStart },
+      // Only edits made to a live ad count — pending/rejected fix-ups are part
+      // of the review loop and must not eat the seller's quota.
+      previous_data: { path: ['status'], equals: 'approved' },
+    },
+  });
+}
+
+/** Owner-facing edit history (same snapshots the editor panel sees). */
+export async function getAdEditHistoryForOwner(adId: number) {
+  return prisma.ad_edit_history.findMany({
+    where: { ad_id: adId },
+    orderBy: { created_at: 'desc' },
+    select: {
+      id: true,
+      resulting_status: true,
+      previous_data: true,
+      created_at: true,
+    },
+  });
+}
+
+/** Snapshot the ad BEFORE an owner edit (Facebook-style version history). */
+export async function recordAdEditSnapshot(existingAd: any, editedBy: number, resultingStatus: string) {
+  await prisma.ad_edit_history.create({
+    data: {
+      ad_id: existingAd.id,
+      edited_by: editedBy,
+      resulting_status: resultingStatus,
+      previous_data: {
+        title: existingAd.title,
+        description: existingAd.description,
+        price: existingAd.price != null ? Number(existingAd.price) : null,
+        category_id: existingAd.category_id,
+        location_id: existingAd.location_id,
+        condition: existingAd.condition,
+        custom_fields: existingAd.custom_fields,
+        images: (existingAd.ad_images || []).map((img: any) => img.file_path),
+        status: existingAd.status,
+      },
+    },
+  });
+}
+
+export async function createAd(userId: number, input: CreateAdInput, options?: { directPublish?: boolean }) {
   const finalCategoryId = input.subcategoryId || input.categoryId;
   const slug = await generateAdSlug(input.title, input.locationId);
 
@@ -652,7 +750,7 @@ export async function createAd(userId: number, input: CreateAdInput) {
       location_id: input.locationId || null,
       condition: normalizeCondition(input.condition),
       user_id: userId,
-      status: 'pending',
+      status: options?.directPublish ? 'approved' : 'pending',
       slug,
       custom_fields: input.customFields && Object.keys(input.customFields).length > 0
         ? input.customFields
@@ -665,7 +763,7 @@ export async function createAd(userId: number, input: CreateAdInput) {
     },
   });
 
-  console.log(`✅ Ad created: ${ad.title} (ID: ${ad.id}) by user ${userId} - Status: pending`);
+  console.log(`✅ Ad created: ${ad.title} (ID: ${ad.id}) by user ${userId} - Status: ${ad.status}`);
   return ad;
 }
 
@@ -691,7 +789,12 @@ export async function getAdForEdit(adId: number, userId: number) {
   });
 }
 
-export async function updateAd(adId: number, existingAd: any, input: UpdateAdInput) {
+export async function updateAd(
+  adId: number,
+  existingAd: any,
+  input: UpdateAdInput,
+  options?: { directPublish?: boolean }
+) {
   const finalCategoryId = input.subcategoryId
     ? input.subcategoryId
     : input.categoryId
@@ -703,6 +806,12 @@ export async function updateAd(adId: number, existingAd: any, input: UpdateAdInp
   if (existingAd.status === 'rejected') {
     newStatus = 'pending';
     console.log(`📝 Rejected ad ${adId} resubmitted - status changed to pending`);
+  }
+
+  // Editing a live ad: trusted business users stay live, everyone else goes back to review
+  if (existingAd.status === 'approved' && !options?.directPublish) {
+    newStatus = 'pending';
+    console.log(`📝 Approved ad ${adId} edited by owner - status changed to pending for re-review`);
   }
 
   const ad = await prisma.ads.update({

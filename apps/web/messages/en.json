@@ -359,7 +359,16 @@
     "applyPriceFilter": "Apply Price Filter",
     "reset": "Reset",
     "showResults": "Show Results",
-    "clearSearch": "Clear search"
+    "clearSearch": "Clear search",
+    "editThisAd": "Edit this ad",
+    "edited": "Edited",
+    "viewEditHistory": "View history",
+    "editHistory": "Edit history",
+    "noEditsYet": "No edits yet.",
+    "wentLiveDirectly": "Went live directly",
+    "sentToReview": "Sent to review",
+    "previousTitle": "Previous title",
+    "previousPrice": "Previous price"
   },
   "dashboard": {
     "title": "Dashboard",

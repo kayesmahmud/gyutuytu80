@@ -9,7 +9,8 @@ import { XCircle } from 'lucide-react';
 import { useEditAd } from '@/hooks/useEditAd';
 import {
   RejectionBanner,
-  ApprovedBanner,
+  LiveEditReviewBanner,
+  LiveEditDirectBanner,
   AdDetailsSection,
   CategorySection,
   LocationSection,
@@ -37,6 +38,7 @@ export default function EditAdPage({ params }: EditAdPageProps) {
     adStatus,
     rejectionReason,
     isApproved,
+    editContext,
     customFields,
     customFieldsErrors,
     fields,
@@ -134,8 +136,19 @@ export default function EditAdPage({ params }: EditAdPageProps) {
           <RejectionBanner rejectionReason={rejectionReason} />
         )}
 
-        {/* Approved Lock Message */}
-        {isApproved && <ApprovedBanner />}
+        {/* Live-ad edit warning (variant decided by the server) */}
+        {isApproved &&
+          (editContext?.willGoToPending === false ? (
+            <LiveEditDirectBanner
+              editsRemaining={editContext?.editsRemaining}
+              editLimit={editContext?.editLimit}
+            />
+          ) : (
+            <LiveEditReviewBanner
+              editsRemaining={editContext?.editsRemaining}
+              editLimit={editContext?.editLimit}
+            />
+          ))}
 
         {/* Error Message */}
         {error && (

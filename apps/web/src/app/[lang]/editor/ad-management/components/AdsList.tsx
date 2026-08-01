@@ -19,6 +19,7 @@ interface AdsListProps {
   onSuspend: (ad: Ad) => void;
   onPermanentDelete: (ad: Ad) => void;
   onHistory: (ad: Ad) => void;
+  onEditHistory: (ad: Ad) => void;
 }
 
 export default function AdsList({
@@ -31,6 +32,7 @@ export default function AdsList({
   onSuspend,
   onPermanentDelete,
   onHistory,
+  onEditHistory,
 }: AdsListProps) {
   if (ads.length === 0) {
     return (
@@ -58,6 +60,7 @@ export default function AdsList({
           onSuspend={onSuspend}
           onPermanentDelete={onPermanentDelete}
           onHistory={onHistory}
+          onEditHistory={onEditHistory}
         />
       ))}
     </div>

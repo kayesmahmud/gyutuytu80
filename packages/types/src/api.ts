@@ -519,6 +519,8 @@ export type NotificationType =
   | 'announcement'
   // Editor/staff operational alerts (editor APK + desktop notification center)
   | 'new_ad_pending'
+  | 'ad_live_posted'
+  | 'ad_live_edited'
   | 'verification_requested'
   | 'support_message';
 

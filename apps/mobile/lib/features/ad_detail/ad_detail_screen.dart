@@ -27,7 +27,9 @@ import 'package:mobile/features/ad_detail/widgets/ad_detail_banners.dart';
 import 'package:mobile/features/ad_detail/widgets/report_ad_sheet.dart';
 import 'package:mobile/core/widgets/ad_banner_widget.dart';
 import 'package:mobile/core/services/ad_service.dart';
+import 'package:mobile/core/widgets/edit_ad_warning_dialog.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
+import 'package:mobile/features/post_ad/create_ad_screen.dart';
 import 'package:mobile/features/promotion/promote_ad_screen.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -406,6 +408,18 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
     );
   }
 
+  /// Owner-only: confirm (with warning for live ads) then open the edit form.
+  Future<void> _editAd(AdWithDetails ad) async {
+    final proceed = await confirmAdEdit(context, adClient: _adClient, ad: ad);
+    if (!proceed) return;
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CreateAdScreen(existingAd: ad)),
+    );
+    if (mounted) _fetchAdDetails();
+  }
+
   Widget _buildContent() {
     final ad = _ad!;
 
@@ -435,7 +449,23 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   padding: EdgeInsets.zero,
                 ),
               ),
-              actions: const [],
+              actions: [
+                // Owner-only edit shortcut
+                if (context.read<AuthProvider>().userId != null &&
+                    context.read<AuthProvider>().userId == ad.userId)
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(LucideIcons.edit, color: Colors.black87),
+                      onPressed: () => _editAd(ad),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+              ],
               flexibleSpace: FlexibleSpaceBar(
                 background: AdImageGallery(
                   ad: ad,
@@ -499,7 +529,8 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                           runSpacing: 8,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            if (ad.condition != null && ad.condition!.isNotEmpty)
+                            if (ad.condition != null &&
+                                ad.condition!.isNotEmpty)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,

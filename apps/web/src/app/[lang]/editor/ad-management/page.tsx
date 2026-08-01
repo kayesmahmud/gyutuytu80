@@ -2,12 +2,19 @@
 
 import { useEffect, useState, useCallback, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Clock } from 'lucide-react';
+import { Clock, FileClock } from 'lucide-react';
 import { DashboardLayout } from '@/components/admin';
 import { useStaffAuth } from '@/contexts/StaffAuthContext';
 import { getEditorNavSections } from '@/lib/navigation';
 import { useAdActions } from '@/hooks/useAdActions';
-import { RejectAdModal, SuspendAdModal, PermanentDeleteAdModal, AdHistoryModal } from '@/components/editor';
+import {
+  RejectAdModal,
+  SuspendAdModal,
+  PermanentDeleteAdModal,
+  AdHistoryModal,
+  EditHistoryModal,
+  RecentOwnerEditsModal,
+} from '@/components/editor';
 import { AdTabs, AdSearchBar, AdsList, Pagination } from './components';
 import { useAdManagement } from './useAdManagement';
 import type { Ad, TabStatus } from './types';
@@ -62,6 +69,8 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showEditHistoryModal, setShowEditHistoryModal] = useState(false);
+  const [showOwnerEditsModal, setShowOwnerEditsModal] = useState(false);
 
   const handleLogout = useCallback(async () => {
     await logout();
@@ -112,11 +121,17 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
     setShowHistoryModal(true);
   };
 
+  const openEditHistoryModal = (ad: Ad) => {
+    setSelectedAd(ad);
+    setShowEditHistoryModal(true);
+  };
+
   const closeModals = () => {
     setShowRejectModal(false);
     setShowSuspendModal(false);
     setShowPermanentDeleteModal(false);
     setShowHistoryModal(false);
+    setShowEditHistoryModal(false);
     setSelectedAd(null);
   };
 
@@ -154,8 +169,17 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
           <p className="text-gray-600 mt-1">Review and manage classified ads</p>
         </div>
 
-        {/* Tabs */}
-        <AdTabs activeTab={activeTab} onTabChange={handleTabChange} />
+        {/* Tabs + Owner edits feed */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <AdTabs activeTab={activeTab} onTabChange={handleTabChange} />
+          <button
+            onClick={() => setShowOwnerEditsModal(true)}
+            className="px-4 py-2 bg-white border border-gray-200 shadow-sm text-gray-700 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 font-medium"
+          >
+            <FileClock size={16} />
+            Owner Edits
+          </button>
+        </div>
 
         {/* Search */}
         <AdSearchBar value={searchTerm} onChange={handleSearchChange} />
@@ -171,6 +195,7 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
           onSuspend={openSuspendModal}
           onPermanentDelete={openPermanentDeleteModal}
           onHistory={openHistoryModal}
+          onEditHistory={openEditHistoryModal}
         />
 
         {/* Pagination */}
@@ -216,6 +241,21 @@ export default function AdManagementPage({ params: paramsPromise }: { params: Pr
           adId={selectedAd.id}
           adTitle={selectedAd.title}
           onClose={closeModals}
+        />
+      )}
+
+      {showEditHistoryModal && selectedAd && (
+        <EditHistoryModal
+          adId={selectedAd.id}
+          adTitle={selectedAd.title}
+          onClose={closeModals}
+        />
+      )}
+
+      {showOwnerEditsModal && (
+        <RecentOwnerEditsModal
+          lang={params.lang}
+          onClose={() => setShowOwnerEditsModal(false)}
         />
       )}
     </DashboardLayout>

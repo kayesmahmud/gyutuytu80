@@ -78,7 +78,11 @@ router.get(
           suspended_at: true,
           business_name: true,
           business_verification_status: true,
+          business_verification_expires_at: true,
           individual_verified: true,
+          direct_edit_revoked: true,
+          direct_edit_revoked_at: true,
+          direct_edit_revoke_reason: true,
           avatar: true,
           shop_slug: true,
           custom_shop_slug: true,
@@ -134,7 +138,11 @@ router.get(
           : null,
         business_name: u.business_name,
         business_verification_status: u.business_verification_status || '',
+        business_verification_expires_at: u.business_verification_expires_at,
         individual_verified: u.individual_verified || false,
+        direct_edit_revoked: u.direct_edit_revoked || false,
+        direct_edit_revoked_at: u.direct_edit_revoked_at,
+        direct_edit_revoke_reason: u.direct_edit_revoke_reason,
         avatar: u.avatar,
         shop_slug: u.custom_shop_slug || u.shop_slug,
         location_name: u.locations?.name || null,
@@ -290,6 +298,80 @@ router.put(
     res.json({
       success: true,
       message: `User unsuspended successfully. ${adsRestored.count} ads have been restored.`,
+      data: user,
+    });
+  })
+);
+
+/**
+ * PUT /api/editor/users/:id/direct-edit
+ * Revoke or restore a business user's direct-publish privilege.
+ * Revoked users' edits/new ads go back through editor review like normal users.
+ */
+router.put(
+  '/:id/direct-edit',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const { revoked, reason } = req.body;
+    const editorId = req.user!.userId;
+    const userId = parseInt(String(req.params.id));
+
+    if (typeof revoked !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'revoked (boolean) is required',
+      });
+    }
+
+    if (revoked && (!reason || !reason.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'A reason is required to revoke the direct-publish privilege',
+      });
+    }
+
+    const user = await prisma.users.update({
+      where: { id: userId },
+      data: revoked
+        ? {
+            direct_edit_revoked: true,
+            direct_edit_revoked_at: new Date(),
+            direct_edit_revoked_by: editorId,
+            direct_edit_revoke_reason: reason.trim(),
+          }
+        : {
+            direct_edit_revoked: false,
+            direct_edit_revoked_at: null,
+            direct_edit_revoked_by: null,
+            direct_edit_revoke_reason: null,
+          },
+      select: {
+        id: true,
+        full_name: true,
+        business_name: true,
+        direct_edit_revoked: true,
+        direct_edit_revoked_at: true,
+        direct_edit_revoke_reason: true,
+      },
+    });
+
+    await prisma.admin_activity_logs
+      .create({
+        data: {
+          admin_id: editorId,
+          action_type: revoked ? 'direct_edit_revoked' : 'direct_edit_restored',
+          target_type: 'user',
+          target_id: userId,
+          details: { reason: reason?.trim() || null },
+        },
+      })
+      .catch(() => {});
+
+    res.json({
+      success: true,
+      message: revoked
+        ? 'Direct-publish privilege revoked. Future edits and new ads will require review.'
+        : 'Direct-publish privilege restored.',
       data: user,
     });
   })

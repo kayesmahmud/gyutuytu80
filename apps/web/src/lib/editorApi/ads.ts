@@ -134,6 +134,81 @@ export async function getAdHistory(
 }
 
 /**
+ * Snapshot of an ad BEFORE an owner edit was applied
+ */
+export interface AdEditSnapshot {
+  title: string;
+  description: string;
+  price: number | string | null;
+  category_id: number | null;
+  location_id: number | null;
+  condition: string | null;
+  custom_fields: Record<string, unknown> | null;
+  images: string[];
+  status: string;
+}
+
+/**
+ * One owner-edit version of an ad (Facebook-style version history)
+ */
+export interface AdEditHistoryEntry {
+  id: number;
+  ad_id: number;
+  edited_by: number;
+  previous_data: AdEditSnapshot | null;
+  resulting_status: string;
+  created_at: string;
+  users: { id: number; full_name: string; business_name: string | null } | null;
+}
+
+/**
+ * Owner edit row in the cross-ads recent feed (includes the ad + revoke state)
+ */
+export interface RecentOwnerEdit extends AdEditHistoryEntry {
+  ads: { id: number; title: string; slug: string; status: string } | null;
+  users: {
+    id: number;
+    full_name: string;
+    business_name: string | null;
+    direct_edit_revoked: boolean;
+  } | null;
+}
+
+export interface RecentOwnerEditsParams {
+  page?: number;
+  limit?: number;
+  resulting_status?: string;
+}
+
+/**
+ * Get all owner-edit versions of one ad (newest first)
+ */
+export async function getAdEditHistory(
+  adId: number,
+  token?: string
+): Promise<ApiResponse<AdEditHistoryEntry[]>> {
+  return apiRequest<ApiResponse<AdEditHistoryEntry[]>>(
+    `/api/editor/ads/${adId}/edit-history`,
+    { token }
+  );
+}
+
+/**
+ * Get recent owner edits across all ads
+ * resulting_status='approved' filters to edits that went live directly
+ */
+export async function getRecentOwnerEdits(
+  params?: RecentOwnerEditsParams,
+  token?: string
+): Promise<ApiResponse<RecentOwnerEdit[]>> {
+  const queryString = buildQueryString(params);
+  return apiRequest<ApiResponse<RecentOwnerEdit[]>>(
+    `/api/editor/ads/edit-history/recent${queryString}`,
+    { token }
+  );
+}
+
+/**
  * Get reported ads
  * Generic T allows callers to specify their own detailed type
  */

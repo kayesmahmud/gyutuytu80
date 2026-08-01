@@ -308,6 +308,22 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
     });
   }
 
+  // Trusted business users (verified, not expired, not revoked) publish directly.
+  // Mirrors computeCanDirectPublish in apps/api/src/services/ad.service.ts.
+  const creator = await prisma.users.findUnique({
+    where: { id: userId },
+    select: {
+      business_verification_status: true,
+      business_verification_expires_at: true,
+      direct_edit_revoked: true,
+    },
+  });
+  const canDirectPublish =
+    !!creator &&
+    ['approved', 'verified'].includes(creator.business_verification_status || '') &&
+    (!creator.business_verification_expires_at || creator.business_verification_expires_at > new Date()) &&
+    creator.direct_edit_revoked !== true;
+
   // Create ad
   const ad = await prisma.ads.create({
     data: {
@@ -322,10 +338,24 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
       user_id: userId,
       slug,
       custom_fields: customFields,
-      status: 'pending',
+      status: canDirectPublish ? 'approved' : 'pending',
       expires_at: input.expiresAt ?? null,
     },
   });
+
+  if (canDirectPublish) {
+    prisma.ad_review_history
+      .create({
+        data: {
+          ad_id: ad.id,
+          action: 'owner_direct_publish',
+          actor_id: userId,
+          actor_type: 'user',
+          notes: 'Published live by verified business user (no editor review)',
+        },
+      })
+      .catch((err) => console.error('Review history error:', err));
+  }
 
   // Save images
   if (processedImages.length > 0) {
@@ -399,6 +429,7 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
     seoSlug,
     imageCount: processedImages.length,
     createdAt: ad.created_at,
+    status: ad.status,
   };
 }
 

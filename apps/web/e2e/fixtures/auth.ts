@@ -82,11 +82,24 @@ async function performLogin(
   // Submit the form
   await page.click('button[type="submit"]');
 
-  // Wait for successful login (redirect to homepage or dashboard)
-  await page.waitForURL(/\/(en|np)(\/|$)/, { timeout: 15000 });
+  // Wait for successful login. The old pattern /\/(en|np)(\/|$)/ also matches
+  // /en/auth/signin itself, so it resolved before the credentials callback
+  // finished and the next navigation aborted the login. Wait until we have
+  // actually left the auth pages instead.
+  await page.waitForURL((url) => !url.pathname.includes('/auth/'), { timeout: 15000 });
 
-  // Verify we're logged in by checking session
-  await page.waitForLoadState('networkidle');
+  // Verify the session cookie actually works before handing the page to tests
+  await expect
+    .poll(
+      async () => {
+        const session = await page.evaluate(async () =>
+          (await fetch('/api/auth/session')).json().catch(() => null)
+        );
+        return session?.user?.id ?? null;
+      },
+      { timeout: 15000 }
+    )
+    .not.toBeNull();
 }
 
 /**

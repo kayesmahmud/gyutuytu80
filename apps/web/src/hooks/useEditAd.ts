@@ -74,6 +74,15 @@ export function useEditAd(adId: number, lang: string) {
   const [adStatus, setAdStatus] = useState<string>('');
   const [rejectionReason, setRejectionReason] = useState<string>('');
   const [isApproved, setIsApproved] = useState(false);
+  // Server-decided edit policy for live ads (which warning to show, what happens on save)
+  const [editContext, setEditContext] = useState<{
+    status: string;
+    canDirectPublish: boolean;
+    willGoToPending: boolean;
+    editLimit?: number;
+    editsUsed?: number;
+    editsRemaining?: number;
+  } | null>(null);
 
   // Custom fields state
   const [customFields, setCustomFields] = useState<Record<string, any>>({});
@@ -183,12 +192,21 @@ export function useEditAd(adId: number, lang: string) {
       setAdStatus(status);
       setRejectionReason(statusReason);
 
-      if (status === 'approved') {
+      // Live ads are editable now — ask the server what saving will do
+      // (re-review for normal users, instant publish for trusted businesses)
+      if (status === 'approved' || status === 'active') {
         setIsApproved(true);
-        setError(
-          'This ad has been approved and published. Approved ads cannot be edited to maintain content integrity. If you need to make changes, please contact support or create a new ad.'
-        );
-        return;
+        try {
+          const ctxRes = await apiClient.getAdEditContext(adId);
+          if (ctxRes.success && ctxRes.data) {
+            setEditContext(ctxRes.data);
+          } else {
+            setEditContext({ status, canDirectPublish: false, willGoToPending: true });
+          }
+        } catch {
+          // Safe default: warn that the ad goes back to review
+          setEditContext({ status, canDirectPublish: false, willGoToPending: true });
+        }
       }
 
       // Step 3: Determine category structure
@@ -414,6 +432,14 @@ export function useEditAd(adId: number, lang: string) {
         }
       }
 
+      // Editing a live ad as a non-trusted user takes it offline — confirm first
+      if (isApproved && editContext?.willGoToPending) {
+        const confirmed = window.confirm(
+          'Saving these changes will take your ad OFFLINE and send it back for review. It will go live again once our team approves it.\n\nContinue?'
+        );
+        if (!confirmed) return;
+      }
+
       try {
         setSubmitting(true);
 
@@ -449,12 +475,18 @@ export function useEditAd(adId: number, lang: string) {
         const response = await apiClient.updateAd(adId, updateData);
 
         if (response.success) {
-          const updatedAdResponse = await apiClient.getAdById(adId);
-          if (updatedAdResponse.success && updatedAdResponse.data) {
-            const slug = updatedAdResponse.data.slug;
-            router.push(`/${lang}/ad/${slug}`);
-          } else {
+          // If the edit sent the ad back to review, land on the dashboard
+          // (the public ad page is offline now); otherwise show the live ad.
+          if (response.resultingStatus === 'pending') {
             router.push(`/${lang}/dashboard`);
+          } else {
+            const updatedAdResponse = await apiClient.getAdById(adId);
+            if (updatedAdResponse.success && updatedAdResponse.data) {
+              const slug = updatedAdResponse.data.slug;
+              router.push(`/${lang}/ad/${slug}`);
+            } else {
+              router.push(`/${lang}/dashboard`);
+            }
           }
         } else {
           setError('Failed to update ad. Please try again.');
@@ -476,6 +508,8 @@ export function useEditAd(adId: number, lang: string) {
       adId,
       router,
       lang,
+      isApproved,
+      editContext,
     ]
   );
 
@@ -493,6 +527,7 @@ export function useEditAd(adId: number, lang: string) {
     adStatus,
     rejectionReason,
     isApproved,
+    editContext,
     customFields,
     customFieldsErrors,
     fields,

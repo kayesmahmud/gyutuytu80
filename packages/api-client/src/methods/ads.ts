@@ -94,10 +94,36 @@ export function createAdMethods(client: AxiosInstance) {
       return response.data;
     },
 
+    async getAdEditContext(
+      id: number
+    ): Promise<ApiResponse<{
+      status: string;
+      canDirectPublish: boolean;
+      willGoToPending: boolean;
+      editLimit: number;
+      editsUsed: number;
+      editsRemaining: number;
+    }>> {
+      const response = await client.get(`/api/ads/${id}/edit-context`);
+      return response.data;
+    },
+
+    async getMyAdEditHistory(
+      id: number
+    ): Promise<ApiResponse<Array<{
+      id: number;
+      resulting_status: string;
+      previous_data: Record<string, unknown>;
+      created_at: string;
+    }>>> {
+      const response = await client.get(`/api/ads/${id}/edit-history`);
+      return response.data;
+    },
+
     async updateAd(
       id: number,
       data: Partial<PostAdFormData> & { existingImages?: string[] }
-    ): Promise<ApiResponse<Ad>> {
+    ): Promise<ApiResponse<Ad> & { resultingStatus?: string }> {
       const formData = new FormData();
 
       // Append text fields

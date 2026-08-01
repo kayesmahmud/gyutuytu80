@@ -98,13 +98,15 @@ const nextConfig: NextConfig = {
       `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://pagead2.googlesyndication.com https://www.googletagmanager.com https://accounts.google.com https://connect.facebook.net`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      `img-src 'self' data: blob: https: ${isDev ? 'http://localhost:5000 http://192.168.0.114:5000' : ''}`.trim(),
+      // Dev: allow images from whichever host/port the API actually runs on (see apiUrl)
+      `img-src 'self' data: blob: https: ${isDev ? `${apiUrl} http://localhost:5000 http://192.168.0.114:5000` : ''}`.trim(),
       // API fetch + Socket.IO WebSocket connections
       `connect-src 'self' ${apiUrl} ws: wss: https://accounts.google.com`,
       "frame-src https://accounts.google.com https://www.facebook.com",
       "object-src 'none'",
       "base-uri 'self'",
-      "form-action 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np https://dev.khalti.com https://khalti.com",
+      // facebook.com: Meta Pixel fires some events as form beacons to /tr — without it they're silently dropped
+      "form-action 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np https://dev.khalti.com https://khalti.com https://www.facebook.com",
     ].join('; ');
 
     return [

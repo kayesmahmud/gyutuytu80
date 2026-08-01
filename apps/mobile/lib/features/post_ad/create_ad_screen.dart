@@ -903,19 +903,29 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       await ReviewService.maybeRequestReview();
       if (mounted) {
         final isNepali = context.locale.languageCode == 'ne';
-        await showSuccessDialog(
-          context,
-          message: 'postAd.adPosted'.tr(),
-          subtitle: 'postAd.adPostedReviewNote'.tr(),
-          subtitleTransliteration: isNepali
-              ? null
-              : 'postAd.adPostedReviewNoteLatin'.tr(),
-        );
+        if (result.isLive) {
+          // Verified business: ad published instantly, no review needed.
+          await showSuccessDialog(
+            context,
+            message: isNepali ? 'तपाईंको विज्ञापन लाइभ छ!' : 'Your ad is live!',
+          );
+        } else {
+          await showSuccessDialog(
+            context,
+            message: 'postAd.adPosted'.tr(),
+            subtitle: 'postAd.adPostedReviewNote'.tr(),
+            subtitleTransliteration: isNepali
+                ? null
+                : 'postAd.adPostedReviewNoteLatin'.tr(),
+          );
+        }
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => const DashboardScreen(initialFilter: 'Pending'),
+              builder: (_) => DashboardScreen(
+                initialFilter: result.isLive ? 'Active' : 'Pending',
+              ),
             ),
           );
         }
@@ -956,11 +966,17 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     final result = await _adClient.updateAd(ad.id, formData);
 
     if (result.success && mounted) {
-      final message = isRejected
-          ? (context.locale.languageCode == 'ne'
+      final isNepali = context.locale.languageCode == 'ne';
+      final message = result.isLive
+          // Verified business: the edit published instantly.
+          ? (isNepali
+                ? 'तपाईंको विज्ञापन अपडेट भयो र लाइभ छ।'
+                : 'Your ad has been updated and is live.')
+          : isRejected
+          ? (isNepali
                 ? 'विज्ञापन पुन: पेश गरियो। समीक्षाको लागि पर्खनुहोस्।'
                 : 'Ad resubmitted for review.')
-          : (context.locale.languageCode == 'ne'
+          : (isNepali
                 ? 'विज्ञापन अपडेट भयो। सम्पादक समीक्षाको लागि पर्खनुहोस्।'
                 : 'Ad updated. Waiting for editor review.');
 
@@ -969,7 +985,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => DashboardScreen(initialFilter: 'Pending'),
+            builder: (_) => DashboardScreen(
+              initialFilter: result.isLive ? 'Active' : 'Pending',
+            ),
           ),
         );
       }

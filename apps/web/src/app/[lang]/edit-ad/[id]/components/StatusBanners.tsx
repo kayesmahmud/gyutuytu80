@@ -42,27 +42,61 @@ export function RejectionBanner({ rejectionReason }: RejectionBannerProps) {
   );
 }
 
-export function ApprovedBanner() {
+function EditsRemainingLine({ editsRemaining, editLimit }: { editsRemaining?: number; editLimit?: number }) {
+  if (editsRemaining === undefined || editLimit === undefined) return null;
   return (
-    <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-400 border-l-[6px] border-l-green-600 rounded-xl p-6 mb-8 shadow">
+    <p className="text-sm font-semibold mt-2 text-gray-700">
+      {editsRemaining > 0
+        ? `You can edit this ad ${editsRemaining} more time${editsRemaining === 1 ? '' : 's'} this month (limit: ${editLimit}/month).`
+        : `You have used all ${editLimit} edits for this ad this month — saving is blocked until next month.`}
+    </p>
+  );
+}
+
+/** Live ad, normal/individual-verified user: editing sends it back to review. */
+export function LiveEditReviewBanner({ editsRemaining, editLimit }: { editsRemaining?: number; editLimit?: number }) {
+  return (
+    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 border-l-[6px] border-l-amber-600 rounded-xl p-6 mb-8 shadow">
       <div className="flex gap-4 items-start">
-        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-2xl">✅</span>
+        <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-2xl">⚠️</span>
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-green-900 mb-3">Ad Approved & Published</h3>
-          <p className="text-sm text-green-700 mb-4">
-            This ad has been approved by our editors and is currently live on Thulo Bazaar. For
-            content integrity and fairness to buyers, approved ads cannot be edited.
+          <h3 className="text-lg font-bold text-amber-900 mb-3">This ad is live — editing sends it back to review</h3>
+          <p className="text-sm text-amber-800 mb-2">
+            If you save changes, this ad will go <strong>offline</strong> and move back to the
+            Pending tab. Our editors will review your changes and it will go live again once
+            approved.
           </p>
-          <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
-            <p className="text-sm text-yellow-900">
-              <strong>Need to make changes?</strong> You have these options:
-              <br />
-              • Contact our support team if you need to update critical information
-              <br />• Delete this ad and create a new listing with updated details
-            </p>
-          </div>
+          <p className="text-sm text-amber-700">
+            Only edit if you really need to fix something (typo, wrong category, price, photos…).
+          </p>
+          <EditsRemainingLine editsRemaining={editsRemaining} editLimit={editLimit} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Live ad, trusted business user: edits publish instantly. */
+export function LiveEditDirectBanner({ editsRemaining, editLimit }: { editsRemaining?: number; editLimit?: number }) {
+  return (
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-400 border-l-[6px] border-l-blue-600 rounded-xl p-6 mb-8 shadow">
+      <div className="flex gap-4 items-start">
+        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-2xl">⚡</span>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-lg font-bold text-blue-900 mb-3">Your edits go live instantly</h3>
+          <p className="text-sm text-blue-800 mb-2">
+            As a verified business, your changes publish immediately without editor review.
+            Please double-check everything is accurate before saving.
+          </p>
+          <p className="text-sm text-blue-700">
+            <strong>Note:</strong> repeated misleading edits can remove this privilege — your
+            future edits would then need editor review like everyone else.
+          </p>
+          <EditsRemainingLine editsRemaining={editsRemaining} editLimit={editLimit} />
         </div>
       </div>
     </div>
