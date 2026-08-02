@@ -25,11 +25,13 @@ class SocketService {
   // Event controllers
   final _connectionController = StreamController<bool>.broadcast();
   final _messageController = StreamController<Message>.broadcast();
-  final _messageEditedController = StreamController<Message>.broadcast();
+  final _messageEditedController =
+      StreamController<Map<String, dynamic>>.broadcast();
   final _messageDeletedController = StreamController<int>.broadcast();
   final _typingStartController = StreamController<TypingUser>.broadcast();
   final _typingStopController = StreamController<TypingUser>.broadcast();
-  final _conversationUpdatedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _conversationUpdatedController =
+      StreamController<Map<String, dynamic>>.broadcast();
   final _userOnlineController = StreamController<int>.broadcast();
   final _userOfflineController = StreamController<int>.broadcast();
   final _errorController = StreamController<String>.broadcast();
@@ -43,11 +45,13 @@ class SocketService {
   // Streams for listening to events
   Stream<bool> get connectionStream => _connectionController.stream;
   Stream<Message> get messageStream => _messageController.stream;
-  Stream<Message> get messageEditedStream => _messageEditedController.stream;
+  Stream<Map<String, dynamic>> get messageEditedStream =>
+      _messageEditedController.stream;
   Stream<int> get messageDeletedStream => _messageDeletedController.stream;
   Stream<TypingUser> get typingStartStream => _typingStartController.stream;
   Stream<TypingUser> get typingStopStream => _typingStopController.stream;
-  Stream<Map<String, dynamic>> get conversationUpdatedStream => _conversationUpdatedController.stream;
+  Stream<Map<String, dynamic>> get conversationUpdatedStream =>
+      _conversationUpdatedController.stream;
   Stream<int> get userOnlineStream => _userOnlineController.stream;
   Stream<int> get userOfflineStream => _userOfflineController.stream;
   Stream<String> get errorStream => _errorController.stream;
@@ -70,8 +74,13 @@ class SocketService {
       // Get base URL without trailing /api path (keep subdomain intact)
       final baseUrl = ApiConfig.baseUrl.replaceFirst(RegExp(r'/api$'), '');
 
-      if (kDebugMode) developer.log('Connecting to $baseUrl', name: 'SocketService');
-      if (kDebugMode) developer.log('Token: ${token.substring(0, 10)}...', name: 'SocketService');
+      if (kDebugMode)
+        developer.log('Connecting to $baseUrl', name: 'SocketService');
+      if (kDebugMode)
+        developer.log(
+          'Token: ${token.substring(0, 10)}...',
+          name: 'SocketService',
+        );
 
       _socket = io.io(
         baseUrl,
@@ -123,7 +132,8 @@ class SocketService {
 
       return await completer.future;
     } catch (e) {
-      if (kDebugMode) developer.log('Connection error: $e', name: 'SocketService');
+      if (kDebugMode)
+        developer.log('Connection error: $e', name: 'SocketService');
       _error = e.toString();
       _isConnecting = false;
       return false;
@@ -135,7 +145,8 @@ class SocketService {
 
     // Connection events
     _socket!.onConnect((_) {
-      if (kDebugMode) developer.log('Connected to ${_socket?.io.uri}', name: 'SocketService');
+      if (kDebugMode)
+        developer.log('Connected to ${_socket?.io.uri}', name: 'SocketService');
       _isConnected = true;
       _isConnecting = false;
       _reconnectAttempts = 0;
@@ -150,7 +161,8 @@ class SocketService {
     });
 
     _socket!.onConnectError((error) {
-      if (kDebugMode) developer.log('Connection error: $error', name: 'SocketService');
+      if (kDebugMode)
+        developer.log('Connection error: $error', name: 'SocketService');
       _error = error.toString();
       _isConnecting = false;
       _errorController.add(_error!);
@@ -162,7 +174,11 @@ class SocketService {
     });
 
     _socket!.onReconnectFailed((_) async {
-      if (kDebugMode) developer.log('Reconnect failed after $_maxReconnectAttempts attempts, trying fresh token', name: 'SocketService');
+      if (kDebugMode)
+        developer.log(
+          'Reconnect failed after $_maxReconnectAttempts attempts, trying fresh token',
+          name: 'SocketService',
+        );
       // Built-in reconnect uses the original (possibly expired) token.
       // Try once more with a fresh token from storage.
       final freshToken = await _storage.read(key: 'auth_token');
@@ -176,22 +192,28 @@ class SocketService {
 
     // Message events
     _socket!.on('message:new', (data) {
-      if (kDebugMode) developer.log('New message received', name: 'SocketService');
+      if (kDebugMode)
+        developer.log('New message received', name: 'SocketService');
       try {
         final message = Message.fromJson(data as Map<String, dynamic>);
         _messageController.add(message);
       } catch (e) {
-        if (kDebugMode) developer.log('Error parsing message: $e', name: 'SocketService');
+        if (kDebugMode)
+          developer.log('Error parsing message: $e', name: 'SocketService');
       }
     });
 
     _socket!.on('message:edited', (data) {
       if (kDebugMode) developer.log('Message edited', name: 'SocketService');
       try {
-        final message = Message.fromJson(data as Map<String, dynamic>);
-        _messageEditedController.add(message);
+        // Server sends a partial payload: {messageId, newContent, editedAt}
+        _messageEditedController.add(Map<String, dynamic>.from(data as Map));
       } catch (e) {
-        if (kDebugMode) developer.log('Error parsing edited message: $e', name: 'SocketService');
+        if (kDebugMode)
+          developer.log(
+            'Error parsing edited message: $e',
+            name: 'SocketService',
+          );
       }
     });
 
@@ -201,7 +223,11 @@ class SocketService {
         final messageId = data['messageId'] as int? ?? data['id'] as int? ?? 0;
         _messageDeletedController.add(messageId);
       } catch (e) {
-        if (kDebugMode) developer.log('Error parsing deleted message: $e', name: 'SocketService');
+        if (kDebugMode)
+          developer.log(
+            'Error parsing deleted message: $e',
+            name: 'SocketService',
+          );
       }
     });
 
@@ -211,7 +237,11 @@ class SocketService {
         final user = TypingUser.fromJson(data as Map<String, dynamic>);
         _typingStartController.add(user);
       } catch (e) {
-        if (kDebugMode) developer.log('Error parsing typing start: $e', name: 'SocketService');
+        if (kDebugMode)
+          developer.log(
+            'Error parsing typing start: $e',
+            name: 'SocketService',
+          );
       }
     });
 
@@ -220,17 +250,23 @@ class SocketService {
         final user = TypingUser.fromJson(data as Map<String, dynamic>);
         _typingStopController.add(user);
       } catch (e) {
-        if (kDebugMode) developer.log('Error parsing typing stop: $e', name: 'SocketService');
+        if (kDebugMode)
+          developer.log('Error parsing typing stop: $e', name: 'SocketService');
       }
     });
 
     // Conversation events
     _socket!.on('conversation:updated', (data) {
-      if (kDebugMode) developer.log('Conversation updated', name: 'SocketService');
+      if (kDebugMode)
+        developer.log('Conversation updated', name: 'SocketService');
       try {
         _conversationUpdatedController.add(data as Map<String, dynamic>);
       } catch (e) {
-        if (kDebugMode) developer.log('Error parsing conversation update: $e', name: 'SocketService');
+        if (kDebugMode)
+          developer.log(
+            'Error parsing conversation update: $e',
+            name: 'SocketService',
+          );
       }
     });
 
@@ -265,7 +301,11 @@ class SocketService {
     String? attachmentUrl,
   }) {
     if (!_isConnected || _socket == null) {
-      if (kDebugMode) developer.log('Cannot send message: not connected', name: 'SocketService');
+      if (kDebugMode)
+        developer.log(
+          'Cannot send message: not connected',
+          name: 'SocketService',
+        );
       return;
     }
 
@@ -281,9 +321,7 @@ class SocketService {
   void markAsRead(int conversationId) {
     if (!_isConnected || _socket == null) return;
 
-    _socket!.emit('message:read', {
-      'conversationId': conversationId,
-    });
+    _socket!.emit('message:read', {'conversationId': conversationId});
   }
 
   /// Edit a message
@@ -296,16 +334,13 @@ class SocketService {
 
     _socket!.emit('message:edit', {
       'messageId': messageId,
-      'content': newContent,
+      'newContent': newContent,
       'conversationId': conversationId,
     });
   }
 
   /// Delete a message
-  void deleteMessage({
-    required int messageId,
-    required int conversationId,
-  }) {
+  void deleteMessage({required int messageId, required int conversationId}) {
     if (!_isConnected || _socket == null) return;
 
     _socket!.emit('message:delete', {
@@ -322,18 +357,14 @@ class SocketService {
   void startTyping(int conversationId) {
     if (!_isConnected || _socket == null) return;
 
-    _socket!.emit('typing:start', {
-      'conversationId': conversationId,
-    });
+    _socket!.emit('typing:start', {'conversationId': conversationId});
   }
 
   /// Stop typing indicator
   void stopTyping(int conversationId) {
     if (!_isConnected || _socket == null) return;
 
-    _socket!.emit('typing:stop', {
-      'conversationId': conversationId,
-    });
+    _socket!.emit('typing:stop', {'conversationId': conversationId});
   }
 
   // ==========================================
@@ -341,10 +372,7 @@ class SocketService {
   // ==========================================
 
   /// Create a new conversation
-  void createConversation({
-    required int participantId,
-    int? adId,
-  }) {
+  void createConversation({required int participantId, int? adId}) {
     if (!_isConnected || _socket == null) return;
 
     _socket!.emit('conversation:create', {
@@ -356,18 +384,18 @@ class SocketService {
   /// Join a specific conversation room (retries once after connection if not yet connected)
   void joinConversation(int conversationId) {
     if (_isConnected && _socket != null) {
-      _socket!.emit('room:join', {
-        'room': 'conversation:$conversationId',
-      });
+      _socket!.emit('room:join', {'room': 'conversation:$conversationId'});
     } else {
       // Socket not connected yet — join when connected
-      if (kDebugMode) developer.log('Socket not connected, will join conversation:$conversationId on connect', name: 'SocketService');
+      if (kDebugMode)
+        developer.log(
+          'Socket not connected, will join conversation:$conversationId on connect',
+          name: 'SocketService',
+        );
       late final StreamSubscription<bool> sub;
       sub = connectionStream.listen((connected) {
         if (connected && _socket != null) {
-          _socket!.emit('room:join', {
-            'room': 'conversation:$conversationId',
-          });
+          _socket!.emit('room:join', {'room': 'conversation:$conversationId'});
           sub.cancel();
         }
       });
@@ -378,9 +406,7 @@ class SocketService {
   void leaveConversation(int conversationId) {
     if (!_isConnected || _socket == null) return;
 
-    _socket!.emit('room:leave', {
-      'room': 'conversation:$conversationId',
-    });
+    _socket!.emit('room:leave', {'room': 'conversation:$conversationId'});
   }
 
   // ==========================================
@@ -407,7 +433,8 @@ class SocketService {
   /// Reconnect with a fresh token from secure storage.
   /// Call this after a token refresh to re-establish the socket with the new JWT.
   Future<bool> reconnectWithFreshToken() async {
-    if (kDebugMode) developer.log('Reconnecting with fresh token...', name: 'SocketService');
+    if (kDebugMode)
+      developer.log('Reconnecting with fresh token...', name: 'SocketService');
     disconnect();
     // Small delay to ensure token is written to storage
     await Future.delayed(const Duration(milliseconds: 200));

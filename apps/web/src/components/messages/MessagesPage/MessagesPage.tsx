@@ -26,6 +26,8 @@ export default function MessagesPage() {
     typingUsers,
     handleSelectConversation,
     handleSendMessage,
+    editMessage,
+    deleteMessage,
     clearSelectedConversation,
     clearError,
     startTyping,
@@ -79,6 +81,8 @@ export default function MessagesPage() {
             messages={conversationMessages}
             typingUsers={typingUsers}
             onSendMessage={handleSendMessage}
+            onEditMessage={editMessage}
+            onDeleteMessage={deleteMessage}
             onStartTyping={() => startTyping(selectedConversation.id)}
             onStopTyping={() => stopTyping(selectedConversation.id)}
             connected={connected}

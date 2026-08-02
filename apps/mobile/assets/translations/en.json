@@ -316,7 +316,14 @@
     "imageSizeError": "Image must be less than 5MB. Please upload a smaller file.",
     "failedToUpload": "Failed to upload image",
     "uploadError": "Upload error: {}",
-    "edited": "(edited)"
+    "edited": "(edited)",
+    "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "editMessage": "Edit",
+    "editingMessage": "Editing message",
+    "deleteMessage": "Delete",
+    "deleteConfirmTitle": "Delete message?",
+    "deleteConfirmBody": "This message will be deleted for everyone in this conversation."
   },
   "profile": {
     "title": "Profile",

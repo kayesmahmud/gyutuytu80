@@ -64,7 +64,7 @@ class ChatProvider extends ChangeNotifier {
   Future<void> _connectSocket() async {
     // Setup listeners first to capture any state changes
     _setupSocketListeners();
-    
+
     // Check current state
     _isConnected = _socketService.isConnected;
     notifyListeners();
@@ -97,9 +97,7 @@ class ChatProvider extends ChangeNotifier {
     );
 
     // New messages
-    _subscriptions.add(
-      _socketService.messageStream.listen(_handleNewMessage),
-    );
+    _subscriptions.add(_socketService.messageStream.listen(_handleNewMessage));
 
     // Edited messages
     _subscriptions.add(
@@ -121,7 +119,9 @@ class ChatProvider extends ChangeNotifier {
 
     // Conversation updates
     _subscriptions.add(
-      _socketService.conversationUpdatedStream.listen(_handleConversationUpdated),
+      _socketService.conversationUpdatedStream.listen(
+        _handleConversationUpdated,
+      ),
     );
 
     // Online status
@@ -190,17 +190,22 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _handleMessageEdited(Message message) {
-    final conversationId = message.conversationId;
-    if (conversationId == null) return;
+  void _handleMessageEdited(Map<String, dynamic> data) {
+    final messageId = data['messageId'] as int? ?? data['id'] as int? ?? 0;
+    final newContent =
+        data['newContent'] as String? ?? data['content'] as String?;
+    if (messageId == 0 || newContent == null) return;
 
-    final messages = _messagesByConversation[conversationId];
-    if (messages == null) return;
-
-    final index = messages.indexWhere((m) => m.id == message.id);
-    if (index >= 0) {
-      messages[index] = message;
-      notifyListeners();
+    for (final entry in _messagesByConversation.entries) {
+      final index = entry.value.indexWhere((m) => m.id == messageId);
+      if (index >= 0) {
+        entry.value[index] = entry.value[index].copyWith(
+          content: newContent,
+          isEdited: true,
+        );
+        notifyListeners();
+        break;
+      }
     }
   }
 
@@ -272,15 +277,24 @@ class ChatProvider extends ChangeNotifier {
 
   /// Load messages for a conversation (initial load)
   Future<void> loadMessages(int conversationId) async {
-    final response = await _messageClient.getMessages(conversationId, limit: _messagesPerPage);
+    final response = await _messageClient.getMessages(
+      conversationId,
+      limit: _messagesPerPage,
+    );
 
     if (response.success && response.data != null) {
       // Reverse: API returns [oldest→newest] but reverse ListView needs [newest→oldest]
-      _messagesByConversation[conversationId] = response.data!.reversed.toList();
-      _hasMoreMessages[conversationId] = response.data!.length >= _messagesPerPage;
+      _messagesByConversation[conversationId] = response.data!.reversed
+          .toList();
+      _hasMoreMessages[conversationId] =
+          response.data!.length >= _messagesPerPage;
       notifyListeners();
     } else {
-      if (kDebugMode) developer.log('Failed to load messages: ${response.error}', name: 'ChatProvider');
+      if (kDebugMode)
+        developer.log(
+          'Failed to load messages: ${response.error}',
+          name: 'ChatProvider',
+        );
     }
   }
 
@@ -295,12 +309,19 @@ class ChatProvider extends ChangeNotifier {
     final oldestMessage = messages.last;
     final before = oldestMessage.createdAt.toUtc().toIso8601String();
 
-    final response = await _messageClient.getMessages(conversationId, before: before, limit: _messagesPerPage);
+    final response = await _messageClient.getMessages(
+      conversationId,
+      before: before,
+      limit: _messagesPerPage,
+    );
 
     if (response.success && response.data != null) {
       // Reverse: older messages appended at end (higher index = top of reversed ListView)
-      _messagesByConversation[conversationId]!.addAll(response.data!.reversed.toList());
-      _hasMoreMessages[conversationId] = response.data!.length >= _messagesPerPage;
+      _messagesByConversation[conversationId]!.addAll(
+        response.data!.reversed.toList(),
+      );
+      _hasMoreMessages[conversationId] =
+          response.data!.length >= _messagesPerPage;
       notifyListeners();
     }
   }
@@ -333,7 +354,11 @@ class ChatProvider extends ChangeNotifier {
         isRead: false,
         createdAt: DateTime.now(),
         attachmentUrl: attachmentUrl,
-        sender: MessageSender(id: _currentUserId!, name: 'Me', avatar: ''), // Placeholder
+        sender: MessageSender(
+          id: _currentUserId!,
+          name: 'Me',
+          avatar: '',
+        ), // Placeholder
       );
 
       _messagesByConversation[conversationId] ??= [];
@@ -496,16 +521,12 @@ class ChatProvider extends ChangeNotifier {
   }
 
   /// Delete a message
-  void deleteMessage({
-    required int messageId,
-    required int conversationId,
-  }) {
+  void deleteMessage({required int messageId, required int conversationId}) {
     _socketService.deleteMessage(
       messageId: messageId,
       conversationId: conversationId,
     );
   }
-
 
   // ==========================================
   // LIFECYCLE

@@ -276,7 +276,14 @@
     "imageSizeError": "फोटो ५MB भन्दा सानो हुनुपर्छ। कृपया सानो फाइल अपलोड गर्नुहोस्।",
     "failedToUpload": "फोटो अपलोड गर्न असफल",
     "uploadError": "अपलोड त्रुटि: {}",
-    "edited": "(सम्पादित)"
+    "edited": "(सम्पादित)",
+    "copy": "कपी गर्नुहोस्",
+    "copied": "क्लिपबोर्डमा कपी भयो",
+    "editMessage": "सम्पादन गर्नुहोस्",
+    "editingMessage": "सन्देश सम्पादन गर्दै",
+    "deleteMessage": "मेट्नुहोस्",
+    "deleteConfirmTitle": "सन्देश मेट्ने हो?",
+    "deleteConfirmBody": "यो सन्देश यस कुराकानीका सबैका लागि मेटिनेछ।"
   },
   "profile": {
     "title": "प्रोफाइल",

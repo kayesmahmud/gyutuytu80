@@ -11,7 +11,10 @@ import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { TeamBadge } from './TeamBadge';
+import ReportUserModal from './ReportUserModal';
 import { checkProfanity } from '@/utils/profanityCheck';
+
+const LONG_PRESS_MS = 500;
 
 // Constants for image upload
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -52,6 +55,8 @@ interface ChatWindowProps {
   messages: any[];
   typingUsers: number[];
   onSendMessage: (content: string, type?: string, attachmentUrl?: string) => Promise<void>;
+  onEditMessage?: (messageId: number, newContent: string) => Promise<unknown>;
+  onDeleteMessage?: (messageId: number) => Promise<unknown>;
   onStartTyping: () => void;
   onStopTyping: () => void;
   connected: boolean;
@@ -65,6 +70,8 @@ export default function ChatWindow({
   messages,
   typingUsers,
   onSendMessage,
+  onEditMessage,
+  onDeleteMessage,
   onStartTyping,
   onStopTyping,
   connected,
@@ -82,10 +89,16 @@ export default function ChatWindow({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
   const [profanityWarning, setProfanityWarning] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [editingMessage, setEditingMessage] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -100,6 +113,77 @@ export default function ChatWindow({
       }
     };
   }, [imagePreview]);
+
+  // Close message menu on outside click or Escape
+  useEffect(() => {
+    if (openMenuId === null) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenMenuId(null);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [openMenuId]);
+
+  // Long-press support for touch devices
+  const startLongPress = (messageId: number) => {
+    longPressTimerRef.current = setTimeout(() => setOpenMenuId(messageId), LONG_PRESS_MS);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleCopyMessage = async (message: any) => {
+    setOpenMenuId(null);
+    try {
+      await navigator.clipboard.writeText(message.content || '');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy message:', error);
+    }
+  };
+
+  const startEditingMessage = (message: any) => {
+    setOpenMenuId(null);
+    setEditingMessage(message);
+    setInputValue(message.content || '');
+  };
+
+  const cancelEditing = () => {
+    setEditingMessage(null);
+    setInputValue('');
+  };
+
+  const handleDeleteMessage = async (message: any) => {
+    setOpenMenuId(null);
+    if (!onDeleteMessage) return;
+    if (!window.confirm('Delete this message? It will be removed for everyone.')) return;
+    try {
+      await onDeleteMessage(message.id);
+    } catch (error: any) {
+      setUploadError(error.message || 'Failed to delete message');
+    }
+  };
+
+  const handleReportMessage = () => {
+    setOpenMenuId(null);
+    setReportModalOpen(true);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
@@ -203,6 +287,25 @@ export default function ChatWindow({
 
     // Clear any previous warning
     setProfanityWarning(null);
+
+    // Editing an existing message: emit the edit instead of sending a new one
+    if (editingMessage && hasText) {
+      try {
+        setSending(true);
+        if (hasText !== editingMessage.content && onEditMessage) {
+          await onEditMessage(editingMessage.id, hasText);
+        }
+        setEditingMessage(null);
+        setInputValue('');
+        onStopTyping();
+      } catch (error: any) {
+        console.error('Failed to edit message:', error);
+        setUploadError(error.message || 'Failed to edit message');
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
 
     try {
       setSending(true);
@@ -345,6 +448,21 @@ export default function ChatWindow({
               const isOwnMessage = message.sender?.id === currentUserId;
               const showAvatar = !isOwnMessage && (index === 0 || messages[index - 1]?.sender?.id !== message.sender?.id);
               const imageUrl = message.attachmentUrl || message.attachment_url;
+              const isImage = isImageMessage(message);
+              const canShowActions = !message.isDeleted && !!message.id;
+
+              const menuButton = (
+                <button
+                  type="button"
+                  onClick={() => setOpenMenuId(openMenuId === message.id ? null : message.id)}
+                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition flex-shrink-0"
+                  aria-label="Message actions"
+                >
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
+                </button>
+              );
 
               return (
                 <div
@@ -374,7 +492,14 @@ export default function ChatWindow({
                       </span>
                     )}
 
-                    {/* Message content */}
+                    {/* Message content + actions */}
+                    <div
+                      className="relative group flex items-center gap-1"
+                      onTouchStart={canShowActions ? () => startLongPress(message.id) : undefined}
+                      onTouchEnd={cancelLongPress}
+                      onTouchMove={cancelLongPress}
+                    >
+                    {isOwnMessage && canShowActions && menuButton}
                     {message.isDeleted ? (
                       <div
                         className={`rounded-2xl px-4 py-2 shadow-sm ${
@@ -425,6 +550,55 @@ export default function ChatWindow({
                         )}
                       </div>
                     )}
+                    {!isOwnMessage && canShowActions && menuButton}
+
+                    {/* Actions dropdown */}
+                    {openMenuId === message.id && (
+                      <div
+                        ref={menuRef}
+                        className={`absolute top-full mt-1 z-20 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1 ${
+                          isOwnMessage ? 'right-0' : 'left-0'
+                        }`}
+                      >
+                        {!isImage && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(message)}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            Copy
+                          </button>
+                        )}
+                        {isOwnMessage && !isImage && (
+                          <button
+                            type="button"
+                            onClick={() => startEditingMessage(message)}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {isOwnMessage && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMessage(message)}
+                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        )}
+                        {!isOwnMessage && (
+                          <button
+                            type="button"
+                            onClick={handleReportMessage}
+                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            Report
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    </div>
 
                     {/* Timestamp */}
                     <p className={`text-xs mt-1 px-1 ${isOwnMessage ? 'text-gray-500' : 'text-gray-500'}`}>
@@ -516,6 +690,32 @@ export default function ChatWindow({
         </div>
       )}
 
+      {/* Copied feedback */}
+      {copied && (
+        <div className="bg-green-50 border-t border-green-200 px-4 py-2 text-sm text-green-700">
+          Copied to clipboard
+        </div>
+      )}
+
+      {/* Editing banner */}
+      {editingMessage && (
+        <div className="bg-blue-50 border-t border-blue-200 px-4 py-2 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-blue-700">Editing message</p>
+            <p className="text-xs text-gray-600 truncate">{editingMessage.content}</p>
+          </div>
+          <button
+            onClick={cancelEditing}
+            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            aria-label="Cancel editing"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Message Input */}
       <div className="border-t border-gray-200 bg-white p-3 md:p-4">
         <form onSubmit={handleSubmit} className="flex items-end space-x-2 md:space-x-3">
@@ -576,6 +776,17 @@ export default function ChatWindow({
           Images: JPEG, PNG, GIF, WebP (max 5MB)
         </p>
       </div>
+
+      {/* Report user modal */}
+      {otherParticipant && (
+        <ReportUserModal
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          reportedUserId={otherParticipant.id}
+          userName={otherParticipant.fullName || 'Unknown User'}
+          conversationId={conversation.id}
+        />
+      )}
     </div>
   );
 }

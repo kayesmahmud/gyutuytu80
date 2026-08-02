@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +29,7 @@ import '../../core/providers/chat_provider.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/utils/page_transitions.dart';
 import '../shop/shop_screen.dart';
+import 'widgets/message_actions_sheet.dart';
 import 'widgets/report_user_sheet.dart';
 
 /// Chat Screen - individual conversation view
@@ -72,6 +74,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Timer? _typingDebounce;
   File? _pendingImage;
   bool _isUploading = false;
+  Message? _editingMessage;
   int _initialMessageCount = 0;
   bool _initialLoadDone = false;
 
@@ -252,6 +255,20 @@ class _ChatScreenState extends State<ChatScreen> {
     final chatProvider = context.read<ChatProvider>();
     chatProvider.stopTyping(widget.conversationId);
 
+    // Editing an existing message: emit the edit instead of sending a new one.
+    final editing = _editingMessage;
+    if (editing != null) {
+      setState(() => _editingMessage = null);
+      if (text != editing.content) {
+        chatProvider.editMessage(
+          messageId: editing.id,
+          newContent: text,
+          conversationId: widget.conversationId,
+        );
+      }
+      return;
+    }
+
     final success = await chatProvider.sendMessage(
       conversationId: widget.conversationId,
       content: text,
@@ -412,6 +429,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(child: _buildMessageList(currentUserId)),
           _buildTypingIndicator(),
           if (_pendingImage != null) _buildImagePreview(),
+          if (_editingMessage != null) _buildEditingBanner(),
           _buildInputArea(),
         ],
       ),
@@ -447,6 +465,69 @@ class _ChatScreenState extends State<ChatScreen> {
       userName: widget.recipientName,
       conversationId: widget.conversationId,
     );
+  }
+
+  Future<void> _showMessageActions(Message message, bool isMe) async {
+    final action = await showMessageActionsSheet(
+      context,
+      message: message,
+      isMe: isMe,
+    );
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case MessageAction.copy:
+        await Clipboard.setData(ClipboardData(text: message.content));
+        if (mounted) _showSnack('messages.copied'.tr());
+        break;
+      case MessageAction.edit:
+        setState(() => _editingMessage = message);
+        _messageController.text = message.content;
+        _messageController.selection = TextSelection.collapsed(
+          offset: message.content.length,
+        );
+        _focusNode.requestFocus();
+        break;
+      case MessageAction.delete:
+        await _confirmDeleteMessage(message);
+        break;
+      case MessageAction.report:
+        await _handleReport();
+        break;
+    }
+  }
+
+  Future<void> _confirmDeleteMessage(Message message) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('messages.deleteConfirmTitle'.tr()),
+        content: Text('messages.deleteConfirmBody'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('common.cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFEF4444),
+            ),
+            child: Text('messages.deleteMessage'.tr()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    context.read<ChatProvider>().deleteMessage(
+      messageId: message.id,
+      conversationId: widget.conversationId,
+    );
+  }
+
+  void _cancelEditing() {
+    setState(() => _editingMessage = null);
+    _messageController.clear();
   }
 
   Future<void> _handleBlockToggle() async {
@@ -889,99 +970,103 @@ class _ChatScreenState extends State<ChatScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75,
-          ),
-          padding: isImage
-              ? const EdgeInsets.all(4)
-              : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: isMe ? const Color(0xFFDC143C) : Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(18),
-              topRight: const Radius.circular(18),
-              bottomLeft: Radius.circular(isMe ? 18 : 4),
-              bottomRight: Radius.circular(isMe ? 4 : 18),
+        child: GestureDetector(
+          onLongPress: () => _showMessageActions(message, isMe),
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+            padding: isImage
+                ? const EdgeInsets.all(4)
+                : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isMe ? const Color(0xFFDC143C) : Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(isMe ? 18 : 4),
+                bottomRight: Radius.circular(isMe ? 4 : 18),
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (isImage)
-                GestureDetector(
-                  onTap: () => _showFullImage(context, message.attachmentUrl!),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: AppCachedImage(
-                      imageUrl: _getFullImageUrl(message.attachmentUrl!),
-                      width: 220,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 440,
-                      placeholder: Container(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (isImage)
+                  GestureDetector(
+                    onTap: () =>
+                        _showFullImage(context, message.attachmentUrl!),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: AppCachedImage(
+                        imageUrl: _getFullImageUrl(message.attachmentUrl!),
                         width: 220,
-                        height: 160,
-                        color: Colors.grey[300],
-                      ),
-                      errorWidget: Container(
-                        width: 220,
-                        height: 160,
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          LucideIcons.imageOff,
-                          color: Colors.grey,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 440,
+                        placeholder: Container(
+                          width: 220,
+                          height: 160,
+                          color: Colors.grey[300],
+                        ),
+                        errorWidget: Container(
+                          width: 220,
+                          height: 160,
+                          color: Colors.grey[300],
+                          child: const Icon(
+                            LucideIcons.imageOff,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                )
-              else
-                _buildLinkifiedText(message.content, isMe),
-              const SizedBox(height: 4),
-              Padding(
-                padding: isImage
-                    ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
-                    : EdgeInsets.zero,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      formatNepalTime(
-                        message.createdAt,
-                        'h:mm a',
-                        context.locale.languageCode,
-                      ),
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: isMe
-                            ? Colors.white.withValues(alpha: 0.7)
-                            : Colors.grey[500],
-                      ),
-                    ),
-                    if (message.isEdited) ...[
-                      const SizedBox(width: 4),
+                  )
+                else
+                  _buildLinkifiedText(message.content, isMe),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: isImage
+                      ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                      : EdgeInsets.zero,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        'messages.edited'.tr(),
+                        formatNepalTime(
+                          message.createdAt,
+                          'h:mm a',
+                          context.locale.languageCode,
+                        ),
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: isMe
                               ? Colors.white.withValues(alpha: 0.7)
                               : Colors.grey[500],
-                          fontStyle: FontStyle.italic,
                         ),
                       ),
+                      if (message.isEdited) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          'messages.edited'.tr(),
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: isMe
+                                ? Colors.white.withValues(alpha: 0.7)
+                                : Colors.grey[500],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1084,6 +1169,50 @@ class _ChatScreenState extends State<ChatScreen> {
               onPressed: _sendImage,
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditingBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        border: Border(top: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Row(
+        children: [
+          const Icon(LucideIcons.pencil, size: 16, color: Color(0xFFDC143C)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'messages.editingMessage'.tr(),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFDC143C),
+                  ),
+                ),
+                Text(
+                  _editingMessage?.content ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.x, size: 18, color: Colors.grey),
+            onPressed: _cancelEditing,
+          ),
         ],
       ),
     );

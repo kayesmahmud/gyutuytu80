@@ -30,6 +30,8 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
     error: socketError,
     sendMessage: socketSendMessage,
     markAsRead: socketMarkAsRead,
+    editMessage,
+    deleteMessage,
     startTyping,
     stopTyping,
     socket,
@@ -170,6 +172,32 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
       socket.off('message:new', handleNewMessage);
     };
   }, [socket, connected, selectedConversation, currentUserId]);
+
+  // Socket.IO: Listen for message edits/deletes (server echoes to the whole room, incl. sender)
+  useEffect(() => {
+    if (!socket || !connected || !selectedConversation) return;
+
+    const handleMessageEdited = (data: { messageId: number; newContent: string; editedAt: string }) => {
+      setConversationMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === data.messageId ? { ...msg, content: data.newContent, isEdited: true } : msg
+        )
+      );
+    };
+
+    const handleMessageDeleted = (data: { messageId: number }) => {
+      setConversationMessages((prev) =>
+        prev.map((msg) => (msg.id === data.messageId ? { ...msg, isDeleted: true } : msg))
+      );
+    };
+
+    socket.on('message:edited', handleMessageEdited);
+    socket.on('message:deleted', handleMessageDeleted);
+    return () => {
+      socket.off('message:edited', handleMessageEdited);
+      socket.off('message:deleted', handleMessageDeleted);
+    };
+  }, [socket, connected, selectedConversation]);
 
   // Socket.IO: Listen for typing indicators (direct socket.on — same proven pattern as message:new)
   useEffect(() => {
@@ -341,6 +369,8 @@ export function useMessagesPageState({ token, currentUserId }: UseMessagesPageSt
     // Handlers
     handleSelectConversation,
     handleSendMessage,
+    editMessage,
+    deleteMessage,
     clearSelectedConversation,
     clearError,
     startTyping,
