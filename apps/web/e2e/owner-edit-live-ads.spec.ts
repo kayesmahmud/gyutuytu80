@@ -19,7 +19,15 @@ const BIZ = { phone: '9800000002', adSlug: 'e2e-live-ad-biz', adTitle: 'E2E Live
 
 const TITLE_INPUT = 'input[placeholder="e.g., iPhone 15 Pro Max 256GB"]';
 
+// These tests share the seeded ads (the visitor test reads the ad the normal
+// test edits), so they must not run concurrently despite fullyParallel.
+test.describe.configure({ mode: 'default' });
+
 test.describe('Owner editing of live ads', () => {
+  // Every test here depends on ads seeded by seed-owner-edit-tests.ts; the CI
+  // E2E job runs the web server without a database, so none of them can pass.
+  test.skip(!!process.env.CI, 'Requires seeded database; CI E2E environment has none');
+
   test('visitor sees no Edit button on a live ad', async ({ page }) => {
     await page.goto(`/en/ad/${NORMAL.adSlug}`);
     await page.waitForLoadState('networkidle');
