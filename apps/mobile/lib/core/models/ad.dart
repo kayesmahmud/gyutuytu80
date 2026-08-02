@@ -93,9 +93,12 @@ class Ad {
         title: json['title'] as String? ?? '',
         description: json['description'] as String? ?? '',
         price: _parseDouble(json['price']),
-        categoryId: json['categoryId'] as int? ?? json['category_id'] as int? ?? 0,
-        subcategoryId: json['subcategoryId'] as int? ?? json['subcategory_id'] as int?,
-        locationId: json['locationId'] as int? ?? json['location_id'] as int? ?? 0,
+        categoryId:
+            json['categoryId'] as int? ?? json['category_id'] as int? ?? 0,
+        subcategoryId:
+            json['subcategoryId'] as int? ?? json['subcategory_id'] as int?,
+        locationId:
+            json['locationId'] as int? ?? json['location_id'] as int? ?? 0,
         areaId: json['areaId'] as int? ?? json['area_id'] as int?,
         slug: json['slug'] as String? ?? '',
         status: _parseAdStatus(json['status']),
@@ -103,27 +106,53 @@ class Ad {
         thumbnail: json['thumbnail'] as String?,
         latitude: _parseDoubleNullable(json['latitude']),
         longitude: _parseDoubleNullable(json['longitude']),
-        googleMapsLink: json['googleMapsLink'] as String? ?? json['google_maps_link'] as String?,
+        googleMapsLink:
+            json['googleMapsLink'] as String? ??
+            json['google_maps_link'] as String?,
         viewCount: json['viewCount'] as int? ?? json['view_count'] as int? ?? 0,
-        isNegotiable: json['isNegotiable'] as bool? ?? json['is_negotiable'] as bool? ?? false,
+        isNegotiable:
+            json['isNegotiable'] as bool? ??
+            json['is_negotiable'] as bool? ??
+            false,
         createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
         updatedAt: _parseDateTime(json['updatedAt'] ?? json['updated_at']),
-        reviewedAt: _parseDateTimeNullable(json['reviewedAt'] ?? json['reviewed_at']),
-        isFeatured: json['isFeatured'] as bool? ?? json['is_featured'] as bool? ?? false,
-        isUrgent: json['isUrgent'] as bool? ?? json['is_urgent'] as bool? ?? false,
-        isSticky: json['isSticky'] as bool? ?? json['is_sticky'] as bool? ?? false,
-        featuredUntil: _parseDateTimeNullable(json['featuredUntil'] ?? json['featured_until']),
-        urgentUntil: _parseDateTimeNullable(json['urgentUntil'] ?? json['urgent_until']),
-        stickyUntil: _parseDateTimeNullable(json['stickyUntil'] ?? json['sticky_until']),
-        attributes: json['attributes'] as Map<String, dynamic>? ?? json['custom_fields'] as Map<String, dynamic>?,
+        reviewedAt: _parseDateTimeNullable(
+          json['reviewedAt'] ?? json['reviewed_at'],
+        ),
+        isFeatured:
+            json['isFeatured'] as bool? ??
+            json['is_featured'] as bool? ??
+            false,
+        isUrgent:
+            json['isUrgent'] as bool? ?? json['is_urgent'] as bool? ?? false,
+        isSticky:
+            json['isSticky'] as bool? ?? json['is_sticky'] as bool? ?? false,
+        featuredUntil: _parseDateTimeNullable(
+          json['featuredUntil'] ?? json['featured_until'],
+        ),
+        urgentUntil: _parseDateTimeNullable(
+          json['urgentUntil'] ?? json['urgent_until'],
+        ),
+        stickyUntil: _parseDateTimeNullable(
+          json['stickyUntil'] ?? json['sticky_until'],
+        ),
+        attributes:
+            json['attributes'] as Map<String, dynamic>? ??
+            json['custom_fields'] as Map<String, dynamic>?,
         condition: json['condition'] as String?,
-        favoritesCount: json['favoritesCount'] as int? ?? json['favorites_count'] as int? ?? 0,
-        locationType: json['locationType'] as String? ?? json['location_type'] as String?,
+        favoritesCount:
+            json['favoritesCount'] as int? ??
+            json['favorites_count'] as int? ??
+            0,
+        locationType:
+            json['locationType'] as String? ?? json['location_type'] as String?,
       );
     } catch (e, stack) {
-      if (kDebugMode) developer.log('Error parsing Ad.fromJson: $e', name: 'Ad');
-      if (kDebugMode) developer.log('JSON: $json', name: 'Ad');
-      if (kDebugMode) developer.log('$stack', name: 'Ad');
+      if (kDebugMode) {
+        developer.log('Error parsing Ad.fromJson: $e', name: 'Ad');
+        developer.log('JSON: $json', name: 'Ad');
+        developer.log('$stack', name: 'Ad');
+      }
       rethrow;
     }
   }
@@ -242,6 +271,32 @@ class Ad {
 }
 
 /// Ad with additional details (seller info, category/location names)
+/// One level of an ad's location chain (leaf → root: Area, District, Province).
+class AdLocationLevel {
+  final int id;
+  final String name;
+  final String? nameNe;
+  final String? type;
+
+  const AdLocationLevel({
+    required this.id,
+    required this.name,
+    this.nameNe,
+    this.type,
+  });
+
+  factory AdLocationLevel.fromJson(Map<String, dynamic> json) =>
+      AdLocationLevel(
+        id: json['id'] as int,
+        name: json['name'] as String? ?? '',
+        nameNe: json['name_ne'] as String?,
+        type: json['type'] as String?,
+      );
+
+  String localizedName(String locale) =>
+      locale == 'ne' && nameNe != null && nameNe!.isNotEmpty ? nameNe! : name;
+}
+
 class AdWithDetails extends Ad {
   final String userName;
   final String? userAvatar;
@@ -255,6 +310,7 @@ class AdWithDetails extends Ad {
   final String? locationNameNe;
   final String? areaName;
   final String? areaNameNe;
+  final List<AdLocationLevel> locationLevels;
 
   // Additional seller info
   final String? accountType;
@@ -305,6 +361,7 @@ class AdWithDetails extends Ad {
     this.locationNameNe,
     this.areaName,
     this.areaNameNe,
+    this.locationLevels = const [],
     this.accountType,
     this.businessVerificationStatus,
     this.individualVerified,
@@ -344,21 +401,53 @@ class AdWithDetails extends Ad {
       condition: ad.condition,
       favoritesCount: ad.favoritesCount,
       locationType: ad.locationType,
-      userName: json['userName'] as String? ?? json['user_name'] as String? ?? json['sellerName'] as String? ?? 'Unknown',
-      userAvatar: json['userAvatar'] as String? ?? json['user_avatar'] as String?,
+      userName:
+          json['userName'] as String? ??
+          json['user_name'] as String? ??
+          json['sellerName'] as String? ??
+          'Unknown',
+      userAvatar:
+          json['userAvatar'] as String? ?? json['user_avatar'] as String?,
       userPhone: json['userPhone'] as String? ?? json['user_phone'] as String?,
-      userVerified: json['userVerified'] as bool? ?? json['user_verified'] as bool? ?? false,
-      categoryName: json['categoryName'] as String? ?? json['category_name'] as String? ?? '',
-      categoryNameNe: json['categoryNameNe'] as String? ?? json['category_name_ne'] as String?,
-      subcategoryName: json['subcategoryName'] as String? ?? json['subcategory_name'] as String?,
-      subcategoryNameNe: json['subcategoryNameNe'] as String? ?? json['subcategory_name_ne'] as String?,
-      locationName: json['locationName'] as String? ?? json['location_name'] as String? ?? '',
-      locationNameNe: json['locationNameNe'] as String? ?? json['location_name_ne'] as String?,
+      userVerified:
+          json['userVerified'] as bool? ??
+          json['user_verified'] as bool? ??
+          false,
+      categoryName:
+          json['categoryName'] as String? ??
+          json['category_name'] as String? ??
+          '',
+      categoryNameNe:
+          json['categoryNameNe'] as String? ??
+          json['category_name_ne'] as String?,
+      subcategoryName:
+          json['subcategoryName'] as String? ??
+          json['subcategory_name'] as String?,
+      subcategoryNameNe:
+          json['subcategoryNameNe'] as String? ??
+          json['subcategory_name_ne'] as String?,
+      locationName:
+          json['locationName'] as String? ??
+          json['location_name'] as String? ??
+          '',
+      locationLevels: (json['locationLevels'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(AdLocationLevel.fromJson)
+          .toList(),
+      locationNameNe:
+          json['locationNameNe'] as String? ??
+          json['location_name_ne'] as String?,
       areaName: json['areaName'] as String? ?? json['area_name'] as String?,
-      areaNameNe: json['areaNameNe'] as String? ?? json['area_name_ne'] as String?,
-      accountType: json['accountType'] as String? ?? json['account_type'] as String?,
-      businessVerificationStatus: json['businessVerificationStatus'] as String? ?? json['business_verification_status'] as String?,
-      individualVerified: json['individualVerified'] as bool? ?? json['individual_verified'] as bool?,
+      areaNameNe:
+          json['areaNameNe'] as String? ?? json['area_name_ne'] as String?,
+      accountType:
+          json['accountType'] as String? ?? json['account_type'] as String?,
+      businessVerificationStatus:
+          json['businessVerificationStatus'] as String? ??
+          json['business_verification_status'] as String?,
+      individualVerified:
+          json['individualVerified'] as bool? ??
+          json['individual_verified'] as bool?,
       shopSlug: json['shopSlug'] as String? ?? json['shop_slug'] as String?,
     );
   }
@@ -392,19 +481,29 @@ class AdWithDetails extends Ad {
 
   /// Get localized category name based on locale
   String localizedCategoryName(String locale) =>
-      locale == 'ne' && categoryNameNe != null && categoryNameNe!.isNotEmpty ? categoryNameNe! : categoryName;
+      locale == 'ne' && categoryNameNe != null && categoryNameNe!.isNotEmpty
+      ? categoryNameNe!
+      : categoryName;
 
   /// Get localized location name based on locale
   String localizedLocationName(String locale) =>
-      locale == 'ne' && locationNameNe != null && locationNameNe!.isNotEmpty ? locationNameNe! : locationName;
+      locale == 'ne' && locationNameNe != null && locationNameNe!.isNotEmpty
+      ? locationNameNe!
+      : locationName;
 
   /// Get localized subcategory name based on locale
   String? localizedSubcategoryName(String locale) =>
-      locale == 'ne' && subcategoryNameNe != null && subcategoryNameNe!.isNotEmpty ? subcategoryNameNe : subcategoryName;
+      locale == 'ne' &&
+          subcategoryNameNe != null &&
+          subcategoryNameNe!.isNotEmpty
+      ? subcategoryNameNe
+      : subcategoryName;
 
   /// Get localized area name based on locale
   String? localizedAreaName(String locale) =>
-      locale == 'ne' && areaNameNe != null && areaNameNe!.isNotEmpty ? areaNameNe : areaName;
+      locale == 'ne' && areaNameNe != null && areaNameNe!.isNotEmpty
+      ? areaNameNe
+      : areaName;
 }
 
 // Helper functions

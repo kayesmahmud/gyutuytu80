@@ -1,5 +1,7 @@
 export interface AdBadgesProps {
   lastEditedAt?: Date | string | null;
+  /** Category → subcategory links, parent first (each goes to that category's listing). */
+  categoryLinks?: Array<{ name: string; href: string }>;
   condition: string | null;
   isNegotiable: boolean;
   fullCategory: string;
@@ -18,6 +20,8 @@ export interface SpecificationsSectionProps {
 
 export interface LocationSectionProps {
   fullLocation: string;
+  /** Location chain links, leaf → root (each goes to that location's listing). */
+  locationLinks?: Array<{ name: string; href: string }>;
   locationType: string | null;
 }
 

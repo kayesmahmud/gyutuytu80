@@ -21,6 +21,8 @@ class MainNavScreen extends StatefulWidget {
   final int? initialCategoryId;
   final String? initialCategoryName;
   final int? initialSubcategoryId;
+  final int? initialLocationId;
+  final String? initialLocationName;
 
   const MainNavScreen({
     super.key,
@@ -28,6 +30,8 @@ class MainNavScreen extends StatefulWidget {
     this.initialCategoryId,
     this.initialCategoryName,
     this.initialSubcategoryId,
+    this.initialLocationId,
+    this.initialLocationName,
   });
 
   @override
@@ -87,6 +91,15 @@ class _MainNavScreenState extends State<MainNavScreen> {
           widget.initialCategoryId!,
           widget.initialCategoryName!,
           subcategoryId: widget.initialSubcategoryId,
+        );
+      }
+
+      // Apply initial location filter if provided
+      if (widget.initialLocationId != null &&
+          widget.initialLocationName != null) {
+        _handleLocationTap(
+          widget.initialLocationId!,
+          widget.initialLocationName!,
         );
       }
     });
@@ -177,6 +190,13 @@ class _MainNavScreenState extends State<MainNavScreen> {
     });
   }
 
+  void _handleLocationTap(int locationId, String locationName) {
+    _selectTab(1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchKey.currentState?.filterByLocation(locationId, locationName);
+    });
+  }
+
   // Convert nav index to screen index (nav 2 is FAB spacer, skip it)
   int _navToScreen(int navIndex) => navIndex > 2 ? navIndex - 1 : navIndex;
   // Convert screen index to nav index
@@ -239,12 +259,15 @@ class _MainNavScreenState extends State<MainNavScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
+      // NOTE: deliberately NOT named `context` — shadowing the State's context
+      // here made the login onSuccess callback capture the (disposed) sheet's
+      // context and crash Navigator with a null-check after every login.
+      builder: (sheetContext) => Padding(
         padding: EdgeInsets.fromLTRB(
           24,
           24,
           24,
-          24 + MediaQuery.of(context).viewPadding.bottom,
+          24 + MediaQuery.of(sheetContext).viewPadding.bottom,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -289,13 +312,16 @@ class _MainNavScreenState extends State<MainNavScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Close bottom sheet
+                  Navigator.pop(sheetContext); // Close bottom sheet
+                  // Use the State's stable context (not the sheet's) for the
+                  // pushes — the sheet is disposed the moment it closes.
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => SignInScreen(
                         onSuccess: () {
                           // After successful login, navigate to post ad
+                          if (!mounted) return;
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
@@ -326,7 +352,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(sheetContext),
               child: Text(
                 'auth.maybeLater'.tr(),
                 style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),

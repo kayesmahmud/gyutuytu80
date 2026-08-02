@@ -79,7 +79,11 @@ class FloatingContactBar extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SignInScreen(onSuccess: () => Navigator.pop(context)),
+          builder: (_) => SignInScreen(
+            onSuccess: () {
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
         ),
       );
       return;

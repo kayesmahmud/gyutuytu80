@@ -1,8 +1,10 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { AdBadgesProps } from './types';
 
 export async function AdBadges({
   lastEditedAt,
+  categoryLinks,
   condition,
   isNegotiable,
   fullCategory,
@@ -49,10 +51,26 @@ export async function AdBadges({
         </span>
       )}
 
-      {fullCategory && (
+      {categoryLinks && categoryLinks.length > 0 ? (
         <span className="bg-green-50 text-green-800 px-3 py-1 rounded text-sm">
-          {fullCategory}
+          {categoryLinks.map((link, i) => (
+            <span key={link.href}>
+              {i > 0 && ' > '}
+              <Link
+                href={link.href}
+                className="hover:underline hover:text-green-900 font-medium"
+              >
+                {link.name}
+              </Link>
+            </span>
+          ))}
         </span>
+      ) : (
+        fullCategory && (
+          <span className="bg-green-50 text-green-800 px-3 py-1 rounded text-sm">
+            {fullCategory}
+          </span>
+        )
       )}
 
       {isFeatured && featuredUntil && new Date(featuredUntil) > new Date() && (

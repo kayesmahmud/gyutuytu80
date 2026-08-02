@@ -115,24 +115,28 @@ const getAdBySlug = cache(async (slug: string) => {
           id: true,
           name: true,
           name_ne: true,
+          slug: true,
           type: true,
           locations: {
             select: {
               id: true,
               name: true,
               name_ne: true,
+              slug: true,
               type: true,
               locations: {
                 select: {
                   id: true,
                   name: true,
                   name_ne: true,
+                  slug: true,
                   type: true,
                   locations: {
                     select: {
                       id: true,
                       name: true,
                       name_ne: true,
+                      slug: true,
                       type: true,
                     },
                   },
@@ -299,6 +303,36 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
 
   const fullLocation = buildFullLocation(ad.locations, lang);
   const fullCategory = buildFullCategory(ad.categories, lang);
+
+  // Clickable category > subcategory links (each goes to that category's listing)
+  const locName = (item: { name: string; name_ne?: string | null } | null | undefined) =>
+    lang === 'ne' && item?.name_ne ? item.name_ne : item?.name;
+  const categoryLinks: Array<{ name: string; href: string }> = [];
+  if (ad.categories?.categories?.slug) {
+    categoryLinks.push({
+      name: locName(ad.categories.categories) || '',
+      href: `/${lang}/ads/${ad.categories.categories.slug}`,
+    });
+  }
+  if (ad.categories?.slug) {
+    categoryLinks.push({
+      name: locName(ad.categories) || '',
+      href: `/${lang}/ads/${ad.categories.slug}`,
+    });
+  }
+
+  // Clickable location chain, leaf → root (each level goes to its own listing)
+  const locationLinks: Array<{ name: string; href: string }> = [];
+  let locationNode: any = ad.locations;
+  while (locationNode) {
+    if (locationNode.slug) {
+      locationLinks.push({
+        name: locName(locationNode) || '',
+        href: `/${lang}/ads/${locationNode.slug}`,
+      });
+    }
+    locationNode = locationNode.locations;
+  }
   const images = ad.ad_images.map((img: any) =>
     getImageUrl(img.file_path, 'ads') || ''
   );
@@ -409,6 +443,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                 }
                 condition={ad.condition}
                 isNegotiable={customFields?.isNegotiable || false}
+                categoryLinks={categoryLinks}
                 fullCategory={fullCategory}
                 isFeatured={ad.is_featured ?? false}
                 featuredUntil={ad.featured_until}
@@ -424,7 +459,11 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
               </div>
 
               <SpecificationsSection customFields={customFields} lang={lang} />
-              <LocationSection fullLocation={fullLocation} locationType={ad.locations?.type || null} />
+              <LocationSection
+                fullLocation={fullLocation}
+                locationLinks={locationLinks}
+                locationType={ad.locations?.type || null}
+              />
             </div>
 
             {/* Seller Card + Promote - Mobile only, shown after ad details */}

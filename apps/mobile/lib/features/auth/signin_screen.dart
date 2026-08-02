@@ -229,8 +229,25 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (!mounted) return;
-    if (widget.onSuccess != null) {
-      widget.onSuccess!();
+    final onSuccess = widget.onSuccess;
+    if (onSuccess != null) {
+      // Safety net: login has ALREADY succeeded at this point. Callers pass
+      // navigation callbacks that can capture dead contexts (closed bottom
+      // sheets etc.) and crash with "Null check operator used on a null
+      // value" — the user then sees an error for a login that worked. If the
+      // callback blows up, log it and fall back to the home screen instead.
+      try {
+        onSuccess();
+      } catch (e, stack) {
+        debugPrint('Post-login onSuccess callback failed: $e\n$stack');
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const MainNavScreen()),
+            (route) => false,
+          );
+        }
+      }
     } else {
       Navigator.pushAndRemoveUntil(
         context,
@@ -402,7 +419,10 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      // Surface the real failure in logs — a swallowed stack made this class
+      // of "Null check operator" login error undiagnosable for months.
+      debugPrint('Phone login failed: $e\n$stack');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

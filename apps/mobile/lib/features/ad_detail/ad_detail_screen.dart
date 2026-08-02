@@ -18,6 +18,7 @@ import 'package:mobile/core/api/favorites_client.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/features/shop/shop_screen.dart';
+import 'package:mobile/features/main_nav/main_nav_screen.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
 import 'package:mobile/features/ad_detail/widgets/ad_image_gallery.dart';
 import 'package:mobile/features/ad_detail/widgets/ad_specifications.dart';
@@ -184,7 +185,11 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SignInScreen(onSuccess: () => Navigator.pop(context)),
+          builder: (_) => SignInScreen(
+            onSuccess: () {
+              if (mounted) Navigator.pop(context);
+            },
+          ),
         ),
       );
       return;
@@ -409,6 +414,37 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
   }
 
   /// Owner-only: confirm (with warning for live ads) then open the edit form.
+  /// Open the search tab filtered to one level of this ad's location chain
+  /// (province/district/area) — all ads there, no category filter.
+  void _browseLocation(AdLocationLevel level) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MainNavScreen(
+          initialLocationId: level.id,
+          initialLocationName: level.localizedName(context.locale.languageCode),
+        ),
+      ),
+    );
+  }
+
+  /// Open the search tab filtered to this ad's category (or subcategory),
+  /// same destination as tapping a category icon on the home screen.
+  void _browseCategory(AdWithDetails ad, {bool subcategory = false}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MainNavScreen(
+          initialCategoryId: ad.categoryId,
+          initialCategoryName: ad.localizedCategoryName(
+            context.locale.languageCode,
+          ),
+          initialSubcategoryId: subcategory ? ad.subcategoryId : null,
+        ),
+      ),
+    );
+  }
+
   Future<void> _editAd(AdWithDetails ad) async {
     final proceed = await confirmAdEdit(context, adClient: _adClient, ad: ad);
     if (!proceed) return;
@@ -449,23 +485,7 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                   padding: EdgeInsets.zero,
                 ),
               ),
-              actions: [
-                // Owner-only edit shortcut
-                if (context.read<AuthProvider>().userId != null &&
-                    context.read<AuthProvider>().userId == ad.userId)
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(LucideIcons.edit, color: Colors.black87),
-                      onPressed: () => _editAd(ad),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-              ],
+              actions: const [],
               flexibleSpace: FlexibleSpaceBar(
                 background: AdImageGallery(
                   ad: ad,
@@ -512,14 +532,50 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // 3. PRICE
-                        Text(
-                          _formatPrice(ad.price),
-                          style: GoogleFonts.inter(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF10B981),
-                          ),
+                        // 3. PRICE + owner-only edit shortcut (far right)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _formatPrice(ad.price),
+                                style: GoogleFonts.inter(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF10B981),
+                                ),
+                              ),
+                            ),
+                            if (context.read<AuthProvider>().userId != null &&
+                                context.read<AuthProvider>().userId ==
+                                    ad.userId)
+                              OutlinedButton.icon(
+                                onPressed: () => _editAd(ad),
+                                icon: const Icon(LucideIcons.edit, size: 16),
+                                label: Text(
+                                  context.locale.languageCode == 'ne'
+                                      ? 'सम्पादन'
+                                      : 'Edit',
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF4338CA),
+                                  backgroundColor: const Color(0xFFEEF2FF),
+                                  side: const BorderSide(
+                                    color: Color(0xFFC7D2FE),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  textStyle: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 12),
 
@@ -585,24 +641,56 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                         ),
                         if (ad.categoryName.isNotEmpty) ...[
                           const SizedBox(height: 8),
-                          GestureDetector(
-                            onTap: () {
-                              // Navigate categories
-                            },
-                            child: Text(
-                              ad.localizedSubcategoryName(
-                                        context.locale.languageCode,
-                                      ) !=
-                                      null
-                                  ? '${ad.localizedCategoryName(context.locale.languageCode)} > ${ad.localizedSubcategoryName(context.locale.languageCode)}'
-                                  : ad.localizedCategoryName(
-                                      context.locale.languageCode,
-                                    ),
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: const Color(0xFF10B981),
+                          // Tappable breadcrumb: category → all ads in it,
+                          // subcategory → all ads in the subcategory.
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () => _browseCategory(ad),
+                                child: Text(
+                                  ad.localizedCategoryName(
+                                    context.locale.languageCode,
+                                  ),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF10B981),
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: const Color(0xFF10B981),
+                                  ),
+                                ),
                               ),
-                            ),
+                              if (ad.localizedSubcategoryName(
+                                    context.locale.languageCode,
+                                  ) !=
+                                  null) ...[
+                                Text(
+                                  ' > ',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFF10B981),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () =>
+                                      _browseCategory(ad, subcategory: true),
+                                  child: Text(
+                                    ad.localizedSubcategoryName(
+                                          context.locale.languageCode,
+                                        ) ??
+                                        '',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF10B981),
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: const Color(0xFF10B981),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ],
@@ -675,16 +763,65 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      ad.localizedLocationName(
-                                        context.locale.languageCode,
+                                    // Tappable per level: area/district/province
+                                    // each opens its own ads listing.
+                                    if (ad.locationLevels.isNotEmpty)
+                                      Wrap(
+                                        children: [
+                                          for (
+                                            var i = 0;
+                                            i < ad.locationLevels.length;
+                                            i++
+                                          ) ...[
+                                            if (i > 0)
+                                              Text(
+                                                ', ',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 14,
+                                                  color: const Color(
+                                                    0xFF374151,
+                                                  ),
+                                                ),
+                                              ),
+                                            GestureDetector(
+                                              onTap: () => _browseLocation(
+                                                ad.locationLevels[i],
+                                              ),
+                                              child: Text(
+                                                ad.locationLevels[i]
+                                                    .localizedName(
+                                                      context
+                                                          .locale
+                                                          .languageCode,
+                                                    ),
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 14,
+                                                  color: const Color(
+                                                    0xFF374151,
+                                                  ),
+                                                  fontWeight: FontWeight.w500,
+                                                  decoration:
+                                                      TextDecoration.underline,
+                                                  decorationColor: const Color(
+                                                    0xFF9CA3AF,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      )
+                                    else
+                                      Text(
+                                        ad.localizedLocationName(
+                                          context.locale.languageCode,
+                                        ),
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          color: const Color(0xFF374151),
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        color: const Color(0xFF374151),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
                                     if (ad.locationType != null &&
                                         ad.locationType!.isNotEmpty)
                                       Padding(
@@ -823,8 +960,11 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        SignInScreen(onSuccess: () => Navigator.pop(context)),
+                    builder: (_) => SignInScreen(
+                      onSuccess: () {
+                        if (mounted) Navigator.pop(context);
+                      },
+                    ),
                   ),
                 );
                 return;

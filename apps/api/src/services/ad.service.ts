@@ -144,7 +144,8 @@ export async function transformAdForDetail(ad: any) {
   const catNameNe = ad.categories?.categories?.name_ne ?? ad.categories?.name_ne;
   const subName = ad.categories?.categories ? ad.categories.name : undefined;
   const subNameNe = ad.categories?.categories ? ad.categories.name_ne : undefined;
-  const locName = await getLocationHierarchy(ad.location_id);
+  const locationLevels = await getLocationLevels(ad.location_id);
+  const locName = locationLevels.map((l) => l.name).join(', ');
 
   // Get favorites count and location type
   const favoritesCount = await prisma.user_favorites.count({ where: { ad_id: ad.id } });
@@ -184,6 +185,12 @@ export async function transformAdForDetail(ad: any) {
     categoryNameNe: catNameNe,
     subcategoryName: subName,
     subcategoryNameNe: subNameNe,
+    // Parent/leaf ids so clients can link to category listings.
+    // DB category_id stores the LEAF; here categoryId = parent, subcategoryId = leaf.
+    categoryId: ad.categories?.categories?.id ?? ad.categories?.id ?? ad.category_id,
+    subcategoryId: ad.categories?.categories ? ad.categories.id : null,
+    // Location chain leaf → root so clients can browse ads per province/district/area
+    locationLevels,
     locationName: locName,
     publishedAt: ad.reviewed_at || ad.created_at,
     reviewedAt: ad.reviewed_at,
@@ -208,6 +215,53 @@ export async function transformAdForDetail(ad: any) {
     locationType: locationRecord?.type || null,
     location_type: locationRecord?.type || null,
   };
+}
+
+/** Location chain leaf → root (Area, District, Province) with ids so clients can link each level. */
+export async function getLocationLevels(locationId?: number): Promise<Array<{
+  id: number;
+  name: string;
+  name_ne: string | null;
+  type: string | null;
+  slug: string | null;
+}>> {
+  if (!locationId) return [];
+
+  try {
+    const location = await prisma.locations.findUnique({
+      where: { id: locationId },
+      include: {
+        locations: {
+          include: {
+            locations: {
+              include: {
+                locations: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!location) return [];
+
+    const levels = [];
+    let current: any = location;
+    while (current) {
+      levels.push({
+        id: current.id,
+        name: current.name,
+        name_ne: current.name_ne ?? null,
+        type: current.type ?? null,
+        slug: current.slug ?? null,
+      });
+      current = current.locations;
+    }
+    return levels;
+  } catch (error) {
+    console.error('Error fetching location levels:', error);
+    return [];
+  }
 }
 
 export async function getLocationHierarchy(locationId?: number): Promise<string> {

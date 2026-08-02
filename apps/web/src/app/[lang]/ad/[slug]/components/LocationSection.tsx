@@ -1,8 +1,9 @@
+import Link from 'next/link';
 import { MapPin } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import type { LocationSectionProps } from './types';
 
-export async function LocationSection({ fullLocation, locationType }: LocationSectionProps) {
+export async function LocationSection({ fullLocation, locationLinks, locationType }: LocationSectionProps) {
   const t = await getTranslations('ads');
 
   if (!fullLocation) {
@@ -38,7 +39,16 @@ export async function LocationSection({ fullLocation, locationType }: LocationSe
             fontWeight: '600',
             color: '#1f2937'
           }}>
-            {fullLocation}
+            {locationLinks && locationLinks.length > 0
+              ? locationLinks.map((link, i) => (
+                  <span key={link.href}>
+                    {i > 0 && ', '}
+                    <Link href={link.href} className="hover:underline hover:text-red-600">
+                      {link.name}
+                    </Link>
+                  </span>
+                ))
+              : fullLocation}
           </div>
           {locationType && (
             <div style={{

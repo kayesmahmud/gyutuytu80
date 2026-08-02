@@ -232,6 +232,15 @@ class SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  /// Called from ad detail location taps: all ads in a province/district/area
+  /// (backend includes every child location automatically).
+  void filterByLocation(int locationId, String locationName) {
+    _searchController.clear();
+    _applyFilters(
+      SearchFilters(locationId: locationId, locationName: locationName),
+    );
+  }
+
   void _applyFilters(SearchFilters newFilters) {
     setState(() {
       _filters = newFilters;
@@ -355,7 +364,8 @@ class SearchScreenState extends State<SearchScreen> {
                         _buildFilterChip(
                           context,
                           _filters.condition != null
-                              ? (_filters.condition?.toLowerCase() == 'brand new'
+                              ? (_filters.condition?.toLowerCase() ==
+                                        'brand new'
                                     ? (context.locale.languageCode == 'ne'
                                           ? 'नयाँ'
                                           : 'Brand New')
