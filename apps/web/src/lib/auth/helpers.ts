@@ -145,6 +145,10 @@ export async function generateBackendToken(user: {
   }
   const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
+  // Staff sessions (editor APK especially) must survive a full week without
+  // re-login even when a login elsewhere revokes their refresh-token chain.
+  const isStaff = ['editor', 'super_admin'].includes(user.role);
+
   return new SignJWT({
     userId: user.id,
     email: user.email || '',
@@ -153,7 +157,7 @@ export async function generateBackendToken(user: {
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('24h')
+    .setExpirationTime(isStaff ? '7d' : '24h')
     .sign(JWT_SECRET);
 }
 

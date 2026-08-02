@@ -96,7 +96,7 @@ router.post(
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       config.JWT_SECRET,
-      { expiresIn: config.JWT_EXPIRES_IN } as jwt.SignOptions
+      { expiresIn: config.EDITOR_JWT_EXPIRES_IN } as jwt.SignOptions
     );
 
     console.log(`✅ Editor/Admin logged in: ${user.email}`);
