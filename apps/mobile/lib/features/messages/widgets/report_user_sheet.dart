@@ -90,6 +90,7 @@ class _ReportUserSheetState extends State<_ReportUserSheet> {
 
   String? _selectedReason;
   bool _isSubmitting = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -100,7 +101,10 @@ class _ReportUserSheetState extends State<_ReportUserSheet> {
   Future<void> _handleSubmit() async {
     if (_selectedReason == null) return;
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
     try {
       final result = await _messageClient.reportUser(
         reportedUserId: widget.reportedUserId,
@@ -120,15 +124,14 @@ class _ReportUserSheetState extends State<_ReportUserSheet> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.error ?? 'reportUser.failed'.tr())),
+        // A SnackBar would render behind this modal sheet — show inline.
+        setState(
+          () => _errorMessage = result.error ?? 'reportUser.failed'.tr(),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      setState(() => _errorMessage = 'Error: $e');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -256,6 +259,38 @@ class _ReportUserSheetState extends State<_ReportUserSheet> {
                     style: GoogleFonts.inter(fontSize: 14),
                   ),
                   const SizedBox(height: 16),
+
+                  if (_errorMessage != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            LucideIcons.alertCircle,
+                            size: 18,
+                            color: Color(0xFFEF4444),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: const Color(0xFFB91C1C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
 
                   SizedBox(
                     width: double.infinity,
