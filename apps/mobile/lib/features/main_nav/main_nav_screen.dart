@@ -37,6 +37,10 @@ class MainNavScreen extends StatefulWidget {
 class _MainNavScreenState extends State<MainNavScreen> {
   late int _selectedIndex;
   final GlobalKey<SearchScreenState> _searchKey = GlobalKey();
+  final GlobalKey<HomeScreenState> _homeKey = GlobalKey();
+  // Set by HomeScreen when the server has newer ads than the loaded feed;
+  // drives the dot on the Home tab icon.
+  final ValueNotifier<bool> _homeHasNewAds = ValueNotifier(false);
   late final Set<int> _visitedTabs;
 
   // Breadcrumb of NON-Home tabs in visit order (most recent last).
@@ -45,7 +49,9 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   static const int _homeIndex = 0;
   // Native bridge to send the Android app to the background (see MainActivity.kt).
-  static const _appControl = MethodChannel('com.thulobazaar.mobile/app_control');
+  static const _appControl = MethodChannel(
+    'com.thulobazaar.mobile/app_control',
+  );
 
   @override
   void initState() {
@@ -84,6 +90,49 @@ class _MainNavScreenState extends State<MainNavScreen> {
         );
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _homeHasNewAds.dispose();
+    super.dispose();
+  }
+
+  // Home icon with a small dot that appears when newer ads exist on the
+  // server than what the feed is showing; tapping Home refreshes and clears it.
+  Widget _buildHomeIcon() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _homeHasNewAds,
+      builder: (context, hasNewAds, _) {
+        return Stack(
+          children: [
+            const Icon(LucideIcons.home),
+            if (hasNewAds)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.elasticOut,
+                  builder: (context, scale, child) {
+                    return Transform.scale(scale: scale, child: child);
+                  },
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 
   // Single entry point for switching tabs — keeps the breadcrumb in sync.
@@ -136,7 +185,14 @@ class _MainNavScreenState extends State<MainNavScreen> {
 
   void _onItemTapped(int index) {
     if (index == 2) return; // FAB spacer — ignore tap
-    _selectTab(_navToScreen(index));
+    final screenIndex = _navToScreen(index);
+    if (screenIndex == _homeIndex && _selectedIndex == _homeIndex) {
+      // Re-tap on the active Home tab: back to the top + refresh the feed
+      // (Instagram-style), whether or not the new-ads dot is showing.
+      _homeKey.currentState?.scrollToTopAndRefresh();
+      return;
+    }
+    _selectTab(screenIndex);
   }
 
   // Sends the app to the background on Android (no-op elsewhere).
@@ -295,9 +351,11 @@ class _MainNavScreenState extends State<MainNavScreen> {
           children: [
             if (_visitedTabs.contains(0))
               HomeScreen(
+                key: _homeKey,
                 onSearch: _handleHomeSearch,
                 onCategoryTap: _handleCategoryTap,
                 onViewAllAds: _handleViewAllAds,
+                newAdsNotifier: _homeHasNewAds,
               )
             else
               const SizedBox.shrink(),
@@ -344,8 +402,8 @@ class _MainNavScreenState extends State<MainNavScreen> {
                 ),
                 items: [
                   BottomNavigationBarItem(
-                    icon: const Icon(LucideIcons.home),
-                    activeIcon: const Icon(LucideIcons.home),
+                    icon: _buildHomeIcon(),
+                    activeIcon: _buildHomeIcon(),
                     label: 'nav.home'.tr(),
                   ),
                   BottomNavigationBarItem(

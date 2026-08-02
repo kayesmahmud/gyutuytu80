@@ -28,21 +28,30 @@ class HomeScreen extends StatefulWidget {
   final void Function(int categoryId, String categoryName)? onCategoryTap;
   final VoidCallback? onViewAllAds;
 
+  /// Flipped to true when the server has a newer ad than the feed is showing;
+  /// the nav shell listens to it to show a dot on the Home tab icon.
+  final ValueNotifier<bool>? newAdsNotifier;
+
   const HomeScreen({
     super.key,
     this.onSearch,
     this.onCategoryTap,
     this.onViewAllAds,
+    this.newAdsNotifier,
   });
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // First page keeps the original dense 60-ad grid; further pages append via
   // infinite scroll (same pattern as SearchScreen).
   static const int _latestPageSize = 60;
+
+  // How often to quietly ask the server whether a newer ad has arrived
+  // (drives the dot on the Home tab icon). Runs only while foregrounded.
+  static const Duration _newAdCheckInterval = Duration(minutes: 3);
 
   final AdClient _adClient = AdClient();
   final TextEditingController _searchController = TextEditingController();
@@ -52,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _categoryCanScrollLeft = false;
   bool _categoryCanScrollRight = false;
   Timer? _categoryArrowHideTimer;
+  Timer? _newAdCheckTimer;
   final FocusNode _searchFocusNode = FocusNode();
   final LayerLink _searchLayerLink = LayerLink();
   final SearchSuggestionsController _suggestionsController =
@@ -79,13 +89,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _fetchData();
     _scrollController.addListener(_onScroll);
     _searchFocusNode.addListener(_onSearchFocusChanged);
+    _startNewAdChecks();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchFocusNode.removeListener(_onSearchFocusChanged);
     _searchFocusNode.dispose();
     _suggestionsController.hide();
@@ -93,7 +106,60 @@ class _HomeScreenState extends State<HomeScreen> {
     _scrollController.dispose();
     _categoryScrollController.dispose();
     _categoryArrowHideTimer?.cancel();
+    _newAdCheckTimer?.cancel();
     super.dispose();
+  }
+
+  // Pause the new-ad polling while the app is backgrounded; on return, check
+  // immediately (the user may have been away for a while) and resume the timer.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkForNewAds();
+      _startNewAdChecks();
+    } else if (state == AppLifecycleState.paused) {
+      _newAdCheckTimer?.cancel();
+    }
+  }
+
+  void _startNewAdChecks() {
+    _newAdCheckTimer?.cancel();
+    _newAdCheckTimer = Timer.periodic(
+      _newAdCheckInterval,
+      (_) => _checkForNewAds(),
+    );
+  }
+
+  /// Best-effort check for ads newer than the top of the loaded feed.
+  /// Fetches a single ad, so it stays cheap enough to poll.
+  Future<void> _checkForNewAds() async {
+    final notifier = widget.newAdsNotifier;
+    if (notifier == null || notifier.value) return;
+    if (_isLoading || _latestAds.isEmpty) return;
+
+    try {
+      final response = await _adClient.getLatestAds(page: 1, limit: 1);
+      if (!mounted || !response.success || response.data.isEmpty) return;
+      if (response.data.first.id != _latestAds.first.id) {
+        notifier.value = true;
+      }
+    } catch (_) {
+      // The dot is a hint, not critical state — the next tick will retry.
+    }
+  }
+
+  /// Called by the nav shell when the Home tab is re-tapped: glide back to
+  /// the top of the feed, then reload it so the newest ads are visible.
+  Future<void> scrollToTopAndRefresh() async {
+    if (_scrollController.hasClients && _scrollController.offset > 0) {
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    await _fetchData();
+    HapticFeedback.mediumImpact();
   }
 
   void _onScroll() {
@@ -179,6 +245,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _displayFeaturedAds = _featuredAds.take(12).toList();
         _isLoading = false;
       });
+      // The feed now shows the newest ads, so retire the Home-tab dot.
+      widget.newAdsNotifier?.value = false;
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _updateCategoryScrollEdges(),
       );
