@@ -63,6 +63,9 @@ function HeaderSection({ verification }: { verification: BusinessVerification })
   return (
     <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-2 sm:gap-4 mb-3">
       <div className="flex-1 min-w-0">
+        <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
+          Business name to be verified:
+        </div>
         <h3 className="text-xl font-bold text-gray-900 mb-1">{verification.businessName}</h3>
         <div className="flex items-center gap-4 text-sm text-gray-600 mb-2 flex-wrap">
           <span className="flex items-center gap-1">

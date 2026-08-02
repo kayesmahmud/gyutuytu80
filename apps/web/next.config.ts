@@ -41,6 +41,13 @@ const nextConfig: NextConfig = {
         port: '5000',
         pathname: '/uploads/**',
       },
+      // Local API on 5050 (macOS AirPlay squats on 5000)
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5050',
+        pathname: '/uploads/**',
+      },
       {
         protocol: 'http',
         hostname: '192.168.0.114',

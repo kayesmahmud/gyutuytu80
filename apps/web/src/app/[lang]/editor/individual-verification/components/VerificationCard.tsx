@@ -39,6 +39,9 @@ export function VerificationCard({
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-2 sm:gap-4 mb-3">
               <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-purple-700 uppercase tracking-wide">
+                  Name to be verified:
+                </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1">
                   {verification.fullName}
                 </h3>
