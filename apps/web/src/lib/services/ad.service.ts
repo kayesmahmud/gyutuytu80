@@ -339,6 +339,9 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
       slug,
       custom_fields: customFields,
       status: canDirectPublish ? 'approved' : 'pending',
+      // Listings sort by reviewed_at (approval time) — stamp publish time on
+      // direct publish or the ad sinks to the bottom of every feed (NULLS LAST).
+      reviewed_at: canDirectPublish ? new Date() : null,
       expires_at: input.expiresAt ?? null,
     },
   });

@@ -805,6 +805,10 @@ export async function createAd(userId: number, input: CreateAdInput, options?: {
       condition: normalizeCondition(input.condition),
       user_id: userId,
       status: options?.directPublish ? 'approved' : 'pending',
+      // Public listings sort by reviewed_at (approval time); direct-published
+      // ads have no editor review, so stamp publish time or they sink to the
+      // bottom of home/browse/shop feeds (NULLS LAST).
+      reviewed_at: options?.directPublish ? new Date() : null,
       slug,
       custom_fields: input.customFields && Object.keys(input.customFields).length > 0
         ? input.customFields

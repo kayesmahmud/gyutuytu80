@@ -285,7 +285,12 @@ router.post(
         type: 'ad_live_posted',
         title: 'Business ad went live',
         body: `"${ad.title}" was published directly by a verified business (no review).`,
-        data: { route: '/editor/ad-management', adId: String(ad.id) },
+        // The ad is already approved — land editors on the Approved tab
+        // filtered to it, not the (empty for this ad) default Pending tab.
+        data: {
+          route: `/editor/ad-management?status=approved&search=${encodeURIComponent(ad.title)}`,
+          adId: String(ad.id),
+        },
         referenceId: ad.id,
       }).catch((err) => console.error('Live-ad editor notification error:', err));
     } else {
@@ -450,7 +455,14 @@ router.put(
         body: directPublish
           ? `"${ad.title}" was edited by a verified business and is still live.`
           : `"${ad.title}" was edited by its owner and went back to pending.`,
-        data: { route: '/editor/ad-management', adId: String(ad.id) },
+        data: {
+          // Direct-published edits stay approved — send editors to the Approved
+          // tab filtered to the ad; pending resubmissions keep the default tab.
+          route: directPublish
+            ? `/editor/ad-management?status=approved&search=${encodeURIComponent(ad.title)}`
+            : '/editor/ad-management',
+          adId: String(ad.id),
+        },
         referenceId: ad.id,
       }).catch((err) => console.error('Edit editor notification error:', err));
     }
