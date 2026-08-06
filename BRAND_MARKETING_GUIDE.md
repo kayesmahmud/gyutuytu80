@@ -201,16 +201,27 @@ should set the expectation that you sign up and post, not just browse.
 
 ## 9c. Google Ads Asset Specs & Copy Bank
 
-**Limits** — Performance Max / RSA:
+**Limits** — Performance Max asset group (corrected 2026-07-27; the previous
+version of this table understated headlines as "up to 5" and the account was
+built to that wrong number):
 
-| Asset | Limit | Count |
-|---|---|---|
-| Headline | 30 chars | up to 5 (15 for RSA) |
-| Long headline | 90 chars | up to 5 |
-| Description | 90 chars | up to 5 |
-| Images | 1200×1200 (1:1), 1200×628 (1.91:1) | **up to 20** |
-| Logo | 1200×1200 + 1200×300 | up to 5 |
-| Video | 10s+ , vertical/square/horizontal | up to 5 |
+| Asset | Chars | Count (min–max) | Google recommends |
+|---|---|---|---|
+| Headline | 30 | **3–15** | 11+ |
+| Long headline | 90 (aim ≥30) | 1–5 | 2+ |
+| Description | 90 | 2–5 | 4+ |
+| Business name | 25 | 1 | — |
+| Images | 1:1 1200×1200 · 1.91:1 1200×628 · 4:5 960×1200 | up to 20 | all three ratios |
+| Logo | 1:1 1200×1200 · 4:1 1200×300 | up to 5 | both |
+| Video | 10s+, vertical/square/horizontal | up to 5 | 1 per orientation |
+
+**Two rules that are easy to miss and both cost Ad Strength:**
+- **At least one headline must be ≤15 characters.**
+- **At least one description must be ≤60 characters.**
+
+Images max 5MB, .jpg or .png. Videos must be hosted on YouTube (unlisted is fine)
+before they can be attached. **9:16 is not a valid Google Ads image ratio** — only
+1.91:1, 1:1 and 4:5.
 
 **Asset shortage is the top priority.** The account currently runs ~6 images and
 1 video against slots for 20 and 5. Ad Strength sits at "Average" and the
@@ -228,25 +239,56 @@ Note: winning on *serving* is not the same as winning on *conversions*. The four
 assets on the Best/Good/Low label alone — that label reflects how often Google
 chose to serve an asset, which is self-reinforcing.
 
-### Headlines (≤30)
+### Headlines — full set of 15 (≤30 chars, counts verified)
 
-- List in 2 Min, Reach Nepal ← proven
-- Post Free Ad in 2 Minutes
-- Sell in 2 Min, Free Always
-- 10,000+ Nepalis Buy & Sell
-- Your Ad Live in 2 Minutes
+Keep all five incumbents. **Never delete an asset on its Best/Good/Low label
+alone** — `Post Free Ads, Sell Fast` is labelled "Low" and has the highest CTR in
+the account (11.39%).
 
-### Long headlines (≤90)
+| # | Headline | Chars |
+|---|---|---|
+| 1 | List in 2 Min, Reach Nepal | 26 — proven, 1.19M impr |
+| 2 | Post Free Ads, Sell Fast | 24 — **best CTR 11.39%** |
+| 3 | Sell Phones, Cars & More | 24 |
+| 4 | Sell Anything in Nepal | 22 |
+| 5 | Nepal's Free Marketplace | 24 |
+| 6 | Post Free Ad | **12 — satisfies the ≤15 rule** |
+| 7 | Sell in 2 Min | **13** |
+| 8 | Free Ads, All Nepal | 19 |
+| 9 | 2 Min to All of Nepal | 21 |
+| 10 | Your Ad Live in 2 Minutes | 25 |
+| 11 | List Free, Reach 7 Provinces | 28 |
+| 12 | Post Free, Buyers Message You | 29 |
+| 13 | 10,000+ Downloads. Post Now | 27 |
+| 14 | Sell Your Bike, Car or Flat | 27 |
+| 15 | Verified Sellers, Real Deals | 28 |
 
-- Post your ad free in 2 minutes and reach buyers across all 7 provinces of Nepal
-- Join 10,000+ Nepalis buying and selling — free to post, no commission ever
-- Mobiles, vehicles, property and more. Post in 2 minutes, reach all of Nepal
+### Long headlines — 5 (≤90)
 
-### Descriptions (≤90)
+- Post your ad free in 2 minutes and reach buyers across all 7 provinces of Nepal (79)
+- Join 10,000+ Nepalis buying and selling — free to post, no commission ever (74)
+- Mobiles, vehicles, property and more. Post in 2 minutes, reach all of Nepal (75)
+- Create a free account, post your first ad in 2 minutes, and buyers message you (78)
+- Verified sellers, free listings, buyers nationwide — Nepal's own marketplace (76)
 
-- Free to post, always. Mobiles, vehicles, property & more. Verified sellers.
-- Join 10,000+ Nepalis buying and selling. Post free in 2 minutes. No commission.
-- Nepal's marketplace. Post an ad in 2 minutes and reach buyers nationwide.
+### Descriptions — 5 (≤90, one must be ≤60)
+
+- Post free in 2 minutes. Reach buyers across Nepal. (**50 — the ≤60 slot**)
+- Free to post, always. Mobiles, vehicles, property & more. Verified sellers. (75)
+- Join 10,000+ Nepalis buying and selling. Post free in 2 minutes. No commission. (79)
+- Sign up free, post your ad, buyers contact you direct. No commission, ever. (75)
+- Mobiles, electronics, vehicles, property, jobs. Post free, reach all of Nepal. (78)
+
+### Image & video concepts
+
+15 image concepts (8 landscape / 7 square) and 4 video concepts, with generation
+prompts and layout briefs, live in **`../Marketing/GOOGLE_ADS_CREATIVE_2026-07.md`**,
+along with an audit of the currently-live assets.
+
+Headline note: **do not reuse the green style block** in
+`../Marketing/seller-campaign-10-slides.md` — it predates the palette correction
+and specifies green `#1B8E3D` as primary. The corrected block is in §2 of the
+creative pack.
 
 ---
 
