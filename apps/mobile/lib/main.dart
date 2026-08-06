@@ -17,6 +17,7 @@ import 'core/providers/chat_provider.dart';
 import 'core/providers/notification_provider.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/reengagement_service.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/interstitial_ad_service.dart';
 import 'core/services/version_check_service.dart';
@@ -41,6 +42,11 @@ void main() async {
   // is stripped. This makes the 120+ debugPrint call sites safe to ship.
   if (kReleaseMode) {
     debugPrint = (String? message, {int? wrapWidth}) {};
+
+    // Replace the default release ErrorWidget (a bare gray box that is
+    // indistinguishable from renderer corruption) with a recognizable screen,
+    // so build exceptions in production are visible and reportable.
+    ErrorWidget.builder = (details) => const _ReleaseErrorScreen();
   }
 
   // Initialize Marionette for AI-assisted testing (debug only)
@@ -88,6 +94,9 @@ void main() async {
           .then((_) {
             notificationService.onNotificationTap = _handleNotificationTap;
             debugPrint('✅ Notifications initialized');
+            // Replay a local-notification tap that launched the app from
+            // terminated (e.g. a re-engagement notification).
+            return notificationService.processLaunchNotification();
           })
           .catchError((e) => debugPrint('⚠️ Notifications init failed: $e')),
     );
@@ -183,14 +192,22 @@ bool appReadyForDeepLinks = false;
 
 /// Handle notification taps and navigate
 void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
-  if (route == null) return;
-
   // Defer until MainNav is the base route (and navigator exists), so a
   // cold-start deep link isn't clobbered by the splash transition.
-  if (!appReadyForDeepLinks || navigatorKey.currentState == null) {
+  // Checked before the tap analytics so a deferred tap is logged exactly
+  // once — on replay, not on both the initial call and the replay.
+  if (route != null &&
+      (!appReadyForDeepLinks || navigatorKey.currentState == null)) {
     _pendingNotification = {'route': route, ...?data};
     return;
   }
+
+  // Measure re-engagement notification taps.
+  if (data?['source'] == 'reengage') {
+    AnalyticsService.logReengageTapped('${data?['n'] ?? ''}');
+  }
+
+  if (route == null) return;
 
   // FCM data values are always strings — parse IDs
   final conversationId = int.tryParse('${data?['conversationId'] ?? ''}');
@@ -245,6 +262,52 @@ void processPendingNotification() {
   _handleNotificationTap(route, data);
 }
 
+/// Shown in place of a widget whose build threw in a release build. Kept free
+/// of fonts, localization, and theme lookups — it must render even when the
+/// app's infrastructure is the thing that failed. It replaces only the failed
+/// subtree, so it must also look sane at small sizes (hence FittedBox).
+class _ReleaseErrorScreen extends StatelessWidget {
+  const _ReleaseErrorScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(24),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 48),
+            const SizedBox(height: 16),
+            const Text(
+              'Something went wrong',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                decoration: TextDecoration.none,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'केही गडबड भयो — कृपया एप बन्द गरेर फेरि खोल्नुहोस्',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class ThuloBazaarApp extends StatefulWidget {
   const ThuloBazaarApp({super.key});
 
@@ -252,16 +315,61 @@ class ThuloBazaarApp extends StatefulWidget {
   State<ThuloBazaarApp> createState() => _ThuloBazaarAppState();
 }
 
-class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
+class _ThuloBazaarAppState extends State<ThuloBazaarApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    // Observe lifecycle for signed-out re-engagement scheduling
+    WidgetsBinding.instance.addObserver(this);
+    // Ask every user for notification permission shortly after the home
+    // screen settles (product decision 2026-08-05: reach over accept-rate).
+    // Idempotent — the intent triggers (search/favourite) remain as no-ops.
+    // Once answered, arm the signed-out re-engagement timer while the app is
+    // alive (scheduling at pause-time dies to the HyperOS app freezer).
+    Future.delayed(const Duration(seconds: 5), () async {
+      await NotificationService().requestPermissionsIfNeeded();
+      if (!mounted) return;
+      final authProvider = context.read<AuthProvider>();
+      if (!authProvider.isAuthenticated) {
+        unawaited(
+          ReEngagementService.onAppResumed(context.locale.languageCode),
+        );
+      }
+    });
     // Request App Tracking Transparency, then initialize ads (Apple-compliant)
     _requestTrackingThenInitAds();
     // Register FCM token when user is logged in
     _registerNotificationToken();
     // Check for app updates
     _checkForAppUpdate();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Signed-out users: schedule a local re-engagement notification when the
+  /// app is backgrounded; settle/cancel it when they come back on their own.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      final authProvider = context.read<AuthProvider>();
+      if (!authProvider.isAuthenticated) {
+        unawaited(
+          ReEngagementService.onAppBackgrounded(context.locale.languageCode),
+        );
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      final authProvider = context.read<AuthProvider>();
+      if (!authProvider.isAuthenticated) {
+        unawaited(
+          ReEngagementService.onAppResumed(context.locale.languageCode),
+        );
+      }
+    }
   }
 
   /// Show the iOS App Tracking Transparency prompt (once), then initialize the
@@ -333,6 +441,8 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
     if (authProvider.isAuthenticated) {
       NotificationService().registerToken();
       notificationProvider.initialize();
+      // Signed-in users get real push — end local re-engagement forever
+      unawaited(ReEngagementService.disablePermanently());
       // Process any notification that arrived before navigator/auth was ready
       processPendingNotification();
     }
@@ -342,6 +452,8 @@ class _ThuloBazaarAppState extends State<ThuloBazaarApp> {
       if (authProvider.isAuthenticated) {
         NotificationService().registerToken();
         notificationProvider.initialize();
+        // Signed-in users get real push — end local re-engagement forever
+        unawaited(ReEngagementService.disablePermanently());
         // Process any pending notification after login
         processPendingNotification();
       } else {

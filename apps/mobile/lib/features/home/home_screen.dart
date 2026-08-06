@@ -17,6 +17,7 @@ import 'package:mobile/core/services/ad_service.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:mobile/core/widgets/tap_scale.dart';
 import 'package:mobile/core/widgets/search_suggestions_overlay.dart';
+import 'package:mobile/core/services/notification_service.dart';
 import 'package:mobile/core/services/search_history_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:mobile/core/utils/skeleton_data.dart';
@@ -189,6 +190,9 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
       SearchHistoryService.addSearch(query);
+      // First search = moment of intent — safe spot for the one-shot
+      // notification permission prompt (no-op once requested).
+      unawaited(NotificationService().requestPermissionsIfNeeded());
       widget.onSearch?.call(query);
     }
   }

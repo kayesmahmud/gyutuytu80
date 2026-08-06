@@ -44,10 +44,7 @@ class AnalyticsService {
   }
 
   /// Analytics must never break a user flow, so all failures are swallowed.
-  static Future<void> _log(
-    String name,
-    Map<String, Object> parameters,
-  ) async {
+  static Future<void> _log(String name, Map<String, Object> parameters) async {
     final analytics = _analytics;
     if (analytics == null) return;
 
@@ -109,4 +106,19 @@ class AnalyticsService {
   /// prove retargeting actually returns people to the item they browsed.
   static Future<void> logDeepLinkOpen(String slug) =>
       _log('deep_link_open', {'ad_slug': slug});
+
+  /// A local re-engagement notification was scheduled for a signed-out user.
+  /// Compare against [logReengageTapped] to measure whether the copy works.
+  static Future<void> logReengageScheduled({
+    required int notificationNumber,
+    required int delayHours,
+  }) => _log('reengage_scheduled', {
+    'notification_number': notificationNumber.toString(),
+    'delay_hours': delayHours.toString(),
+  });
+
+  /// The user came back by tapping a re-engagement notification — the only
+  /// signal that the whole local-notification loop actually re-engages.
+  static Future<void> logReengageTapped(String notificationNumber) =>
+      _log('reengage_tapped', {'notification_number': notificationNumber});
 }

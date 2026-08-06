@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -11,6 +12,7 @@ import 'package:mobile/core/widgets/main_drawer.dart';
 import 'package:mobile/core/widgets/ad_card.dart';
 import 'package:mobile/core/widgets/staggered_fade_in.dart';
 import 'package:mobile/core/widgets/search_suggestions_overlay.dart';
+import 'package:mobile/core/services/notification_service.dart';
 import 'package:mobile/core/services/search_history_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:mobile/core/utils/skeleton_data.dart';
@@ -203,6 +205,9 @@ class SearchScreenState extends State<SearchScreen> {
     final query = _searchController.text.trim();
     if (query.isNotEmpty) {
       SearchHistoryService.addSearch(query);
+      // First search = moment of intent — safe spot for the one-shot
+      // notification permission prompt (no-op once requested).
+      unawaited(NotificationService().requestPermissionsIfNeeded());
     }
     setState(() {
       _filters = _filters.copyWith(query: query);

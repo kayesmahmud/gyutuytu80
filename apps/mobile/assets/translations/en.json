@@ -655,5 +655,16 @@
     "disclaimer": "Reports are confidential. Our team will review and take action if needed.",
     "success": "User reported. Our team will review it shortly.",
     "failed": "Failed to report user"
+  },
+  "reengagement": {
+    "itemRecallTitle": "Still thinking about it? 👀",
+    "itemRecallBody": "{} — {} is still on Thulo Bazaar. Take another look.",
+    "savedSearchTitle": "Never miss a deal 🔔",
+    "savedSearchBody": "New {} ads are posted daily. Sign up to get alerts for what you want.",
+    "savedSearchBodyGeneric": "New ads are posted daily. Sign up to get alerts for what you want.",
+    "missYouTitle": "We miss you! 🛍️",
+    "missYouBody": "Thousands of new ads every week — or post your own for free in 2 minutes.",
+    "postAdTitle": "Have something to sell? 💰",
+    "postAdBody": "Post your ad for free in 2 minutes — thousands of buyers browse Thulo Bazaar daily."
   }
 }

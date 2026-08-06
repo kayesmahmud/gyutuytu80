@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -28,6 +29,9 @@ import 'package:mobile/features/ad_detail/widgets/ad_detail_banners.dart';
 import 'package:mobile/features/ad_detail/widgets/report_ad_sheet.dart';
 import 'package:mobile/core/widgets/ad_banner_widget.dart';
 import 'package:mobile/core/services/ad_service.dart';
+import 'package:mobile/core/services/analytics_service.dart';
+import 'package:mobile/core/services/notification_service.dart';
+import 'package:mobile/core/services/recent_ads_service.dart';
 import 'package:mobile/core/widgets/edit_ad_warning_dialog.dart';
 import 'package:mobile/features/auth/signin_screen.dart';
 import 'package:mobile/features/post_ad/create_ad_screen.dart';
@@ -120,6 +124,10 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
         final ad = response.data!;
         _adClient.incrementView(ad.id);
 
+        // One view = one remarketing signal + one on-device recents entry.
+        unawaited(AnalyticsService.logViewItem(ad));
+        unawaited(RecentAdsService.recordView(ad));
+
         final related = await _adClient.getRelatedAds(
           ad.categoryId,
           limit: 4,
@@ -179,6 +187,10 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
   }
 
   Future<void> _toggleFavorite() async {
+    // First favourite = moment of intent — safe spot for the one-shot
+    // notification permission prompt (no-op once requested).
+    unawaited(NotificationService().requestPermissionsIfNeeded());
+
     final authProvider = context.read<AuthProvider>();
 
     if (!authProvider.isLoggedIn) {
