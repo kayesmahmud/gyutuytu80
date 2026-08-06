@@ -23,7 +23,7 @@ class ReviewService {
   // Tuning knobs — adjust to taste.
   static const _minDaysSinceInstall = 3;
   static const _minSignificantActions = 2;
-  static const _minDaysBetweenPrompts = 60;
+  static const _minDaysBetweenPrompts = 30;
   static const _maxPromptsEver = 3;
 
   static final InAppReview _inAppReview = InAppReview.instance;
