@@ -9,6 +9,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:mobile/core/api/shop_client.dart';
@@ -587,8 +589,8 @@ class _ShopScreenState extends State<ShopScreen> {
                                 color: _shop!.isBusinessVerified
                                     ? const Color(0xFFFBBF24)
                                     : _shop!.individualVerified
-                                        ? const Color(0xFF3B82F6)
-                                        : Colors.white,
+                                    ? const Color(0xFF3B82F6)
+                                    : Colors.white,
                                 width: 4,
                               ),
                               boxShadow: [
@@ -739,6 +741,8 @@ class _ShopScreenState extends State<ShopScreen> {
                             ? 'सदस्य'
                             : 'Joined',
                       ),
+                      const Spacer(),
+                      _buildShareButton(),
                     ],
                   ),
                 ),
@@ -748,6 +752,56 @@ class _ShopScreenState extends State<ShopScreen> {
         ],
       ),
     );
+  }
+
+  /// Circular share button at the end of the stats row.
+  Widget _buildShareButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: _shareShop,
+        tooltip: context.locale.languageCode == 'ne'
+            ? 'पसल सेयर गर्नुहोस्'
+            : 'Share shop',
+        icon: const Icon(
+          LucideIcons.share2,
+          size: 20,
+          color: Color(0xFF374151),
+        ),
+      ),
+    );
+  }
+
+  /// Share the shop's public URL. iOS goes through the native channel
+  /// because share_plus can't find the root view controller under the
+  /// UIScene lifecycle (same fix as AdDetailScreen._shareAd).
+  Future<void> _shareShop() async {
+    final shop = _shop;
+    if (shop == null) return;
+    final lang = context.locale.languageCode;
+    // URL only — no shop name — so it pastes cleanly into social link fields.
+    final url = 'https://thulobazaar.com.np/$lang/shop/${widget.shopSlug}';
+    try {
+      if (Platform.isIOS) {
+        await const MethodChannel(
+          'app/native_share',
+        ).invokeMethod('share', {'text': url, 'subject': shop.displayName});
+      } else {
+        await Share.share(url, subject: shop.displayName);
+      }
+    } catch (e) {
+      developer.log('Share failed: $e', name: 'ShopScreen');
+    }
   }
 
   Widget _buildAvatarPlaceholder() {

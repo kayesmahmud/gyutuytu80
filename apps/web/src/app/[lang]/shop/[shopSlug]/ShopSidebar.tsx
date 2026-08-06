@@ -123,6 +123,7 @@ export default function ShopSidebar({
             initialDescription={initialDescription}
             bio={bio}
             isOwner={isOwner}
+            shareUrl={`https://thulobazaar.com.np/${lang}/shop/${shopSlug}`}
           />
         );
       case 'contact':

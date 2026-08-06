@@ -12,6 +12,7 @@ import { Point, Area } from 'react-easy-crop/types';
 import { Button } from '@/components/ui';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { getCoverUrl } from '@/lib/images';
+import ShareShopButton from '@/components/shop/ShareShopButton';
 
 interface ShopProfileClientProps {
   shopId: number;
@@ -452,7 +453,7 @@ export default function ShopProfileClient({
             </p>
 
             {/* Stats */}
-            <div className="flex flex-wrap gap-4 sm:gap-6 md:gap-8">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 md:gap-8">
               <div>
                 <div className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">{stats.total_ads}</div>
                 <div className="text-xs sm:text-sm text-gray-600">{t('activeAds')}</div>
@@ -464,6 +465,12 @@ export default function ShopProfileClient({
               <div>
                 <div className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">{stats.member_since}</div>
                 <div className="text-xs sm:text-sm text-gray-600">{t('memberSince')}</div>
+              </div>
+              {/* Desktop only — on mobile the button lives in the About card */}
+              <div className="ml-auto hidden lg:block">
+                <ShareShopButton
+                  shopUrl={`https://thulobazaar.com.np/${lang}/shop/${shopSlug}`}
+                />
               </div>
             </div>
           </div>

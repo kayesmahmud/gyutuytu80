@@ -2,15 +2,18 @@
 
 import { useTranslations } from 'next-intl';
 import { useShopAbout } from '@/hooks/useShopAbout';
+import ShareShopButton from '@/components/shop/ShareShopButton';
 
 interface AboutSectionProps {
   shopSlug: string;
   initialDescription: string | null;
   bio: string | null;
   isOwner: boolean;
+  /** When set, a share button renders in the card header (mobile tab view). */
+  shareUrl?: string;
 }
 
-export function AboutSection({ shopSlug, initialDescription, bio, isOwner }: AboutSectionProps) {
+export function AboutSection({ shopSlug, initialDescription, bio, isOwner, shareUrl }: AboutSectionProps) {
   const t = useTranslations('shop');
   const tc = useTranslations('common');
   const { isEditing, setIsEditing, aboutText, setAboutText, saving, handleSave, handleCancel } = useShopAbout({
@@ -23,14 +26,17 @@ export function AboutSection({ shopSlug, initialDescription, bio, isOwner }: Abo
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-3 sm:mb-4">
         <h2 className="text-lg sm:text-xl font-semibold">{t('about')}</h2>
-        {!isEditing && isOwner && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            {tc('edit')}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {shareUrl && <ShareShopButton shopUrl={shareUrl} />}
+          {!isEditing && isOwner && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              {tc('edit')}
+            </button>
+          )}
+        </div>
       </div>
 
       {isEditing ? (
