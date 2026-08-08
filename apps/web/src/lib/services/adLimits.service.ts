@@ -28,8 +28,8 @@ const SETTING_KEYS = [
   'ad_expiry_days',
   'free_ads_limit',
   'max_images_per_ad',
-  'max_images_verified_users',
-  'max_images_unverified_users',
+  'max_images_verified',
+  'max_images_unverified',
 ];
 
 export async function getAdLimits(): Promise<AdLimits> {
@@ -44,13 +44,18 @@ export async function getAdLimits(): Promise<AdLimits> {
       if (s.setting_value) map[s.setting_key] = s.setting_value;
     }
 
+    // ad_expiry_days: 0 is meaningful ("never expires"), so || won't do — but
+    // parseInt('') is NaN and NaN ?? default stays NaN, which produced an
+    // Invalid Date whenever the setting row was missing.
+    const parsedExpiryDays = parseInt(map.ad_expiry_days || '', 10);
+
     return {
       maxAdsPerUser: parseInt(map.max_ads_per_user || '', 10) || DEFAULTS.maxAdsPerUser,
-      adExpiryDays: parseInt(map.ad_expiry_days || '', 10) ?? DEFAULTS.adExpiryDays,
+      adExpiryDays: Number.isFinite(parsedExpiryDays) ? parsedExpiryDays : DEFAULTS.adExpiryDays,
       freeAdsLimit: parseInt(map.free_ads_limit || '', 10) || DEFAULTS.freeAdsLimit,
       maxImagesPerAd: parseInt(map.max_images_per_ad || '', 10) || DEFAULTS.maxImagesPerAd,
-      maxImagesVerified: parseInt(map.max_images_verified_users || '', 10) || DEFAULTS.maxImagesVerified,
-      maxImagesUnverified: parseInt(map.max_images_unverified_users || '', 10) || DEFAULTS.maxImagesUnverified,
+      maxImagesVerified: parseInt(map.max_images_verified || '', 10) || DEFAULTS.maxImagesVerified,
+      maxImagesUnverified: parseInt(map.max_images_unverified || '', 10) || DEFAULTS.maxImagesUnverified,
     };
   } catch (error) {
     console.error('Failed to fetch ad limits:', error);
@@ -104,6 +109,59 @@ export async function getBooleanSetting(key: string, defaultValue = true): Promi
   } catch {
     return defaultValue;
   }
+}
+
+export interface ExpiryBackfillResult {
+  restamped: number;
+  revived: number;
+}
+
+/**
+ * Apply a changed ad_expiry_days setting to ALL existing ads, not just new ones.
+ * - days > 0:  expires_at = created_at + days (each ad keeps its own clock),
+ *              floored at NOW() + 15 days so no ad expires without the
+ *              "expiring soon" warning (checkExpiringAds in the API's
+ *              notificationCron uses the same 15-day window) firing first.
+ * - days <= 0: expires_at = NULL (never expires)
+ * Then revive expired ads that were previously approved (reviewed_at set)
+ * and now fall inside the new window. The hourly expiry cron handles the
+ * opposite direction (ads that fell outside a shrunken window).
+ */
+export async function applyExpirySettingToAllAds(days: number): Promise<ExpiryBackfillResult> {
+  let restamped: number;
+  if (days > 0) {
+    // Live ads: floored so none expires without warning
+    const live = await prisma.$executeRaw`
+        UPDATE ads
+        SET expires_at = GREATEST(
+              created_at + make_interval(days => ${days}),
+              NOW() + interval '15 days'
+            ),
+            updated_at = NOW()
+        WHERE deleted_at IS NULL AND status <> 'expired'`;
+    // Already-expired ads: plain stamp — no grace floor, otherwise the revive
+    // check below would wrongly resurrect ads that are outside the new window
+    const expired = await prisma.$executeRaw`
+        UPDATE ads
+        SET expires_at = created_at + make_interval(days => ${days}), updated_at = NOW()
+        WHERE deleted_at IS NULL AND status = 'expired'`;
+    restamped = live + expired;
+  } else {
+    restamped = await prisma.$executeRaw`
+        UPDATE ads
+        SET expires_at = NULL, updated_at = NOW()
+        WHERE deleted_at IS NULL`;
+  }
+
+  const revived = await prisma.$executeRaw`
+      UPDATE ads
+      SET status = 'approved', updated_at = NOW()
+      WHERE deleted_at IS NULL
+        AND status = 'expired'
+        AND reviewed_at IS NOT NULL
+        AND (expires_at IS NULL OR expires_at > NOW())`;
+
+  return { restamped, revived };
 }
 
 export function calculateExpiresAt(adExpiryDays: number): Date | null {

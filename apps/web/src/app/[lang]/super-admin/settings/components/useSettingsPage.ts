@@ -43,9 +43,14 @@ export function useSettingsPage(lang: string) {
           allowRegistration: db.allow_registration !== 'false',
           requirePhoneVerification: db.require_phone_verification !== 'false',
           maxAdsPerUser: parseInt(db.max_ads_per_user) || prev.maxAdsPerUser,
-          adExpiryDays: parseInt(db.ad_expiry_days) || prev.adExpiryDays,
+          // 0 = expiry disabled (ads permanent), so || would wrongly fall back
+          adExpiryDays: Number.isFinite(parseInt(db.ad_expiry_days))
+            ? parseInt(db.ad_expiry_days)
+            : prev.adExpiryDays,
           freeAdsLimit: parseInt(db.free_ads_limit) || prev.freeAdsLimit,
           maxImagesPerAd: parseInt(db.max_images_per_ad) || prev.maxImagesPerAd,
+          maxImagesVerified: parseInt(db.max_images_verified) || prev.maxImagesVerified,
+          maxImagesUnverified: parseInt(db.max_images_unverified) || prev.maxImagesUnverified,
           smtpEnabled: db.smtp_enabled === 'true',
           smtpHost: db.smtp_host || prev.smtpHost,
           smtpPort: parseInt(db.smtp_port) || prev.smtpPort,
@@ -144,8 +149,8 @@ export function useSettingsPage(lang: string) {
       const data = await res.json();
 
       if (data.success) {
-        setSuccess('Settings saved successfully');
-        setTimeout(() => setSuccess(''), 3000);
+        setSuccess(data.message || 'Settings saved successfully');
+        setTimeout(() => setSuccess(''), 5000);
       } else {
         setError(data.message || 'Failed to save settings');
       }

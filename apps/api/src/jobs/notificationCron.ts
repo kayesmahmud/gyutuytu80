@@ -12,16 +12,20 @@ import cron from 'node-cron';
 import { prisma } from '@thulobazaar/database';
 import { sendNotification, canSendNotification } from '../services/notification.service.js';
 
-const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const THREE_DAYS_MS = 3 * ONE_DAY_MS;
+const FIFTEEN_DAYS_MS = 15 * ONE_DAY_MS;
+const THIRTY_DAYS_MS = 30 * ONE_DAY_MS;
+const TWENTY_FOUR_HOURS_MS = ONE_DAY_MS;
 
 /**
- * #5 — Ad Expiring Soon (expires within 3 days)
+ * #5 — Ad Expiring Soon (expires within 15 days)
+ * Keep the window in sync with the grace floor in
+ * apps/web/src/lib/services/adLimits.service.ts (applyExpirySettingToAllAds).
  */
 async function checkExpiringAds(): Promise<void> {
   const now = new Date();
-  const threeDaysFromNow = new Date(now.getTime() + THREE_DAYS_MS);
+  const fifteenDaysFromNow = new Date(now.getTime() + FIFTEEN_DAYS_MS);
 
   const ads = await prisma.ads.findMany({
     where: {
@@ -29,23 +33,24 @@ async function checkExpiringAds(): Promise<void> {
       deleted_at: null,
       expires_at: {
         gte: now,
-        lte: threeDaysFromNow,
+        lte: fifteenDaysFromNow,
       },
     },
-    select: { id: true, user_id: true, title: true },
+    select: { id: true, user_id: true, title: true, expires_at: true },
   });
 
   for (const ad of ads) {
-    if (!ad.user_id) continue;
+    if (!ad.user_id || !ad.expires_at) continue;
     // Once per ad (cooldown = forever via referenceId)
     const canSend = await canSendNotification(ad.user_id, 'ad_expiring', ad.id, 60 * 24 * 30);
     if (!canSend) continue;
 
+    const daysLeft = Math.max(1, Math.ceil((ad.expires_at.getTime() - now.getTime()) / ONE_DAY_MS));
     await sendNotification({
       recipientUserIds: [ad.user_id],
       type: 'ad_expiring',
       title: 'Ad Expiring Soon',
-      body: `Your ad "${ad.title}" expires in 3 days — renew it to stay visible!`,
+      body: `Your ad "${ad.title}" expires in ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} — renew it to stay visible!`,
       data: { adId: String(ad.id), route: '/ad' },
       referenceId: ad.id,
     }).catch(err => console.error(`❌ [NotifCron] ad_expiring error:`, err));

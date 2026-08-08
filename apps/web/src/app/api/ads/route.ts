@@ -8,7 +8,7 @@ import {
 } from '@/lib/services/ad.service';
 import {
   getAdLimits,
-  getImageLimitForUser,
+  isUserVerified,
   countUserActiveAds,
   calculateExpiresAt,
   getBooleanSetting,
@@ -151,16 +151,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enforce ad limits from site_settings
-    const [limits, activeAdCount, imageLimit] = await Promise.all([
+    // Enforce ad limits from site_settings (tiered by verification status)
+    const [limits, verified, activeAdCount] = await Promise.all([
       getAdLimits(),
+      isUserVerified(userId),
       countUserActiveAds(userId),
-      getImageLimitForUser(userId),
     ]);
 
-    if (activeAdCount >= limits.maxAdsPerUser) {
+    const maxActiveAds = verified ? limits.maxAdsPerUser : limits.freeAdsLimit;
+    const imageLimit = verified ? limits.maxImagesVerified : limits.maxImagesUnverified;
+
+    if (activeAdCount >= maxActiveAds) {
       return NextResponse.json(
-        { success: false, message: `You have reached the maximum limit of ${limits.maxAdsPerUser} ads` },
+        {
+          success: false,
+          message: verified
+            ? `You have reached the maximum limit of ${maxActiveAds} ads`
+            : `You have reached the limit of ${maxActiveAds} ads for unverified accounts. Get verified to post up to ${limits.maxAdsPerUser} ads`,
+        },
         { status: 400 }
       );
     }

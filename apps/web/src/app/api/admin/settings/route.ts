@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { requireSuperAdmin } from '@/lib/auth';
+import { applyExpirySettingToAllAds } from '@/lib/services/adLimits.service';
 
 /**
  * GET /api/admin/settings
@@ -92,8 +93,8 @@ export async function POST(request: NextRequest) {
       ad_expiry_days: 'number',
       free_ads_limit: 'number',
       max_images_per_ad: 'number',
-      max_images_verified_users: 'number',
-      max_images_unverified_users: 'number',
+      max_images_verified: 'number',
+      max_images_unverified: 'number',
       // SMS Message Templates
       sms_business_approved: 'string',
       sms_business_rejected: 'string',
@@ -143,6 +144,12 @@ export async function POST(request: NextRequest) {
       admob_interstitial_interval: 'number',
     };
 
+    // Expiry changes must propagate to existing ads, so capture the old value
+    const previousExpiry = await prisma.site_settings.findUnique({
+      where: { setting_key: 'ad_expiry_days' },
+      select: { setting_value: true },
+    });
+
     // Upsert all settings
     for (const [key, value] of Object.entries(settings)) {
       const snakeCaseKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -163,9 +170,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // If ad_expiry_days changed, restamp ALL existing ads (and revive
+    // previously approved ones that fall inside the new window)
+    let message = 'Settings saved successfully';
+    if (
+      settings.adExpiryDays !== undefined &&
+      String(settings.adExpiryDays) !== (previousExpiry?.setting_value ?? '')
+    ) {
+      const days = parseInt(String(settings.adExpiryDays), 10) || 0;
+      const { restamped, revived } = await applyExpirySettingToAllAds(days);
+      message = `Settings saved. Expiry ${days > 0 ? `(${days} days)` : '(off)'} applied to ${restamped} ads${revived > 0 ? `, ${revived} revived` : ''}`;
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Settings saved successfully',
+      message,
     });
   } catch (error: any) {
     console.error('Save settings error:', error);

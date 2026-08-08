@@ -25,7 +25,7 @@ import {
 import { logReviewHistory } from '../utils/responseHelpers.js';
 import {
   getAdLimits,
-  getImageLimitForUser,
+  isUserVerified,
   countUserActiveAds,
   calculateExpiresAt,
   getBooleanSetting,
@@ -224,15 +224,22 @@ router.post(
       throw new ValidationError('Location is required');
     }
 
-    // Enforce ad limits from site_settings
-    const [limits, activeAdCount, imageLimit] = await Promise.all([
+    // Enforce ad limits from site_settings (tiered by verification status)
+    const [limits, verified, activeAdCount] = await Promise.all([
       getAdLimits(),
+      isUserVerified(userId),
       countUserActiveAds(userId),
-      getImageLimitForUser(userId),
     ]);
 
-    if (activeAdCount >= limits.maxAdsPerUser) {
-      throw new ValidationError(`You have reached the maximum limit of ${limits.maxAdsPerUser} ads`);
+    const maxActiveAds = verified ? limits.maxAdsPerUser : limits.freeAdsLimit;
+    const imageLimit = verified ? limits.maxImagesVerified : limits.maxImagesUnverified;
+
+    if (activeAdCount >= maxActiveAds) {
+      throw new ValidationError(
+        verified
+          ? `You have reached the maximum limit of ${maxActiveAds} ads`
+          : `You have reached the limit of ${maxActiveAds} ads for unverified accounts. Get verified to post up to ${limits.maxAdsPerUser} ads`
+      );
     }
 
     // Enforce image limit based on verification status

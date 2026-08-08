@@ -28,8 +28,8 @@ const SETTING_KEYS = [
   'ad_expiry_days',
   'free_ads_limit',
   'max_images_per_ad',
-  'max_images_verified_users',
-  'max_images_unverified_users',
+  'max_images_verified',
+  'max_images_unverified',
 ];
 
 export async function getAdLimits(): Promise<AdLimits> {
@@ -54,8 +54,8 @@ export async function getAdLimits(): Promise<AdLimits> {
       adExpiryDays: Number.isFinite(parsedExpiryDays) ? parsedExpiryDays : DEFAULTS.adExpiryDays,
       freeAdsLimit: parseInt(map.free_ads_limit || '', 10) || DEFAULTS.freeAdsLimit,
       maxImagesPerAd: parseInt(map.max_images_per_ad || '', 10) || DEFAULTS.maxImagesPerAd,
-      maxImagesVerified: parseInt(map.max_images_verified_users || '', 10) || DEFAULTS.maxImagesVerified,
-      maxImagesUnverified: parseInt(map.max_images_unverified_users || '', 10) || DEFAULTS.maxImagesUnverified,
+      maxImagesVerified: parseInt(map.max_images_verified || '', 10) || DEFAULTS.maxImagesVerified,
+      maxImagesUnverified: parseInt(map.max_images_unverified || '', 10) || DEFAULTS.maxImagesUnverified,
     };
   } catch (error) {
     console.error('Failed to fetch ad limits:', error);
