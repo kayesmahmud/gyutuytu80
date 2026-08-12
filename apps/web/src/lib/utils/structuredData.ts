@@ -15,18 +15,34 @@ interface ProductStructuredDataProps {
   seller: {
     name: string;
     type: 'Person' | 'Organization';
+    /** Seller's shop page — links the listing to the seller entity. */
+    url?: string;
   };
   category?: string;
   location?: string;
+  /** Ad ID, used as the stable identifier for this listing. */
+  sku?: string | number;
+  /** When the listing went live (approval time). */
+  validFrom?: Date | null;
+  /** When the listing expires — Google warns on offers with no priceValidUntil. */
+  priceValidUntil?: Date | null;
 }
 
+const toIsoDate = (date?: Date | null): string | undefined =>
+  date ? date.toISOString().split('T')[0] : undefined;
+
 export function generateProductStructuredData(props: ProductStructuredDataProps) {
+  const validFrom = toIsoDate(props.validFrom);
+  const priceValidUntil = toIsoDate(props.priceValidUntil);
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
+    '@id': props.url,
     name: props.name,
     description: props.description,
     image: props.image,
+    ...(props.sku && { sku: String(props.sku), productID: String(props.sku) }),
     offers: {
       '@type': 'Offer',
       price: props.price,
@@ -36,13 +52,27 @@ export function generateProductStructuredData(props: ProductStructuredDataProps)
       ...(props.condition && { itemCondition: `https://schema.org/${props.condition}` }),
       availability: `https://schema.org/${props.availability}`,
       url: props.url,
+      ...(validFrom && { validFrom }),
+      ...(priceValidUntil && { priceValidUntil }),
       seller: {
         '@type': props.seller.type,
         name: props.seller.name,
+        ...(props.seller.url && { url: props.seller.url }),
       },
+      // Where the item can actually be collected. `locationCreated` was wrong
+      // here — it's a CreativeWork property, not an offer's location.
+      ...(props.location && {
+        availableAtOrFrom: {
+          '@type': 'Place',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: props.location,
+            addressCountry: 'NP',
+          },
+        },
+      }),
     },
     ...(props.category && { category: props.category }),
-    ...(props.location && { locationCreated: props.location }),
   };
 }
 

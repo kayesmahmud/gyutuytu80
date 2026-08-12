@@ -54,11 +54,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.blog_tags.findMany({
       select: { slug: true },
     }).catch(() => [] as { slug: string }[]),
-    // Fetch shop profiles (users with shop_slug)
+    // Fetch shop profiles that actually have something to show.
+    // A shop with zero approved ads is a blank page — submitting it wastes crawl
+    // budget and lands in "Crawled - currently not indexed".
     prisma.users.findMany({
       where: {
         is_active: true,
         shop_slug: { not: null },
+        NOT: { role: { in: ['editor', 'super_admin'] } },
+        ads_ads_user_idTousers: {
+          some: { status: 'approved', deleted_at: null },
+        },
       },
       select: { shop_slug: true, custom_shop_slug: true },
       take: 50000,

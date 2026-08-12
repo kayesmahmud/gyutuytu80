@@ -1,5 +1,7 @@
+import { cache } from 'react';
 import { prisma } from '@thulobazaar/database';
 import { getLocationBreadcrumb } from '@/lib/location';
+import { getImageUrl } from '@/lib/images/imageUrl';
 
 const VERIFIED_BUSINESS_STATUSES = ['approved', 'verified'];
 
@@ -266,15 +268,51 @@ export async function getShopProfile(shopSlug: string): Promise<ShopProfile | nu
   return shopById ? await transformShop(shopById) : null;
 }
 
-export function buildShopMetadata(shop: ShopProfile, lang?: string) {
+/**
+ * The one slug a shop should be indexed under.
+ *
+ * A shop is reachable via its custom slug, its generated slug, and an ID-suffix
+ * fallback. Canonical URLs, the sitemap and on-page JSON-LD must all agree on a
+ * single one of those, or Google reports "Duplicate without user-selected
+ * canonical". Custom slug wins because it's the URL the seller chose.
+ */
+export function getCanonicalShopSlug(shop: ShopProfile): string | null {
+  return shop.customShopSlug || shop.shopSlug;
+}
+
+/**
+ * Whether a shop has anything worth indexing.
+ *
+ * Wrapped in React cache() so generateMetadata and the page render share one
+ * query per request.
+ */
+export const shopHasApprovedAds = cache(async (userId: number): Promise<boolean> => {
+  const firstAd = await prisma.ads.findFirst({
+    where: { user_id: userId, status: 'approved', deleted_at: null },
+    select: { id: true },
+  });
+  return firstAd !== null;
+});
+
+interface ShopMetadataOptions {
+  /** When false, the shop renders an empty page — tell Google not to index it. */
+  hasAds?: boolean;
+}
+
+export function buildShopMetadata(shop: ShopProfile, lang?: string, options: ShopMetadataOptions = {}) {
   const displayName = shop.businessName || shop.fullName;
   const description =
     shop.businessDescription || shop.bio || `Shop profile for ${displayName}. Search products and contact the seller.`;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
-  const shopSlug = shop.shopSlug;
+  const shopSlug = getCanonicalShopSlug(shop);
   const currentLang = lang || 'en';
   const title = `${displayName} - Shop | Thulo Bazaar`;
   const desc = description.substring(0, 160);
+
+  // Cover photo is the wide image; fall back to the avatar so shared links are
+  // never a bare text card.
+  const shareImage =
+    getImageUrl(shop.coverPhoto, 'avatars') || getImageUrl(shop.avatar, 'avatars');
 
   return {
     title,
@@ -286,11 +324,13 @@ export function buildShopMetadata(shop: ShopProfile, lang?: string) {
       siteName: 'Thulo Bazaar',
       locale: currentLang === 'ne' ? 'ne_NP' : 'en_US',
       type: 'website' as const,
+      ...(shareImage && { images: [{ url: shareImage, alt: displayName }] }),
     },
     twitter: {
-      card: 'summary' as const,
+      card: shareImage ? ('summary_large_image' as const) : ('summary' as const),
       title,
       description: desc,
+      ...(shareImage && { images: [shareImage] }),
     },
     alternates: {
       canonical: `${baseUrl}/${currentLang}/shop/${shopSlug}`,
@@ -299,5 +339,10 @@ export function buildShopMetadata(shop: ShopProfile, lang?: string) {
         ne: `${baseUrl}/ne/shop/${shopSlug}`,
       },
     },
+    // An empty shop is a blank page. Keep follow so the seller's other links are
+    // still crawled, and drop the index so it stops consuming crawl budget.
+    ...(options.hasAds === false && {
+      robots: { index: false, follow: true },
+    }),
   };
 }

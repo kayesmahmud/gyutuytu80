@@ -13,8 +13,12 @@ interface AdJsonLdProps {
   url: string;
   sellerName: string;
   sellerType?: 'Person' | 'Organization';
+  sellerUrl?: string;
   category?: string;
   location?: string;
+  adId?: number;
+  publishedAt?: Date | null;
+  expiresAt?: Date | null;
   breadcrumbItems: { name: string; url: string }[];
 }
 
@@ -47,9 +51,13 @@ export function AdJsonLd(props: AdJsonLdProps) {
     seller: {
       name: props.sellerName,
       type: props.sellerType || 'Person',
+      url: props.sellerUrl,
     },
     category: props.category,
     location: props.location,
+    sku: props.adId,
+    validFrom: props.publishedAt,
+    priceValidUntil: props.expiresAt,
   });
 
   const breadcrumbData = generateBreadcrumbStructuredData({

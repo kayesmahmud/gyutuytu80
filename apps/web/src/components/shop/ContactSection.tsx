@@ -282,7 +282,9 @@ export function ContactSection({
                 <a
                   href={ensureHttps(contactData.businessWebsite)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow ugc"
+                  title={`${t('website')}: ${contactData.businessWebsite}`}
+                  aria-label={`${t('website')}: ${contactData.businessWebsite}`}
                   className="text-rose-500 hover:underline font-semibold text-sm sm:text-base break-all"
                 >
                   {contactData.businessWebsite}
@@ -298,7 +300,9 @@ export function ContactSection({
                 <a
                   href={ensureHttps(contactData.googleMapsLink)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow ugc"
+                  title={t('viewOnGoogleMaps')}
+                  aria-label={t('viewOnGoogleMaps')}
                   className="text-rose-500 hover:underline font-semibold text-sm sm:text-base"
                 >
                   {t('viewOnGoogleMaps')}
@@ -314,7 +318,9 @@ export function ContactSection({
                 <a
                   href={buildSocialUrl(contactData.facebookUsername, 'facebook')}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow ugc"
+                  title={`${t('facebookLabel')}: ${contactData.facebookUsername}`}
+                  aria-label={`${t('facebookLabel')}: ${contactData.facebookUsername}`}
                   className="text-rose-500 hover:underline font-semibold text-sm sm:text-base break-all"
                 >
                   {contactData.facebookUsername}
@@ -330,7 +336,9 @@ export function ContactSection({
                 <a
                   href={buildSocialUrl(contactData.instagramUsername, 'instagram')}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow ugc"
+                  title={`${t('instagramLabel')}: @${contactData.instagramUsername}`}
+                  aria-label={`${t('instagramLabel')}: @${contactData.instagramUsername}`}
                   className="text-rose-500 hover:underline font-semibold text-sm sm:text-base break-all"
                 >
                   @{contactData.instagramUsername}
@@ -346,7 +354,9 @@ export function ContactSection({
                 <a
                   href={buildSocialUrl(contactData.tiktokUsername, 'tiktok')}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow ugc"
+                  title={`${t('tiktokLabel')}: @${contactData.tiktokUsername}`}
+                  aria-label={`${t('tiktokLabel')}: @${contactData.tiktokUsername}`}
                   className="text-rose-500 hover:underline font-semibold text-sm sm:text-base break-all"
                 >
                   @{contactData.tiktokUsername}

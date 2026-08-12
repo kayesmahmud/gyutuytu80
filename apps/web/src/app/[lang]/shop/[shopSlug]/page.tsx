@@ -7,10 +7,12 @@ import ShopSidebar from './ShopSidebar';
 import ShopEmptyState from './ShopEmptyState';
 import ReportShopButton from './ReportShopButton';
 import ShopAdCard from './ShopAdCard';
-import { getShopProfile, buildShopMetadata } from '@/lib/shops';
+import { getShopProfile, buildShopMetadata, getCanonicalShopSlug, shopHasApprovedAds } from '@/lib/shops';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { ShopJsonLd } from '@/components/seo/ShopJsonLd';
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
+import { ensureHttps, buildSocialUrl, extractSocialUsername } from '@/utils/socialMedia';
+import { getImageUrl } from '@/lib/images/imageUrl';
 
 interface ShopProfilePageProps {
   params: Promise<{ lang: string; shopSlug: string }>;
@@ -22,7 +24,8 @@ export async function generateMetadata({ params }: ShopProfilePageProps): Promis
   try {
     const shop = await getShopProfile(shopSlug);
     if (shop) {
-      return buildShopMetadata(shop, lang);
+      const hasAds = await shopHasApprovedAds(shop.id);
+      return buildShopMetadata(shop, lang, { hasAds });
     }
   } catch (error) {
     console.error('Error fetching shop metadata:', error);
@@ -32,6 +35,9 @@ export async function generateMetadata({ params }: ShopProfilePageProps): Promis
   return {
     title: t('shopFallbackTitle'),
     description: t('shopFallbackDescription'),
+    // Without this the not-found shell is indexable and inherits the homepage
+    // canonical from the root layout.
+    robots: { index: false, follow: true },
   };
 }
 
@@ -89,6 +95,20 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
   };
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
+  // Structured data must point at the same URL as the canonical, not at whichever
+  // slug variant the visitor happened to arrive on.
+  const canonicalSlug = getCanonicalShopSlug(shop) || shopSlug;
+  const shopUrl = `${baseUrl}/${lang}/shop/${canonicalSlug}`;
+
+  // The seller's own profiles — sameAs is how Google ties this shop to its
+  // off-site presence. Older rows stored a bare username instead of a URL, so
+  // round-trip each one through extract/build to guarantee an absolute URL.
+  const socialProfiles = [
+    shop.facebookUrl && buildSocialUrl(extractSocialUsername(shop.facebookUrl, 'facebook'), 'facebook'),
+    shop.instagramUrl && buildSocialUrl(extractSocialUsername(shop.instagramUrl, 'instagram'), 'instagram'),
+    shop.tiktokUrl && buildSocialUrl(extractSocialUsername(shop.tiktokUrl, 'tiktok'), 'tiktok'),
+    shop.businessWebsite && ensureHttps(shop.businessWebsite),
+  ].filter((url): url is string => Boolean(url));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -96,15 +116,18 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
         items={[
           { name: 'Home', url: `${baseUrl}/${lang}` },
           { name: 'Shops', url: `${baseUrl}/${lang}/shops` },
-          { name: shop.businessName || shop.fullName, url: `${baseUrl}/${lang}/shop/${shopSlug}` },
+          { name: shop.businessName || shop.fullName, url: shopUrl },
         ]}
       />
       <ShopJsonLd
         name={shop.businessName || shop.fullName}
         description={shop.businessDescription || shop.bio || `Shop profile for ${shop.businessName || shop.fullName}`}
-        url={`${baseUrl}/${lang}/shop/${shopSlug}`}
-        image={shop.avatar || undefined}
+        url={shopUrl}
+        image={getImageUrl(shop.avatar, 'avatars') || undefined}
         location={shop.locationFullPath || shop.location?.name || undefined}
+        sameAs={socialProfiles}
+        telephone={shop.businessPhone || shop.phone || undefined}
+        numberOfItems={stats.totalAds}
       />
       {/* Breadcrumb - Hidden visually but kept for SEO */}
       <nav aria-label="Breadcrumb" className="sr-only">

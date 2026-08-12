@@ -155,6 +155,7 @@ const getAdBySlug = cache(async (slug: string) => {
           business_phone: true,
           avatar: true,
           shop_slug: true,
+          custom_shop_slug: true,
           account_type: true,
           business_name: true,
           individual_verified: true,
@@ -370,6 +371,10 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
   const sellerName = ad.users_ads_user_idTousers?.business_name || ad.users_ads_user_idTousers?.full_name || 'Seller';
   const sellerType = ad.users_ads_user_idTousers?.account_type === 'business' ? 'Organization' as const : 'Person' as const;
+  // Must match the shop page's canonical slug, not just shop_slug.
+  const sellerSlug =
+    ad.users_ads_user_idTousers?.custom_shop_slug || ad.users_ads_user_idTousers?.shop_slug;
+  const sellerShopUrl = sellerSlug ? `${baseUrl}/${lang}/shop/${sellerSlug}` : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -382,8 +387,12 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
         url={`${baseUrl}/${lang}/ad/${slug}`}
         sellerName={sellerName}
         sellerType={sellerType}
+        sellerUrl={sellerShopUrl}
         category={fullCategory || undefined}
         location={fullLocation || undefined}
+        adId={ad.id}
+        publishedAt={ad.reviewed_at || ad.created_at}
+        expiresAt={ad.expires_at}
         breadcrumbItems={breadcrumbItems.filter(b => b.path).map(b => ({
           name: b.label,
           url: `${baseUrl}${b.path}`,
