@@ -5,6 +5,26 @@
  */
 
 /**
+ * Normalize query parameters to ensure consistent ordering
+ * Google treats ?a=1&b=2 differently from ?b=2&a=1
+ * This function sorts params alphabetically for consistent canonical URLs
+ *
+ * @param params - Query parameters object
+ * @returns Normalized query string with sorted parameters
+ */
+function normalizeQueryParams(params: Record<string, string | number | boolean | undefined | null>): string {
+  // Filter out undefined/null values and sort alphabetically
+  const entries = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => [key, String(value)] as [string, string])
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+
+  if (entries.length === 0) return '';
+
+  return new URLSearchParams(entries).toString();
+}
+
+/**
  * Build SEO-friendly ad browsing URL from location and category
  *
  * @param lang - Language code (e.g., 'en', 'np')
@@ -32,16 +52,9 @@ export function buildAdUrl(
 
   let url = `/${segments.join('/')}`;
 
-  // Add query parameters if provided
+  // Add normalized query parameters if provided
   if (queryParams) {
-    const searchParams = new URLSearchParams();
-    Object.entries(queryParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        searchParams.set(key, String(value));
-      }
-    });
-
-    const queryString = searchParams.toString();
+    const queryString = normalizeQueryParams(queryParams);
     if (queryString) {
       url += `?${queryString}`;
     }
@@ -85,7 +98,7 @@ export function generateAdListingMetadata(
       description = `Search results for "${searchQuery}". ${totalAds.toLocaleString()} ads found across Nepal.`;
     }
   } else {
-    // Search mode
+    // Browse mode
     if (locationName && categoryName) {
       title = `${categoryName} in ${locationName} | Thulo Bazaar`;
       description = `Search ${totalAds.toLocaleString()} ${categoryName} ads in ${locationName}. Find the best deals on classified ads in Nepal.`;
@@ -105,8 +118,14 @@ export function generateAdListingMetadata(
   const lang = options?.lang || 'en';
   const path = options?.path || `/${lang}/ads`;
   const page = options?.page || 1;
+
+  // SEO Fix: Use page 1 as canonical (no page param for page 1)
+  // This consolidates all paginated results under the first page URL
   const pageSuffix = page > 1 ? `?page=${page}` : '';
+  const canonicalSuffix = ''; // Canonical always points to page 1 (no page param)
   const url = `${baseUrl}${path}${pageSuffix}`;
+  const canonicalUrl = `${baseUrl}${path}${canonicalSuffix}`;
+
   const otherLang = lang === 'en' ? 'ne' : 'en';
   const otherPath = path.replace(`/${lang}/`, `/${otherLang}/`);
 
@@ -127,10 +146,11 @@ export function generateAdListingMetadata(
       description,
     },
     alternates: {
-      canonical: url,
+      // SEO Fix: Page 1 is the canonical for all variations
+      canonical: canonicalUrl,
       languages: {
-        en: `${baseUrl}${lang === 'en' ? path : otherPath}${pageSuffix}`,
-        ne: `${baseUrl}${lang === 'ne' ? path : otherPath}${pageSuffix}`,
+        en: `${baseUrl}${lang === 'en' ? path : otherPath}${canonicalSuffix}`,
+        ne: `${baseUrl}${lang === 'ne' ? path : otherPath}${canonicalSuffix}`,
       },
     },
   };

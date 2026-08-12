@@ -45,6 +45,15 @@ export async function generateMetadata({ params, searchParams }: AdsPageProps): 
     { lang, path, page }
   );
 
+  // SEO Fix: Don't index paginated results (page 2, 3, 4...)
+  // Keep page 1 indexable but mark others as noindex to prevent duplicate content
+  if (page > 1) {
+    return {
+      ...metadata,
+      robots: { index: false, follow: true },
+    };
+  }
+
   return metadata;
 }
 

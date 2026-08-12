@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   poweredByHeader: false,
+  // SEO Fix: Remove trailing slashes to avoid duplicate content (e.g., /ads vs /ads/)
+  trailingSlash: false,
   // Skip TS checking during build — handled separately in CI via tsc --noEmit
   typescript: { ignoreBuildErrors: true },
   transpilePackages: ['@thulobazaar/types', '@thulobazaar/utils', '@thulobazaar/api-client', '@thulobazaar/auth-core'],

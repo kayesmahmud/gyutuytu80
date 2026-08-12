@@ -183,7 +183,13 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
       const description = ad.description?.substring(0, 160) || t('viewDetailsFor', { title: ad.title });
       const priceText = ad.price ? `Rs. ${parseFloat(ad.price.toString()).toLocaleString()}` : t('priceOnRequest');
 
-      return {
+      // SEO Fix: Quality-based noindex for thin content
+      // Don't index ads with no images or very short descriptions (low quality signal)
+      const hasImages = (ad.ad_images?.length || 0) > 0;
+      const hasDescription = (ad.description?.trim() || '').length >= 20;
+      const isLowQuality = !hasImages || !hasDescription;
+
+      const metadata: Metadata = {
         title: `${ad.title} | ${priceText} - Thulo Bazaar`,
         description,
         openGraph: {
@@ -225,6 +231,12 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
           },
         },
       };
+
+      if (isLowQuality) {
+        metadata.robots = { index: false, follow: true };
+      }
+
+      return metadata;
     }
   } catch (error) {
     console.error('Error fetching ad metadata:', error);
@@ -235,6 +247,7 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
   return {
     title: `${title} - Thulo Bazaar`,
     description: t('adFallbackDescription', { title }),
+    robots: { index: false, follow: true }, // Don't index fallback/missing ads
   };
 }
 

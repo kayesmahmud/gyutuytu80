@@ -4,11 +4,18 @@ import { prisma } from '@thulobazaar/database';
 // Generate at request time (DB not available during build)
 export const dynamic = 'force-dynamic';
 
+/**
+ * Sitemap generation strategy:
+ * - Includes static pages, categories, ads, shops, blog content
+ * - Does NOT include paginated results (?page=2, etc.) to avoid duplicate content
+ * - Does NOT include filtered variations (?sortBy=, ?minPrice=, etc.) to reduce crawl budget waste
+ * - Google will discover filter combinations via internal links
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
 
   // Parallel data fetching for performance
-  const [ads, categories, blogPosts, blogCategories, blogAuthors, blogTags, shops] = await Promise.all([
+  const [ads, categories, locations, blogPosts, blogCategories, blogAuthors, blogTags, shops] = await Promise.all([
     // Fetch all approved ads
     prisma.ads.findMany({
       where: { status: 'approved', deleted_at: null },
@@ -18,6 +25,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
     // Fetch all parent categories
     prisma.categories.findMany({
+      where: { parent_id: null },
+      select: { slug: true },
+    }),
+    // Fetch all provinces (parent locations) for location browse pages
+    prisma.locations.findMany({
       where: { parent_id: null },
       select: { slug: true },
     }),
@@ -69,6 +81,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const categoryPages = categories.flatMap((category) =>
     ['en', 'ne'].map((lang) => ({
       url: `${baseUrl}/${lang}/ads/${category.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    }))
+  );
+
+  // Location pages (both languages) - province-level browse pages
+  const locationPages = locations.flatMap((location) =>
+    ['en', 'ne'].map((lang) => ({
+      url: `${baseUrl}/${lang}/ads/${location.slug}`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.8,
@@ -140,6 +162,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticPages,
     ...categoryPages,
+    ...locationPages,
     ...adPages,
     ...shopPages,
     ...blogPostPages,
