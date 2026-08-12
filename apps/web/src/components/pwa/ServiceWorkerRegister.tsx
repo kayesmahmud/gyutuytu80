@@ -2,50 +2,54 @@
 
 import { useEffect } from 'react';
 
+const UPDATE_CHECK_INTERVAL_MS = 60 * 1000;
+
 export default function ServiceWorkerRegister() {
     useEffect(() => {
         if (
-            typeof window !== 'undefined' &&
-            'serviceWorker' in navigator &&
-            process.env.NODE_ENV === 'production'
+            typeof window === 'undefined' ||
+            !('serviceWorker' in navigator) ||
+            process.env.NODE_ENV !== 'production'
         ) {
-            // Register service worker
-            navigator.serviceWorker
-                .register('/sw.js')
-                .then((registration) => {
-                    console.log('[SW] Service Worker registered:', registration);
-
-                    // Check for updates periodically
-                    setInterval(() => {
-                        registration.update();
-                    }, 60000); // Check every minute
-
-                    // Listen for updates
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        if (newWorker) {
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // New service worker available, prompt user to reload
-                                    if (confirm('New version available! Reload to update?')) {
-                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                        window.location.reload();
-                                    }
-                                }
-                            });
-                        }
-                    });
-                })
-                .catch((error) => {
-                    console.error('[SW] Service Worker registration failed:', error);
-                });
-
-            // Handle controller change (new SW activated)
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                window.location.reload();
-            });
+            return;
         }
+
+        // Whether this page load started under an existing worker. On a first-ever
+        // install there is no controller, and clients.claim() would otherwise
+        // trigger a pointless reload on the visitor's very first page view.
+        const hadController = Boolean(navigator.serviceWorker.controller);
+        let reloading = false;
+
+        const onControllerChange = () => {
+            if (!hadController || reloading) return;
+            reloading = true;
+            window.location.reload();
+        };
+
+        navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+
+        let updateTimer: ReturnType<typeof setInterval> | undefined;
+
+        navigator.serviceWorker
+            .register('/sw.js')
+            .then((registration) => {
+                // The worker calls skipWaiting() on install and clients.claim() on
+                // activate, so an update applies itself and controllerchange above
+                // does the single reload. No confirm() prompt — it interrupted
+                // users mid-task and the reload happened regardless of the answer.
+                updateTimer = setInterval(() => {
+                    registration.update();
+                }, UPDATE_CHECK_INTERVAL_MS);
+            })
+            .catch((error) => {
+                console.error('[SW] Service Worker registration failed:', error);
+            });
+
+        return () => {
+            navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+            if (updateTimer) clearInterval(updateTimer);
+        };
     }, []);
 
-    return null; // This component doesn't render anything
+    return null;
 }

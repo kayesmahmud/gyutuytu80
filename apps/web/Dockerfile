@@ -61,9 +61,13 @@ RUN npm run build -w packages/types && \
 ARG NEXT_PUBLIC_API_URL=https://api.thulobazaar.com.np
 ARG NEXT_PUBLIC_SITE_URL=https://thulobazaar.com.np
 ARG NEXT_PUBLIC_API_HOSTNAME=api.thulobazaar.com.np
+# Changes every deploy — names the service worker cache so activating a new
+# worker purges every previous build's cache. See src/app/sw.js/route.ts.
+ARG NEXT_PUBLIC_BUILD_ID=dev
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_API_HOSTNAME=$NEXT_PUBLIC_API_HOSTNAME
+ENV NEXT_PUBLIC_BUILD_ID=$NEXT_PUBLIC_BUILD_ID
 
 # Build Next.js
 RUN cd apps/web && npx next build
@@ -74,6 +78,11 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3333
+
+# Carried into the runtime image so the service worker route reports the build
+# it was shipped from.
+ARG NEXT_PUBLIC_BUILD_ID=dev
+ENV NEXT_PUBLIC_BUILD_ID=$NEXT_PUBLIC_BUILD_ID
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
