@@ -45,8 +45,21 @@ export async function generateMetadata({ params, searchParams }: AdsPageProps): 
     { lang, path, page }
   );
 
-  // Note: robots metadata for pagination is handled by layout.tsx
-  return metadata;
+  // SEO: Don't index paginated results (page 2, 3, 4...)
+  // This prevents duplicate content from being indexed
+  const result: Metadata = {
+    ...metadata,
+  };
+
+  // Explicitly set robots meta tag for paginated results
+  if (page > 1) {
+    result.robots = {
+      index: false,
+      follow: true,
+    };
+  }
+
+  return result;
 }
 
 export default async function AdsPage({ params, searchParams }: AdsPageProps) {
