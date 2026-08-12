@@ -149,7 +149,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [
     { path: '', changeFrequency: 'daily' as const, priority: 1.0 },
     { path: '/ads', changeFrequency: 'hourly' as const, priority: 0.9 },
-    { path: '/shops', changeFrequency: 'daily' as const, priority: 0.7 },
+    // /shops is intentionally absent — it's noindex. Individual shop pages are
+    // the search landing pages and they're listed separately below.
     { path: '/blog', changeFrequency: 'daily' as const, priority: 0.8 },
     { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.4 },
     { path: '/faq', changeFrequency: 'monthly' as const, priority: 0.4 },

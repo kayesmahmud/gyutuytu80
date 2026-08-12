@@ -52,6 +52,16 @@ export async function generateMetadata({ params, searchParams }: ShopsPageProps)
         'x-default': `${baseUrl}/en/shops${pageSuffix}`,
       },
     },
+    // The directory itself isn't a search landing page — the individual shop
+    // pages are. At 24 shops/page that's ~92 paginated URLs per language, and
+    // every ?category x ?location combination is another one on top.
+    //
+    // follow stays ON deliberately: this listing is the only remaining crawl
+    // path to shops with no ads (they were dropped from the sitemap), and
+    // Google has to reach those pages to see their noindex before it will drop
+    // them from the index. Blocking this in robots.txt instead would strand
+    // them as "Indexed, though blocked by robots.txt".
+    robots: { index: false, follow: true },
   };
 }
 
