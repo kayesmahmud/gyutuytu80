@@ -34,6 +34,7 @@ export async function generateMetadata({ params }: SupportPageProps): Promise<Me
       languages: {
         en: `${baseUrl}/en/support`,
         ne: `${baseUrl}/ne/support`,
+        'x-default': `${baseUrl}/en/support`,
       },
     },
   };

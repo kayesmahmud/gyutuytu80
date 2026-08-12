@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       languages: {
         en: `${baseUrl}/en/blog/category/${slug}`,
         ne: `${baseUrl}/ne/blog/category/${slug}`,
+        'x-default': `${baseUrl}/en/blog/category/${slug}`,
       },
     },
     openGraph: {

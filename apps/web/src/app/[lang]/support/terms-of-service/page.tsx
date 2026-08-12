@@ -34,6 +34,7 @@ export async function generateMetadata({ params }: TermsOfServicePageProps): Pro
       languages: {
         en: `${baseUrl}/en/support/terms-of-service`,
         ne: `${baseUrl}/ne/support/terms-of-service`,
+        'x-default': `${baseUrl}/en/support/terms-of-service`,
       },
     },
   };

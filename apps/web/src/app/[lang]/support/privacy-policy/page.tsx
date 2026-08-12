@@ -34,6 +34,7 @@ export async function generateMetadata({ params }: PrivacyPolicyPageProps): Prom
       languages: {
         en: `${baseUrl}/en/support/privacy-policy`,
         ne: `${baseUrl}/ne/support/privacy-policy`,
+        'x-default': `${baseUrl}/en/support/privacy-policy`,
       },
     },
   };

@@ -49,6 +49,7 @@ export async function generateMetadata({ params, searchParams }: ShopsPageProps)
       languages: {
         en: `${baseUrl}/en/shops${pageSuffix}`,
         ne: `${baseUrl}/ne/shops${pageSuffix}`,
+        'x-default': `${baseUrl}/en/shops${pageSuffix}`,
       },
     },
   };

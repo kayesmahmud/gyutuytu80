@@ -337,6 +337,7 @@ export function buildShopMetadata(shop: ShopProfile, lang?: string, options: Sho
       languages: {
         en: `${baseUrl}/en/shop/${shopSlug}`,
         ne: `${baseUrl}/ne/shop/${shopSlug}`,
+        'x-default': `${baseUrl}/en/shop/${shopSlug}`,
       },
     },
     // An empty shop is a blank page. Keep follow so the seller's other links are

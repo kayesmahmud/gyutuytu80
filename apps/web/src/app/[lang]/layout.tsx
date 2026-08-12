@@ -81,6 +81,9 @@ export async function generateMetadata({
       languages: {
         en: `${baseUrl}/en`,
         ne: `${baseUrl}/ne`,
+        // Tells Google which version to serve when no language matches.
+        // Without it, en and ne compete instead of clustering.
+        'x-default': `${baseUrl}/en`,
       },
     },
     openGraph: {

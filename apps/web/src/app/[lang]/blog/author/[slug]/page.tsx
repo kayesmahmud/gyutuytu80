@@ -35,6 +35,7 @@ export async function generateMetadata({ params }: AuthorPageProps): Promise<Met
       languages: {
         en: `${baseUrl}/en/blog/author/${slug}`,
         ne: `${baseUrl}/ne/blog/author/${slug}`,
+        'x-default': `${baseUrl}/en/blog/author/${slug}`,
       },
     },
     openGraph: {

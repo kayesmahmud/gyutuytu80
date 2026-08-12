@@ -151,6 +151,7 @@ export function generateAdListingMetadata(
       languages: {
         en: `${baseUrl}${lang === 'en' ? path : otherPath}${canonicalSuffix}`,
         ne: `${baseUrl}${lang === 'ne' ? path : otherPath}${canonicalSuffix}`,
+        'x-default': `${baseUrl}${lang === 'en' ? path : otherPath}${canonicalSuffix}`,
       },
     },
   };

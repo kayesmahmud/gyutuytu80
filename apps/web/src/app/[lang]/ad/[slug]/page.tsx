@@ -213,6 +213,7 @@ export async function generateMetadata({ params }: AdDetailPageProps): Promise<M
           languages: {
             en: `${baseUrl}/en/ad/${slug}`,
             ne: `${baseUrl}/ne/ad/${slug}`,
+            'x-default': `${baseUrl}/en/ad/${slug}`,
           },
         },
         appLinks: {

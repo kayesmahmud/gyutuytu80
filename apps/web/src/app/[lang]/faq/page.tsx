@@ -44,6 +44,7 @@ export async function generateMetadata({ params }: FAQPageProps): Promise<Metada
       languages: {
         en: `${baseUrl}/en/faq`,
         ne: `${baseUrl}/ne/faq`,
+        'x-default': `${baseUrl}/en/faq`,
       },
     },
   };

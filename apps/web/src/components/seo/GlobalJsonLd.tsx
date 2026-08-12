@@ -7,15 +7,24 @@ const BASE_URL = 'https://thulobazaar.com.np';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.thulobazaar.mobile';
 const APP_STORE_URL = 'https://apps.apple.com/us/app/thulo-bazaar/id6774762315';
 
+// Keep in sync with the footer — these are the profiles Google uses to tie the
+// site to the same entity across the web.
+const SOCIAL_PROFILES = [
+  'https://facebook.com/thulobazaar',
+  'https://instagram.com/thulobazaar',
+  'https://tiktok.com/@thulobazaar',
+  'https://youtube.com/thulobazaar',
+  PLAY_STORE_URL,
+  APP_STORE_URL,
+];
+
 export function GlobalJsonLd({ lang }: { lang: string }) {
   const orgData = generateOrganizationStructuredData({
     name: 'Thulo Bazaar',
     url: BASE_URL,
     logo: `${BASE_URL}/logo.png`,
     description: "Nepal's Leading Classifieds Marketplace - Buy & Sell Everything",
-    sameAs: [
-      'https://www.facebook.com/thulobazaar',
-    ],
+    sameAs: SOCIAL_PROFILES,
   });
 
   const websiteData = generateWebsiteStructuredData({
@@ -37,13 +46,10 @@ export function GlobalJsonLd({ lang }: { lang: string }) {
       price: '0',
       priceCurrency: 'NPR',
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '2500',
-      bestRating: '5',
-      worstRating: '1',
-    },
+    // No aggregateRating here on purpose. Self-declared ratings we can't tie to
+    // a real review source are a spam-policy risk (manual action affects the
+    // whole domain) and earn no rich result. If you want one back, pull the live
+    // Play Store / App Store figures — don't hardcode a number.
     image: `${BASE_URL}/logo.png`,
     url: `${BASE_URL}/${lang}`,
     installUrl: PLAY_STORE_URL,

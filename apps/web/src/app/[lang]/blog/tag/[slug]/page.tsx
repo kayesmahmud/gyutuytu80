@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
       languages: {
         en: `${baseUrl}/en/blog/tag/${slug}`,
         ne: `${baseUrl}/ne/blog/tag/${slug}`,
+        'x-default': `${baseUrl}/en/blog/tag/${slug}`,
       },
     },
     openGraph: {

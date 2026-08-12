@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: HelpPageProps): Promise<Metad
       languages: {
         en: `${baseUrl}/en/help`,
         ne: `${baseUrl}/ne/help`,
+        'x-default': `${baseUrl}/en/help`,
       },
     },
   };

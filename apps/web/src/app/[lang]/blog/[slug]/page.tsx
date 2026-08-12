@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     keywords: tags,
     alternates: {
       canonical: `${baseUrl}/${lang}/blog/${slug}`,
-      languages: { en: `${baseUrl}/en/blog/${slug}`, ne: `${baseUrl}/ne/blog/${slug}` },
+      languages: { en: `${baseUrl}/en/blog/${slug}`, ne: `${baseUrl}/ne/blog/${slug}`, 'x-default': `${baseUrl}/en/blog/${slug}` },
     },
     openGraph: {
       title,
