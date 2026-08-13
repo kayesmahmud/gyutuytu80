@@ -19,6 +19,28 @@ const PRIVATE_PATHS = [
 
 const LOCALES = ['en', 'ne'];
 
+// Crawlers that collect content to train models. Blocking them costs no traffic
+// — they don't send visitors — so we keep the listings out of training corpora.
+//
+// Note what is deliberately NOT here: OAI-SearchBot, ChatGPT-User, PerplexityBot
+// and Claude-User are AI *search* agents that do send real visitors (OpenAI
+// alone: 876 requests/24h, +156%, 474 of them ChatGPT-User). They stay allowed
+// by the '*' rule above.
+//
+// Google-Extended is also deliberately absent: it gates whether listings can
+// appear in Google AI Overviews, which render at the top of ordinary search
+// results. It has no bearing on normal Googlebot ranking — that's a separate
+// agent — so blocking it only costs visibility.
+const AI_TRAINING_CRAWLERS = [
+  'GPTBot',
+  'ClaudeBot',
+  'CCBot',
+  'Applebot-Extended',
+  'meta-externalagent',
+  'Bytespider',
+  'Amazonbot',
+];
+
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thulobazaar.com.np';
 
@@ -39,6 +61,13 @@ export default function robots(): MetadataRoute.Robots {
           ...localisedDisallows,
           '/*?promoted=*',
         ],
+      },
+      // These only take effect once Cloudflare's "Managed robots.txt" toggle
+      // (AI Crawl Control) is OFF. While it is on, Cloudflare appends its own
+      // block to this file and its Google-Extended disallow would still apply.
+      {
+        userAgent: AI_TRAINING_CRAWLERS,
+        disallow: '/',
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
