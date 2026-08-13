@@ -67,7 +67,19 @@ export default async function middleware(req: NextRequest) {
   // Printed on marketing material and told to shop owners verbally, so they get
   // to work without a locale prefix. Permanent so the localised URL is the one
   // that accrues search value.
-  if (pathname === '/oursignboard' || pathname === '/oursignboard/') {
+  // Next strips the trailing slash before middleware runs, so only the bare path
+  // ever reaches here.
+  if (pathname === '/oursignboard') {
+    return NextResponse.redirect(new URL('/en/oursignboard', req.url), 308);
+  }
+
+  // That page is English only, so send every other locale to /en. This has to
+  // happen here rather than with a redirect() in the page: [lang] is
+  // force-dynamic, so the page body runs only after the 200 has already been
+  // streamed, and redirect() there degrades to a client-side one (verified — it
+  // returns 200 with a NEXT_REDIRECT payload). Middleware is the only place the
+  // status can still be decided.
+  if (/^\/(?!en\/)[a-z]{2}\/oursignboard$/.test(pathname)) {
     return NextResponse.redirect(new URL('/en/oursignboard', req.url), 308);
   }
 
@@ -204,8 +216,10 @@ export const config = {
     // Redirect routes
     '/:lang/all-ads',
     '/:lang/search',
-    // Vanity path — the locale-less URL we hand out to shop owners
+    // Vanity path — the locale-less URL we hand out to shop owners — plus the
+    // localised form, so non-English locales can be redirected to /en.
     '/oursignboard',
+    '/:lang/oursignboard',
     // Ad pages (for eSewa callback handling)
     '/:lang/ad/:slug*',
     // Single-segment paths only, so isUnknownRootPath can 404 junk like
