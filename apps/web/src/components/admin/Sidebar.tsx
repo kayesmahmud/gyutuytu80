@@ -35,6 +35,7 @@ import {
   Layers,
   Lock,
   Send,
+  Signpost,
   type LucideIcon,
 } from 'lucide-react';
 import { AdminTheme, getRoleLabel } from '@/lib/themes';
@@ -100,6 +101,7 @@ const iconMap: Record<string, LucideIcon> = {
   Layers,
   Lock,
   Send,
+  Signpost,
 };
 
 export function Sidebar({

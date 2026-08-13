@@ -63,6 +63,14 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // ===== VANITY PATHS =====
+  // Printed on marketing material and told to shop owners verbally, so they get
+  // to work without a locale prefix. Permanent so the localised URL is the one
+  // that accrues search value.
+  if (pathname === '/oursignboard' || pathname === '/oursignboard/') {
+    return NextResponse.redirect(new URL('/en/oursignboard', req.url), 308);
+  }
+
   // ===== ESEWA CALLBACK REDIRECT =====
   // Handle eSewa callbacks that land on wrong URLs (due to old cached code)
   // eSewa returns with ?data= param containing base64 encoded response
@@ -196,6 +204,8 @@ export const config = {
     // Redirect routes
     '/:lang/all-ads',
     '/:lang/search',
+    // Vanity path — the locale-less URL we hand out to shop owners
+    '/oursignboard',
     // Ad pages (for eSewa callback handling)
     '/:lang/ad/:slug*',
     // Single-segment paths only, so isUnknownRootPath can 404 junk like

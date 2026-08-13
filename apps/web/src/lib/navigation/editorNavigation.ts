@@ -132,6 +132,11 @@ export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}
           icon: 'TrendingUp',
           label: 'Moderation Analytics',
         },
+        {
+          href: `/${lang}/editor/signboard`,
+          icon: 'Signpost',
+          label: 'Signboard Generator',
+        },
       ],
     },
     {
