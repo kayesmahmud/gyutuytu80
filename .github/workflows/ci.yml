@@ -316,6 +316,32 @@ jobs:
             fi
             # ---------------------------------------------------------------
 
+            # ---- Reclaim disk before pulling -------------------------------
+            # Images are built with --no-cache, so every deploy leaves a full
+            # unshared image set behind. The root volume has twice filled to
+            # ~97% and killed a deploy with "no space left on device" during
+            # layer extract. Prune ahead of the pull rather than after the
+            # failure.
+            DISK_PCT=$(df --output=pcent / | tail -1 | tr -dc '0-9')
+            echo "Disk usage before prune: ${DISK_PCT}%"
+            if [ "$DISK_PCT" -ge 70 ]; then
+              # Keep the last 48h of images so a recent version is still
+              # available to roll back to locally. Running containers' images
+              # are never removed by prune.
+              docker image prune -af --filter "until=48h" || true
+              docker builder prune -af || true
+              DISK_PCT=$(df --output=pcent / | tail -1 | tr -dc '0-9')
+              echo "Disk usage after timed prune: ${DISK_PCT}%"
+            fi
+            if [ "$DISK_PCT" -ge 85 ]; then
+              # Still tight — drop every image not backing a running container.
+              # Everything is re-pullable from ECR.
+              echo "Still above 85%, pruning all unused images"
+              docker image prune -af || true
+              echo "Disk usage after full prune: $(df --output=pcent / | tail -1 | tr -dc '0-9')%"
+            fi
+            # ----------------------------------------------------------------
+
             aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin "$ECR_REGISTRY"
             docker compose -f docker-compose.prod.yml pull web api nginx
 
