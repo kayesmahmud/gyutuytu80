@@ -8,9 +8,48 @@ import type { NextRequest } from 'next/server';
  * 2. URL redirects for backward compatibility (old /all-ads and /search URLs)
  * 3. Authentication for protected routes
  */
+// First path segments that are real, locale-less entry points. Everything else
+// with a single segment and no file extension is junk.
+const ROOT_ALLOWLIST = new Set([
+  'en', 'ne',            // locales
+  'api', '_next',        // framework
+  'app', 'auth', 'feeds', // route handlers under src/app
+  'oursignboard',        // vanity path, redirected below
+  '.well-known',
+]);
+
+/**
+ * Reject unknown locale-less paths with a real 404.
+ *
+ * `[lang]` is a dynamic segment, so it matches ANY single-segment path: /.env
+ * and /wp-admin rendered the homepage with HTTP 200 (a soft 404) and served
+ * ~109KB to every vulnerability scanner. The layout's notFound() cannot fix the
+ * status because force-dynamic streams the 200 before the layout body runs, and
+ * `dynamicParams = false` is a no-op once a route is force-dynamic — verified
+ * against a production build. Middleware is the only place the status can still
+ * be decided.
+ *
+ * Deliberately conservative: only single-segment, extension-less paths are
+ * rejected. Anything with a dot (/robots.txt, /sw.js, /favicon.ico, /logo.png)
+ * or more than one segment passes straight through untouched.
+ */
+function isUnknownRootPath(pathname: string): boolean {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length !== 1) return false;
+  const segment = segments[0]!;
+  if (ROOT_ALLOWLIST.has(segment)) return false;
+  // Dot-files (.env) are junk; dotted filenames (robots.txt) are real.
+  if (segment.includes('.') && !segment.startsWith('.')) return false;
+  return true;
+}
+
 export default async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const searchParams = req.nextUrl.searchParams;
+
+  if (isUnknownRootPath(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
 
   // ===== GUARD AGAINST BAD LANG SEGMENTS (e.g., "/undefined/") =====
   if (pathname.startsWith('/undefined/')) {
@@ -159,5 +198,10 @@ export const config = {
     '/:lang/search',
     // Ad pages (for eSewa callback handling)
     '/:lang/ad/:slug*',
+    // Single-segment paths only, so isUnknownRootPath can 404 junk like
+    // /.env and /wp-admin. Scoped to one segment on purpose: the middleware
+    // stays off every real page route, so none of the auth/eSewa logic below
+    // starts running on traffic it never handled before.
+    '/:segment',
   ],
 };

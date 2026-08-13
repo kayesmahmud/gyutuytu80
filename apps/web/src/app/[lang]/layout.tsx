@@ -35,14 +35,6 @@ export async function generateStaticParams() {
   return supportedLanguages.map((lang) => ({ lang }));
 }
 
-// [lang] is a dynamic segment, so it otherwise matches ANY single-segment path:
-// /.env and /wp-admin were rendering the homepage with HTTP 200 (a soft 404),
-// serving ~109KB to every vulnerability scanner. The notFound() call further
-// down can't fix the status because force-dynamic streams the 200 before the
-// layout body runs. Rejecting unknown params at the routing layer returns a
-// real 404 before rendering starts.
-export const dynamicParams = false;
-
 export async function generateMetadata({
   params,
 }: {
