@@ -116,12 +116,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for existing rejected/pending_payment requests (for resubmission logic)
+    // Check for existing rejected/pending_payment requests (for resubmission logic).
+    // Newest application wins: several rejected rows can exist per user, and reviving
+    // an old one would carry over its stale duration/payment entitlement.
     const existingRequest = await prisma.individual_verification_requests.findFirst({
       where: {
         user_id: userId,
         status: { in: ['pending_payment', 'rejected'] },
       },
+      orderBy: { id: 'desc' },
       select: { id: true, status: true, payment_amount: true, duration_days: true },
     });
 
@@ -463,22 +466,33 @@ export async function POST(request: NextRequest) {
     let verificationRequest;
 
     if (isResubmission && existingRequest) {
-      // Update the existing rejected request with new data
-      verificationRequest = await prisma.individual_verification_requests.update({
-        where: { id: existingRequest.id },
-        data: {
-          full_name: fullName.trim(),
-          id_document_type: idDocumentType,
-          id_document_number: idDocumentNumber || '',
-          id_document_front: frontFilename,
-          id_document_back: backFilename,
-          selfie_with_id: selfieFilename,
-          status: verificationStatus,
-          // Keep the original payment info for resubmissions
-          rejection_reason: null, // Clear rejection reason
-          updated_at: new Date(),
-        },
-      });
+      // Update the existing rejected request with new data. Superseded applications
+      // (older rejected/pending_payment rows) are deleted in the same transaction so
+      // a later resubmission can never revive one with stale payment info.
+      [verificationRequest] = await prisma.$transaction([
+        prisma.individual_verification_requests.update({
+          where: { id: existingRequest.id },
+          data: {
+            full_name: fullName.trim(),
+            id_document_type: idDocumentType,
+            id_document_number: idDocumentNumber || '',
+            id_document_front: frontFilename,
+            id_document_back: backFilename,
+            selfie_with_id: selfieFilename,
+            status: verificationStatus,
+            // Keep the original payment info for resubmissions
+            rejection_reason: null, // Clear rejection reason
+            updated_at: new Date(),
+          },
+        }),
+        prisma.individual_verification_requests.deleteMany({
+          where: {
+            user_id: userId,
+            id: { not: existingRequest.id },
+            status: { in: ['rejected', 'pending_payment'] },
+          },
+        }),
+      ]);
 
       console.log(
         `🔄 Individual verification RESUBMITTED by user ${userId}, request ID: ${verificationRequest.id}`

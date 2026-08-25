@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { MessageUserButton } from '../../components/MessageUserButton';
 import type { BusinessVerification, TabStatus } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -300,6 +301,7 @@ function ActionButtons({
           <span>✅</span> Verified Business
         </div>
       )}
+      <MessageUserButton userId={verification.userId} lang={lang} />
       <button
         onClick={() => window.open(`/${lang}/ads?userId=${verification.userId}`, '_blank')}
         className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"

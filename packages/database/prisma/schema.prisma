@@ -407,7 +407,8 @@ model individual_verification_requests {
   users_individual_verification_requests_reviewed_byTousers users?    @relation("individual_verification_requests_reviewed_byTousers", fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_individual_verification_requests_user_idTousers     users     @relation("individual_verification_requests_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([user_id, status], map: "unique_user_pending_request")
+  // DB also has a PARTIAL unique index "unique_user_pending_request" (user_id WHERE status='pending')
+  // that Prisma cannot model — see migration 20260826000000_verification_unique_pending_only.
   @@index([status], map: "idx_individual_verification_status")
   @@index([user_id], map: "idx_individual_verification_user_id")
   @@index([payment_status], map: "idx_individual_verification_payment")
