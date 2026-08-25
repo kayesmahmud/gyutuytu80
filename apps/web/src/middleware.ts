@@ -170,6 +170,25 @@ export default async function middleware(req: NextRequest) {
   const isSuperAdminRoute = superAdminPaths.some(path => pathname.includes(path));
   const isEditorRoute = editorPaths.some(path => pathname.includes(path));
 
+  // Already-authenticated staff landing on a staff login page go straight to
+  // their dashboard. The editor APK cold-starts on the dashboard URL, but this
+  // also covers anyone opening a login link while their session is still valid —
+  // without it the login form renders and invites a pointless re-login.
+  // (Must live here: the editor/super-admin pages are force-dynamic, where a
+  // page-level redirect() does not reliably take effect.)
+  // super_admin must NOT be sent to the editor dashboard: the editor pages'
+  // client guards require strictly role==='editor' and push back to
+  // /editor/login, which would loop forever against this redirect.
+  if (token && pathname.includes('/editor/login') && token.role === 'editor') {
+    return NextResponse.redirect(new URL(`/${lang}/editor/dashboard`, req.url));
+  }
+  if (token && pathname.includes('/editor/login') && token.role === 'super_admin') {
+    return NextResponse.redirect(new URL(`/${lang}/super-admin/dashboard`, req.url));
+  }
+  if (token && pathname.includes('/super-admin/login') && token.role === 'super_admin') {
+    return NextResponse.redirect(new URL(`/${lang}/super-admin/dashboard`, req.url));
+  }
+
   // Skip auth check for login/signin pages
   if (pathname.includes('/login') || pathname.includes('/signin')) {
     return NextResponse.next();

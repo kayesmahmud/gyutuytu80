@@ -28,9 +28,11 @@ class MainActivity : Activity() {
 
     companion object {
         private const val BASE_URL = "https://thulobazaar.com.np"
-        // Start at the editor login; once authenticated it redirects to the
-        // dashboard, and the session cookie persists across launches.
-        private const val START_PATH = "/en/editor/login"
+        // Start at the dashboard: the middleware bounces to the login page only
+        // when the persisted session cookie is missing/expired. Starting at the
+        // login page instead would show a login form on every cold start even
+        // while the session is still valid.
+        private const val START_PATH = "/en/editor/dashboard"
         private const val APP_HOST = "thulobazaar.com.np"
         private const val FILE_CHOOSER_REQUEST = 1001
         private const val NOTIF_PERMISSION_REQUEST = 2001
@@ -113,6 +115,14 @@ class MainActivity : Activity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         webView.saveState(outState)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Cookies are only auto-flushed to disk periodically; an aggressive OEM
+        // process kill right after a session-token rotation would otherwise lose
+        // the newest cookie and trip the API's refresh-token reuse detection.
+        CookieManager.getInstance().flush()
     }
 
     /** Build a deep-link URL from a notification's "route" extra (e.g. /editor/ad-management). */

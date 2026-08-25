@@ -145,10 +145,11 @@ export async function generateBackendToken(user: {
   }
   const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-  // Staff sessions (editor APK especially) must survive a full week without
-  // re-login even when a login elsewhere revokes their refresh-token chain.
-  const isStaff = ['editor', 'super_admin'].includes(user.role);
-
+  // Uniform 24h for all roles. Staff used to get 7d as a workaround for logins
+  // elsewhere revoking their refresh chain; staff are multi-device now (their
+  // logins don't revoke other sessions) and refresh retries on transient
+  // failures, so rotation keeps everyone fresh — and short-lived staff tokens
+  // cap the exposure window on surfaces without per-request DB checks.
   return new SignJWT({
     userId: user.id,
     email: user.email || '',
@@ -157,22 +158,29 @@ export async function generateBackendToken(user: {
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime(isStaff ? '7d' : '24h')
+    .setExpirationTime('24h')
     .sign(JWT_SECRET);
 }
 
 // Generate long-lived refresh token
-export async function generateRefreshToken(user: { id: number }): Promise<string> {
+export async function generateRefreshToken(
+  user: { id: number },
+  // Consumers are single-session: each login kills the previous device's chain.
+  // Staff logins pass false so desktop panel + editor APK can stay signed in
+  // at the same time instead of force-logging each other out daily.
+  revokeExisting: boolean = true
+): Promise<string> {
   const token = crypto.randomBytes(40).toString('hex');
   const days = 30; // Default 30 days
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + days);
 
-  // Revoke all existing refresh tokens for this user (matches API-side behavior)
-  await prisma.refresh_tokens.updateMany({
-    where: { user_id: user.id, is_revoked: false },
-    data: { is_revoked: true },
-  });
+  if (revokeExisting) {
+    await prisma.refresh_tokens.updateMany({
+      where: { user_id: user.id, is_revoked: false },
+      data: { is_revoked: true },
+    });
+  }
 
   await prisma.refresh_tokens.create({
     data: {

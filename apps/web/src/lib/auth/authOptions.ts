@@ -25,10 +25,37 @@ import { userSelectBase, userSelectForAuth, userSelectForOAuth } from './queries
 /**
  * Refresh access token helper
  */
+// Backend tokens live 24h; refresh fires at 23h. NOTE: `iat` cannot be used to
+// track this age — NextAuth re-encodes the session cookie on every session read
+// and jose's setIssuedAt() overwrites `iat` with "now" each time. We track the
+// backend token's age in our own claim, backendTokenIssuedAt, which survives
+// re-encoding, so a failed refresh genuinely retries on the next session read.
+const BACKEND_TOKEN_REFRESH_AFTER_S = 82800; // 23h
+// If refresh keeps failing past the token's real lifetime + grace, the session
+// is unusable anyway (all API calls 401) — force logout instead of a zombie.
+const BACKEND_TOKEN_HARD_EXPIRY_S = 26 * 3600; // 24h lifetime + 2h grace
+
+function backendTokenAge(token: any): number {
+  const issuedAt = (token.backendTokenIssuedAt as number) || (token.iat as number) || 0;
+  return Math.floor(Date.now() / 1000) - issuedAt;
+}
+
 async function refreshAccessToken(token: any) {
+  const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  // Transient failures keep the session only while the backend token could
+  // still plausibly work; past hard expiry every failure is fatal.
+  const failSoft = (reason: string) => {
+    if (backendTokenAge(token) > BACKEND_TOKEN_HARD_EXPIRY_S) {
+      console.error(`Refresh failing past hard token expiry (${reason}) — signing out`);
+      return { ...token, error: 'RefreshAccessTokenError' };
+    }
+    console.error(`Refresh token attempt failed (${reason}) — transient, keeping session`);
+    return token;
+  };
+
+  let response: Response;
   try {
-    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const response = await fetch(`${url}/api/auth/refresh-token`, {
+    response = await fetch(`${url}/api/auth/refresh-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,26 +64,38 @@ async function refreshAccessToken(token: any) {
         refreshToken: token.refreshToken,
       }),
     });
-
-    const refreshedTokens = await response.json();
-
-    if (!response.ok) {
-      throw refreshedTokens;
-    }
-
-    return {
-      ...token,
-      backendToken: refreshedTokens.data.token,
-      refreshToken: refreshedTokens.data.refreshToken ?? token.refreshToken, // Fallback if not rotated
-      iat: Math.floor(Date.now() / 1000),
-      error: undefined,
-    };
   } catch (error) {
-    console.error('RefreshAccessTokenError', error);
+    return failSoft(`network error: ${error}`);
+  }
+
+  // Only an explicit rejection means the refresh token is truly dead
+  // (revoked, expired, or reuse-detected). SessionGuard signs out on this.
+  if (response.status === 401 || response.status === 403) {
+    const body = await response.json().catch(() => ({}));
+    console.error('RefreshAccessTokenError', body);
     return {
       ...token,
       error: 'RefreshAccessTokenError',
     };
+  }
+
+  // 5xx / unexpected statuses (e.g. the brief 502 window during a deploy) are
+  // transient — never convert them into an immediate forced logout.
+  if (!response.ok) {
+    return failSoft(`status ${response.status}`);
+  }
+
+  try {
+    const refreshedTokens = await response.json();
+    return {
+      ...token,
+      backendToken: refreshedTokens.data.token,
+      refreshToken: refreshedTokens.data.refreshToken ?? token.refreshToken, // Fallback if not rotated
+      backendTokenIssuedAt: Math.floor(Date.now() / 1000),
+      error: undefined,
+    };
+  } catch (error) {
+    return failSoft(`unreadable response body: ${error}`);
   }
 }
 
@@ -272,7 +311,9 @@ export const authOptions: NextAuthOptions = {
           });
 
           const backendToken = await generateBackendToken(user);
-          const refreshToken = await generateRefreshToken(user);
+          // Staff are multi-device: don't revoke the refresh-token chains of
+          // their other logged-in devices (desktop panel vs editor APK).
+          const refreshToken = await generateRefreshToken(user, false);
 
           return {
             ...createUserObject(user as any, backendToken, refreshToken),
@@ -430,7 +471,7 @@ export const authOptions: NextAuthOptions = {
           backendToken: user.backendToken,
           refreshToken: user.refreshToken,
           oauthProvider: user.oauthProvider,
-          iat: Math.floor(Date.now() / 1000),
+          backendTokenIssuedAt: Math.floor(Date.now() / 1000),
         });
       }
 
@@ -462,10 +503,10 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // Check token expiration (24 hours)
-      const tokenAge = Math.floor(Date.now() / 1000) - (token.iat as number || 0);
-      // Access token expires in 24h (86400s), refresh slightly before (e.g. 23h = 82800s)
-      if (tokenAge > 82800) {
+      // Backend token expires in 24h; refresh slightly before (23h). Age comes
+      // from our own backendTokenIssuedAt claim (iat is unreliable — see above);
+      // iat remains the fallback for sessions issued before this claim existed.
+      if (backendTokenAge(token) > BACKEND_TOKEN_REFRESH_AFTER_S) {
         return refreshAccessToken(token);
       }
 

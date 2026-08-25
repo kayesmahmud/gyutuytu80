@@ -14,7 +14,13 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if ((session as any)?.error === 'RefreshAccessTokenError') {
       console.log('🔐 [SessionGuard] Token refresh failed — signing out');
-      signOut({ redirect: true, callbackUrl: '/en/auth/signin' });
+      // Staff go back to their own login page, not the consumer sign-in.
+      const role = (session?.user as any)?.role;
+      const callbackUrl =
+        role === 'super_admin' ? '/en/super-admin/login'
+        : role === 'editor' ? '/en/editor/login'
+        : '/en/auth/signin';
+      signOut({ redirect: true, callbackUrl });
     }
   }, [session]);
 
