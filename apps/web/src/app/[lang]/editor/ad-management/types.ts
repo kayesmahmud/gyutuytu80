@@ -15,6 +15,7 @@ export interface Ad {
   description: string;
   price: number;
   category: string;
+  subcategory?: string;
   location: string;
   status: string;
   createdAt: string; // when the user POSTED the ad (shown to editors)
@@ -38,15 +39,21 @@ export type TabStatus = 'pending' | 'approved' | 'rejected' | 'suspended' | 'del
 
 export const TAB_LIST: TabStatus[] = ['pending', 'approved', 'rejected', 'suspended', 'deleted', 'all'];
 
-// Transform API response (snake_case) to component format (camelCase)
+// Transform API response to component format. /api/editor/ads sends camelCase
+// (categoryName); snake_case keys are kept as fallbacks for older endpoints.
 export function transformAd(ad: any): Ad {
+  // Ads point at their leaf category: with a parent it's a subcategory
+  // (Electronics › Mobile Phones), without one it IS the main category.
+  const ownCategory = ad.categoryName ?? ad.category_name ?? ad.category ?? '';
+  const parentCategory = ad.parentCategoryName ?? ad.parent_category_name ?? null;
   return {
     id: ad.id,
     title: ad.title,
     description: ad.description,
     price: ad.price,
-    category: ad.category_name || ad.category || '',
-    location: ad.location_name || ad.location || '',
+    category: parentCategory || ownCategory,
+    subcategory: parentCategory ? ownCategory : undefined,
+    location: ad.locationName ?? ad.location_name ?? ad.location ?? '',
     status: ad.status,
     createdAt: ad.created_at || ad.createdAt,
     updatedAt: ad.updated_at || ad.updatedAt,

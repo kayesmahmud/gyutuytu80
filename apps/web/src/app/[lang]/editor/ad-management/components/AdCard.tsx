@@ -155,7 +155,9 @@ export default function AdCard({
                 </div>
                 <p className="text-gray-600 line-clamp-2 mb-2">{ad.description}</p>
                 <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
-                  <span className="flex items-center gap-1">🏷️ {ad.category}</span>
+                  <span className="flex items-center gap-1">
+                    🏷️ {ad.subcategory ? `${ad.category} › ${ad.subcategory}` : ad.category}
+                  </span>
                   <span className="flex items-center gap-1">📍 {ad.location}</span>
                   <span className="flex items-center gap-1">💰 NPR {ad.price?.toLocaleString()}</span>
                   {ad.condition && <span className="flex items-center gap-1">📦 {ad.condition}</span>}

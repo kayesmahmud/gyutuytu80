@@ -91,7 +91,8 @@ router.get(
       prisma.ads.findMany({
         where,
         include: {
-          categories: { select: { name: true } },
+          // nested `categories` on the categories model is the PARENT category
+          categories: { select: { name: true, categories: { select: { name: true } } } },
           locations: { select: { name: true } },
           users_ads_user_idTousers: {
             select: {
@@ -143,6 +144,7 @@ router.get(
         categoryId: ad.category_id,
         locationId: ad.location_id,
         categoryName: ad.categories?.name,
+        parentCategoryName: ad.categories?.categories?.name || null,
         locationName: ad.locations?.name,
         user: ad.users_ads_user_idTousers
           ? {
