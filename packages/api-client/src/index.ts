@@ -73,6 +73,7 @@ export class ApiClient extends BaseApiClient {
 
   // Categories
   getCategories: ReturnType<typeof createCategoryMethods>['getCategories'];
+  getCategoryKeywords: ReturnType<typeof createCategoryMethods>['getCategoryKeywords'];
   getCategoryBySlug: ReturnType<typeof createCategoryMethods>['getCategoryBySlug'];
 
   // Locations
@@ -210,6 +211,7 @@ export class ApiClient extends BaseApiClient {
     // Bind category methods
     const categoryMethods = createCategoryMethods(this.client);
     this.getCategories = categoryMethods.getCategories;
+    this.getCategoryKeywords = categoryMethods.getCategoryKeywords;
     this.getCategoryBySlug = categoryMethods.getCategoryBySlug;
 
     // Bind location methods

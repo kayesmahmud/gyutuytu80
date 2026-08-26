@@ -51,6 +51,32 @@ router.get(
 );
 
 /**
+ * GET /api/categories/keywords
+ * Keyword→category dictionary for post-ad title suggestions.
+ * Clients download it once and match locally on each keystroke.
+ * NOTE: must be registered before /:id so "keywords" isn't parsed as an id.
+ */
+router.get(
+  '/keywords',
+  catchAsync(async (_req: Request, res: Response) => {
+    const keywords = await prisma.category_keywords.findMany({
+      select: { keyword: true, category_id: true, subcategory_id: true },
+      orderBy: { keyword: 'asc' },
+    });
+
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=300');
+    res.json({
+      success: true,
+      data: keywords.map((k) => ({
+        keyword: k.keyword,
+        categoryId: k.category_id,
+        subcategoryId: k.subcategory_id,
+      })),
+    });
+  })
+);
+
+/**
  * GET /api/categories/:id
  * Get single category by ID or slug
  */

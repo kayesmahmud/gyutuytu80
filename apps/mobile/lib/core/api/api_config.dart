@@ -71,4 +71,8 @@ class ApiConfig {
   // Timeout settings
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
+
+  /// Upload (request body) timeout — bounds the send phase of multipart posts,
+  /// which was previously unbounded. Generous for slow Nepali upstream links.
+  static const Duration sendTimeout = Duration(minutes: 3);
 }

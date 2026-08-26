@@ -8,6 +8,8 @@ import { useFormTemplate } from '@/hooks/useFormTemplate';
 import { useAdDraft, AdDraft } from '@/hooks/useAdDraft';
 import { apiClient } from '@/lib/api';
 import { trackPostAd } from '@/lib/analytics';
+import { suggestCategory } from '@/lib/categorySuggest';
+import type { CategoryKeyword } from '@thulobazaar/types';
 import type { Category, PostAdFormData } from './types';
 import { INITIAL_FORM_DATA } from './types';
 
@@ -20,6 +22,10 @@ export function usePostAd(lang: string) {
   const [images, setImages] = useState<File[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
+
+  // Title → category suggestion (keyword dictionary, matched locally)
+  const [categoryKeywords, setCategoryKeywords] = useState<CategoryKeyword[]>([]);
+  const [suggestion, setSuggestion] = useState<CategoryKeyword | null>(null);
 
   // Loading states
   const [loading, setLoading] = useState(false);
@@ -93,10 +99,16 @@ export function usePostAd(lang: string) {
     try {
       setLoading(true);
 
-      const [categoriesRes] = await Promise.all([
+      const [categoriesRes, , keywordsRes] = await Promise.all([
         apiClient.getCategories({ includeSubcategories: true }),
         apiClient.getLocations({ type: 'municipality' }),
+        // Non-critical: suggestions simply stay off if this fails
+        apiClient.getCategoryKeywords().catch(() => null),
       ]);
+
+      if (keywordsRes?.success && keywordsRes.data) {
+        setCategoryKeywords(keywordsRes.data);
+      }
 
       // Map other_categories to subcategories (API returns other_categories, frontend expects subcategories)
       let mappedCategories: Category[] = [];
@@ -256,6 +268,37 @@ export function usePostAd(lang: string) {
     saveDraft(formData, customFields);
   }, [formData, customFields, saveDraft]);
 
+  // Debounced title → category suggestion (description as fallback when the
+  // title matches nothing — descriptions are noisier, so title always wins)
+  useEffect(() => {
+    if (categoryKeywords.length === 0) return;
+    const timer = setTimeout(() => {
+      setSuggestion(
+        suggestCategory(formData.title, categoryKeywords) ??
+          suggestCategory(formData.description, categoryKeywords)
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [formData.title, formData.description, categoryKeywords]);
+
+  // Apply the suggested category + subcategory in one tap
+  const applySuggestion = useCallback(() => {
+    if (!suggestion) return;
+    setIsLoadingDraft(false);
+    pendingDraftCustomFieldsRef.current = null;
+    // Same ref trick as user defaults: stop the categoryId effect from
+    // clearing the subcategory we set alongside it.
+    isLoadingUserDefaultsRef.current = true;
+    setFormData((prev) => ({
+      ...prev,
+      categoryId: suggestion.categoryId.toString(),
+      subcategoryId: suggestion.subcategoryId ? suggestion.subcategoryId.toString() : '',
+    }));
+    loadSubcategories(suggestion.categoryId);
+    setCustomFields({});
+    setCustomFieldsErrors({});
+  }, [suggestion, loadSubcategories]);
+
   // Handle loading a draft
   const handleLoadDraft = useCallback(
     (draft: AdDraft) => {
@@ -339,6 +382,11 @@ export function usePostAd(lang: string) {
 
       if (!formData.categoryId) {
         setError('Please select a category');
+        return;
+      }
+
+      if (subcategories.length > 0 && !formData.subcategoryId) {
+        setError('Please select a subcategory');
         return;
       }
 
@@ -466,6 +514,7 @@ export function usePostAd(lang: string) {
       phoneVerified,
       fields,
       customFields,
+      subcategories,
       validateFields,
       clearCurrentDraft,
       userHasDefaultLocation,
@@ -511,6 +560,9 @@ export function usePostAd(lang: string) {
     customFields,
     customFieldsErrors,
     selectedSubcategory,
+    // Title → category suggestion
+    suggestion,
+    applySuggestion,
     // Handlers
     handleLoadDraft,
     handleStartNew,

@@ -37,61 +37,66 @@ class DioClient {
   }
 
   DioClient._() {
-    dio = Dio(BaseOptions(
-      baseUrl: ApiConfig.baseUrl,
-      connectTimeout: ApiConfig.connectTimeout,
-      receiveTimeout: ApiConfig.receiveTimeout,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
+    dio = Dio(
+      BaseOptions(
+        baseUrl: ApiConfig.baseUrl,
+        connectTimeout: ApiConfig.connectTimeout,
+        receiveTimeout: ApiConfig.receiveTimeout,
+        sendTimeout: ApiConfig.sendTimeout,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
 
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        if (!_authTokenLoaded) {
-          // Cold start: read secure storage once, then serve from memory.
-          _cachedAuthToken = await _storage.read(key: 'auth_token');
-          _authTokenLoaded = true;
-        }
-        final token = _cachedAuthToken;
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (DioException e, handler) async {
-        if (e.response?.statusCode == 401 &&
-            !e.requestOptions.path.contains('/auth/')) {
-          // Try refreshing the token
-          final newToken = await _tryRefreshToken();
-          if (newToken != null) {
-            // Retry the original request with the new token
-            e.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-            try {
-              final response = await dio.fetch(e.requestOptions);
-              return handler.resolve(response);
-            } catch (retryError) {
-              // Retry failed — pass through
-            }
-          } else {
-            // Refresh failed — clear tokens and notify auth failure
-            await _storage.delete(key: 'auth_token');
-            await _storage.delete(key: 'refresh_token');
-            updateAuthToken(null);
-            onAuthFailure?.call();
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          if (!_authTokenLoaded) {
+            // Cold start: read secure storage once, then serve from memory.
+            _cachedAuthToken = await _storage.read(key: 'auth_token');
+            _authTokenLoaded = true;
           }
-        }
-        if (kDebugMode) {
-          developer.log(
-            'DioError: ${e.message}',
-            name: 'DioClient',
-            error: e.response?.data,
-          );
-        }
-        return handler.next(e);
-      },
-    ));
+          final token = _cachedAuthToken;
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+        onError: (DioException e, handler) async {
+          if (e.response?.statusCode == 401 &&
+              !e.requestOptions.path.contains('/auth/')) {
+            // Try refreshing the token
+            final newToken = await _tryRefreshToken();
+            if (newToken != null) {
+              // Retry the original request with the new token
+              e.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+              try {
+                final response = await dio.fetch(e.requestOptions);
+                return handler.resolve(response);
+              } catch (retryError) {
+                // Retry failed — pass through
+              }
+            } else {
+              // Refresh failed — clear tokens and notify auth failure
+              await _storage.delete(key: 'auth_token');
+              await _storage.delete(key: 'refresh_token');
+              updateAuthToken(null);
+              onAuthFailure?.call();
+            }
+          }
+          if (kDebugMode) {
+            developer.log(
+              'DioError: ${e.message}',
+              name: 'DioClient',
+              error: e.response?.data,
+            );
+          }
+          return handler.next(e);
+        },
+      ),
+    );
   }
 
   Future<String?>? _refreshInFlight;
@@ -102,8 +107,9 @@ class DioClient {
   /// would wrongly clear tokens and log the user out). Returns null only on a
   /// genuine refresh failure (no refresh token, or the refresh call failed).
   Future<String?> _tryRefreshToken() {
-    return _refreshInFlight ??=
-        _doRefreshToken().whenComplete(() => _refreshInFlight = null);
+    return _refreshInFlight ??= _doRefreshToken().whenComplete(
+      () => _refreshInFlight = null,
+    );
   }
 
   Future<String?> _doRefreshToken() async {
@@ -154,13 +160,15 @@ class DioClient {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return;
 
     try {
-      final certBytes =
-          await rootBundle.load('assets/certs/api_thulobazaar.pem');
+      final certBytes = await rootBundle.load(
+        'assets/certs/api_thulobazaar.pem',
+      );
       final securityContext = SecurityContext()
         ..setTrustedCertificatesBytes(certBytes.buffer.asUint8List());
 
       (_instance.dio.httpClientAdapter as IOHttpClientAdapter)
-          .createHttpClient = () => HttpClient(context: securityContext);
+          .createHttpClient = () =>
+          HttpClient(context: securityContext);
 
       developer.log('SSL pinning active', name: 'DioClient');
     } catch (e) {

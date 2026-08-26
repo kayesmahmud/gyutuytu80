@@ -341,9 +341,23 @@ model categories {
   users_as_default_category                      users[]                 @relation("users_default_category")
   users_as_default_subcategory                   users[]                 @relation("users_default_subcategory")
   blog_categories                                blog_categories[]
+  keywords_as_category                           category_keywords[]     @relation("category_keywords_category")
+  keywords_as_subcategory                        category_keywords[]     @relation("category_keywords_subcategory")
 
   @@index([name], map: "idx_categories_name")
   @@index([parent_id], map: "idx_categories_parent_id")
+}
+
+model category_keywords {
+  id             Int         @id @default(autoincrement())
+  keyword        String      @unique @db.VarChar(100)
+  category_id    Int
+  subcategory_id Int?
+  created_at     DateTime?   @default(now()) @db.Timestamp(6)
+  category       categories  @relation("category_keywords_category", fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subcategory    categories? @relation("category_keywords_subcategory", fields: [subcategory_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([category_id], map: "idx_category_keywords_category_id")
 }
 
 model contact_messages {

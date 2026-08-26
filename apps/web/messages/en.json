@@ -236,6 +236,8 @@
     "category": "Category",
     "selectCategory": "Select Category",
     "selectMainCategory": "-- Select Main Category --",
+    "suggestedCategory": "Suggested",
+    "tapToUse": "Tap to use",
     "selectSubcategory": "Select Subcategory",
     "selectSubcategoryOption": "-- Select Subcategory --",
     "loadingSubcategories": "Loading subcategories...",

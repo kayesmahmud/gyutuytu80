@@ -8,7 +8,15 @@ import { ImageUpload } from '@/components/forms';
 import DynamicFormFields from '@/components/post-ad/DynamicFormFields';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
 import { Button } from '@/components/ui';
-import { usePostAd, DraftsList, PhoneVerificationBanner, AdPostedModal } from './components';
+import {
+  usePostAd,
+  DraftsList,
+  PhoneVerificationBanner,
+  AdPostedModal,
+  CategoryTileGrid,
+  SubcategoryChips,
+  SuggestionChip,
+} from './components';
 
 interface PostAdPageProps {
   params: Promise<{ lang: string }>;
@@ -44,6 +52,8 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     customFields,
     customFieldsErrors,
     selectedSubcategory,
+    suggestion,
+    applySuggestion,
     handleLoadDraft,
     handleStartNew,
     handleCategoryChange,
@@ -74,6 +84,19 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     };
     fetchAdLimits();
   }, []);
+
+  // Resolve the keyword suggestion to displayable category objects
+  const suggestedCategory = suggestion
+    ? categories.find((c) => c.id === suggestion.categoryId) || null
+    : null;
+  const suggestedSubcategory =
+    suggestion?.subcategoryId && suggestedCategory?.subcategories
+      ? suggestedCategory.subcategories.find((s) => s.id === suggestion.subcategoryId) || null
+      : null;
+  const suggestionApplied =
+    !!suggestion &&
+    suggestion.categoryId.toString() === formData.categoryId &&
+    (suggestion.subcategoryId ? suggestion.subcategoryId.toString() === formData.subcategoryId : true);
 
   if (status === 'loading' || loading) {
     return (
@@ -155,25 +178,103 @@ export default function PostAdPage({ params }: PostAdPageProps) {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm">
-              {/* Ad Details */}
+              {/* Photos first — matches how sellers think ("let me show the thing")
+                  and the flow of top marketplaces (Vinted, Marketplace, OfferUp) */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900 m-0">{t('photos')} *</h2>
+                  <span className="text-sm text-gray-500">
+                    {t('maxImages', { count: maxImages })}
+                  </span>
+                </div>
+
+                {/* Upgrade prompt for unverified users */}
+                {!isUserVerified && (
+                  <div className="mb-4 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <span className="text-xl">✨</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-indigo-900 m-0">
+                          {t('wantMoreImages', { count: MAX_IMAGES_VERIFIED })}
+                        </p>
+                        <p className="text-xs text-indigo-700 mt-1 mb-2">
+                          {t('getVerifiedForImages')}
+                        </p>
+                        <Link
+                          href={`/${lang}/verification`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md no-underline transition-colors"
+                        >
+                          {t('getVerified')}
+                          <span>→</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <ImageUpload
+                  images={images}
+                  onChange={setImages}
+                  maxImages={maxImages}
+                  maxSizeMB={5}
+                />
+              </div>
+
+              {/* Ad Title + suggestion */}
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('adDetails')}</h2>
 
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <label className="block mb-2 font-medium text-gray-700">{t('adTitle')} *</label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="e.g., iPhone 15 Pro Max 256GB"
-                      required
-                      maxLength={100}
-                      className="w-full p-3 rounded-lg border border-gray-300 text-base"
-                    />
-                    <small className="text-gray-500">{formData.title.length}/100</small>
-                  </div>
+                <div>
+                  <label className="block mb-2 font-medium text-gray-700">{t('adTitle')} *</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g., iPhone 15 Pro Max 256GB"
+                    required
+                    maxLength={100}
+                    className="w-full p-3 rounded-lg border border-gray-300 text-base"
+                  />
+                  <small className="text-gray-500">{formData.title.length}/100</small>
+                  {suggestedCategory && !suggestionApplied && (
+                    <div>
+                      <SuggestionChip
+                        category={suggestedCategory}
+                        subcategory={suggestedSubcategory}
+                        onApply={applySuggestion}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
 
+              {/* Category Selection — right after the title so the suggestion lands next to it */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('category')} *</h2>
+
+                <CategoryTileGrid
+                  categories={categories}
+                  selectedId={formData.categoryId}
+                  onSelect={handleCategoryChange}
+                />
+
+                {formData.categoryId && subcategories.length > 0 && (
+                  <div className="mt-4">
+                    <label className="block mb-2 font-medium text-gray-700">
+                      {t('selectSubcategory')} *
+                    </label>
+                    <SubcategoryChips
+                      subcategories={subcategories}
+                      selectedId={formData.subcategoryId}
+                      onSelect={(subcategoryId) => setFormData({ ...formData, subcategoryId })}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Description, Price, Negotiable */}
+              <div className="mb-8">
+                <div className="flex flex-col gap-4">
                   <div>
                     <label className="block mb-2 font-medium text-gray-700">{t('description')} *</label>
                     <textarea
@@ -220,57 +321,6 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                 </div>
               </div>
 
-              {/* Category Selection */}
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('category')} *</h2>
-
-                <div className="mb-4">
-                  <label className="block mb-2 font-medium text-gray-700">{t('selectCategory')} *</label>
-                  <select
-                    value={formData.categoryId}
-                    onChange={(e) => handleCategoryChange(e.target.value)}
-                    required
-                    className="w-full p-3 rounded-lg border border-gray-300 text-base"
-                  >
-                    <option value="">{t('selectMainCategory')}</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.icon || '📦'} {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {formData.categoryId && (
-                  <div className="mt-4">
-                    <label className="block mb-2 font-medium text-gray-700">
-                      {t('selectSubcategory')} *
-                    </label>
-                    <select
-                      value={formData.subcategoryId}
-                      onChange={(e) => setFormData({ ...formData, subcategoryId: e.target.value })}
-                      disabled={loadingSubcategories}
-                      required
-                      className={`w-full p-3 rounded-lg border border-gray-300 text-base ${
-                        loadingSubcategories ? 'bg-gray-100 cursor-wait' : 'cursor-pointer'
-                      }`}
-                    >
-                      <option value="">
-                        {loadingSubcategories
-                          ? t('loadingSubcategories')
-                          : t('selectSubcategoryOption')}
-                      </option>
-                      {!loadingSubcategories &&
-                        subcategories.map((sub) => (
-                          <option key={sub.id} value={sub.id}>
-                            {sub.name}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
               {/* Dynamic Category-Specific Fields */}
               {fields.length > 0 && (
                 <DynamicFormFields
@@ -281,47 +331,6 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                   subcategoryName={selectedSubcategory?.name}
                 />
               )}
-
-              {/* Images */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900 m-0">{t('photos')} *</h2>
-                  <span className="text-sm text-gray-500">
-                    {t('maxImages', { count: maxImages })}
-                  </span>
-                </div>
-
-                {/* Upgrade prompt for unverified users */}
-                {!isUserVerified && (
-                  <div className="mb-4 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <span className="text-xl">✨</span>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-indigo-900 m-0">
-                          {t('wantMoreImages', { count: MAX_IMAGES_VERIFIED })}
-                        </p>
-                        <p className="text-xs text-indigo-700 mt-1 mb-2">
-                          {t('getVerifiedForImages')}
-                        </p>
-                        <Link
-                          href={`/${lang}/verification`}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md no-underline transition-colors"
-                        >
-                          {t('getVerified')}
-                          <span>→</span>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <ImageUpload
-                  images={images}
-                  onChange={setImages}
-                  maxImages={maxImages}
-                  maxSizeMB={5}
-                />
-              </div>
 
               {/* Location */}
               <div className="mb-8">

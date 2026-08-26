@@ -16,9 +16,11 @@ interface OptimizeOptions {
 const PRESETS: Record<string, OptimizeOptions> = {
   avatar: { maxWidth: 500, maxHeight: 500, quality: 85, format: 'jpeg' },
   cover: { maxWidth: 1920, maxHeight: 1080, quality: 85, format: 'jpeg' },
-  ad: { maxWidth: 1920, maxHeight: 1920, quality: 65, effort: 4, format: 'avif' },
-  message: { maxWidth: 1200, maxHeight: 1200, quality: 45, effort: 4, format: 'avif' },
-  document: { maxWidth: 1920, maxHeight: 1920, quality: 70, effort: 4, format: 'avif' },
+  // effort 2 (not 4): encoding runs inline before the response, and on the
+  // shared t3.small effort 4 costs tens of seconds per image for ~5% size gain.
+  ad: { maxWidth: 1920, maxHeight: 1920, quality: 65, effort: 2, format: 'avif' },
+  message: { maxWidth: 1200, maxHeight: 1200, quality: 45, effort: 2, format: 'avif' },
+  document: { maxWidth: 1920, maxHeight: 1920, quality: 70, effort: 2, format: 'avif' },
 };
 
 /**
@@ -26,7 +28,7 @@ const PRESETS: Record<string, OptimizeOptions> = {
  * Resizes and compresses to JPEG.
  */
 async function optimizeFile(filePath: string, opts: OptimizeOptions): Promise<void> {
-  const buffer = fs.readFileSync(filePath);
+  const buffer = await fs.promises.readFile(filePath);
 
   let instance = sharp(buffer);
   const metadata = await instance.metadata();
@@ -57,11 +59,11 @@ async function optimizeFile(filePath: string, opts: OptimizeOptions): Promise<vo
   const ext = opts.format === 'avif' ? '.avif' : '.jpg';
   const parsed = path.parse(filePath);
   const newPath = path.join(parsed.dir, `${parsed.name}${ext}`);
-  fs.writeFileSync(newPath, optimized);
+  await fs.promises.writeFile(newPath, optimized);
 
   // Remove original if extension changed
   if (newPath !== filePath) {
-    fs.unlinkSync(filePath);
+    await fs.promises.unlink(filePath);
   }
 }
 

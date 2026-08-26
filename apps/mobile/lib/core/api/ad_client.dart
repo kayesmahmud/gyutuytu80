@@ -237,9 +237,16 @@ class AdClient {
   }
 
   /// Create a new ad
-  Future<AdSubmitResult> createAd(FormData formData) async {
+  Future<AdSubmitResult> createAd(
+    FormData formData, {
+    void Function(int sent, int total)? onSendProgress,
+  }) async {
     try {
-      final response = await _dio.post('/ads', data: formData);
+      final response = await _dio.post(
+        '/ads',
+        data: formData,
+        onSendProgress: onSendProgress,
+      );
       if (kDebugMode)
         developer.log('createAd response: ${response.data}', name: 'AdClient');
 
@@ -274,9 +281,17 @@ class AdClient {
   }
 
   /// Update an existing ad
-  Future<AdSubmitResult> updateAd(int adId, FormData formData) async {
+  Future<AdSubmitResult> updateAd(
+    int adId,
+    FormData formData, {
+    void Function(int sent, int total)? onSendProgress,
+  }) async {
     try {
-      final response = await _dio.put('/ads/$adId', data: formData);
+      final response = await _dio.put(
+        '/ads/$adId',
+        data: formData,
+        onSendProgress: onSendProgress,
+      );
 
       if (response.data['success'] == true) {
         return AdSubmitResult.success(
@@ -334,6 +349,27 @@ class AdClient {
     } on DioException catch (e) {
       if (kDebugMode)
         developer.log('Error fetching categories: $e', name: 'AdClient');
+      return [];
+    }
+  }
+
+  /// Get the keyword→category dictionary for post-ad title suggestions.
+  /// Downloaded once per screen; matching happens locally on each keystroke.
+  Future<List<CategoryKeyword>> getCategoryKeywords() async {
+    try {
+      final response = await _dio.get('/categories/keywords');
+
+      if (response.data['success'] == true) {
+        final data = response.data['data'] as List<dynamic>;
+        return data
+            .map((e) => CategoryKeyword.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        developer.log('Error fetching category keywords: $e', name: 'AdClient');
+      }
       return [];
     }
   }

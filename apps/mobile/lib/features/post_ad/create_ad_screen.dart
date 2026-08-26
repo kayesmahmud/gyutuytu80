@@ -20,6 +20,8 @@ import 'package:mobile/core/api/location_client.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/services/analytics_service.dart';
 import 'package:mobile/core/services/review_service.dart';
+import 'package:mobile/core/utils/category_suggest.dart';
+import 'package:mobile/core/widgets/category_icon.dart';
 import 'package:mobile/core/widgets/success_checkmark.dart';
 import 'package:mobile/features/dashboard/dashboard_screen.dart';
 import 'package:mobile/features/post_ad/models/ad_draft_model.dart';
@@ -41,13 +43,25 @@ class CreateAdScreen extends StatefulWidget {
 }
 
 class _CreateAdScreenState extends State<CreateAdScreen> {
-  // Step Control
-  int _currentStep = 0;
-  final int _totalSteps = 3;
+  // Single-screen progressive form: sections reveal as earlier ones are
+  // filled, and never collapse again (monotonic) so editing doesn't hide work.
+  final _formKey = GlobalKey<FormState>();
+  final _scrollController = ScrollController();
+  final Set<String> _revealedSections = {};
+  final Map<String, GlobalKey> _sectionKeys = {
+    'title': GlobalKey(),
+    'category': GlobalKey(),
+    'details': GlobalKey(),
+    'location': GlobalKey(),
+    'contact': GlobalKey(),
+  };
+  String? _pendingRevealScroll;
+  bool _initialBuildDone = false;
 
-  // Form Keys for validation per step
-  final _step1Key = GlobalKey<FormState>();
-  final _step2Key = GlobalKey<FormState>();
+  // Title → category suggestion (keyword dictionary, matched locally)
+  List<CategoryKeyword> _categoryKeywords = [];
+  CategoryKeyword? _suggestion;
+  Timer? _suggestDebounce;
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -55,6 +69,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
   bool _isLoading = false;
   bool _priceNegotiable = false;
+
+  // 0..1 while the multipart body is uploading; null once the server is
+  // processing (or when idle). Drives the "Uploading X%" label on the button.
+  double? _uploadProgress;
 
   // Data
   List<CategoryWithSubcategories> _categories = [];
@@ -113,8 +131,24 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _whatsappController.text = _verifiedPhone;
     _initializeScreen();
     _titleController.addListener(_onFormChanged);
+    _titleController.addListener(_onTitleChangedForSuggestion);
+    _descriptionController.addListener(_onTitleChangedForSuggestion);
     _descriptionController.addListener(_onFormChanged);
     _priceController.addListener(_onFormChanged);
+  }
+
+  void _onTitleChangedForSuggestion() {
+    _suggestDebounce?.cancel();
+    _suggestDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      // Title wins; description is only a fallback (it's noisier text).
+      final next =
+          suggestCategory(_titleController.text, _categoryKeywords) ??
+          suggestCategory(_descriptionController.text, _categoryKeywords);
+      if (next?.keyword != _suggestion?.keyword) {
+        setState(() => _suggestion = next);
+      }
+    });
   }
 
   // Full ad details fetched for edit mode (dashboard data is incomplete)
@@ -285,15 +319,18 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         _adClient.getCategories(),
         _adClient.getLocationHierarchy(),
         _adClient.getAdLimits(),
+        _adClient.getCategoryKeywords(),
       ]);
       final categories = results[0] as List<CategoryWithSubcategories>;
       final provinces = results[1] as List<LocationProvince>;
       final limits = results[2] as AdLimitsResponse;
+      final keywords = results[3] as List<CategoryKeyword>;
 
       setState(() {
         _categories = categories;
         _provinces = provinces;
         _maxImages = limits.effectiveImageLimit;
+        _categoryKeywords = keywords;
       });
     } catch (e) {
       debugPrint("Error loading initial data: $e");
@@ -308,6 +345,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   }
 
   void _onFormChanged() {
+    // Rebuild so char counters and progressive reveals track typing.
+    if (mounted) setState(() {});
     if (!widget.isEditMode) _triggerAutoSave();
   }
 
@@ -440,7 +479,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       _currentDraftId = draft.id;
       _lastSaved = draft.updatedAt;
       _showDraftsPanel = false;
-      _currentStep = 0;
     });
   }
 
@@ -468,8 +506,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _suggestDebounce?.cancel();
     _locationSearchDebounce?.cancel();
     _titleController.removeListener(_onFormChanged);
+    _titleController.removeListener(_onTitleChangedForSuggestion);
+    _descriptionController.removeListener(_onTitleChangedForSuggestion);
     _descriptionController.removeListener(_onFormChanged);
     _priceController.removeListener(_onFormChanged);
     _titleController.dispose();
@@ -477,6 +518,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _priceController.dispose();
     _whatsappController.dispose();
     _locationSearchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -710,7 +752,12 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
   Future<void> _pickImages() async {
     try {
-      final List<XFile> images = await _picker.pickMultiImage();
+      // Same downscaling as the camera path — without it, gallery picks upload
+      // the original 4-12MB photo, which dominates post time on slow upstream.
+      final List<XFile> images = await _picker.pickMultiImage(
+        maxWidth: 1200,
+        imageQuality: 85,
+      );
       if (images.isNotEmpty) {
         // Validate each image is under 5MB
         const maxSize = 5 * 1024 * 1024; // 5MB
@@ -751,59 +798,130 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     }
   }
 
-  void _nextStep() {
-    if (_currentStep == 0) {
-      if (!_step1Key.currentState!.validate()) return;
-      if (_selectedCategory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('postAd.selectCategoryError'.tr())),
-        );
-        return;
-      }
-      if (_selectedCategory!.subcategories.isNotEmpty &&
-          _selectedSubCategory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('postAd.selectSubcategoryError'.tr())),
-        );
-        return;
-      }
-    } else if (_currentStep == 1) {
-      // Step 2: Visuals & Location
-      // No Form key for images, but location uses dropdowns which might not be wrapped in Form, or we can wrap.
-      // Actually previously Step 2 had _step2Key, which we are reusing.
-      if (!_step2Key.currentState!.validate()) return;
+  // ── Progressive reveal ───────────────────────────────────────────────────
 
-      if (_selectedImages.isEmpty && _existingImagePaths.isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('postAd.addImageError'.tr())));
-        return;
-      }
-
-      if (_selectedProvince == null ||
-          _selectedDistrict == null ||
-          _selectedMunicipality == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('postAd.selectLocationError'.tr())),
+  /// Marks [key] revealed once [condition] first becomes true; sections never
+  /// collapse again. Called from build (top-down), so a newly satisfied
+  /// condition schedules an auto-scroll to the freshly revealed section.
+  bool _reveal(String key, bool condition) {
+    if (widget.isEditMode) return true;
+    if (condition && !_revealedSections.contains(key)) {
+      _revealedSections.add(key);
+      if (_initialBuildDone) {
+        _pendingRevealScroll = key;
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _scrollToPendingReveal(),
         );
-        return;
       }
     }
+    return _revealedSections.contains(key);
+  }
 
-    if (_currentStep < _totalSteps - 1) {
-      setState(() => _currentStep++);
+  void _scrollToPendingReveal() {
+    final key = _pendingRevealScroll;
+    _pendingRevealScroll = null;
+    if (key == null || !mounted) return;
+    final ctx = _sectionKeys[key]?.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+        alignment: 0.05,
+      );
     }
   }
 
-  void _prevStep() {
-    if (_currentStep > 0) {
-      setState(() => _currentStep--);
-    } else {
-      Navigator.pop(context);
+  // ── Title → category suggestion ──────────────────────────────────────────
+
+  CategoryWithSubcategories? get _suggestedParent {
+    final suggestion = _suggestion;
+    if (suggestion == null) return null;
+    for (final cat in _categories) {
+      if (cat.id == suggestion.categoryId) return cat;
     }
+    return null;
+  }
+
+  Category? get _suggestedSub {
+    final suggestion = _suggestion;
+    final parent = _suggestedParent;
+    if (suggestion == null || parent == null) return null;
+    final subId = suggestion.subcategoryId;
+    if (subId == null) return null;
+    for (final sub in parent.subcategories) {
+      if (sub.id == subId) return sub;
+    }
+    return null;
+  }
+
+  bool get _suggestionApplied {
+    final suggestion = _suggestion;
+    if (suggestion == null) return false;
+    if (_selectedCategory?.id != suggestion.categoryId) return false;
+    final subId = suggestion.subcategoryId;
+    return subId == null || _selectedSubCategory?.id == subId;
+  }
+
+  void _applySuggestion() {
+    final parent = _suggestedParent;
+    if (parent == null) return;
+    setState(() {
+      _selectedCategory = parent;
+      _selectedSubCategory = _suggestedSub;
+      if (!widget.isEditMode || _editPrefillDone) {
+        _attributeValues.clear();
+      }
+    });
+    _onFormChanged();
   }
 
   Future<void> _submitAd() async {
+    // The Form only validates fields that are currently in the widget tree, so
+    // check section completeness explicitly (replaces the old per-step gates).
+    if (_titleController.text.trim().isEmpty ||
+        _descriptionController.text.trim().isEmpty ||
+        _priceController.text.trim().isEmpty) {
+      _formKey.currentState?.validate();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('postAd.completeAllFields'.tr())));
+      return;
+    }
+
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('postAd.selectCategoryError'.tr())),
+      );
+      return;
+    }
+
+    final selectedCategory = _selectedCategory;
+    if (selectedCategory != null &&
+        selectedCategory.subcategories.isNotEmpty &&
+        _selectedSubCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('postAd.selectSubcategoryError'.tr())),
+      );
+      return;
+    }
+
+    if (_selectedImages.isEmpty && _existingImagePaths.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('postAd.addImageError'.tr())));
+      return;
+    }
+
+    if (_selectedProvince == null ||
+        _selectedDistrict == null ||
+        _selectedMunicipality == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('postAd.selectLocationError'.tr())),
+      );
+      return;
+    }
+
     // Phone must be verified before posting (mirrors the web post-ad flow).
     if (!_isPhoneVerified) {
       ScaffoldMessenger.of(
@@ -812,7 +930,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       return;
     }
 
-    // Step 3 valid? WhatsApp check if needed
     if (_whatsappController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -841,9 +958,17 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _uploadProgress = null;
+        });
       }
     }
+  }
+
+  void _onUploadProgress(int sent, int total) {
+    if (!mounted || total <= 0) return;
+    setState(() => _uploadProgress = sent / total);
   }
 
   /// Builds the attributes map including isNegotiable + a custom WhatsApp number
@@ -889,7 +1014,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       );
     }
 
-    final result = await _adClient.createAd(formData);
+    final result = await _adClient.createAd(
+      formData,
+      onSendProgress: _onUploadProgress,
+    );
 
     if (result.success) {
       await _deleteDraftAfterPost();
@@ -963,7 +1091,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       );
     }
 
-    final result = await _adClient.updateAd(ad.id, formData);
+    final result = await _adClient.updateAd(
+      ad.id,
+      formData,
+      onSendProgress: _onUploadProgress,
+    );
 
     if (result.success && mounted) {
       final isNepali = context.locale.languageCode == 'ne';
@@ -1076,10 +1208,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Custom Stepper Indicator
-            _buildStepIndicator(),
-            const Divider(height: 1),
-
             // Draft status bar (create mode only)
             if (!widget.isEditMode) _buildDraftStatusBar(),
 
@@ -1093,15 +1221,16 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                     : const SizedBox.shrink(),
               ),
 
-            // Step Content
+            // Single-screen progressive form
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(20),
-                child: _buildCurrentStep(),
+                child: Form(key: _formKey, child: _buildFormContent()),
               ),
             ),
 
-            // Bottom Navigation
+            // Sticky Post/Update button
             _buildBottomBar(),
           ],
         ),
@@ -1246,253 +1375,351 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     );
   }
 
-  Widget _buildStepIndicator() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-      child: Row(
-        children: [
-          _buildStepCircle(0, 'postAd.stepProduct'.tr()),
-          _buildStepLine(0),
-          _buildStepCircle(1, 'postAd.stepVisuals'.tr()),
-          _buildStepLine(1),
-          _buildStepCircle(2, 'postAd.stepContact'.tr()),
-        ],
-      ),
-    );
-  }
+  Widget _buildFormContent() {
+    final selectedCategory = _selectedCategory;
+    final titleFilled = _titleController.text.trim().isNotEmpty;
+    final categoryComplete =
+        selectedCategory != null &&
+        (selectedCategory.subcategories.isEmpty ||
+            _selectedSubCategory != null);
+    final detailsFilled =
+        _descriptionController.text.trim().isNotEmpty &&
+        _priceController.text.trim().isNotEmpty;
+    final locationChosen = _selectedMunicipality != null;
 
-  Widget _buildStepCircle(int step, String label) {
-    bool isActive = _currentStep >= step;
-    bool isCurrent = _currentStep == step;
+    // Photos first (always visible); the title also reveals from restored
+    // drafts, which carry text but no images.
+    final photosAdded = _totalImageCount > 0;
+    final showTitle = _reveal('title', photosAdded || titleFilled);
+    final showCategory = _reveal('category', titleFilled);
+    final showDetails = _reveal('details', categoryComplete);
+    final showLocation = _reveal('location', showDetails && detailsFilled);
+    final showContact = _reveal('contact', showLocation && locationChosen);
+
+    if (!_initialBuildDone) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _initialBuildDone = true,
+      );
+    }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF10B981) : Colors.grey[200],
-            shape: BoxShape.circle,
-            border: isCurrent
-                ? Border.all(color: const Color(0xFF047857), width: 2)
-                : null,
-          ),
-          child: Center(
-            child: isActive
-                ? const Icon(LucideIcons.check, size: 18, color: Colors.white)
-                : Text(
-                    "${step + 1}",
-                    style: GoogleFonts.inter(
-                      color: Colors.grey[500],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 10,
-            color: isActive ? Colors.black87 : Colors.grey[500],
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
+        _buildPhotosSection(),
+        _buildRevealedSection('title', showTitle, _buildTitleSection),
+        _buildRevealedSection('category', showCategory, _buildCategorySection),
+        _buildRevealedSection('details', showDetails, _buildDetailsSection),
+        _buildRevealedSection('location', showLocation, _buildLocationSection),
+        _buildRevealedSection('contact', showContact, _buildContactSection),
       ],
     );
   }
 
-  Widget _buildStepLine(int step) {
-    bool isActive = _currentStep > step;
-    return Expanded(
-      child: Container(
-        height: 2,
-        margin: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 16,
-        ), // Align with circle center roughly
-        color: isActive ? const Color(0xFF10B981) : Colors.grey[200],
-      ),
+  /// Animates a section into view the first time its reveal condition is met.
+  Widget _buildRevealedSection(
+    String key,
+    bool visible,
+    Widget Function() builder,
+  ) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      alignment: Alignment.topCenter,
+      child: visible
+          ? KeyedSubtree(key: _sectionKeys[key], child: builder())
+          : const SizedBox.shrink(),
     );
   }
 
-  Widget _buildCurrentStep() {
-    switch (_currentStep) {
-      case 0:
-        return _buildStep1();
-      case 1:
-        return _buildStep2();
-      case 2:
-        return _buildStep3();
-      default:
-        return const SizedBox.shrink();
-    }
-  }
+  Widget _buildSuggestionChip() {
+    final parent = _suggestedParent;
+    if (parent == null) return const SizedBox.shrink();
+    final sub = _suggestedSub;
+    final locale = context.locale.languageCode;
+    final label = sub == null
+        ? parent.localizedName(locale)
+        : '${parent.localizedName(locale)} › ${sub.localizedName(locale)}';
 
-  // Step 1: Product Info (Title -> Desc -> Price -> Category -> Specs)
-  Widget _buildStep1() {
-    return Form(
-      key: _step1Key,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'postAd.aboutProduct'.tr(),
-            style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: InkWell(
+        onTap: _applySuggestion,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFECFDF5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
           ),
-          const SizedBox(height: 24),
-
-          _buildLabel('postAd.adTitle'.tr()),
-          _buildTextField(
-            controller: _titleController,
-            hintText: 'postAd.adTitleHint'.tr(),
-            validator: (val) => val == null || val.isEmpty
-                ? (context.locale.languageCode == 'ne'
-                      ? 'शीर्षक आवश्यक छ'
-                      : 'Title is required')
-                : null,
-          ),
-          _buildCharCount("${_titleController.text.length}/100"),
-
-          const SizedBox(height: 16),
-          _buildLabel('postAd.descriptionLabel'.tr()),
-          _buildTextField(
-            controller: _descriptionController,
-            hintText: 'postAd.descriptionHint'.tr(),
-            maxLines: 5,
-            validator: (val) => val == null || val.isEmpty
-                ? (context.locale.languageCode == 'ne'
-                      ? 'विवरण आवश्यक छ'
-                      : 'Description is required')
-                : null,
-          ),
-          _buildCharCount("${_descriptionController.text.length}/5000"),
-
-          const SizedBox(height: 24),
-          _buildLabel('postAd.priceLabel'.tr()),
-          _buildTextField(
-            controller: _priceController,
-            hintText: "0",
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            validator: (val) => val == null || val.isEmpty
-                ? (context.locale.languageCode == 'ne'
-                      ? 'मूल्य आवश्यक छ'
-                      : 'Price is required')
-                : null,
-          ),
-
-          const SizedBox(height: 8),
-          Row(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                height: 24,
-                width: 24,
-                child: Checkbox(
-                  value: _priceNegotiable,
-                  activeColor: const Color(0xFF10B981),
-                  onChanged: (val) {
-                    setState(() => _priceNegotiable = val!);
-                    _onFormChanged();
-                  },
+              CategoryIcon(
+                slug: parent.slug,
+                emoji: parent.icon ?? '📁',
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '${'postAd.suggestedCategory'.tr()}: $label',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF047857),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
-                'postAd.priceNegotiable'.tr(),
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.black87),
+                'postAd.tapToUse'.tr(),
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: const Color(0xFF10B981),
+                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
 
-          const SizedBox(height: 24),
-          _buildLabel('postAd.selectCategory'.tr()),
-          DropdownButtonFormField<CategoryWithSubcategories>(
-            value: _selectedCategory,
-            isExpanded: true,
-            hint: Text(
-              'postAd.selectCategoryHint'.tr(),
-              style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-            ),
-            decoration: _inputDecoration(),
-            items: _categories.map<DropdownMenuItem<CategoryWithSubcategories>>(
-              (CategoryWithSubcategories cat) {
-                return DropdownMenuItem<CategoryWithSubcategories>(
-                  value: cat,
-                  child: Text(
-                    cat.localizedName(context.locale.languageCode),
-                    style: GoogleFonts.inter(fontSize: 14),
+  Future<void> _openCategoryPicker() async {
+    final locale = context.locale.languageCode;
+    final picked = await showModalBottomSheet<CategoryWithSubcategories>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.72,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'postAd.selectCategoryHint'.tr(),
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
-                );
-              },
-            ).toList(),
-            onChanged: (val) {
-              setState(() {
-                _selectedCategory = val;
-                _selectedSubCategory = null;
-                if (!widget.isEditMode || _editPrefillDone) {
-                  _attributeValues.clear();
-                }
-              });
-              _onFormChanged();
-            },
-            icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
-          ),
-
-          if (_selectedCategory != null &&
-              _selectedCategory!.subcategories.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            _buildLabel('postAd.selectSubcategory'.tr()),
-            DropdownButtonFormField<Category>(
-              value: _selectedSubCategory,
-              isExpanded: true,
-              hint: Text(
-                'postAd.selectSubcategoryHint'.tr(),
-                style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-              ),
-              decoration: _inputDecoration(),
-              items: _selectedCategory!.subcategories
-                  .map<DropdownMenuItem<Category>>((Category sub) {
-                    return DropdownMenuItem<Category>(
-                      value: sub,
-                      child: Text(
-                        sub.localizedName(context.locale.languageCode),
-                        style: GoogleFonts.inter(fontSize: 14),
-                      ),
-                    );
-                  })
-                  .toList(),
-              onChanged: (val) {
-                setState(() {
-                  _selectedSubCategory = val;
-                  if (!widget.isEditMode || _editPrefillDone) {
-                    _attributeValues.clear();
-                  }
-                });
-                _onFormChanged();
-              },
-              icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 0.95,
+                        ),
+                    itemCount: _categories.length,
+                    itemBuilder: (ctx2, i) {
+                      final cat = _categories[i];
+                      final selected = _selectedCategory?.id == cat.id;
+                      return InkWell(
+                        onTap: () => Navigator.pop(ctx, cat),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? const Color(0xFFECFDF5)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: selected
+                                  ? const Color(0xFF10B981)
+                                  : Colors.grey[200]!,
+                              width: selected ? 2 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CategoryIcon(
+                                slug: cat.slug,
+                                emoji: cat.icon ?? '📁',
+                                size: 44,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                cat.localizedName(locale),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedCategory = picked;
+      _selectedSubCategory = null;
+      if (!widget.isEditMode || _editPrefillDone) {
+        _attributeValues.clear();
+      }
+    });
+    _onFormChanged();
+  }
 
-          const SizedBox(height: 24),
+  // Title (after photos) — the suggestion chip appears right under it.
+  Widget _buildTitleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 28),
+        Text(
+          'postAd.aboutProduct'.tr(),
+          style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 24),
 
-          // Dynamic Fields
-          Builder(
-            builder: (context) {
-              if (_selectedSubCategory == null) return const SizedBox.shrink();
+        _buildLabel('postAd.adTitle'.tr()),
+        _buildTextField(
+          controller: _titleController,
+          hintText: 'postAd.adTitleHint'.tr(),
+          validator: (val) => val == null || val.isEmpty
+              ? (context.locale.languageCode == 'ne'
+                    ? 'शीर्षक आवश्यक छ'
+                    : 'Title is required')
+              : null,
+        ),
+        _buildCharCount("${_titleController.text.length}/100"),
+        if (_suggestedParent != null && !_suggestionApplied)
+          _buildSuggestionChip(),
+      ],
+    );
+  }
 
-              final categoryName = _selectedCategory!.name;
-              final subcategoryName = _selectedSubCategory!.name;
+  // Category right after the title: tappable field opening the icon tile
+  // grid, then subcategory chips, then category-specific dynamic fields.
+  Widget _buildCategorySection() {
+    final selectedCategory = _selectedCategory;
+    final locale = context.locale.languageCode;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        _buildLabel('postAd.selectCategory'.tr()),
+        InkWell(
+          onTap: _openCategoryPicker,
+          borderRadius: BorderRadius.circular(8),
+          child: InputDecorator(
+            decoration: _inputDecoration(),
+            child: Row(
+              children: [
+                if (selectedCategory != null) ...[
+                  CategoryIcon(
+                    slug: selectedCategory.slug,
+                    emoji: selectedCategory.icon ?? '📁',
+                    size: 24,
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Text(
+                    selectedCategory?.localizedName(locale) ??
+                        'postAd.selectCategoryHint'.tr(),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: selectedCategory == null
+                          ? Colors.grey[400]
+                          : Colors.black87,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  LucideIcons.chevronDown,
+                  color: Colors.grey,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
 
-              final fields = _templateService.getApplicableFields(
-                categoryName,
-                subcategoryName,
+        if (selectedCategory != null &&
+            selectedCategory.subcategories.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          _buildLabel('postAd.selectSubcategory'.tr()),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: selectedCategory.subcategories.map((sub) {
+              final selected = _selectedSubCategory?.id == sub.id;
+              return ChoiceChip(
+                label: Text(
+                  sub.localizedName(locale),
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: selected ? Colors.white : Colors.black87,
+                  ),
+                ),
+                selected: selected,
+                showCheckmark: false,
+                selectedColor: const Color(0xFF10B981),
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: selected ? const Color(0xFF10B981) : Colors.grey[300]!,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                onSelected: (_) {
+                  setState(() {
+                    _selectedSubCategory = sub;
+                    if (!widget.isEditMode || _editPrefillDone) {
+                      _attributeValues.clear();
+                    }
+                  });
+                  _onFormChanged();
+                },
               );
+            }).toList(),
+          ),
+        ],
 
-              if (fields.isEmpty) return const SizedBox.shrink();
+        // Dynamic Fields
+        Builder(
+          builder: (context) {
+            final category = _selectedCategory;
+            final subcategory = _selectedSubCategory;
+            if (category == null || subcategory == null) {
+              return const SizedBox.shrink();
+            }
 
-              return DynamicFormFields(
+            final fields = _templateService.getApplicableFields(
+              category.name,
+              subcategory.name,
+            );
+
+            if (fields.isEmpty) return const SizedBox.shrink();
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: DynamicFormFields(
                 locale: context.locale.languageCode,
                 fields: fields,
                 values: _attributeValues,
@@ -1501,391 +1728,444 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                     _attributeValues[key] = value;
                   });
                 },
-              );
-            },
-          ),
-        ],
-      ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
-  // Step 2: Visuals & Location
-  Widget _buildStep2() {
-    return Form(
-      key: _step2Key,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'postAd.photosAndLocation'.tr(),
-            style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
+  // Description, price, and negotiable checkbox.
+  Widget _buildDetailsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        _buildLabel('postAd.descriptionLabel'.tr()),
+        _buildTextField(
+          controller: _descriptionController,
+          hintText: 'postAd.descriptionHint'.tr(),
+          maxLines: 5,
+          validator: (val) => val == null || val.isEmpty
+              ? (context.locale.languageCode == 'ne'
+                    ? 'विवरण आवश्यक छ'
+                    : 'Description is required')
+              : null,
+        ),
+        _buildCharCount("${_descriptionController.text.length}/5000"),
 
-          // Photos
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'postAd.photosLabel'.tr(),
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                'postAd.maxImages'.tr(),
-                style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: _showImageSourceSheet,
-            child: Container(
-              height: 140,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.grey[300]!,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: _totalImageCount == 0
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            LucideIcons.camera,
-                            size: 24,
-                            color: Colors.blue[600],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'postAd.tapToUpload'.tr(),
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.all(12),
-                      itemCount: _totalImageCount + 1,
-                      itemBuilder: (context, index) {
-                        // Add button at the end
-                        if (index == _totalImageCount) {
-                          if (_totalImageCount < _maxImages) {
-                            return GestureDetector(
-                              onTap: _showImageSourceSheet,
-                              child: Container(
-                                width: 100,
-                                margin: const EdgeInsets.only(left: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.grey[300]!,
-                                    style: BorderStyle.solid,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  LucideIcons.plus,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        }
+        const SizedBox(height: 24),
+        _buildLabel('postAd.priceLabel'.tr()),
+        _buildTextField(
+          controller: _priceController,
+          hintText: "0",
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (val) => val == null || val.isEmpty
+              ? (context.locale.languageCode == 'ne'
+                    ? 'मूल्य आवश्यक छ'
+                    : 'Price is required')
+              : null,
+        ),
 
-                        // Existing images first, then new images
-                        final isExisting = index < _existingImagePaths.length;
-
-                        return Stack(
-                          children: [
-                            Container(
-                              width: 100,
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: isExisting
-                                  ? AppCachedImage(
-                                      imageUrl: ApiConfig.getAdImageUrl(
-                                        _existingImagePaths[index],
-                                      ),
-                                      fit: BoxFit.cover,
-                                      width: 100,
-                                    )
-                                  : Image.file(
-                                      File(
-                                        _selectedImages[index -
-                                                _existingImagePaths.length]
-                                            .path,
-                                      ),
-                                      fit: BoxFit.cover,
-                                      width: 100,
-                                      height: double.infinity,
-                                    ),
-                            ),
-                            Positioned(
-                              right: 4,
-                              top: 4,
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    if (isExisting) {
-                                      _existingImagePaths.removeAt(index);
-                                    } else {
-                                      _selectedImages.removeAt(
-                                        index - _existingImagePaths.length,
-                                      );
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    LucideIcons.x,
-                                    size: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            SizedBox(
+              height: 24,
+              width: 24,
+              child: Checkbox(
+                value: _priceNegotiable,
+                activeColor: const Color(0xFF10B981),
+                onChanged: (val) {
+                  setState(() => _priceNegotiable = val ?? false);
+                  _onFormChanged();
+                },
+              ),
             ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // Location
-          Text(
-            'postAd.locationLabel'.tr(),
-            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 16),
-
-          // Quick search — type a place name to auto-fill the dropdowns below
-          _buildLabel('postAd.searchLocationLabel'.tr()),
-          TextField(
-            controller: _locationSearchController,
-            onChanged: _onLocationSearchChanged,
-            style: GoogleFonts.inter(fontSize: 14),
-            decoration: _inputDecoration().copyWith(
-              hintText: 'postAd.searchLocationHint'.tr(),
-              hintStyle: GoogleFonts.inter(
-                color: Colors.grey[400],
-                fontSize: 14,
-              ),
-              prefixIcon: const Icon(
-                LucideIcons.search,
-                size: 18,
-                color: Colors.grey,
-              ),
-              suffixIcon: _searchingLocation
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : (_locationSearchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(
-                              LucideIcons.x,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () {
-                              _locationSearchController.clear();
-                              setState(() => _locationSearchResults = []);
-                            },
-                          )
-                        : null),
-            ),
-          ),
-          if (_locationSearchResults.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Column(
-                children: [
-                  for (int i = 0; i < _locationSearchResults.length; i++) ...[
-                    if (i > 0) Divider(height: 1, color: Colors.grey[200]),
-                    _buildLocationResultTile(_locationSearchResults[i]),
-                  ],
-                ],
-              ),
+            const SizedBox(width: 8),
+            Text(
+              'postAd.priceNegotiable'.tr(),
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.black87),
             ),
           ],
-          const SizedBox(height: 16),
+        ),
+      ],
+    );
+  }
 
-          _buildLabel('postAd.provinceLabel'.tr()),
-          DropdownButtonFormField<LocationProvince>(
-            value: _selectedProvince,
+  // Photos section — first thing on the form ("let me show you the thing")
+  Widget _buildPhotosSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'postAd.photosLabel'.tr(),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              'postAd.maxImages'.tr(),
+              style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _showImageSourceSheet,
+          child: Container(
+            height: 140,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.grey[300]!,
+                style: BorderStyle.solid,
+              ),
+            ),
+            child: _totalImageCount == 0
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          LucideIcons.camera,
+                          size: 24,
+                          color: Colors.blue[600],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'postAd.tapToUpload'.tr(),
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  )
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.all(12),
+                    itemCount: _totalImageCount + 1,
+                    itemBuilder: (context, index) {
+                      // Add button at the end
+                      if (index == _totalImageCount) {
+                        if (_totalImageCount < _maxImages) {
+                          return GestureDetector(
+                            onTap: _showImageSourceSheet,
+                            child: Container(
+                              width: 100,
+                              margin: const EdgeInsets.only(left: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.grey[300]!,
+                                  style: BorderStyle.solid,
+                                ),
+                              ),
+                              child: const Icon(
+                                LucideIcons.plus,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      }
+
+                      // Existing images first, then new images
+                      final isExisting = index < _existingImagePaths.length;
+
+                      return Stack(
+                        children: [
+                          Container(
+                            width: 100,
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: isExisting
+                                ? AppCachedImage(
+                                    imageUrl: ApiConfig.getAdImageUrl(
+                                      _existingImagePaths[index],
+                                    ),
+                                    fit: BoxFit.cover,
+                                    width: 100,
+                                  )
+                                : Image.file(
+                                    File(
+                                      _selectedImages[index -
+                                              _existingImagePaths.length]
+                                          .path,
+                                    ),
+                                    fit: BoxFit.cover,
+                                    width: 100,
+                                    height: double.infinity,
+                                  ),
+                          ),
+                          Positioned(
+                            right: 4,
+                            top: 4,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isExisting) {
+                                    _existingImagePaths.removeAt(index);
+                                  } else {
+                                    _selectedImages.removeAt(
+                                      index - _existingImagePaths.length,
+                                    );
+                                  }
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  LucideIcons.x,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Location section
+  Widget _buildLocationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 28),
+        Text(
+          'postAd.locationLabel'.tr(),
+          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+
+        // Quick search — type a place name to auto-fill the dropdowns below
+        _buildLabel('postAd.searchLocationLabel'.tr()),
+        TextField(
+          controller: _locationSearchController,
+          onChanged: _onLocationSearchChanged,
+          style: GoogleFonts.inter(fontSize: 14),
+          decoration: _inputDecoration().copyWith(
+            hintText: 'postAd.searchLocationHint'.tr(),
+            hintStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+            prefixIcon: const Icon(
+              LucideIcons.search,
+              size: 18,
+              color: Colors.grey,
+            ),
+            suffixIcon: _searchingLocation
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : (_locationSearchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            LucideIcons.x,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            _locationSearchController.clear();
+                            setState(() => _locationSearchResults = []);
+                          },
+                        )
+                      : null),
+          ),
+        ),
+        if (_locationSearchResults.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Column(
+              children: [
+                for (int i = 0; i < _locationSearchResults.length; i++) ...[
+                  if (i > 0) Divider(height: 1, color: Colors.grey[200]),
+                  _buildLocationResultTile(_locationSearchResults[i]),
+                ],
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+
+        _buildLabel('postAd.provinceLabel'.tr()),
+        DropdownButtonFormField<LocationProvince>(
+          value: _selectedProvince,
+          isExpanded: true,
+          hint: Text(
+            'postAd.selectProvince'.tr(),
+            style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+          ),
+          decoration: _inputDecoration(),
+          items: _provinces.map<DropdownMenuItem<LocationProvince>>((
+            LocationProvince prov,
+          ) {
+            return DropdownMenuItem<LocationProvince>(
+              value: prov,
+              child: Text(
+                prov.localizedName(context.locale.languageCode),
+                style: GoogleFonts.inter(fontSize: 14),
+              ),
+            );
+          }).toList(),
+          onChanged: (val) {
+            setState(() {
+              _selectedProvince = val;
+              _selectedDistrict = null;
+              _selectedMunicipality = null;
+            });
+          },
+          icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
+        ),
+
+        if (_selectedProvince != null) ...[
+          const SizedBox(height: 16),
+          _buildLabel('postAd.districtLabel'.tr()),
+          DropdownButtonFormField<LocationDistrict>(
+            value: _selectedDistrict,
             isExpanded: true,
             hint: Text(
-              'postAd.selectProvince'.tr(),
+              'postAd.selectDistrict'.tr(),
               style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
             ),
             decoration: _inputDecoration(),
-            items: _provinces.map<DropdownMenuItem<LocationProvince>>((
-              LocationProvince prov,
-            ) {
-              return DropdownMenuItem<LocationProvince>(
-                value: prov,
-                child: Text(
-                  prov.localizedName(context.locale.languageCode),
-                  style: GoogleFonts.inter(fontSize: 14),
-                ),
-              );
-            }).toList(),
+            items: _selectedProvince!.districts
+                .map<DropdownMenuItem<LocationDistrict>>((
+                  LocationDistrict dist,
+                ) {
+                  return DropdownMenuItem<LocationDistrict>(
+                    value: dist,
+                    child: Text(
+                      dist.localizedName(context.locale.languageCode),
+                      style: GoogleFonts.inter(fontSize: 14),
+                    ),
+                  );
+                })
+                .toList(),
             onChanged: (val) {
               setState(() {
-                _selectedProvince = val;
-                _selectedDistrict = null;
+                _selectedDistrict = val;
                 _selectedMunicipality = null;
               });
             },
             icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
           ),
-
-          if (_selectedProvince != null) ...[
-            const SizedBox(height: 16),
-            _buildLabel('postAd.districtLabel'.tr()),
-            DropdownButtonFormField<LocationDistrict>(
-              value: _selectedDistrict,
-              isExpanded: true,
-              hint: Text(
-                'postAd.selectDistrict'.tr(),
-                style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-              ),
-              decoration: _inputDecoration(),
-              items: _selectedProvince!.districts
-                  .map<DropdownMenuItem<LocationDistrict>>((
-                    LocationDistrict dist,
-                  ) {
-                    return DropdownMenuItem<LocationDistrict>(
-                      value: dist,
-                      child: Text(
-                        dist.localizedName(context.locale.languageCode),
-                        style: GoogleFonts.inter(fontSize: 14),
-                      ),
-                    );
-                  })
-                  .toList(),
-              onChanged: (val) {
-                setState(() {
-                  _selectedDistrict = val;
-                  _selectedMunicipality = null;
-                });
-              },
-              icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
-            ),
-          ],
-
-          if (_selectedDistrict != null) ...[
-            const SizedBox(height: 16),
-            _buildLabel('postAd.cityLabel'.tr()),
-            DropdownButtonFormField<LocationMunicipality>(
-              value: _selectedMunicipality,
-              isExpanded: true,
-              hint: Text(
-                'postAd.selectCity'.tr(),
-                style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-              ),
-              decoration: _inputDecoration(),
-              items: _selectedDistrict!.municipalities
-                  .map<DropdownMenuItem<LocationMunicipality>>((
-                    LocationMunicipality city,
-                  ) {
-                    return DropdownMenuItem<LocationMunicipality>(
-                      value: city,
-                      child: Text(
-                        city.localizedName(context.locale.languageCode),
-                        style: GoogleFonts.inter(fontSize: 14),
-                      ),
-                    );
-                  })
-                  .toList(),
-              onChanged: (val) {
-                setState(() {
-                  _selectedMunicipality = val;
-                  _selectedArea = null;
-                });
-              },
-              icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
-            ),
-          ],
-
-          if (_selectedMunicipality != null &&
-              _selectedMunicipality!.areas.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _buildLabel('postAd.areaLabel'.tr()),
-            DropdownButtonFormField<LocationArea>(
-              value: _selectedArea,
-              isExpanded: true,
-              hint: Text(
-                'postAd.selectArea'.tr(),
-                style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-              ),
-              decoration: _inputDecoration(),
-              items: _selectedMunicipality!.areas
-                  .map<DropdownMenuItem<LocationArea>>((LocationArea area) {
-                    return DropdownMenuItem<LocationArea>(
-                      value: area,
-                      child: Text(
-                        area.localizedName(context.locale.languageCode),
-                        style: GoogleFonts.inter(fontSize: 14),
-                      ),
-                    );
-                  })
-                  .toList(),
-              onChanged: (val) {
-                setState(() {
-                  _selectedArea = val;
-                });
-              },
-              icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
-            ),
-          ],
         ],
-      ),
+
+        if (_selectedDistrict != null) ...[
+          const SizedBox(height: 16),
+          _buildLabel('postAd.cityLabel'.tr()),
+          DropdownButtonFormField<LocationMunicipality>(
+            value: _selectedMunicipality,
+            isExpanded: true,
+            hint: Text(
+              'postAd.selectCity'.tr(),
+              style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+            ),
+            decoration: _inputDecoration(),
+            items: _selectedDistrict!.municipalities
+                .map<DropdownMenuItem<LocationMunicipality>>((
+                  LocationMunicipality city,
+                ) {
+                  return DropdownMenuItem<LocationMunicipality>(
+                    value: city,
+                    child: Text(
+                      city.localizedName(context.locale.languageCode),
+                      style: GoogleFonts.inter(fontSize: 14),
+                    ),
+                  );
+                })
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _selectedMunicipality = val;
+                _selectedArea = null;
+              });
+            },
+            icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
+          ),
+        ],
+
+        if (_selectedMunicipality != null &&
+            _selectedMunicipality!.areas.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildLabel('postAd.areaLabel'.tr()),
+          DropdownButtonFormField<LocationArea>(
+            value: _selectedArea,
+            isExpanded: true,
+            hint: Text(
+              'postAd.selectArea'.tr(),
+              style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+            ),
+            decoration: _inputDecoration(),
+            items: _selectedMunicipality!.areas
+                .map<DropdownMenuItem<LocationArea>>((LocationArea area) {
+                  return DropdownMenuItem<LocationArea>(
+                    value: area,
+                    child: Text(
+                      area.localizedName(context.locale.languageCode),
+                      style: GoogleFonts.inter(fontSize: 14),
+                    ),
+                  );
+                })
+                .toList(),
+            onChanged: (val) {
+              setState(() {
+                _selectedArea = val;
+              });
+            },
+            icon: const Icon(LucideIcons.chevronDown, color: Colors.grey),
+          ),
+        ],
+      ],
     );
   }
 
-  // Step 3: Contact (Phone + WhatsApp)
-  Widget _buildStep3() {
+  // Contact section (Phone + WhatsApp)
+  Widget _buildContactSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 28),
         Text(
           'postAd.contactInfo'.tr(),
           style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
@@ -2165,79 +2445,70 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          if (_currentStep > 0)
-            Expanded(
-              flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: OutlinedButton(
-                  onPressed: _prevStep,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: BorderSide(color: Colors.grey[300]!),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    'common.back'.tr(),
-                    style: GoogleFonts.inter(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _submitAd,
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: const Color(0xFF10B981),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
-
-          Expanded(
-            flex: 2,
-            child: ElevatedButton(
-              onPressed: _currentStep == _totalSteps - 1
-                  ? (_isLoading ? null : _submitAd)
-                  : _nextStep,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: const Color(0xFF10B981),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
+          ),
+          child: _isLoading
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: Colors.white,
                       ),
-                    )
-                  : Text(
-                      _currentStep == _totalSteps - 1
-                          ? (widget.isEditMode
-                                ? (widget.existingAd!.status ==
-                                          AdStatus.rejected
-                                      ? (context.locale.languageCode == 'ne'
-                                            ? 'पुन: पेश गर्नुहोस्'
-                                            : 'Resubmit')
-                                      : (context.locale.languageCode == 'ne'
-                                            ? 'अपडेट गर्नुहोस्'
-                                            : 'Update Ad'))
-                                : 'postAd.postAdNow'.tr())
-                          : 'common.next'.tr(),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _uploadLabel(),
                       style: GoogleFonts.inter(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-            ),
-          ),
-        ],
+                  ],
+                )
+              : Text(
+                  widget.isEditMode
+                      ? (widget.existingAd?.status == AdStatus.rejected
+                            ? (context.locale.languageCode == 'ne'
+                                  ? 'पुन: पेश गर्नुहोस्'
+                                  : 'Resubmit')
+                            : (context.locale.languageCode == 'ne'
+                                  ? 'अपडेट गर्नुहोस्'
+                                  : 'Update Ad'))
+                      : 'postAd.postAdNow'.tr(),
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+        ),
       ),
     );
+  }
+
+  /// "Uploading X%" while bytes are leaving the phone, then "Processing..."
+  /// while the server optimizes images and creates the ad.
+  String _uploadLabel() {
+    final progress = _uploadProgress;
+    final isNepali = context.locale.languageCode == 'ne';
+    if (progress != null && progress < 0.99) {
+      final percent = (progress * 100).round();
+      return isNepali ? 'अपलोड हुँदैछ $percent%' : 'Uploading $percent%';
+    }
+    return isNepali ? 'प्रोसेस हुँदैछ...' : 'Processing...';
   }
 
   Widget _buildLabel(String text) {

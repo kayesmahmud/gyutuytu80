@@ -112,6 +112,13 @@ export interface CategoryWithSubcategories extends Category {
   subcategories: Category[];
 }
 
+/** One entry of the keyword→category dictionary used for post-ad title suggestions. */
+export interface CategoryKeyword {
+  keyword: string;
+  categoryId: number;
+  subcategoryId: number | null;
+}
+
 // ============================================
 // API LOCATION TYPES
 // ============================================
