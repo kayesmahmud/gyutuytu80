@@ -5,7 +5,6 @@ export 'user.dart';
 export 'ad.dart';
 export 'ai_draft.dart';
 export 'category.dart';
-export 'category_keyword.dart';
 export 'location.dart';
 export 'message.dart';
 export 'api_response.dart';

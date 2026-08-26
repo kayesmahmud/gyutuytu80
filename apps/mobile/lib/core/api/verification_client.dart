@@ -42,10 +42,15 @@ class VerificationClient {
       if (response.data['success'] == true && response.data['data'] != null) {
         return VerificationPricingResponse.fromJson(response.data['data']);
       }
-      if (kDebugMode) developer.log('No data in pricing response', name: 'VerificationClient');
+      if (kDebugMode)
+        developer.log(
+          'No data in pricing response',
+          name: 'VerificationClient',
+        );
       return null;
     } catch (e) {
-      if (kDebugMode) developer.log('Error fetching pricing: $e', name: 'VerificationClient');
+      if (kDebugMode)
+        developer.log('Error fetching pricing: $e', name: 'VerificationClient');
       return null;
     }
   }

@@ -36,7 +36,11 @@ class ValidatedStepIndicator extends StatelessWidget {
                   ),
                   child: Center(
                     child: isCompleted
-                        ? const Icon(LucideIcons.check, color: Colors.white, size: 16)
+                        ? const Icon(
+                            LucideIcons.check,
+                            color: Colors.white,
+                            size: 16,
+                          )
                         : Text(
                             '${index + 1}',
                             style: GoogleFonts.inter(
@@ -53,8 +57,12 @@ class ValidatedStepIndicator extends StatelessWidget {
                     steps[index],
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                      color: isActive ? const Color(0xFF6366F1) : Colors.grey[500],
+                      fontWeight: isActive
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                      color: isActive
+                          ? const Color(0xFF6366F1)
+                          : Colors.grey[500],
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),

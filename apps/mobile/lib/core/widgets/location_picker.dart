@@ -28,7 +28,8 @@ class SelectedLocation {
   });
 
   /// Get the most specific location ID (area > municipality > district > province)
-  int? get finalLocationId => areaId ?? municipalityId ?? districtId ?? provinceId;
+  int? get finalLocationId =>
+      areaId ?? municipalityId ?? districtId ?? provinceId;
 
   /// Get display name for the selected location
   String get displayName {
@@ -332,13 +333,23 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                         ? const SizedBox(height: 48)
                         : DropdownButtonFormField<Province>(
                             value: _selectedProvince,
-                            hint: Text('Select Province', style: GoogleFonts.inter(color: Colors.grey[500])),
+                            hint: Text(
+                              'Select Province',
+                              style: GoogleFonts.inter(color: Colors.grey[500]),
+                            ),
                             isExpanded: true,
                             decoration: _dropdownDecoration(),
-                            items: _provinces.map((p) => DropdownMenuItem(
-                              value: p,
-                              child: Text(p.name, style: GoogleFonts.inter()),
-                            )).toList(),
+                            items: _provinces
+                                .map(
+                                  (p) => DropdownMenuItem(
+                                    value: p,
+                                    child: Text(
+                                      p.name,
+                                      style: GoogleFonts.inter(),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
                             onChanged: (province) {
                               setState(() => _selectedProvince = province);
                               if (province != null) {
@@ -360,21 +371,36 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                         : DropdownButtonFormField<District>(
                             value: _selectedDistrict,
                             hint: Text(
-                              _selectedProvince == null ? 'Select Province first' : 'Select District',
+                              _selectedProvince == null
+                                  ? 'Select Province first'
+                                  : 'Select District',
                               style: GoogleFonts.inter(color: Colors.grey[500]),
                             ),
                             isExpanded: true,
-                            decoration: _dropdownDecoration(enabled: _selectedProvince != null),
-                            items: _districts.map((d) => DropdownMenuItem(
-                              value: d,
-                              child: Text(d.name, style: GoogleFonts.inter()),
-                            )).toList(),
-                            onChanged: _selectedProvince == null ? null : (district) {
-                              setState(() => _selectedDistrict = district);
-                              if (district != null) {
-                                _loadMunicipalities(district.id);
-                              }
-                            },
+                            decoration: _dropdownDecoration(
+                              enabled: _selectedProvince != null,
+                            ),
+                            items: _districts
+                                .map(
+                                  (d) => DropdownMenuItem(
+                                    value: d,
+                                    child: Text(
+                                      d.name,
+                                      style: GoogleFonts.inter(),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: _selectedProvince == null
+                                ? null
+                                : (district) {
+                                    setState(
+                                      () => _selectedDistrict = district,
+                                    );
+                                    if (district != null) {
+                                      _loadMunicipalities(district.id);
+                                    }
+                                  },
                           ),
                   ),
 
@@ -390,21 +416,37 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                         : DropdownButtonFormField<Municipality>(
                             value: _selectedMunicipality,
                             hint: Text(
-                              _selectedDistrict == null ? 'Select District first' : 'Select Municipality',
+                              _selectedDistrict == null
+                                  ? 'Select District first'
+                                  : 'Select Municipality',
                               style: GoogleFonts.inter(color: Colors.grey[500]),
                             ),
                             isExpanded: true,
-                            decoration: _dropdownDecoration(enabled: _selectedDistrict != null),
-                            items: _municipalities.map((m) => DropdownMenuItem(
-                              value: m,
-                              child: Text(m.name, style: GoogleFonts.inter()),
-                            )).toList(),
-                            onChanged: _selectedDistrict == null ? null : (municipality) {
-                              setState(() => _selectedMunicipality = municipality);
-                              if (municipality != null) {
-                                _loadAreas(municipality.id);
-                              }
-                            },
+                            decoration: _dropdownDecoration(
+                              enabled: _selectedDistrict != null,
+                            ),
+                            items: _municipalities
+                                .map(
+                                  (m) => DropdownMenuItem(
+                                    value: m,
+                                    child: Text(
+                                      m.name,
+                                      style: GoogleFonts.inter(),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: _selectedDistrict == null
+                                ? null
+                                : (municipality) {
+                                    setState(
+                                      () =>
+                                          _selectedMunicipality = municipality,
+                                    );
+                                    if (municipality != null) {
+                                      _loadAreas(municipality.id);
+                                    }
+                                  },
                           ),
                   ),
 
@@ -418,34 +460,52 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                     child: _loadingAreas
                         ? const SizedBox(height: 48)
                         : _areas.isEmpty && _selectedMunicipality != null
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey[200]!),
-                                ),
-                                child: Text(
-                                  'No areas available',
-                                  style: GoogleFonts.inter(color: Colors.grey[500]),
-                                ),
-                              )
-                            : DropdownButtonFormField<Area>(
-                                value: _selectedArea,
-                                hint: Text(
-                                  _selectedMunicipality == null ? 'Select Municipality first' : 'Select Area',
-                                  style: GoogleFonts.inter(color: Colors.grey[500]),
-                                ),
-                                isExpanded: true,
-                                decoration: _dropdownDecoration(enabled: _selectedMunicipality != null && _areas.isNotEmpty),
-                                items: _areas.map((a) => DropdownMenuItem(
-                                  value: a,
-                                  child: Text(a.name, style: GoogleFonts.inter()),
-                                )).toList(),
-                                onChanged: _selectedMunicipality == null ? null : (area) {
-                                  setState(() => _selectedArea = area);
-                                },
-                              ),
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Text(
+                              'No areas available',
+                              style: GoogleFonts.inter(color: Colors.grey[500]),
+                            ),
+                          )
+                        : DropdownButtonFormField<Area>(
+                            value: _selectedArea,
+                            hint: Text(
+                              _selectedMunicipality == null
+                                  ? 'Select Municipality first'
+                                  : 'Select Area',
+                              style: GoogleFonts.inter(color: Colors.grey[500]),
+                            ),
+                            isExpanded: true,
+                            decoration: _dropdownDecoration(
+                              enabled:
+                                  _selectedMunicipality != null &&
+                                  _areas.isNotEmpty,
+                            ),
+                            items: _areas
+                                .map(
+                                  (a) => DropdownMenuItem(
+                                    value: a,
+                                    child: Text(
+                                      a.name,
+                                      style: GoogleFonts.inter(),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: _selectedMunicipality == null
+                                ? null
+                                : (area) {
+                                    setState(() => _selectedArea = area);
+                                  },
+                          ),
                   ),
 
                   const SizedBox(height: 24),
@@ -457,11 +517,17 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
+                        border: Border.all(
+                          color: AppTheme.primary.withOpacity(0.2),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.mapPin, color: AppTheme.primary, size: 20),
+                          const Icon(
+                            LucideIcons.mapPin,
+                            color: AppTheme.primary,
+                            size: 20,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -510,7 +576,9 @@ class _LocationPickerContentState extends State<_LocationPickerContent> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _selectedProvince != null ? _confirmSelection : null,
+                  onPressed: _selectedProvince != null
+                      ? _confirmSelection
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     disabledBackgroundColor: Colors.grey[300],

@@ -98,7 +98,9 @@ class VerificationDurationSelector extends StatelessWidget {
                 ),
               ),
               child: Text(
-                isFreeVerification ? 'Continue with Free Verification' : 'Continue',
+                isFreeVerification
+                    ? 'Continue with Free Verification'
+                    : 'Continue',
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -124,8 +126,9 @@ class VerificationDurationSelector extends StatelessWidget {
           color: isFreeVerification ? const Color(0xFFD1FAE5) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color:
-                isFreeVerification ? const Color(0xFF10B981) : Colors.grey[200]!,
+            color: isFreeVerification
+                ? const Color(0xFF10B981)
+                : Colors.grey[200]!,
             width: isFreeVerification ? 2 : 1,
           ),
         ),
@@ -137,8 +140,11 @@ class VerificationDurationSelector extends StatelessWidget {
                 color: const Color(0xFF10B981).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(LucideIcons.partyPopper,
-                  color: Color(0xFF10B981), size: 20),
+              child: const Icon(
+                LucideIcons.partyPopper,
+                color: Color(0xFF10B981),
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -165,8 +171,11 @@ class VerificationDurationSelector extends StatelessWidget {
               ),
             ),
             if (isFreeVerification)
-              const Icon(LucideIcons.checkCircle,
-                  color: Color(0xFF10B981), size: 24),
+              const Icon(
+                LucideIcons.checkCircle,
+                color: Color(0xFF10B981),
+                size: 24,
+              ),
           ],
         ),
       ),
@@ -218,7 +227,9 @@ class VerificationDurationSelector extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFEF3C7),
                             borderRadius: BorderRadius.circular(4),
@@ -248,8 +259,11 @@ class VerificationDurationSelector extends StatelessWidget {
             ),
             if (isSelected) ...[
               const SizedBox(width: 8),
-              const Icon(LucideIcons.checkCircle,
-                  color: Color(0xFF6366F1), size: 24),
+              const Icon(
+                LucideIcons.checkCircle,
+                color: Color(0xFF6366F1),
+                size: 24,
+              ),
             ],
           ],
         ),

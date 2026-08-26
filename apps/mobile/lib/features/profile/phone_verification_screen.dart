@@ -88,15 +88,13 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         // Server rejected before sending an OTP — e.g. the number is already in
         // use, on cooldown, or invalid. Show its message as-is (no "Exception:"
         // wrapper) so the user can act on it (try another number, wait, etc.).
-        final message = result['message'] as String? ??
+        final message =
+            result['message'] as String? ??
             (context.locale.languageCode == 'ne'
                 ? 'OTP पठाउन असफल भयो'
                 : 'Failed to send OTP');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red[600],
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red[600]),
         );
       }
     } catch (e) {

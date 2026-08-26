@@ -15,7 +15,8 @@ class SellerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isBusiness = ad.businessVerificationStatus == 'verified' ||
+    bool isBusiness =
+        ad.businessVerificationStatus == 'verified' ||
         ad.businessVerificationStatus == 'approved';
     bool isVerified = isBusiness || ad.individualVerified == true;
 
@@ -52,15 +53,17 @@ class SellerCard extends StatelessWidget {
                   color: isBusiness
                       ? const Color(0xFFFBBF24)
                       : isVerified
-                          ? const Color(0xFF3B82F6)
-                          : Colors.grey[300]!,
+                      ? const Color(0xFF3B82F6)
+                      : Colors.grey[300]!,
                   width: isBusiness || isVerified ? 3 : 1,
                 ),
               ),
               child: CircleAvatar(
                 radius: 26,
                 backgroundImage: ad.userAvatar != null
-                    ? CachedNetworkImageProvider(ApiConfig.getAvatarUrl(ad.userAvatar))
+                    ? CachedNetworkImageProvider(
+                        ApiConfig.getAvatarUrl(ad.userAvatar),
+                      )
                     : null,
                 backgroundColor: Colors.grey[200],
                 child: ad.userAvatar == null
@@ -77,31 +80,46 @@ class SellerCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          ad.userName ?? (context.locale.languageCode == 'ne' ? "विक्रेता" : "Seller"),
+                          ad.userName ??
+                              (context.locale.languageCode == 'ne'
+                                  ? "विक्रेता"
+                                  : "Seller"),
                           style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1F2937)),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF1F2937),
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (isVerified) ...[
                         const SizedBox(width: 4),
                         Image.asset(
-                          isBusiness ? 'assets/images/golden-badge.png' : 'assets/images/blue-badge.png',
-                          width: 16, height: 16,
+                          isBusiness
+                              ? 'assets/images/golden-badge.png'
+                              : 'assets/images/blue-badge.png',
+                          width: 16,
+                          height: 16,
                         ),
-                      ]
+                      ],
                     ],
                   ),
                   Text(
                     isBusiness
-                        ? (context.locale.languageCode == 'ne' ? "प्रमाणित व्यापार खाता" : "Verified Business Account")
+                        ? (context.locale.languageCode == 'ne'
+                              ? "प्रमाणित व्यापार खाता"
+                              : "Verified Business Account")
                         : isVerified
-                        ? (context.locale.languageCode == 'ne' ? "प्रमाणित व्यक्तिगत विक्रेता" : "Verified Individual Seller")
-                        : (context.locale.languageCode == 'ne' ? "विक्रेता" : "Seller"),
+                        ? (context.locale.languageCode == 'ne'
+                              ? "प्रमाणित व्यक्तिगत विक्रेता"
+                              : "Verified Individual Seller")
+                        : (context.locale.languageCode == 'ne'
+                              ? "विक्रेता"
+                              : "Seller"),
                     style: GoogleFonts.inter(
-                        fontSize: 12, color: const Color(0xFF6B7280)),
+                      fontSize: 12,
+                      color: const Color(0xFF6B7280),
+                    ),
                   ),
                 ],
               ),
@@ -112,5 +130,4 @@ class SellerCard extends StatelessWidget {
       ),
     );
   }
-
 }

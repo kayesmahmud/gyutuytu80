@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../main.dart'
-    show appReadyForDeepLinks, processPendingNotification, processPendingDeepLink;
+    show
+        appReadyForDeepLinks,
+        processPendingNotification,
+        processPendingDeepLink;
 
 class SplashScreen extends StatefulWidget {
   final Widget nextScreen;

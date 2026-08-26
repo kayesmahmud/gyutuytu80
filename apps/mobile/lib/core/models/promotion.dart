@@ -54,11 +54,23 @@ extension PromotionTypeEnumExt on PromotionTypeEnum {
   List<String> get benefits {
     switch (this) {
       case PromotionTypeEnum.featured:
-        return ['Homepage carousel', 'Top of search results', 'Category highlights'];
+        return [
+          'Homepage carousel',
+          'Top of search results',
+          'Category highlights',
+        ];
       case PromotionTypeEnum.urgent:
-        return ['Top of category', 'Above sticky ads', 'Urgent badge with animation'];
+        return [
+          'Top of category',
+          'Above sticky ads',
+          'Urgent badge with animation',
+        ];
       case PromotionTypeEnum.sticky:
-        return ['Category visibility', 'Cost-effective', 'Consistent placement'];
+        return [
+          'Category visibility',
+          'Cost-effective',
+          'Consistent placement',
+        ];
     }
   }
 }
@@ -91,12 +103,24 @@ class PromotionPricing {
   factory PromotionPricing.fromJson(Map<String, dynamic> json) {
     return PromotionPricing(
       id: json['id'] as int? ?? 0,
-      promotionType: _parsePromotionType(json['promotionType'] ?? json['promotion_type']),
-      durationDays: json['durationDays'] as int? ?? json['duration_days'] as int? ?? 0,
-      accountType: json['accountType'] as String? ?? json['account_type'] as String? ?? 'individual',
-      pricingTier: json['pricingTier'] as String? ?? json['pricing_tier'] as String? ?? 'default',
+      promotionType: _parsePromotionType(
+        json['promotionType'] ?? json['promotion_type'],
+      ),
+      durationDays:
+          json['durationDays'] as int? ?? json['duration_days'] as int? ?? 0,
+      accountType:
+          json['accountType'] as String? ??
+          json['account_type'] as String? ??
+          'individual',
+      pricingTier:
+          json['pricingTier'] as String? ??
+          json['pricing_tier'] as String? ??
+          'default',
       price: _parseDouble(json['price']),
-      discountPercentage: json['discountPercentage'] as int? ?? json['discount_percentage'] as int? ?? 0,
+      discountPercentage:
+          json['discountPercentage'] as int? ??
+          json['discount_percentage'] as int? ??
+          0,
       isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
     );
   }
@@ -129,13 +153,26 @@ class CalculatedPrice {
 
   factory CalculatedPrice.fromJson(Map<String, dynamic> json) {
     return CalculatedPrice(
-      originalPrice: _parseDouble(json['originalPrice'] ?? json['original_price']),
+      originalPrice: _parseDouble(
+        json['originalPrice'] ?? json['original_price'],
+      ),
       finalPrice: _parseDouble(json['finalPrice'] ?? json['final_price']),
-      totalDiscount: json['totalDiscount'] as int? ?? json['total_discount'] as int? ?? 0,
-      accountDiscount: json['accountDiscount'] as int? ?? json['account_discount'] as int? ?? 0,
-      campaignDiscount: json['campaignDiscount'] as int? ?? json['campaign_discount'] as int? ?? 0,
-      accountType: json['accountType'] as String? ?? json['account_type'] as String? ?? 'individual',
-      campaignName: json['campaignName'] as String? ?? json['campaign_name'] as String?,
+      totalDiscount:
+          json['totalDiscount'] as int? ?? json['total_discount'] as int? ?? 0,
+      accountDiscount:
+          json['accountDiscount'] as int? ??
+          json['account_discount'] as int? ??
+          0,
+      campaignDiscount:
+          json['campaignDiscount'] as int? ??
+          json['campaign_discount'] as int? ??
+          0,
+      accountType:
+          json['accountType'] as String? ??
+          json['account_type'] as String? ??
+          'individual',
+      campaignName:
+          json['campaignName'] as String? ?? json['campaign_name'] as String?,
     );
   }
 
@@ -176,14 +213,29 @@ class PromotionCampaign {
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
-      discountPercentage: json['discountPercentage'] as int? ?? json['discount_percentage'] as int? ?? 0,
-      startsAt: _parseDateTime(json['startsAt'] ?? json['starts_at'] ?? json['start_date']),
-      endsAt: _parseDateTime(json['endsAt'] ?? json['ends_at'] ?? json['end_date']),
-      isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? false,
-      applicableTypes: (json['applicableTypes'] as List<dynamic>?)?.map((e) => e.toString()).toList()
-          ?? (json['applicable_types'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
-      bannerEmoji: json['bannerEmoji'] as String? ?? json['banner_emoji'] as String?,
-      bannerText: json['bannerText'] as String? ?? json['banner_text'] as String?,
+      discountPercentage:
+          json['discountPercentage'] as int? ??
+          json['discount_percentage'] as int? ??
+          0,
+      startsAt: _parseDateTime(
+        json['startsAt'] ?? json['starts_at'] ?? json['start_date'],
+      ),
+      endsAt: _parseDateTime(
+        json['endsAt'] ?? json['ends_at'] ?? json['end_date'],
+      ),
+      isActive:
+          json['isActive'] as bool? ?? json['is_active'] as bool? ?? false,
+      applicableTypes:
+          (json['applicableTypes'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          (json['applicable_types'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList(),
+      bannerEmoji:
+          json['bannerEmoji'] as String? ?? json['banner_emoji'] as String?,
+      bannerText:
+          json['bannerText'] as String? ?? json['banner_text'] as String?,
     );
   }
 
@@ -238,15 +290,25 @@ class AdPromotion {
       id: json['id'] as int? ?? 0,
       adId: json['adId'] as int? ?? json['ad_id'] as int? ?? 0,
       userId: json['userId'] as int? ?? json['user_id'] as int? ?? 0,
-      promotionType: _parsePromotionType(json['promotionType'] ?? json['promotion_type']),
-      durationDays: json['durationDays'] as int? ?? json['duration_days'] as int? ?? 0,
+      promotionType: _parsePromotionType(
+        json['promotionType'] ?? json['promotion_type'],
+      ),
+      durationDays:
+          json['durationDays'] as int? ?? json['duration_days'] as int? ?? 0,
       pricePaid: _parseDouble(json['pricePaid'] ?? json['price_paid']),
-      accountType: json['accountType'] as String? ?? json['account_type'] as String? ?? 'individual',
-      paymentReference: json['paymentReference'] as String? ?? json['payment_reference'] as String?,
-      paymentMethod: json['paymentMethod'] as String? ?? json['payment_method'] as String?,
+      accountType:
+          json['accountType'] as String? ??
+          json['account_type'] as String? ??
+          'individual',
+      paymentReference:
+          json['paymentReference'] as String? ??
+          json['payment_reference'] as String?,
+      paymentMethod:
+          json['paymentMethod'] as String? ?? json['payment_method'] as String?,
       startsAt: _parseDateTime(json['startsAt'] ?? json['starts_at']),
       expiresAt: _parseDateTime(json['expiresAt'] ?? json['expires_at']),
-      isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? false,
+      isActive:
+          json['isActive'] as bool? ?? json['is_active'] as bool? ?? false,
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
     );
   }
@@ -286,18 +348,27 @@ class PricingResponse {
       pricing: rawList
           .map((e) => PromotionPricing.fromJson(e as Map<String, dynamic>))
           .toList(),
-      activeCampaign: json['activeCampaign'] != null || json['active_campaign'] != null
+      activeCampaign:
+          json['activeCampaign'] != null || json['active_campaign'] != null
           ? PromotionCampaign.fromJson(
-              (json['activeCampaign'] ?? json['active_campaign']) as Map<String, dynamic>)
+              (json['activeCampaign'] ?? json['active_campaign'])
+                  as Map<String, dynamic>,
+            )
           : null,
       userAccountType:
-          json['userAccountType'] as String? ?? json['user_account_type'] as String? ?? 'individual',
+          json['userAccountType'] as String? ??
+          json['user_account_type'] as String? ??
+          'individual',
       pricingTier: json['adPricingTier'] as String? ?? 'default',
     );
   }
 
   /// Get price for specific type, duration, and account type — filtered by ad's pricing tier
-  PromotionPricing? getPricing(PromotionTypeEnum type, int durationDays, {String? accountType}) {
+  PromotionPricing? getPricing(
+    PromotionTypeEnum type,
+    int durationDays, {
+    String? accountType,
+  }) {
     try {
       // Match the ad's detected pricing tier first
       return pricing.firstWhere(

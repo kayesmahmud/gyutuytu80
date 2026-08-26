@@ -100,7 +100,8 @@ class LocationHierarchy extends Location {
       longitude: location.longitude,
       isActive: location.isActive,
       children: childrenList,
-      parentName: json['parentName'] as String? ?? json['parent_name'] as String?,
+      parentName:
+          json['parentName'] as String? ?? json['parent_name'] as String?,
     );
   }
 
@@ -132,8 +133,10 @@ class Area {
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
       nameNe: json['nameNe'] as String? ?? json['name_ne'] as String?,
-      listingCount: json['listing_count'] as int? ?? json['listingCount'] as int?,
-      isPopular: json['is_popular'] as bool? ?? json['isPopular'] as bool? ?? false,
+      listingCount:
+          json['listing_count'] as int? ?? json['listingCount'] as int?,
+      isPopular:
+          json['is_popular'] as bool? ?? json['isPopular'] as bool? ?? false,
     );
   }
 
@@ -182,7 +185,9 @@ class Municipality {
     List<Area>? areasList;
     final areasData = json['areas'];
     if (areasData != null && areasData is List) {
-      areasList = areasData.map((e) => Area.fromJson(e as Map<String, dynamic>)).toList();
+      areasList = areasData
+          .map((e) => Area.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
 
     return Municipality(
@@ -209,7 +214,9 @@ class Municipality {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Municipality && runtimeType == other.runtimeType && id == other.id;
+      other is Municipality &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;
@@ -239,7 +246,9 @@ class District {
     List<Municipality> muns = [];
     final munsData = json['municipalities'];
     if (munsData != null && munsData is List) {
-      muns = munsData.map((e) => Municipality.fromJson(e as Map<String, dynamic>)).toList();
+      muns = munsData
+          .map((e) => Municipality.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
 
     return District(
@@ -277,12 +286,7 @@ class Province {
   final String? nameNe;
   final List<District>? districts;
 
-  Province({
-    required this.id,
-    required this.name,
-    this.nameNe,
-    this.districts,
-  });
+  Province({required this.id, required this.name, this.nameNe, this.districts});
 
   /// Returns the localized name based on locale
   String localizedName(String locale) =>
@@ -292,7 +296,9 @@ class Province {
     List<District>? districtsList;
     final districtsData = json['districts'];
     if (districtsData != null && districtsData is List) {
-      districtsList = districtsData.map((e) => District.fromJson(e as Map<String, dynamic>)).toList();
+      districtsList = districtsData
+          .map((e) => District.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
 
     return Province(
@@ -326,20 +332,20 @@ class AreasHierarchyResponse {
   final int provinceId;
   final List<District> districts;
 
-  AreasHierarchyResponse({
-    required this.provinceId,
-    required this.districts,
-  });
+  AreasHierarchyResponse({required this.provinceId, required this.districts});
 
   factory AreasHierarchyResponse.fromJson(Map<String, dynamic> json) {
     List<District> districtsList = [];
     final districtsData = json['districts'];
     if (districtsData != null && districtsData is List) {
-      districtsList = districtsData.map((e) => District.fromJson(e as Map<String, dynamic>)).toList();
+      districtsList = districtsData
+          .map((e) => District.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
 
     return AreasHierarchyResponse(
-      provinceId: json['province_id'] as int? ?? json['provinceId'] as int? ?? 0,
+      provinceId:
+          json['province_id'] as int? ?? json['provinceId'] as int? ?? 0,
       districts: districtsList,
     );
   }

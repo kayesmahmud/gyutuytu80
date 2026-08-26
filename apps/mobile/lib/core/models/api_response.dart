@@ -7,12 +7,7 @@ class ApiResponse<T> {
   final String? error;
   final String? message;
 
-  ApiResponse({
-    required this.success,
-    this.data,
-    this.error,
-    this.message,
-  });
+  ApiResponse({required this.success, this.data, this.error, this.message});
 
   /// Factory for successful response
   factory ApiResponse.success(T data) {
@@ -30,10 +25,7 @@ class ApiResponse<T> {
     T Function(dynamic) fromData,
   ) {
     if (json['success'] == true) {
-      return ApiResponse(
-        success: true,
-        data: fromData(json['data']),
-      );
+      return ApiResponse(success: true, data: fromData(json['data']));
     }
     return ApiResponse(
       success: false,
@@ -68,8 +60,10 @@ class PaginationInfo {
     final total = json['total'] as int? ?? 0;
     final offset = json['offset'] as int? ?? 0;
     // Backend returns offset-based pagination; compute page/totalPages
-    final page = json['page'] as int? ?? (limit > 0 ? (offset ~/ limit) + 1 : 1);
-    final totalPages = json['totalPages'] as int? ??
+    final page =
+        json['page'] as int? ?? (limit > 0 ? (offset ~/ limit) + 1 : 1);
+    final totalPages =
+        json['totalPages'] as int? ??
         json['total_pages'] as int? ??
         (limit > 0 ? (total + limit - 1) ~/ limit : 1);
     return PaginationInfo(
@@ -115,11 +109,7 @@ class PaginatedResponse<T> {
 
   /// Factory for successful paginated response
   factory PaginatedResponse.success(List<T> data, PaginationInfo pagination) {
-    return PaginatedResponse(
-      success: true,
-      data: data,
-      pagination: pagination,
-    );
+    return PaginatedResponse(success: true, data: data, pagination: pagination);
   }
 
   /// Factory for error response
@@ -142,10 +132,14 @@ class PaginatedResponse<T> {
       return PaginatedResponse(
         success: true,
         data: dataList.map((e) => fromData(e as Map<String, dynamic>)).toList(),
-        pagination: PaginationInfo.fromJson(json['pagination'] as Map<String, dynamic>? ?? {}),
+        pagination: PaginationInfo.fromJson(
+          json['pagination'] as Map<String, dynamic>? ?? {},
+        ),
       );
     }
-    return PaginatedResponse.failure(_extractError(json['error']) ?? 'Unknown error');
+    return PaginatedResponse.failure(
+      _extractError(json['error']) ?? 'Unknown error',
+    );
   }
 
   /// Check if there are more pages to load
@@ -200,7 +194,8 @@ class SearchFilters {
     final params = <String, String>{};
     if (query != null && query!.isNotEmpty) params['search'] = query!;
     if (categoryId != null) params['category_id'] = categoryId.toString();
-    if (subcategoryId != null) params['subcategory_id'] = subcategoryId.toString();
+    if (subcategoryId != null)
+      params['subcategory_id'] = subcategoryId.toString();
     if (locationId != null) params['location_id'] = locationId.toString();
     if (areaId != null) params['area_id'] = areaId.toString();
     if (minPrice != null) params['min_price'] = minPrice.toString();
@@ -260,10 +255,7 @@ class SearchFilters {
 
   /// Clear all filters
   SearchFilters clear() {
-    return SearchFilters(
-      sortBy: sortBy,
-      sortOrder: sortOrder,
-    );
+    return SearchFilters(sortBy: sortBy, sortOrder: sortOrder);
   }
 }
 

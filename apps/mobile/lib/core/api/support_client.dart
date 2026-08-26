@@ -13,13 +13,13 @@ class SupportClient {
     int offset = 0,
   }) async {
     try {
-      final params = <String, dynamic>{
-        'limit': limit,
-        'offset': offset,
-      };
+      final params = <String, dynamic>{'limit': limit, 'offset': offset};
       if (status != null) params['status'] = status;
 
-      final response = await _dio.get('/support/tickets', queryParameters: params);
+      final response = await _dio.get(
+        '/support/tickets',
+        queryParameters: params,
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -44,11 +44,10 @@ class SupportClient {
     String category = 'general',
   }) async {
     try {
-      final response = await _dio.post('/support/tickets', data: {
-        'subject': subject,
-        'category': category,
-        'message': message,
-      });
+      final response = await _dio.post(
+        '/support/tickets',
+        data: {'subject': subject, 'category': category, 'message': message},
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
@@ -71,7 +70,9 @@ class SupportClient {
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
-          SupportTicketDetail.fromMap(response.data['data'] as Map<String, dynamic>),
+          SupportTicketDetail.fromMap(
+            response.data['data'] as Map<String, dynamic>,
+          ),
         );
       }
       return ApiResponse.failure(
@@ -84,12 +85,20 @@ class SupportClient {
     }
   }
 
-  Future<ApiResponse<void>> submitCsat(int ticketId, int score, {String? comment}) async {
+  Future<ApiResponse<void>> submitCsat(
+    int ticketId,
+    int score, {
+    String? comment,
+  }) async {
     try {
-      final response = await _dio.post('/support/tickets/$ticketId/csat', data: {
-        'score': score,
-        if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
-      });
+      final response = await _dio.post(
+        '/support/tickets/$ticketId/csat',
+        data: {
+          'score': score,
+          if (comment != null && comment.trim().isNotEmpty)
+            'comment': comment.trim(),
+        },
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(null);
@@ -104,11 +113,15 @@ class SupportClient {
     }
   }
 
-  Future<ApiResponse<SupportMessage>> sendMessage(int ticketId, String content) async {
+  Future<ApiResponse<SupportMessage>> sendMessage(
+    int ticketId,
+    String content,
+  ) async {
     try {
-      final response = await _dio.post('/support/tickets/$ticketId/messages', data: {
-        'content': content,
-      });
+      final response = await _dio.post(
+        '/support/tickets/$ticketId/messages',
+        data: {'content': content},
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(

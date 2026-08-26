@@ -53,7 +53,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final adWidth = (screenWidth - widget.padding.horizontal).truncate();
 
-    final adSize = AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(adWidth);
+    final adSize = AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(
+      adWidth,
+    );
 
     _bannerAd = BannerAd(
       adUnitId: widget.adUnitId,
@@ -67,7 +69,8 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
           setState(() {
             _bannerAd = bannerAd;
             _isLoaded = true;
-            _adHeight = platformSize?.height.toDouble() ?? adSize.height.toDouble();
+            _adHeight =
+                platformSize?.height.toDouble() ?? adSize.height.toDouble();
           });
         },
         onAdFailedToLoad: (ad, error) {
@@ -111,10 +114,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
 
     // Debug mode — show placeholder while loading or on failure
     if (kDebugMode) {
-      return Padding(
-        padding: widget.padding,
-        child: _buildPlaceholder(),
-      );
+      return Padding(padding: widget.padding, child: _buildPlaceholder());
     }
 
     // Release mode — collapse
@@ -182,7 +182,10 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
                 ),
                 // "Ad" badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(4),

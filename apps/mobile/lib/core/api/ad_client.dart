@@ -353,26 +353,6 @@ class AdClient {
     }
   }
 
-  /// Get the keyword→category dictionary for post-ad title suggestions.
-  /// Downloaded once per screen; matching happens locally on each keystroke.
-  Future<List<CategoryKeyword>> getCategoryKeywords() async {
-    try {
-      final response = await _dio.get('/categories/keywords');
-
-      if (response.data['success'] == true) {
-        final data = response.data['data'] as List<dynamic>;
-        return data
-            .map((e) => CategoryKeyword.fromJson(e as Map<String, dynamic>))
-            .toList();
-      }
-      return [];
-    } on DioException catch (e) {
-      if (kDebugMode) {
-        developer.log('Error fetching category keywords: $e', name: 'AdClient');
-      }
-      return [];
-    }
-  }
 
   /// Background-stage one ad photo the moment it is picked, so posting later
   /// only sends ids (instant). Returns the stagedId, or null on any error —

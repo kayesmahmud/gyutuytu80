@@ -73,7 +73,11 @@ class PaymentMethodSheet extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.badgeCheck, color: Colors.indigo, size: 20),
+                      const Icon(
+                        LucideIcons.badgeCheck,
+                        color: Colors.indigo,
+                        size: 20,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -189,10 +193,7 @@ class _GatewayCard extends StatelessWidget {
                   ),
                   Text(
                     description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),

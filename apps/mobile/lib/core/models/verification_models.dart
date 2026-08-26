@@ -1,4 +1,3 @@
-
 class VerificationStatusResponse {
   final bool success;
   final String? error;
@@ -17,21 +16,23 @@ class VerificationStatusResponse {
   factory VerificationStatusResponse.fromJson(Map<String, dynamic> json) {
     // If wrapping in {success: true, data: {...}}
     final data = json['data'] ?? json;
-    
+
     return VerificationStatusResponse(
       success: json['success'] == true,
-      error: json['message'], // sometimes error comes as message in 200 OK w/ success: false
+      error:
+          json['message'], // sometimes error comes as message in 200 OK w/ success: false
       accountType: data['accountType'],
       businessVerification: data['businessVerification'] != null
           ? BusinessVerificationStatus.fromJson(data['businessVerification'])
           : null,
       individualVerification: data['individualVerification'] != null
-          ? IndividualVerificationStatus.fromJson(data['individualVerification'])
+          ? IndividualVerificationStatus.fromJson(
+              data['individualVerification'],
+            )
           : null,
     );
   }
 }
-
 
 class BusinessVerificationStatus {
   final String status; // 'verified', 'pending', 'rejected', 'unverified'
@@ -142,7 +143,9 @@ class VerificationRequestDetails {
       durationDays: json['durationDays'],
       createdAt: json['createdAt'],
       paymentStatus: json['paymentStatus'],
-      paymentAmount: json['paymentAmount'] != null ? (json['paymentAmount'] as num).toDouble() : null,
+      paymentAmount: json['paymentAmount'] != null
+          ? (json['paymentAmount'] as num).toDouble()
+          : null,
       canResubmitFree: json['canResubmitFree'] == true,
     );
   }
@@ -151,14 +154,10 @@ class VerificationRequestDetails {
 class VerificationUploadResponse {
   final bool success;
   final String? error;
-  final Map<String, dynamic>? data; 
+  final Map<String, dynamic>? data;
   // data might contain 'url', 'filename' etc.
-  
-  VerificationUploadResponse({
-    required this.success,
-    this.error,
-    this.data,
-  });
+
+  VerificationUploadResponse({required this.success, this.error, this.data});
 
   factory VerificationUploadResponse.fromJson(Map<String, dynamic> json) {
     return VerificationUploadResponse(
@@ -207,16 +206,19 @@ class VerificationPricingResponse {
 
   factory VerificationPricingResponse.fromJson(Map<String, dynamic> json) {
     return VerificationPricingResponse(
-      individual: (json['individual'] as List<dynamic>?)
+      individual:
+          (json['individual'] as List<dynamic>?)
               ?.map((e) => PricingOption.fromJson(e))
               .toList() ??
           [],
-      business: (json['business'] as List<dynamic>?)
+      business:
+          (json['business'] as List<dynamic>?)
               ?.map((e) => PricingOption.fromJson(e))
               .toList() ??
           [],
       freeVerification: FreeVerificationInfo.fromJson(
-          json['freeVerification'] ?? {}),
+        json['freeVerification'] ?? {},
+      ),
       campaign: json['campaign'] != null
           ? VerificationCampaign.fromJson(json['campaign'])
           : null,
@@ -249,8 +251,7 @@ class PricingOption {
       durationDays: json['durationDays'] ?? 0,
       durationLabel: json['durationLabel'] ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0,
-      discountPercentage:
-          (json['discountPercentage'] as num?)?.toDouble() ?? 0,
+      discountPercentage: (json['discountPercentage'] as num?)?.toDouble() ?? 0,
       finalPrice: (json['finalPrice'] as num?)?.toDouble() ?? 0,
       hasCampaignDiscount: json['hasCampaignDiscount'] == true,
     );
@@ -274,7 +275,8 @@ class FreeVerificationInfo {
     return FreeVerificationInfo(
       enabled: json['enabled'] == true,
       durationDays: json['durationDays'] ?? 180,
-      types: (json['types'] as List<dynamic>?)
+      types:
+          (json['types'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           ['individual', 'business'],
@@ -311,12 +313,12 @@ class VerificationCampaign {
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
       description: json['description'],
-      discountPercentage:
-          (json['discountPercentage'] as num?)?.toDouble() ?? 0,
+      discountPercentage: (json['discountPercentage'] as num?)?.toDouble() ?? 0,
       bannerText: json['bannerText'] ?? '',
       bannerEmoji: json['bannerEmoji'],
       daysRemaining: json['daysRemaining'] ?? 0,
-      appliesToTypes: (json['appliesToTypes'] as List<dynamic>?)
+      appliesToTypes:
+          (json['appliesToTypes'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
@@ -324,4 +326,3 @@ class VerificationCampaign {
     );
   }
 }
-

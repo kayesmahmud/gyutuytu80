@@ -38,10 +38,12 @@ class NotificationItem {
       readAt: json['readAt'] != null
           ? DateTime.tryParse(json['readAt'] as String)
           : json['read_at'] != null
-              ? DateTime.tryParse(json['read_at'] as String)
-              : null,
-      createdAt: DateTime.tryParse(
-              json['createdAt'] as String? ?? json['created_at'] as String? ?? '') ??
+          ? DateTime.tryParse(json['read_at'] as String)
+          : null,
+      createdAt:
+          DateTime.tryParse(
+            json['createdAt'] as String? ?? json['created_at'] as String? ?? '',
+          ) ??
           DateTime.now(),
     );
   }

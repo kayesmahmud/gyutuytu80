@@ -88,9 +88,11 @@ class _GatewaySelectorState extends State<GatewaySelector> {
           _selectedGateway = _gateways.first.gateway;
         }
       } else {
-        _error = response.errorMessage ?? (context.locale.languageCode == 'ne'
-            ? 'भुक्तानी विकल्पहरू लोड गर्न असफल'
-            : 'Failed to load payment options');
+        _error =
+            response.errorMessage ??
+            (context.locale.languageCode == 'ne'
+                ? 'भुक्तानी विकल्पहरू लोड गर्न असफल'
+                : 'Failed to load payment options');
       }
     });
   }
@@ -180,7 +182,9 @@ class _GatewaySelectorState extends State<GatewaySelector> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.locale.languageCode == 'ne' ? 'भुक्तानी विधि छान्नुहोस्' : 'Select Payment Method',
+                  context.locale.languageCode == 'ne'
+                      ? 'भुक्तानी विधि छान्नुहोस्'
+                      : 'Select Payment Method',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -189,10 +193,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
                 const SizedBox(height: 2),
                 Text(
                   widget.orderName,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -202,13 +203,13 @@ class _GatewaySelectorState extends State<GatewaySelector> {
             children: [
               Text(
                 context.locale.languageCode == 'ne' ? 'जम्मा' : 'Total',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               Text(
-                formatLocalizedPrice(widget.amount, context.locale.languageCode),
+                formatLocalizedPrice(
+                  widget.amount,
+                  context.locale.languageCode,
+                ),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -226,9 +227,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
     if (_isLoading) {
       return const Padding(
         padding: EdgeInsets.all(40),
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -237,11 +236,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
         padding: const EdgeInsets.all(40),
         child: Column(
           children: [
-            Icon(
-              LucideIcons.alertCircle,
-              size: 48,
-              color: Colors.grey[400],
-            ),
+            Icon(LucideIcons.alertCircle, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               _error!,
@@ -263,11 +258,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
         padding: const EdgeInsets.all(40),
         child: Column(
           children: [
-            Icon(
-              LucideIcons.creditCard,
-              size: 48,
-              color: Colors.grey[400],
-            ),
+            Icon(LucideIcons.creditCard, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               context.locale.languageCode == 'ne'
@@ -340,7 +331,9 @@ class _GatewaySelectorState extends State<GatewaySelector> {
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? const Color(0xFFDC143C).withValues(alpha: 0.05) : Colors.white,
+          color: isSelected
+              ? const Color(0xFFDC143C).withValues(alpha: 0.05)
+              : Colors.white,
         ),
         child: Row(
           children: [
@@ -351,9 +344,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
                 color: _getGatewayColor(gateway.gateway).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Center(
-                child: _getGatewayIcon(gateway.gateway),
-              ),
+              child: Center(child: _getGatewayIcon(gateway.gateway)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -369,10 +360,7 @@ class _GatewaySelectorState extends State<GatewaySelector> {
                   ),
                   Text(
                     gateway.description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -383,10 +371,14 @@ class _GatewaySelectorState extends State<GatewaySelector> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? const Color(0xFFDC143C) : Colors.grey[400]!,
+                  color: isSelected
+                      ? const Color(0xFFDC143C)
+                      : Colors.grey[400]!,
                   width: 2,
                 ),
-                color: isSelected ? const Color(0xFFDC143C) : Colors.transparent,
+                color: isSelected
+                    ? const Color(0xFFDC143C)
+                    : Colors.transparent,
               ),
               child: isSelected
                   ? const Icon(LucideIcons.check, size: 16, color: Colors.white)
@@ -404,21 +396,14 @@ class _GatewaySelectorState extends State<GatewaySelector> {
       color: Colors.grey[50],
       child: Row(
         children: [
-          Icon(
-            LucideIcons.lock,
-            size: 16,
-            color: Colors.grey[600],
-          ),
+          Icon(LucideIcons.lock, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               context.locale.languageCode == 'ne'
                   ? 'तपाईंको भुक्तानी सुरक्षित र इन्क्रिप्टेड छ'
                   : 'Your payment is secure and encrypted',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ),
         ],

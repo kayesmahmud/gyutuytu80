@@ -25,16 +25,14 @@ class AppCachedImage extends StatelessWidget {
     this.errorWidget,
   });
 
-  static bool _isAvif(String url) =>
-      url.toLowerCase().endsWith('.avif');
+  static bool _isAvif(String url) => url.toLowerCase().endsWith('.avif');
 
-  Widget _defaultPlaceholder() =>
-      Container(color: Colors.grey[100]);
+  Widget _defaultPlaceholder() => Container(color: Colors.grey[100]);
 
   Widget _defaultError() => Container(
-        color: Colors.grey[100],
-        child: Icon(LucideIcons.image, size: 40, color: Colors.grey[300]),
-      );
+    color: Colors.grey[100],
+    child: Icon(LucideIcons.image, size: 40, color: Colors.grey[300]),
+  );
 
   @override
   Widget build(BuildContext context) {

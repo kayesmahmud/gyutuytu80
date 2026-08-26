@@ -31,8 +31,9 @@ class VerificationStatusCard extends StatelessWidget {
         statusData?.statusType == VerificationStatusType.rejected;
 
     Color cardColor = Colors.white;
-    Color borderColor =
-        isSelected ? const Color(0xFF6366F1) : Colors.grey[200]!;
+    Color borderColor = isSelected
+        ? const Color(0xFF6366F1)
+        : Colors.grey[200]!;
     Color iconBgColor = const Color(0xFFEEF2FF);
     Color iconColor = const Color(0xFF6366F1);
 
@@ -114,8 +115,11 @@ class VerificationStatusCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.info,
-                        color: Color(0xFFEF4444), size: 18),
+                    const Icon(
+                      LucideIcons.info,
+                      color: Color(0xFFEF4444),
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -162,8 +166,11 @@ class VerificationStatusCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.alertTriangle,
-                        color: Color(0xFFF59E0B), size: 18),
+                    const Icon(
+                      LucideIcons.alertTriangle,
+                      color: Color(0xFFF59E0B),
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Expires in ${statusData?.daysRemaining} days',

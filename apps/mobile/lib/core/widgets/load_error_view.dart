@@ -21,8 +21,9 @@ class LoadErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = isOffline ? 'common.offlineTitle' : 'common.loadErrorTitle';
-    final subtitle =
-        isOffline ? 'common.offlineSubtitle' : 'common.loadErrorSubtitle';
+    final subtitle = isOffline
+        ? 'common.offlineSubtitle'
+        : 'common.loadErrorSubtitle';
     final icon = isOffline ? LucideIcons.wifiOff : LucideIcons.cloudOff;
 
     return Center(
@@ -63,7 +64,10 @@ class LoadErrorView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

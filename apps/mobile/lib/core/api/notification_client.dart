@@ -7,16 +7,21 @@ import '../models/notification_item.dart';
 class NotificationClient {
   final Dio _dio = DioClient.instance.dio;
 
-  Future<List<NotificationItem>> getNotifications({int page = 1, int limit = 20}) async {
+  Future<List<NotificationItem>> getNotifications({
+    int page = 1,
+    int limit = 20,
+  }) async {
     try {
-      final response = await _dio.get('/notifications', queryParameters: {
-        'page': page,
-        'limit': limit,
-      });
+      final response = await _dio.get(
+        '/notifications',
+        queryParameters: {'page': page, 'limit': limit},
+      );
       final data = response.data;
       if (data['success'] == true && data['data'] != null) {
         return (data['data'] as List)
-            .map((item) => NotificationItem.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => NotificationItem.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
       return [];
@@ -25,7 +30,10 @@ class NotificationClient {
       // offline/error state instead of an empty "no notifications".
       rethrow;
     } catch (e) {
-      developer.log('Error fetching notifications: $e', name: 'NotificationClient');
+      developer.log(
+        'Error fetching notifications: $e',
+        name: 'NotificationClient',
+      );
       return [];
     }
   }
@@ -39,7 +47,10 @@ class NotificationClient {
       }
       return 0;
     } catch (e) {
-      developer.log('Error fetching unread count: $e', name: 'NotificationClient');
+      developer.log(
+        'Error fetching unread count: $e',
+        name: 'NotificationClient',
+      );
       return 0;
     }
   }
@@ -49,7 +60,10 @@ class NotificationClient {
       final response = await _dio.put('/notifications/$notificationId/read');
       return response.data['success'] == true;
     } catch (e) {
-      developer.log('Error marking notification read: $e', name: 'NotificationClient');
+      developer.log(
+        'Error marking notification read: $e',
+        name: 'NotificationClient',
+      );
       return false;
     }
   }
@@ -59,7 +73,10 @@ class NotificationClient {
       final response = await _dio.put('/notifications/read-all');
       return response.data['success'] == true;
     } catch (e) {
-      developer.log('Error marking all notifications read: $e', name: 'NotificationClient');
+      developer.log(
+        'Error marking all notifications read: $e',
+        name: 'NotificationClient',
+      );
       return false;
     }
   }
@@ -69,7 +86,10 @@ class NotificationClient {
       final response = await _dio.delete('/notifications/$notificationId');
       return response.data['success'] == true;
     } catch (e) {
-      developer.log('Error deleting notification: $e', name: 'NotificationClient');
+      developer.log(
+        'Error deleting notification: $e',
+        name: 'NotificationClient',
+      );
       return false;
     }
   }

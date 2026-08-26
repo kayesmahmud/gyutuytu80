@@ -49,15 +49,20 @@ class User {
     return User(
       id: json['id'] as int,
       email: json['email'] as String?,
-      fullName: json['fullName'] as String? ?? json['full_name'] as String? ?? '',
+      fullName:
+          json['fullName'] as String? ?? json['full_name'] as String? ?? '',
       phone: json['phone'] as String?,
       avatar: json['avatar'] as String?,
       role: _parseUserRole(json['role']),
-      accountType: _parseAccountType(json['accountType'] ?? json['account_type']),
-      businessVerificationStatus: _parseVerificationStatus(
-        json['businessVerificationStatus'] ?? json['business_verification_status'],
+      accountType: _parseAccountType(
+        json['accountType'] ?? json['account_type'],
       ),
-      individualVerified: json['individualVerified'] as bool? ??
+      businessVerificationStatus: _parseVerificationStatus(
+        json['businessVerificationStatus'] ??
+            json['business_verification_status'],
+      ),
+      individualVerified:
+          json['individualVerified'] as bool? ??
           json['individual_verified'] as bool? ??
           false,
       shopSlug: json['shopSlug'] as String? ?? json['shop_slug'] as String?,
@@ -65,8 +70,10 @@ class User {
       locationId: json['locationId'] as int? ?? json['location_id'] as int?,
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
       updatedAt: _parseDateTime(json['updatedAt'] ?? json['updated_at']),
-      hasPassword: json['hasPassword'] as bool? ?? json['has_password'] as bool?,
-      oauthProvider: json['oauthProvider'] as String? ?? json['oauth_provider'] as String?,
+      hasPassword:
+          json['hasPassword'] as bool? ?? json['has_password'] as bool?,
+      oauthProvider:
+          json['oauthProvider'] as String? ?? json['oauth_provider'] as String?,
     );
   }
 
@@ -125,7 +132,8 @@ class User {
       avatar: avatar ?? this.avatar,
       role: role ?? this.role,
       accountType: accountType ?? this.accountType,
-      businessVerificationStatus: businessVerificationStatus ?? this.businessVerificationStatus,
+      businessVerificationStatus:
+          businessVerificationStatus ?? this.businessVerificationStatus,
       individualVerified: individualVerified ?? this.individualVerified,
       shopSlug: shopSlug ?? this.shopSlug,
       isActive: isActive ?? this.isActive,
@@ -188,7 +196,8 @@ class UserProfile extends User {
       hasPassword: user.hasPassword,
       oauthProvider: user.oauthProvider,
       bio: json['bio'] as String?,
-      coverPhoto: json['coverPhoto'] as String? ?? json['cover_photo'] as String?,
+      coverPhoto:
+          json['coverPhoto'] as String? ?? json['cover_photo'] as String?,
       totalAds: json['totalAds'] as int? ?? json['total_ads'] as int?,
       activeAds: json['activeAds'] as int? ?? json['active_ads'] as int?,
     );

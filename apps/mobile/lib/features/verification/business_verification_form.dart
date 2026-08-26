@@ -45,8 +45,11 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
   String _documentNumber = '';
 
   Future<void> _pickDocument() async {
-    final picked =
-        await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1200, imageQuality: 85);
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      imageQuality: 85,
+    );
     if (picked != null) {
       // Validate file size (max 5MB)
       final file = File(picked.path);
@@ -55,9 +58,11 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(context.locale.languageCode == 'ne'
-                  ? 'छवि ५MB भन्दा कम हुनुपर्छ। कृपया सानो फाइल अपलोड गर्नुहोस्।'
-                  : 'Image must be less than 5MB. Please upload a smaller file.'),
+              content: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'छवि ५MB भन्दा कम हुनुपर्छ। कृपया सानो फाइल अपलोड गर्नुहोस्।'
+                    : 'Image must be less than 5MB. Please upload a smaller file.',
+              ),
             ),
           );
         }
@@ -77,9 +82,12 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'कृपया कागजातको प्रकार छान्नुहोस्'
-                    : 'Please select a document type')),
+                    : 'Please select a document type',
+              ),
+            ),
           );
         }
         return;
@@ -89,9 +97,12 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'कृपया कागजात अपलोड गर्नुहोस्'
-                    : 'Please upload your document')),
+                    : 'Please upload your document',
+              ),
+            ),
           );
         }
         return;
@@ -110,9 +121,13 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
     if (_step == 'payment') {
       if (_selectedPaymentMethod == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.locale.languageCode == 'ne'
-              ? 'कृपया भुक्तानी विधि छान्नुहोस्'
-              : 'Please select a payment method')),
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'कृपया भुक्तानी विधि छान्नुहोस्'
+                  : 'Please select a payment method',
+            ),
+          ),
         );
         return;
       }
@@ -124,8 +139,9 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
     setState(() => _isSubmitting = true);
 
     try {
-      final uploadResult =
-          await _client.uploadBusinessDocument(_licenseDocument!);
+      final uploadResult = await _client.uploadBusinessDocument(
+        _licenseDocument!,
+      );
 
       if (!uploadResult.success || uploadResult.data == null) {
         throw Exception(uploadResult.error ?? 'Document upload failed');
@@ -146,9 +162,12 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'प्रमाणीकरण सफलतापूर्वक पेश गरियो!'
-                    : 'Verification submitted successfully!')),
+                    : 'Verification submitted successfully!',
+              ),
+            ),
           );
           Navigator.pop(context, true);
         }
@@ -158,7 +177,11 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}',
+            ),
+          ),
         );
       }
     } finally {
@@ -173,8 +196,9 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
 
     try {
       // 1. Upload document
-      final uploadResult =
-          await _client.uploadBusinessDocument(_licenseDocument!);
+      final uploadResult = await _client.uploadBusinessDocument(
+        _licenseDocument!,
+      );
 
       if (!uploadResult.success || uploadResult.data == null) {
         throw Exception(uploadResult.error ?? 'Document upload failed');
@@ -222,24 +246,34 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         if (paymentResult == true && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'भुक्तानी सफल! प्रमाणीकरण पेश गरियो।'
-                    : 'Payment successful! Verification submitted.')),
+                    : 'Payment successful! Verification submitted.',
+              ),
+            ),
           );
           Navigator.pop(context, true);
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'भुक्तानी पूरा भएन। तपाईंको प्रमाणीकरण भुक्तानी पर्खिरहेको छ।'
-                    : 'Payment was not completed. Your verification is pending payment.')),
+                    : 'Payment was not completed. Your verification is pending payment.',
+              ),
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}',
+            ),
+          ),
         );
       }
     } finally {
@@ -289,8 +323,12 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
           children: [
             Text(
               _step == 'form'
-                  ? (lang == 'ne' ? 'व्यापार प्रमाणीकरण' : 'Business Verification')
-                  : (lang == 'ne' ? 'भुक्तानी विधि छान्नुहोस्' : 'Select Payment Method'),
+                  ? (lang == 'ne'
+                        ? 'व्यापार प्रमाणीकरण'
+                        : 'Business Verification')
+                  : (lang == 'ne'
+                        ? 'भुक्तानी विधि छान्नुहोस्'
+                        : 'Select Payment Method'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
@@ -347,9 +385,16 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
           // Business Name
           _buildLabel(lang == 'ne' ? 'व्यापारको नाम' : 'Business Name'),
           TextFormField(
-            decoration: _inputDecoration(lang == 'ne' ? 'व्यापार लाइसेन्समा भएको नाम जस्ताको तस्तै लेख्नुहोस्' : 'Enter your business name exactly as shown on your trade license'),
-            validator: (v) =>
-                v?.isEmpty == true ? (lang == 'ne' ? 'व्यापारको नाम आवश्यक छ' : 'Business name is required') : null,
+            decoration: _inputDecoration(
+              lang == 'ne'
+                  ? 'व्यापार लाइसेन्समा भएको नाम जस्ताको तस्तै लेख्नुहोस्'
+                  : 'Enter your business name exactly as shown on your trade license',
+            ),
+            validator: (v) => v?.isEmpty == true
+                ? (lang == 'ne'
+                      ? 'व्यापारको नाम आवश्यक छ'
+                      : 'Business name is required')
+                : null,
             onSaved: (v) => _businessName = v ?? '',
           ),
           const SizedBox(height: 16),
@@ -358,11 +403,17 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
           _buildLabel(lang == 'ne' ? 'कागजातको प्रकार *' : 'Document Type *'),
           DropdownButtonFormField<String>(
             value: _documentType.isEmpty ? null : _documentType,
-            decoration: _inputDecoration(lang == 'ne' ? 'कागजातको प्रकार छान्नुहोस्' : 'Select document type'),
+            decoration: _inputDecoration(
+              lang == 'ne'
+                  ? 'कागजातको प्रकार छान्नुहोस्'
+                  : 'Select document type',
+            ),
             items: [
               DropdownMenuItem(
                 value: 'business_license',
-                child: Text(lang == 'ne' ? 'व्यापार लाइसेन्स' : 'Business License'),
+                child: Text(
+                  lang == 'ne' ? 'व्यापार लाइसेन्स' : 'Business License',
+                ),
               ),
               DropdownMenuItem(
                 value: 'pan_card',
@@ -370,7 +421,9 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
               ),
             ],
             validator: (v) => v == null || v.isEmpty
-                ? (lang == 'ne' ? 'कागजातको प्रकार आवश्यक छ' : 'Document type is required')
+                ? (lang == 'ne'
+                      ? 'कागजातको प्रकार आवश्यक छ'
+                      : 'Document type is required')
                 : null,
             onChanged: (v) => setState(() => _documentType = v ?? ''),
             onSaved: (v) => _documentType = v ?? '',
@@ -378,28 +431,46 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
           const SizedBox(height: 16),
 
           // Document Number
-          _buildLabel(_documentType == 'pan_card'
-              ? (lang == 'ne' ? 'प्यान नम्बर *' : 'PAN Number *')
-              : _documentType == 'business_license'
-                  ? (lang == 'ne' ? 'लाइसेन्स नम्बर *' : 'License Number *')
-                  : (lang == 'ne' ? 'कागजात नम्बर *' : 'Document Number *')),
+          _buildLabel(
+            _documentType == 'pan_card'
+                ? (lang == 'ne' ? 'प्यान नम्बर *' : 'PAN Number *')
+                : _documentType == 'business_license'
+                ? (lang == 'ne' ? 'लाइसेन्स नम्बर *' : 'License Number *')
+                : (lang == 'ne' ? 'कागजात नम्बर *' : 'Document Number *'),
+          ),
           TextFormField(
-            decoration: _inputDecoration(_documentType == 'pan_card'
-                ? (lang == 'ne' ? 'आफ्नो प्यान नम्बर लेख्नुहोस्' : 'Enter your PAN number')
-                : (lang == 'ne' ? 'आफ्नो लाइसेन्स नम्बर लेख्नुहोस्' : 'Enter your trade license number')),
+            decoration: _inputDecoration(
+              _documentType == 'pan_card'
+                  ? (lang == 'ne'
+                        ? 'आफ्नो प्यान नम्बर लेख्नुहोस्'
+                        : 'Enter your PAN number')
+                  : (lang == 'ne'
+                        ? 'आफ्नो लाइसेन्स नम्बर लेख्नुहोस्'
+                        : 'Enter your trade license number'),
+            ),
             validator: (v) => v?.isEmpty == true
-                ? (lang == 'ne' ? 'कागजात नम्बर आवश्यक छ' : 'Document number is required')
+                ? (lang == 'ne'
+                      ? 'कागजात नम्बर आवश्यक छ'
+                      : 'Document number is required')
                 : null,
             onSaved: (v) => _documentNumber = v ?? '',
           ),
           const SizedBox(height: 24),
 
           // Document Upload
-          _buildLabel(_documentType == 'pan_card'
-              ? (lang == 'ne' ? 'प्यान कार्ड अपलोड गर्नुहोस् *' : 'Upload Pan Card *')
-              : _documentType == 'business_license'
-                  ? (lang == 'ne' ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस् *' : 'Upload Business License *')
-                  : (lang == 'ne' ? 'कागजात अपलोड गर्नुहोस् *' : 'Upload Document *')),
+          _buildLabel(
+            _documentType == 'pan_card'
+                ? (lang == 'ne'
+                      ? 'प्यान कार्ड अपलोड गर्नुहोस् *'
+                      : 'Upload Pan Card *')
+                : _documentType == 'business_license'
+                ? (lang == 'ne'
+                      ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस् *'
+                      : 'Upload Business License *')
+                : (lang == 'ne'
+                      ? 'कागजात अपलोड गर्नुहोस् *'
+                      : 'Upload Document *'),
+          ),
           GestureDetector(
             onTap: _pickDocument,
             child: Container(
@@ -435,8 +506,11 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                               color: Colors.green,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(LucideIcons.check,
-                                color: Colors.white, size: 16),
+                            child: const Icon(
+                              LucideIcons.check,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ],
@@ -445,15 +519,24 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(LucideIcons.upload,
-                              color: Colors.grey[400], size: 28),
+                          Icon(
+                            LucideIcons.upload,
+                            color: Colors.grey[400],
+                            size: 28,
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             _documentType == 'pan_card'
-                                ? (lang == 'ne' ? 'प्यान कार्ड अपलोड गर्नुहोस्' : 'Upload your Pan Card')
+                                ? (lang == 'ne'
+                                      ? 'प्यान कार्ड अपलोड गर्नुहोस्'
+                                      : 'Upload your Pan Card')
                                 : _documentType == 'business_license'
-                                    ? (lang == 'ne' ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस्' : 'Upload your Business License')
-                                    : (lang == 'ne' ? 'कागजात अपलोड गर्नुहोस्' : 'Upload your document'),
+                                ? (lang == 'ne'
+                                      ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस्'
+                                      : 'Upload your Business License')
+                                : (lang == 'ne'
+                                      ? 'कागजात अपलोड गर्नुहोस्'
+                                      : 'Upload your document'),
                             style: TextStyle(
                               color: Colors.grey[500],
                               fontSize: 13,
@@ -485,12 +568,18 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : Text(
                       widget.isFreeVerification || widget.isResubmission
-                          ? (lang == 'ne' ? 'प्रमाणीकरण पेश गर्नुहोस्' : 'Submit Verification')
-                          : (lang == 'ne' ? 'भुक्तानीमा जानुहोस्' : 'Proceed to Payment'),
+                          ? (lang == 'ne'
+                                ? 'प्रमाणीकरण पेश गर्नुहोस्'
+                                : 'Submit Verification')
+                          : (lang == 'ne'
+                                ? 'भुक्तानीमा जानुहोस्'
+                                : 'Proceed to Payment'),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -528,7 +617,11 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
             children: [
               Row(
                 children: [
-                  const Icon(LucideIcons.receipt, size: 20, color: Colors.indigo),
+                  const Icon(
+                    LucideIcons.receipt,
+                    size: 20,
+                    color: Colors.indigo,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     lang == 'ne' ? 'अर्डर सारांश' : 'Order Summary',
@@ -540,10 +633,18 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildSummaryRow(lang == 'ne' ? 'योजना' : 'Plan', lang == 'ne' ? 'व्यापार प्रमाणीकरण' : 'Business Verification'),
               _buildSummaryRow(
-                  lang == 'ne' ? 'अवधि' : 'Duration', _formatDuration(widget.durationDays, lang)),
-              _buildSummaryRow(lang == 'ne' ? 'व्यापार' : 'Business', _businessName),
+                lang == 'ne' ? 'योजना' : 'Plan',
+                lang == 'ne' ? 'व्यापार प्रमाणीकरण' : 'Business Verification',
+              ),
+              _buildSummaryRow(
+                lang == 'ne' ? 'अवधि' : 'Duration',
+                _formatDuration(widget.durationDays, lang),
+              ),
+              _buildSummaryRow(
+                lang == 'ne' ? 'व्यापार' : 'Business',
+                _businessName,
+              ),
               const Divider(height: 24),
               _buildSummaryRow(
                 lang == 'ne' ? 'कुल रकम' : 'Total Amount',
@@ -558,16 +659,15 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         // Payment Method Selection
         Text(
           lang == 'ne' ? 'भुक्तानी विधि छान्नुहोस्' : 'Select Payment Method',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
 
         _buildPaymentMethodCard(
           name: 'Khalti',
-          description: lang == 'ne' ? 'Khalti वालेट वा बैंकबाट भुक्तानी गर्नुहोस्' : 'Pay with Khalti wallet or bank',
+          description: lang == 'ne'
+              ? 'Khalti वालेट वा बैंकबाट भुक्तानी गर्नुहोस्'
+              : 'Pay with Khalti wallet or bank',
           color: const Color(0xFF5C2D91),
           icon: LucideIcons.wallet,
           gateway: PaymentGateway.khalti,
@@ -576,7 +676,9 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
 
         _buildPaymentMethodCard(
           name: 'eSewa',
-          description: lang == 'ne' ? 'eSewa वालेटबाट भुक्तानी गर्नुहोस्' : 'Pay with eSewa wallet',
+          description: lang == 'ne'
+              ? 'eSewa वालेटबाट भुक्तानी गर्नुहोस्'
+              : 'Pay with eSewa wallet',
           color: const Color(0xFF60BB46),
           icon: LucideIcons.smartphone,
           gateway: PaymentGateway.esewa,
@@ -602,7 +704,9 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : Text(
                     '${lang == 'ne' ? 'भुक्तानी गर्नुहोस्' : 'Pay'} ${formatLocalizedPrice(widget.price, lang)}',
@@ -704,10 +808,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                   ),
                   Text(
                     description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -751,8 +852,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.indigo, width: 2),
       ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 }

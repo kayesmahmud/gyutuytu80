@@ -91,8 +91,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       return Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: Text('support.title'.tr(),
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          title: Text(
+            'support.title'.tr(),
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          ),
           backgroundColor: Colors.white,
           foregroundColor: const Color(0xFF1F2937),
           elevation: 0,
@@ -109,8 +111,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('support.title'.tr(),
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        title: Text(
+          'support.title'.tr(),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
         elevation: 0,
@@ -157,13 +161,21 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   }
 
   Widget _buildSummaryHeader() {
-    final openCount = _tickets.where((t) =>
-        t.status == SupportTicketStatus.open ||
-        t.status == SupportTicketStatus.inProgress ||
-        t.status == SupportTicketStatus.waitingOnUser).length;
-    final resolvedCount = _tickets.where((t) =>
-        t.status == SupportTicketStatus.resolved ||
-        t.status == SupportTicketStatus.closed).length;
+    final openCount = _tickets
+        .where(
+          (t) =>
+              t.status == SupportTicketStatus.open ||
+              t.status == SupportTicketStatus.inProgress ||
+              t.status == SupportTicketStatus.waitingOnUser,
+        )
+        .length;
+    final resolvedCount = _tickets
+        .where(
+          (t) =>
+              t.status == SupportTicketStatus.resolved ||
+              t.status == SupportTicketStatus.closed,
+        )
+        .length;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -183,8 +195,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             bgColor: const Color(0xFFDCFCE7),
           ),
           const Spacer(),
-          Text('${_tickets.length} ${'support.totalLabel'.tr()}',
-              style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400])),
+          Text(
+            '${_tickets.length} ${'support.totalLabel'.tr()}',
+            style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400]),
+          ),
         ],
       ),
     );
@@ -207,9 +221,14 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 5),
-          Text(label,
-              style: GoogleFonts.inter(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -238,20 +257,30 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                   ),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(LucideIcons.headphones,
-                    size: 40, color: Color(0xFFE11D48)),
+                child: const Icon(
+                  LucideIcons.headphones,
+                  size: 40,
+                  color: Color(0xFFE11D48),
+                ),
               ),
             ),
             const SizedBox(height: 24),
-            Text('support.howCanWeHelp'.tr(),
-                style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1F2937))),
+            Text(
+              'support.howCanWeHelp'.tr(),
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1F2937),
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               'support.createSubtitle'.tr(),
-              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500], height: 1.5),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: Colors.grey[500],
+                height: 1.5,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 28),
@@ -260,15 +289,20 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               child: ElevatedButton.icon(
                 onPressed: _navigateToCreate,
                 icon: const Icon(LucideIcons.pencil, size: 18),
-                label: Text('support.createTicket'.tr(),
-                    style: GoogleFonts.inter(
-                        fontSize: 16, fontWeight: FontWeight.w600)),
+                label: Text(
+                  'support.createTicket'.tr(),
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFE11D48),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 0,
                 ),
               ),
@@ -278,15 +312,25 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context),
-                icon: Icon(LucideIcons.helpCircle, size: 18, color: Colors.grey[600]),
-                label: Text('support.browseHelp'.tr(),
-                    style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: Colors.grey[700])),
+                icon: Icon(
+                  LucideIcons.helpCircle,
+                  size: 18,
+                  color: Colors.grey[600],
+                ),
+                label: Text(
+                  'support.browseHelp'.tr(),
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[700],
+                  ),
+                ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   side: BorderSide(color: Colors.grey[300]!),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -311,7 +355,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (_) => TicketDetailScreen(ticketId: ticket.id)),
+              builder: (_) => TicketDetailScreen(ticketId: ticket.id),
+            ),
           );
           _loadTickets();
         },
@@ -341,33 +386,47 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                         children: [
                           _StatusBadge(status: ticket.status),
                           const Spacer(),
-                          Icon(LucideIcons.clock, size: 12, color: Colors.grey[400]),
+                          Icon(
+                            LucideIcons.clock,
+                            size: 12,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(width: 4),
-                          Text(_formatDate(ticket.updatedAt),
-                              style: GoogleFonts.inter(
-                                  fontSize: 12, color: Colors.grey[400])),
+                          Text(
+                            _formatDate(ticket.updatedAt),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Colors.grey[400],
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 10),
 
                       // Subject
-                      Text(ticket.subject,
-                          style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1F2937)),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        ticket.subject,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1F2937),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
 
                       if (ticket.lastMessageContent != null) ...[
                         const SizedBox(height: 6),
-                        Text(ticket.lastMessageContent!,
-                            style: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: Colors.grey[500],
-                                height: 1.3),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis),
+                        Text(
+                          ticket.lastMessageContent!,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.grey[500],
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
 
                       const SizedBox(height: 10),
@@ -375,22 +434,36 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                       // Footer: ticket number + category
                       Row(
                         children: [
-                          Icon(LucideIcons.hash, size: 12, color: Colors.grey[400]),
+                          Icon(
+                            LucideIcons.hash,
+                            size: 12,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(width: 3),
-                          Text(ticket.ticketNumber,
-                              style: GoogleFonts.robotoMono(
-                                  fontSize: 11, color: Colors.grey[400])),
+                          Text(
+                            ticket.ticketNumber,
+                            style: GoogleFonts.robotoMono(
+                              fontSize: 11,
+                              color: Colors.grey[400],
+                            ),
+                          ),
                           const SizedBox(width: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.grey[100],
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Text(ticket.category.label,
-                                style: GoogleFonts.inter(
-                                    fontSize: 11, color: Colors.grey[600])),
+                            child: Text(
+                              ticket.category.label,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: Colors.grey[600],
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -401,8 +474,11 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               // Chevron
               Padding(
                 padding: const EdgeInsets.only(right: 12),
-                child: Icon(LucideIcons.chevronRight,
-                    size: 18, color: Colors.grey[300]),
+                child: Icon(
+                  LucideIcons.chevronRight,
+                  size: 18,
+                  color: Colors.grey[300],
+                ),
               ),
             ],
           ),
@@ -426,8 +502,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     final diff = now.difference(date);
 
     if (diff.inMinutes < 1) return 'support.justNow'.tr();
-    if (diff.inHours < 1) return 'support.minutesAgo'.tr(args: ['${diff.inMinutes}']);
-    if (diff.inDays < 1) return 'support.hoursAgo'.tr(args: ['${diff.inHours}']);
+    if (diff.inHours < 1)
+      return 'support.minutesAgo'.tr(args: ['${diff.inMinutes}']);
+    if (diff.inDays < 1)
+      return 'support.hoursAgo'.tr(args: ['${diff.inHours}']);
     if (diff.inDays < 7) return 'support.daysAgo'.tr(args: ['${diff.inDays}']);
     return formatNepalTime(date, 'MMM d', context.locale.languageCode);
   }
@@ -440,11 +518,31 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (Color bg, Color fg, IconData icon) = switch (status) {
-      SupportTicketStatus.open => (const Color(0xFFDCFCE7), const Color(0xFF16A34A), Icons.circle),
-      SupportTicketStatus.inProgress => (const Color(0xFFDBEAFE), const Color(0xFF2563EB), Icons.loop),
-      SupportTicketStatus.waitingOnUser => (const Color(0xFFFEF3C7), const Color(0xFFD97706), Icons.error_outline),
-      SupportTicketStatus.resolved => (const Color(0xFFE0E7FF), const Color(0xFF4F46E5), Icons.check_circle_outline),
-      SupportTicketStatus.closed => (const Color(0xFFF3F4F6), const Color(0xFF6B7280), Icons.cancel_outlined),
+      SupportTicketStatus.open => (
+        const Color(0xFFDCFCE7),
+        const Color(0xFF16A34A),
+        Icons.circle,
+      ),
+      SupportTicketStatus.inProgress => (
+        const Color(0xFFDBEAFE),
+        const Color(0xFF2563EB),
+        Icons.loop,
+      ),
+      SupportTicketStatus.waitingOnUser => (
+        const Color(0xFFFEF3C7),
+        const Color(0xFFD97706),
+        Icons.error_outline,
+      ),
+      SupportTicketStatus.resolved => (
+        const Color(0xFFE0E7FF),
+        const Color(0xFF4F46E5),
+        Icons.check_circle_outline,
+      ),
+      SupportTicketStatus.closed => (
+        const Color(0xFFF3F4F6),
+        const Color(0xFF6B7280),
+        Icons.cancel_outlined,
+      ),
     };
 
     return Container(
@@ -458,9 +556,14 @@ class _StatusBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
-          Text(status.label,
-              style: GoogleFonts.inter(
-                  fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
+          Text(
+            status.label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: fg,
+            ),
+          ),
         ],
       ),
     );

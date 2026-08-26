@@ -9,15 +9,18 @@ class VerificationFaqSection extends StatelessWidget {
     final faqs = [
       {
         'q': 'How long does verification take?',
-        'a': 'Verification is usually completed within 24-48 hours after submission.',
+        'a':
+            'Verification is usually completed within 24-48 hours after submission.',
       },
       {
         'q': 'What documents do I need?',
-        'a': 'For individuals: Valid ID (citizenship, passport, or driving license) and a selfie. For businesses: Business registration/license document.',
+        'a':
+            'For individuals: Valid ID (citizenship, passport, or driving license) and a selfie. For businesses: Business registration/license document.',
       },
       {
         'q': 'Is verification refundable?',
-        'a': 'Verification fees are non-refundable once your application is approved.',
+        'a':
+            'Verification fees are non-refundable once your application is approved.',
       },
     ];
 

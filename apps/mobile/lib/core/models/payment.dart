@@ -8,7 +8,15 @@ enum PaymentGateway { khalti, esewa }
 
 enum PaymentType { adPromotion, individualVerification, businessVerification }
 
-enum PaymentStatus { pending, completed, failed, expired, refunded, canceled, verified }
+enum PaymentStatus {
+  pending,
+  completed,
+  failed,
+  expired,
+  refunded,
+  canceled,
+  verified,
+}
 
 /// Extension to convert enum to API string
 extension PaymentGatewayExt on PaymentGateway {
@@ -77,8 +85,12 @@ class PaymentInitiateResponse {
 
   factory PaymentInitiateResponse.fromJson(Map<String, dynamic> json) {
     return PaymentInitiateResponse(
-      transactionId: json['transactionId'] as String? ?? json['transaction_id'] as String? ?? '',
-      paymentUrl: json['paymentUrl'] as String? ?? json['payment_url'] as String? ?? '',
+      transactionId:
+          json['transactionId'] as String? ??
+          json['transaction_id'] as String? ??
+          '',
+      paymentUrl:
+          json['paymentUrl'] as String? ?? json['payment_url'] as String? ?? '',
       pidx: json['pidx'] as String?,
       expiresAt: json['expiresAt'] as String? ?? json['expires_at'] as String?,
       gateway: _parseGateway(json['gateway']),
@@ -111,15 +123,23 @@ class PaymentVerifyResponse {
   factory PaymentVerifyResponse.fromJson(Map<String, dynamic> json) {
     return PaymentVerifyResponse(
       status: _parseStatus(json['status']),
-      transactionId: json['transactionId'] as String? ?? json['transaction_id'] as String? ?? '',
+      transactionId:
+          json['transactionId'] as String? ??
+          json['transaction_id'] as String? ??
+          '',
       amount: _parseDouble(json['amount']),
       gateway: _parseGateway(json['gateway']),
-      gatewayTransactionId: json['gatewayTransactionId'] as String? ?? json['gateway_transaction_id'] as String?,
-      verifiedAt: _parseDateTimeNullable(json['verifiedAt'] ?? json['verified_at']),
+      gatewayTransactionId:
+          json['gatewayTransactionId'] as String? ??
+          json['gateway_transaction_id'] as String?,
+      verifiedAt: _parseDateTimeNullable(
+        json['verifiedAt'] ?? json['verified_at'],
+      ),
     );
   }
 
-  bool get isSuccess => status == PaymentStatus.verified || status == PaymentStatus.completed;
+  bool get isSuccess =>
+      status == PaymentStatus.verified || status == PaymentStatus.completed;
 }
 
 // ==========================================
@@ -158,24 +178,41 @@ class PaymentTransaction {
 
   factory PaymentTransaction.fromJson(Map<String, dynamic> json) {
     return PaymentTransaction(
-      transactionId: json['transactionId'] as String? ?? json['transaction_id'] as String?,
-      type: _parsePaymentType(json['paymentType'] ?? json['payment_type'] ?? json['type']),
+      transactionId:
+          json['transactionId'] as String? ?? json['transaction_id'] as String?,
+      type: _parsePaymentType(
+        json['paymentType'] ?? json['payment_type'] ?? json['type'],
+      ),
       gateway: _parseGateway(json['gateway'] ?? json['payment_gateway']),
       amount: _parseDouble(json['amount']),
       status: _parseStatus(json['status']),
-      orderName: json['orderName'] as String? ?? json['order_name'] as String? ?? 'Payment',
-      paymentUrl: json['paymentUrl'] as String? ?? json['payment_url'] as String?,
-      referenceId: json['referenceId'] as String? ?? json['reference_id'] as String?,
-      gatewayTransactionId: json['gatewayTransactionId'] as String? ?? json['gateway_transaction_id'] as String?,
+      orderName:
+          json['orderName'] as String? ??
+          json['order_name'] as String? ??
+          'Payment',
+      paymentUrl:
+          json['paymentUrl'] as String? ?? json['payment_url'] as String?,
+      referenceId:
+          json['referenceId'] as String? ?? json['reference_id'] as String?,
+      gatewayTransactionId:
+          json['gatewayTransactionId'] as String? ??
+          json['gateway_transaction_id'] as String?,
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
-      verifiedAt: _parseDateTimeNullable(json['verifiedAt'] ?? json['verified_at']),
-      failureReason: json['failureReason'] as String? ?? json['failure_reason'] as String?,
+      verifiedAt: _parseDateTimeNullable(
+        json['verifiedAt'] ?? json['verified_at'],
+      ),
+      failureReason:
+          json['failureReason'] as String? ?? json['failure_reason'] as String?,
     );
   }
 
   bool get isPending => status == PaymentStatus.pending;
-  bool get isCompleted => status == PaymentStatus.verified || status == PaymentStatus.completed;
-  bool get isFailed => status == PaymentStatus.failed || status == PaymentStatus.expired || status == PaymentStatus.canceled;
+  bool get isCompleted =>
+      status == PaymentStatus.verified || status == PaymentStatus.completed;
+  bool get isFailed =>
+      status == PaymentStatus.failed ||
+      status == PaymentStatus.expired ||
+      status == PaymentStatus.canceled;
 }
 
 // ==========================================
@@ -203,7 +240,8 @@ class GatewayInfo {
     return GatewayInfo(
       gateway: gateway,
       name: json['name'] as String? ?? gateway.displayName,
-      description: json['description'] as String? ?? _getDefaultDescription(gateway),
+      description:
+          json['description'] as String? ?? _getDefaultDescription(gateway),
       enabled: json['enabled'] as bool? ?? json['available'] as bool? ?? false,
       isTest: json['isTest'] as bool? ?? json['is_test'] as bool? ?? true,
     );

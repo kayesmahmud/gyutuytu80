@@ -67,9 +67,7 @@ class LocationMunicipality extends LocationHierarchyBase {
 
   factory LocationMunicipality.fromJson(Map<String, dynamic> json) {
     var rawChildren = json['areas'] as List? ?? json['children'] as List? ?? [];
-    var areas = rawChildren
-        .map((e) => LocationArea.fromJson(e))
-        .toList();
+    var areas = rawChildren.map((e) => LocationArea.fromJson(e)).toList();
 
     return LocationMunicipality(
       id: json['id'],
@@ -97,7 +95,8 @@ class LocationDistrict extends LocationHierarchyBase {
   });
 
   factory LocationDistrict.fromJson(Map<String, dynamic> json) {
-    var rawChildren = json['municipalities'] as List? ?? json['children'] as List? ?? [];
+    var rawChildren =
+        json['municipalities'] as List? ?? json['children'] as List? ?? [];
     var muncs = rawChildren
         .map((e) => LocationMunicipality.fromJson(e))
         .toList();
@@ -128,10 +127,9 @@ class LocationProvince extends LocationHierarchyBase {
   });
 
   factory LocationProvince.fromJson(Map<String, dynamic> json) {
-    var rawChildren = json['districts'] as List? ?? json['children'] as List? ?? [];
-    var dists = rawChildren
-        .map((e) => LocationDistrict.fromJson(e))
-        .toList();
+    var rawChildren =
+        json['districts'] as List? ?? json['children'] as List? ?? [];
+    var dists = rawChildren.map((e) => LocationDistrict.fromJson(e)).toList();
 
     return LocationProvince(
       id: json['id'],

@@ -13,7 +13,7 @@ class MockFilterData {
         {"name": "Tablets & Accessories", "slug": "tablets-accessories"},
         {"name": "Mobile & Tablet Accessories", "slug": "mobile-accessories"},
         {"name": "Smart Watches", "slug": "smart-watches"},
-      ]
+      ],
     },
     // 2. Electronics
     {
@@ -30,7 +30,7 @@ class MockFilterData {
         {"name": "Audio Equipment", "slug": "audio-equipment"},
         {"name": "Gaming Consoles", "slug": "gaming-consoles"},
         {"name": "Other Electronics", "slug": "other-electronics"},
-      ]
+      ],
     },
     // 3. Vehicles
     {
@@ -48,7 +48,7 @@ class MockFilterData {
         {"name": "Auto Parts & Accessories", "slug": "auto-parts"},
         {"name": "Vehicle Rentals", "slug": "vehicle-rentals"},
         {"name": "Parking & Garage", "slug": "parking-garage"},
-      ]
+      ],
     },
     // 4. Property
     {
@@ -65,7 +65,7 @@ class MockFilterData {
         {"name": "Commercial Properties for Sale", "slug": "commercial-sale"},
         {"name": "Commercial Properties for Rent", "slug": "commercial-rent"},
         {"name": "Rooms & Flatmates", "slug": "rooms-flatmates"},
-      ]
+      ],
     },
     // 5. Home & Living
     {
@@ -76,13 +76,16 @@ class MockFilterData {
       "subcategories": [
         {"name": "Bedroom Furniture", "slug": "bedroom-furniture"},
         {"name": "Living Room Furniture", "slug": "living-room-furniture"},
-        {"name": "Kitchen & Dining Furniture", "slug": "kitchen-dining-furniture"},
+        {
+          "name": "Kitchen & Dining Furniture",
+          "slug": "kitchen-dining-furniture",
+        },
         {"name": "Office & Shop Furniture", "slug": "office-shop-furniture"},
         {"name": "Children's Furniture", "slug": "childrens-furniture"},
         {"name": "Home Decor", "slug": "home-decor"},
         {"name": "Kitchen Appliances", "slug": "kitchen-appliances"},
         {"name": "Home Appliances", "slug": "home-appliances"},
-      ]
+      ],
     },
     // 6. Men's Fashion & Grooming
     {
@@ -96,7 +99,7 @@ class MockFilterData {
         {"name": "Men's Watches", "slug": "mens-watches"},
         {"name": "Men's Accessories", "slug": "mens-accessories"},
         {"name": "Men's Grooming", "slug": "mens-grooming"},
-      ]
+      ],
     },
     // 7. Women's Fashion & Beauty
     {
@@ -111,7 +114,7 @@ class MockFilterData {
         {"name": "Jewelry", "slug": "jewelry"},
         {"name": "Beauty & Skincare", "slug": "beauty-skincare"},
         {"name": "Bags & Luggage", "slug": "bags-luggage"},
-      ]
+      ],
     },
     // 8. Hobbies, Sports & Kids
     {
@@ -125,7 +128,7 @@ class MockFilterData {
         {"name": "Musical Instruments", "slug": "musical-instruments"},
         {"name": "Kids Items", "slug": "kids-items"},
         {"name": "Books & Stationery", "slug": "books-stationery"},
-      ]
+      ],
     },
     // 9. Essentials
     {
@@ -138,7 +141,7 @@ class MockFilterData {
         {"name": "Healthcare", "slug": "healthcare"},
         {"name": "Baby Products", "slug": "baby-products"},
         {"name": "Household", "slug": "household"},
-      ]
+      ],
     },
     // 10. Jobs
     {
@@ -151,7 +154,7 @@ class MockFilterData {
         {"name": "Part Time Jobs", "slug": "part-time-jobs"},
         {"name": "Internships", "slug": "internships"},
         {"name": "Freelance Jobs", "slug": "freelance-jobs"},
-      ]
+      ],
     },
     // 11. Overseas Jobs
     {
@@ -163,7 +166,7 @@ class MockFilterData {
         {"name": "Middle East Jobs", "slug": "middle-east-jobs"},
         {"name": "Asia Jobs", "slug": "asia-jobs"},
         {"name": "Europe Jobs", "slug": "europe-jobs"},
-      ]
+      ],
     },
     // 12. Pets & Animals
     {
@@ -182,7 +185,7 @@ class MockFilterData {
         {"name": "Poultry", "slug": "poultry"},
         {"name": "Pet Food", "slug": "pet-food"},
         {"name": "Pet Accessories", "slug": "pet-accessories"},
-      ]
+      ],
     },
     // 13. Services
     {
@@ -199,7 +202,7 @@ class MockFilterData {
         {"name": "Beauty Services", "slug": "beauty-services"},
         {"name": "Body Massage", "slug": "body-massage"},
         {"name": "Domestic & Daycare Services", "slug": "domestic-daycare"},
-      ]
+      ],
     },
     // 14. Education
     {
@@ -212,7 +215,7 @@ class MockFilterData {
         {"name": "Coaching & Tuition", "slug": "coaching-tuition"},
         {"name": "Online Courses", "slug": "online-courses"},
         {"name": "Study Abroad", "slug": "study-abroad"},
-      ]
+      ],
     },
     // 15. Business & Industry
     {
@@ -225,7 +228,7 @@ class MockFilterData {
         {"name": "Medical Equipment & Supplies", "slug": "medical-equipment"},
         {"name": "Office Equipment", "slug": "office-equipment"},
         {"name": "Raw Materials", "slug": "raw-materials"},
-      ]
+      ],
     },
     // 16. Agriculture
     {
@@ -238,9 +241,10 @@ class MockFilterData {
         {"name": "Farming Tools & Machinery", "slug": "farming-tools"},
         {"name": "Fertilizers & Pesticides", "slug": "fertilizers"},
         {"name": "Livestock Feed", "slug": "livestock-feed"},
-      ]
+      ],
     },
   ];
 
-  static const List<Map<String, dynamic>> locations = NepalLocationData.locations;
+  static const List<Map<String, dynamic>> locations =
+      NepalLocationData.locations;
 }

@@ -18,7 +18,9 @@ class FavoritesClient {
 
       if (response.data['success'] == true) {
         final List<dynamic> favoritesJson = response.data['data'] ?? [];
-        final favorites = favoritesJson.map((json) => FavoriteAd.fromJson(json)).toList();
+        final favorites = favoritesJson
+            .map((json) => FavoriteAd.fromJson(json))
+            .toList();
 
         return FavoritesResponse(
           success: true,
@@ -44,10 +46,7 @@ class FavoritesClient {
   /// Add ad to favorites
   Future<ApiResult> addToFavorites(int adId) async {
     try {
-      final response = await _dio.post(
-        '/favorites',
-        data: {'adId': adId},
-      );
+      final response = await _dio.post('/favorites', data: {'adId': adId});
 
       return ApiResult(
         success: response.data['success'] == true,

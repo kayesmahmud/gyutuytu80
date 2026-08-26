@@ -48,8 +48,11 @@ class _IndividualVerificationFormState
   String _idNumber = '';
 
   Future<void> _pickImage(String type) async {
-    final picked =
-        await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1200, imageQuality: 85);
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      imageQuality: 85,
+    );
     if (picked != null) {
       // Validate file size (max 5MB)
       final file = File(picked.path);
@@ -58,9 +61,11 @@ class _IndividualVerificationFormState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(context.locale.languageCode == 'ne'
-                  ? 'छवि ५MB भन्दा कम हुनुपर्छ। कृपया सानो फाइल अपलोड गर्नुहोस्।'
-                  : 'Image must be less than 5MB. Please upload a smaller file.'),
+              content: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'छवि ५MB भन्दा कम हुनुपर्छ। कृपया सानो फाइल अपलोड गर्नुहोस्।'
+                    : 'Image must be less than 5MB. Please upload a smaller file.',
+              ),
             ),
           );
         }
@@ -92,9 +97,12 @@ class _IndividualVerificationFormState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'कृपया आफ्नो परिचयपत्रको अगाडिको छवि अपलोड गर्नुहोस्'
-                    : 'Please upload front image of your ID document')),
+                    : 'Please upload front image of your ID document',
+              ),
+            ),
           );
         }
         return;
@@ -104,9 +112,12 @@ class _IndividualVerificationFormState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'कृपया आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्'
-                    : 'Please upload a selfie holding your ID document')),
+                    : 'Please upload a selfie holding your ID document',
+              ),
+            ),
           );
         }
         return;
@@ -125,9 +136,13 @@ class _IndividualVerificationFormState
     if (_step == 'payment') {
       if (_selectedPaymentMethod == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.locale.languageCode == 'ne'
-              ? 'कृपया भुक्तानी विधि छान्नुहोस्'
-              : 'Please select a payment method')),
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'कृपया भुक्तानी विधि छान्नुहोस्'
+                  : 'Please select a payment method',
+            ),
+          ),
         );
         return;
       }
@@ -163,9 +178,12 @@ class _IndividualVerificationFormState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'प्रमाणीकरण सफलतापूर्वक पेश गरियो!'
-                    : 'Verification submitted successfully!')),
+                    : 'Verification submitted successfully!',
+              ),
+            ),
           );
           Navigator.pop(context, true);
         }
@@ -175,7 +193,11 @@ class _IndividualVerificationFormState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}',
+            ),
+          ),
         );
       }
     } finally {
@@ -241,24 +263,34 @@ class _IndividualVerificationFormState
         if (paymentResult == true && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'भुक्तानी सफल! प्रमाणीकरण पेश गरियो।'
-                    : 'Payment successful! Verification submitted.')),
+                    : 'Payment successful! Verification submitted.',
+              ),
+            ),
           );
           Navigator.pop(context, true);
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(context.locale.languageCode == 'ne'
+              content: Text(
+                context.locale.languageCode == 'ne'
                     ? 'भुक्तानी पूरा भएन। तपाईंको प्रमाणीकरण भुक्तानी पर्खिरहेको छ।'
-                    : 'Payment was not completed. Your verification is pending payment.')),
+                    : 'Payment was not completed. Your verification is pending payment.',
+              ),
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}',
+            ),
+          ),
         );
       }
     } finally {
@@ -308,8 +340,12 @@ class _IndividualVerificationFormState
           children: [
             Text(
               _step == 'form'
-                  ? (lang == 'ne' ? 'व्यक्तिगत प्रमाणीकरण' : 'Individual Verification')
-                  : (lang == 'ne' ? 'भुक्तानी विधि छान्नुहोस्' : 'Select Payment Method'),
+                  ? (lang == 'ne'
+                        ? 'व्यक्तिगत प्रमाणीकरण'
+                        : 'Individual Verification')
+                  : (lang == 'ne'
+                        ? 'भुक्तानी विधि छान्नुहोस्'
+                        : 'Select Payment Method'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
@@ -364,11 +400,22 @@ class _IndividualVerificationFormState
             ),
 
           // Full Name
-          _buildLabel(lang == 'ne' ? 'पूरा नाम (परिचयपत्रमा जस्तो) *' : 'Full Name (as on ID document) *'),
+          _buildLabel(
+            lang == 'ne'
+                ? 'पूरा नाम (परिचयपत्रमा जस्तो) *'
+                : 'Full Name (as on ID document) *',
+          ),
           TextFormField(
-            decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो पूरा नाम परिचयपत्रमा देखिए जस्तै लेख्नुहोस्' : 'Enter your full name exactly as shown on ID'),
-            validator: (v) =>
-                v?.isEmpty == true ? (lang == 'ne' ? 'कृपया आफ्नो पूरा नाम लेख्नुहोस्' : 'Please enter your full name') : null,
+            decoration: _inputDecoration(
+              lang == 'ne'
+                  ? 'आफ्नो पूरा नाम परिचयपत्रमा देखिए जस्तै लेख्नुहोस्'
+                  : 'Enter your full name exactly as shown on ID',
+            ),
+            validator: (v) => v?.isEmpty == true
+                ? (lang == 'ne'
+                      ? 'कृपया आफ्नो पूरा नाम लेख्नुहोस्'
+                      : 'Please enter your full name')
+                : null,
             onSaved: (v) => _fullName = v ?? '',
           ),
           Padding(
@@ -383,54 +430,101 @@ class _IndividualVerificationFormState
           const SizedBox(height: 16),
 
           // ID Type
-          _buildLabel(lang == 'ne' ? 'परिचयपत्र प्रकार *' : 'ID Document Type *'),
+          _buildLabel(
+            lang == 'ne' ? 'परिचयपत्र प्रकार *' : 'ID Document Type *',
+          ),
           DropdownButtonFormField<String>(
             value: _idType,
             decoration: _inputDecoration(''),
             items: [
               DropdownMenuItem(
-                  value: 'citizenship', child: Text(lang == 'ne' ? 'नागरिकता' : 'Citizenship')),
-              DropdownMenuItem(value: 'passport', child: Text(lang == 'ne' ? 'राहदानी' : 'Passport')),
+                value: 'citizenship',
+                child: Text(lang == 'ne' ? 'नागरिकता' : 'Citizenship'),
+              ),
               DropdownMenuItem(
-                  value: 'driving_license',
-                  child: Text(lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License')),
+                value: 'passport',
+                child: Text(lang == 'ne' ? 'राहदानी' : 'Passport'),
+              ),
+              DropdownMenuItem(
+                value: 'driving_license',
+                child: Text(
+                  lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License',
+                ),
+              ),
             ],
             onChanged: (v) => setState(() => _idType = v ?? 'citizenship'),
           ),
           const SizedBox(height: 16),
 
           // ID Number
-          _buildLabel(lang == 'ne' ? 'परिचयपत्र नम्बर *' : 'ID Document Number *'),
+          _buildLabel(
+            lang == 'ne' ? 'परिचयपत्र नम्बर *' : 'ID Document Number *',
+          ),
           TextFormField(
-            decoration: _inputDecoration(lang == 'ne' ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्' : 'Enter your ID number'),
-            validator: (v) =>
-                v?.isEmpty == true ? (lang == 'ne' ? 'कृपया आफ्नो परिचयपत्र नम्बर लेख्नुहोस्' : 'Please enter your ID document number') : null,
+            decoration: _inputDecoration(
+              lang == 'ne'
+                  ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्'
+                  : 'Enter your ID number',
+            ),
+            validator: (v) => v?.isEmpty == true
+                ? (lang == 'ne'
+                      ? 'कृपया आफ्नो परिचयपत्र नम्बर लेख्नुहोस्'
+                      : 'Please enter your ID document number')
+                : null,
             onSaved: (v) => _idNumber = v ?? '',
           ),
           const SizedBox(height: 24),
 
           // Documents
-          _buildLabel(lang == 'ne' ? 'परिचयपत्र अगाडिको छवि *' : 'ID Front Image *'),
+          _buildLabel(
+            lang == 'ne' ? 'परिचयपत्र अगाडिको छवि *' : 'ID Front Image *',
+          ),
           _buildDocUpload(
-              _idFront, 'front', lang == 'ne' ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्' : 'Upload front of your ID'),
+            _idFront,
+            'front',
+            lang == 'ne'
+                ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्'
+                : 'Upload front of your ID',
+          ),
           _buildFileHint(lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
           const SizedBox(height: 12),
 
-          _buildLabel(lang == 'ne'
-              ? 'परिचयपत्र पछाडिको छवि ${_idType != 'passport' ? '*' : ''}'
-              : 'ID Back Image ${_idType != 'passport' ? '*' : ''}'),
-          _buildDocUpload(_idBack, 'back', lang == 'ne' ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस्' : 'Upload back of your ID'),
-          _buildFileHint(_idType == 'passport'
-              ? (lang == 'ne' ? 'ऐच्छिक' : 'Optional')
-              : (lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB')),
+          _buildLabel(
+            lang == 'ne'
+                ? 'परिचयपत्र पछाडिको छवि ${_idType != 'passport' ? '*' : ''}'
+                : 'ID Back Image ${_idType != 'passport' ? '*' : ''}',
+          ),
+          _buildDocUpload(
+            _idBack,
+            'back',
+            lang == 'ne'
+                ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस्'
+                : 'Upload back of your ID',
+          ),
+          _buildFileHint(
+            _idType == 'passport'
+                ? (lang == 'ne' ? 'ऐच्छिक' : 'Optional')
+                : (lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
+          ),
           const SizedBox(height: 12),
 
-          _buildLabel(lang == 'ne' ? 'परिचयपत्रसहित सेल्फी *' : 'Selfie with ID Document *'),
+          _buildLabel(
+            lang == 'ne'
+                ? 'परिचयपत्रसहित सेल्फी *'
+                : 'Selfie with ID Document *',
+          ),
           _buildDocUpload(
-              _selfie, 'selfie', lang == 'ne' ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्' : 'Upload a selfie holding your ID'),
-          _buildFileHint(lang == 'ne'
-              ? 'आफ्नो अनुहारको छेउमा परिचयपत्र समातेको स्पष्ट सेल्फी'
-              : 'Clear selfie holding your ID next to your face'),
+            _selfie,
+            'selfie',
+            lang == 'ne'
+                ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्'
+                : 'Upload a selfie holding your ID',
+          ),
+          _buildFileHint(
+            lang == 'ne'
+                ? 'आफ्नो अनुहारको छेउमा परिचयपत्र समातेको स्पष्ट सेल्फी'
+                : 'Clear selfie holding your ID next to your face',
+          ),
           const SizedBox(height: 32),
 
           // Submit button
@@ -452,12 +546,18 @@ class _IndividualVerificationFormState
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : Text(
                       widget.isFreeVerification || widget.isResubmission
-                          ? (lang == 'ne' ? 'प्रमाणीकरणको लागि पेश गर्नुहोस्' : 'Submit for Verification')
-                          : (lang == 'ne' ? 'भुक्तानीमा जानुहोस्' : 'Proceed to Payment'),
+                          ? (lang == 'ne'
+                                ? 'प्रमाणीकरणको लागि पेश गर्नुहोस्'
+                                : 'Submit for Verification')
+                          : (lang == 'ne'
+                                ? 'भुक्तानीमा जानुहोस्'
+                                : 'Proceed to Payment'),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -495,7 +595,11 @@ class _IndividualVerificationFormState
             children: [
               Row(
                 children: [
-                  const Icon(LucideIcons.receipt, size: 20, color: Colors.indigo),
+                  const Icon(
+                    LucideIcons.receipt,
+                    size: 20,
+                    color: Colors.indigo,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     lang == 'ne' ? 'अर्डर सारांश' : 'Order Summary',
@@ -507,9 +611,16 @@ class _IndividualVerificationFormState
                 ],
               ),
               const SizedBox(height: 12),
-              _buildSummaryRow(lang == 'ne' ? 'योजना' : 'Plan', lang == 'ne' ? 'व्यक्तिगत प्रमाणीकरण' : 'Individual Verification'),
               _buildSummaryRow(
-                  lang == 'ne' ? 'अवधि' : 'Duration', _formatDuration(widget.durationDays, lang)),
+                lang == 'ne' ? 'योजना' : 'Plan',
+                lang == 'ne'
+                    ? 'व्यक्तिगत प्रमाणीकरण'
+                    : 'Individual Verification',
+              ),
+              _buildSummaryRow(
+                lang == 'ne' ? 'अवधि' : 'Duration',
+                _formatDuration(widget.durationDays, lang),
+              ),
               _buildSummaryRow(lang == 'ne' ? 'नाम' : 'Name', _fullName),
               const Divider(height: 24),
               _buildSummaryRow(
@@ -525,16 +636,15 @@ class _IndividualVerificationFormState
         // Payment Method Selection
         Text(
           lang == 'ne' ? 'भुक्तानी विधि छान्नुहोस्' : 'Select Payment Method',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
 
         _buildPaymentMethodCard(
           name: 'Khalti',
-          description: lang == 'ne' ? 'Khalti वालेट वा बैंकबाट भुक्तानी गर्नुहोस्' : 'Pay with Khalti wallet or bank',
+          description: lang == 'ne'
+              ? 'Khalti वालेट वा बैंकबाट भुक्तानी गर्नुहोस्'
+              : 'Pay with Khalti wallet or bank',
           color: const Color(0xFF5C2D91),
           icon: LucideIcons.wallet,
           gateway: PaymentGateway.khalti,
@@ -543,7 +653,9 @@ class _IndividualVerificationFormState
 
         _buildPaymentMethodCard(
           name: 'eSewa',
-          description: lang == 'ne' ? 'eSewa वालेटबाट भुक्तानी गर्नुहोस्' : 'Pay with eSewa wallet',
+          description: lang == 'ne'
+              ? 'eSewa वालेटबाट भुक्तानी गर्नुहोस्'
+              : 'Pay with eSewa wallet',
           color: const Color(0xFF60BB46),
           icon: LucideIcons.smartphone,
           gateway: PaymentGateway.esewa,
@@ -569,7 +681,9 @@ class _IndividualVerificationFormState
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : Text(
                     lang == 'ne'
@@ -673,10 +787,7 @@ class _IndividualVerificationFormState
                   ),
                   Text(
                     description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -730,8 +841,7 @@ class _IndividualVerificationFormState
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.indigo, width: 2),
       ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 
@@ -753,10 +863,12 @@ class _IndividualVerificationFormState
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.file(file,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: 180),
+                    child: Image.file(
+                      file,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 180,
+                    ),
                   ),
                   Positioned(
                     top: 8,
@@ -767,8 +879,11 @@ class _IndividualVerificationFormState
                         color: Colors.green,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(LucideIcons.check,
-                          color: Colors.white, size: 16),
+                      child: const Icon(
+                        LucideIcons.check,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                   ),
                 ],
@@ -777,15 +892,11 @@ class _IndividualVerificationFormState
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.upload,
-                        color: Colors.grey[400], size: 28),
+                    Icon(LucideIcons.upload, color: Colors.grey[400], size: 28),
                     const SizedBox(height: 8),
                     Text(
                       label,
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.grey[500], fontSize: 13),
                     ),
                   ],
                 ),

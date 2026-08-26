@@ -54,7 +54,9 @@ class IndividualDocumentsStep extends StatelessWidget {
         // ID Front
         _buildFileUpload(
           label: lang == 'ne' ? 'परिचयपत्र (अगाडि) *' : 'ID Document (Front) *',
-          hint: lang == 'ne' ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्' : 'Upload front side of your ID',
+          hint: lang == 'ne'
+              ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्'
+              : 'Upload front side of your ID',
           file: idFrontFile,
           onTap: onPickFront,
           onClear: onClearFront,
@@ -64,7 +66,9 @@ class IndividualDocumentsStep extends StatelessWidget {
         // ID Back (Optional)
         _buildFileUpload(
           label: lang == 'ne' ? 'परिचयपत्र (पछाडि)' : 'ID Document (Back)',
-          hint: lang == 'ne' ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस् (ऐच्छिक)' : 'Upload back side of your ID (optional)',
+          hint: lang == 'ne'
+              ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस् (ऐच्छिक)'
+              : 'Upload back side of your ID (optional)',
           file: idBackFile,
           onTap: onPickBack,
           onClear: onClearBack,
@@ -75,7 +79,9 @@ class IndividualDocumentsStep extends StatelessWidget {
         // Selfie
         _buildFileUpload(
           label: lang == 'ne' ? 'परिचयपत्रसहित सेल्फी *' : 'Selfie with ID *',
-          hint: lang == 'ne' ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्' : 'Upload a selfie holding your ID document',
+          hint: lang == 'ne'
+              ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्'
+              : 'Upload a selfie holding your ID document',
           file: selfieFile,
           onTap: onPickSelfie,
           onClear: onClearSelfie,
@@ -95,7 +101,11 @@ class IndividualDocumentsStep extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(LucideIcons.alertTriangle, color: Color(0xFFF59E0B), size: 20),
+                  const Icon(
+                    LucideIcons.alertTriangle,
+                    color: Color(0xFFF59E0B),
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     lang == 'ne' ? 'फोटो आवश्यकताहरू' : 'Photo Requirements',
@@ -111,13 +121,13 @@ class IndividualDocumentsStep extends StatelessWidget {
               Text(
                 lang == 'ne'
                     ? '• सबै पाठ स्पष्ट देखिनुपर्छ\n'
-                      '• चम्किलो प्रकाश र छायाबाट बच्नुहोस्\n'
-                      '• सेल्फीको लागि: परिचयपत्र अनुहारको छेउमा राख्नुहोस्\n'
-                      '• अधिकतम फाइल साइज: प्रति छवि ५MB'
+                          '• चम्किलो प्रकाश र छायाबाट बच्नुहोस्\n'
+                          '• सेल्फीको लागि: परिचयपत्र अनुहारको छेउमा राख्नुहोस्\n'
+                          '• अधिकतम फाइल साइज: प्रति छवि ५MB'
                     : '• Ensure all text is clearly visible\n'
-                      '• Avoid glare and shadows\n'
-                      '• For selfie: Hold ID next to your face\n'
-                      '• Max file size: 5MB per image',
+                          '• Avoid glare and shadows\n'
+                          '• For selfie: Hold ID next to your face\n'
+                          '• Max file size: 5MB per image',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: Colors.grey[700],
@@ -160,7 +170,9 @@ class IndividualDocumentsStep extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: file != null ? const Color(0xFF10B981) : Colors.grey[300]!,
+                color: file != null
+                    ? const Color(0xFF10B981)
+                    : Colors.grey[300]!,
                 width: file != null ? 2 : 1,
               ),
             ),
@@ -187,7 +199,11 @@ class IndividualDocumentsStep extends StatelessWidget {
                               color: Colors.red.withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Icon(LucideIcons.x, color: Colors.white, size: 18),
+                            child: const Icon(
+                              LucideIcons.x,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -200,7 +216,11 @@ class IndividualDocumentsStep extends StatelessWidget {
                             color: const Color(0xFF10B981),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Icon(LucideIcons.check, color: Colors.white, size: 16),
+                          child: const Icon(
+                            LucideIcons.check,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ],
@@ -208,11 +228,18 @@ class IndividualDocumentsStep extends StatelessWidget {
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(LucideIcons.upload, size: 40, color: Colors.grey[400]),
+                      Icon(
+                        LucideIcons.upload,
+                        size: 40,
+                        color: Colors.grey[400],
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         hint,
-                        style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500]),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],

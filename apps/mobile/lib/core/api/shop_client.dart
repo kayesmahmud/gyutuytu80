@@ -65,8 +65,10 @@ class ShopClient {
 
           // Inject seller info (all ads on shop page belong to same seller)
           if (seller != null) {
-            flattened['userName'] ??= seller['businessName'] ?? seller['fullName'];
-            flattened['businessVerificationStatus'] ??= seller['businessVerificationStatus'];
+            flattened['userName'] ??=
+                seller['businessName'] ?? seller['fullName'];
+            flattened['businessVerificationStatus'] ??=
+                seller['businessVerificationStatus'];
             flattened['individualVerified'] ??= seller['individualVerified'];
           }
 
@@ -88,7 +90,10 @@ class ShopClient {
           // Handle ad_images → images (extract filenames)
           if (ad['ad_images'] is List && flattened['images'] == null) {
             flattened['images'] = (ad['ad_images'] as List)
-                .map((img) => img is Map ? (img['filename'] ?? img['file_path']) : img)
+                .map(
+                  (img) =>
+                      img is Map ? (img['filename'] ?? img['file_path']) : img,
+                )
                 .where((img) => img != null)
                 .toList();
           }
@@ -101,10 +106,17 @@ class ShopClient {
 
         return PaginatedResponse.success(
           ads,
-          PaginationInfo(page: page, limit: limit, total: total, totalPages: totalPages),
+          PaginationInfo(
+            page: page,
+            limit: limit,
+            total: total,
+            totalPages: totalPages,
+          ),
         );
       }
-      return PaginatedResponse.failure(response.data['error'] ?? 'Failed to fetch shop ads');
+      return PaginatedResponse.failure(
+        response.data['error'] ?? 'Failed to fetch shop ads',
+      );
     } on DioException catch (e) {
       return PaginatedResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch shop ads',
@@ -126,60 +138,87 @@ class ShopClient {
     return getShopAds(sellerSlug, page: page, limit: limit);
   }
 
-
   /// Update shop profile details (bio, description)
-  Future<ApiResponse<ShopProfile>> updateShopProfile(Map<String, dynamic> data) async {
+  Future<ApiResponse<ShopProfile>> updateShopProfile(
+    Map<String, dynamic> data,
+  ) async {
     try {
       final response = await _dio.patch('/profile', data: data);
       if (response.data['success'] == true) {
         return ApiResponse.success(ShopProfile.fromJson(response.data['data']));
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to update profile');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to update profile',
+      );
     } on DioException catch (e) {
-      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to update profile');
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to update profile',
+      );
     }
   }
 
   /// Update shop contact details
-  Future<ApiResponse<ShopProfile>> updateShopContact(Map<String, dynamic> data) async {
+  Future<ApiResponse<ShopProfile>> updateShopContact(
+    Map<String, dynamic> data,
+  ) async {
     try {
       final response = await _dio.patch('/profile/contact', data: data);
       if (response.data['success'] == true) {
         // Contact update might verify phone, so refresh profile
         return ApiResponse.success(ShopProfile.fromJson(response.data['data']));
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to update contact info');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to update contact info',
+      );
     } on DioException catch (e) {
-      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to update contact info');
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to update contact info',
+      );
     }
   }
 
   /// Update shop location
-  Future<ApiResponse<ShopProfile>> updateShopLocation(String locationSlug) async {
+  Future<ApiResponse<ShopProfile>> updateShopLocation(
+    String locationSlug,
+  ) async {
     try {
-      final response = await _dio.patch('/profile/location', data: {'locationSlug': locationSlug});
+      final response = await _dio.patch(
+        '/profile/location',
+        data: {'locationSlug': locationSlug},
+      );
       if (response.data['success'] == true) {
         return ApiResponse.success(ShopProfile.fromJson(response.data['data']));
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to update location');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to update location',
+      );
     } on DioException catch (e) {
-      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to update location');
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to update location',
+      );
     }
   }
 
   /// Update shop default category
-  Future<ApiResponse<ShopProfile>> updateShopCategory(int categoryId, int? subcategoryId) async {
+  Future<ApiResponse<ShopProfile>> updateShopCategory(
+    int categoryId,
+    int? subcategoryId,
+  ) async {
     try {
-      final response = await _dio.patch('/profile/category', data: {
-        'categoryId': categoryId,
-        'subcategoryId': subcategoryId,
-      });
+      final response = await _dio.patch(
+        '/profile/category',
+        data: {'categoryId': categoryId, 'subcategoryId': subcategoryId},
+      );
       if (response.data['success'] == true) {
         return ApiResponse.success(ShopProfile.fromJson(response.data['data']));
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to update category');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to update category',
+      );
     } on DioException catch (e) {
-      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to update category');
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to update category',
+      );
     }
   }
 
@@ -193,11 +232,17 @@ class ShopClient {
 
       final response = await _dio.post('/profile/avatar', data: formData);
       if (response.data['success'] == true) {
-        return ApiResponse.success(response.data['data']['avatar_url'] ?? 'Avatar uploaded');
+        return ApiResponse.success(
+          response.data['data']['avatar_url'] ?? 'Avatar uploaded',
+        );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to upload avatar');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to upload avatar',
+      );
     } on DioException catch (e) {
-      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to upload avatar');
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to upload avatar',
+      );
     }
   }
 
@@ -208,9 +253,13 @@ class ShopClient {
       if (response.data['success'] == true) {
         return ApiResponse.success(true);
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to remove avatar');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to remove avatar',
+      );
     } on DioException catch (e) {
-      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to remove avatar');
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to remove avatar',
+      );
     }
   }
 
@@ -224,11 +273,17 @@ class ShopClient {
 
       final response = await _dio.post('/profile/cover', data: formData);
       if (response.data['success'] == true) {
-        return ApiResponse.success(response.data['data']['cover_url'] ?? 'Cover uploaded');
+        return ApiResponse.success(
+          response.data['data']['cover_url'] ?? 'Cover uploaded',
+        );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to upload cover');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to upload cover',
+      );
     } on DioException catch (e) {
-      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to upload cover');
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to upload cover',
+      );
     }
   }
 
@@ -239,9 +294,13 @@ class ShopClient {
       if (response.data['success'] == true) {
         return ApiResponse.success(true);
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to remove cover');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to remove cover',
+      );
     } on DioException catch (e) {
-      return ApiResponse.failure(e.response?.data?['message'] ?? 'Failed to remove cover');
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to remove cover',
+      );
     }
   }
 }
@@ -330,7 +389,8 @@ class ShopProfile {
 
   /// Check if business verified
   bool get isBusinessVerified =>
-      businessVerificationStatus == 'verified' || businessVerificationStatus == 'approved';
+      businessVerificationStatus == 'verified' ||
+      businessVerificationStatus == 'approved';
 
   /// Check if verified (either business or individual)
   bool get isVerified => isBusinessVerified || individualVerified;
@@ -345,7 +405,20 @@ class ShopProfile {
   /// Member since formatted
   String get memberSince {
     if (createdAt == null) return '';
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${months[createdAt!.month - 1]} ${createdAt!.year}';
   }
 
@@ -353,49 +426,106 @@ class ShopProfile {
     // Handle nested objects if API returns them (e.g. defaultCategory: { ... })
     // The web code suggests props are passed down, likely flattened or from nested objects.
     // Let's safe-guard for both flattened and nested (defaultCategory object)
-    
-    final defaultCategory = json['defaultCategory'] as Map<String, dynamic>? ?? json['default_category'] as Map<String, dynamic>?;
-    final defaultSubcategory = json['defaultSubcategory'] as Map<String, dynamic>? ?? json['default_subcategory'] as Map<String, dynamic>?;
+
+    final defaultCategory =
+        json['defaultCategory'] as Map<String, dynamic>? ??
+        json['default_category'] as Map<String, dynamic>?;
+    final defaultSubcategory =
+        json['defaultSubcategory'] as Map<String, dynamic>? ??
+        json['default_subcategory'] as Map<String, dynamic>?;
 
     return ShopProfile(
       id: json['id'] as int,
-      fullName: json['fullName'] as String? ?? json['full_name'] as String? ?? '',
-      businessName: json['businessName'] as String? ?? json['business_name'] as String?,
+      fullName:
+          json['fullName'] as String? ?? json['full_name'] as String? ?? '',
+      businessName:
+          json['businessName'] as String? ?? json['business_name'] as String?,
       email: json['email'] as String?,
       phone: json['phone'] as String?,
       avatar: json['avatar'] as String?,
-      coverPhoto: json['coverPhoto'] as String? ?? json['cover_photo'] as String?,
+      coverPhoto:
+          json['coverPhoto'] as String? ?? json['cover_photo'] as String?,
       bio: json['bio'] as String?,
-      businessDescription: json['businessDescription'] as String? ?? json['business_description'] as String?,
-      businessPhone: json['businessPhone'] as String? ?? json['business_phone'] as String?,
-      businessWebsite: json['businessWebsite'] as String? ?? json['business_website'] as String?,
-      googleMapsLink: json['googleMapsLink'] as String? ?? json['google_maps_link'] as String?,
-      facebookUrl: json['facebookUrl'] as String? ?? json['facebook_url'] as String?,
-      instagramUrl: json['instagramUrl'] as String? ?? json['instagram_url'] as String?,
+      businessDescription:
+          json['businessDescription'] as String? ??
+          json['business_description'] as String?,
+      businessPhone:
+          json['businessPhone'] as String? ?? json['business_phone'] as String?,
+      businessWebsite:
+          json['businessWebsite'] as String? ??
+          json['business_website'] as String?,
+      googleMapsLink:
+          json['googleMapsLink'] as String? ??
+          json['google_maps_link'] as String?,
+      facebookUrl:
+          json['facebookUrl'] as String? ?? json['facebook_url'] as String?,
+      instagramUrl:
+          json['instagramUrl'] as String? ?? json['instagram_url'] as String?,
       tiktokUrl: json['tiktokUrl'] as String? ?? json['tiktok_url'] as String?,
-      accountType: json['accountType'] as String? ?? json['account_type'] as String?,
-      businessVerificationStatus: json['businessVerificationStatus'] as String? ?? json['business_verification_status'] as String?,
-      individualVerified: json['individualVerified'] as bool? ?? json['individual_verified'] as bool? ?? false,
+      accountType:
+          json['accountType'] as String? ?? json['account_type'] as String?,
+      businessVerificationStatus:
+          json['businessVerificationStatus'] as String? ??
+          json['business_verification_status'] as String?,
+      individualVerified:
+          json['individualVerified'] as bool? ??
+          json['individual_verified'] as bool? ??
+          false,
       shopSlug: json['shopSlug'] as String? ?? json['shop_slug'] as String?,
-      customShopSlug: json['customShopSlug'] as String? ?? json['custom_shop_slug'] as String?,
+      customShopSlug:
+          json['customShopSlug'] as String? ??
+          json['custom_shop_slug'] as String?,
       locationId: json['locationId'] as int? ?? json['location_id'] as int?,
-      locationName: json['locationName'] as String? ?? json['location_name'] as String? ?? (json['location'] as Map<String, dynamic>?)?['name'] as String?,
-      locationFullPath: json['locationFullPath'] as String? ?? json['location_full_path'] as String?,
-      
-      categoryId: defaultCategory?['id'] as int? ?? json['categoryId'] as int? ?? json['category_id'] as int?,
-      categoryName: defaultCategory?['name'] as String? ?? json['categoryName'] as String? ?? json['category_name'] as String?,
-      categorySlug: defaultCategory?['slug'] as String? ?? json['categorySlug'] as String? ?? json['category_slug'] as String?,
-      categoryIcon: defaultCategory?['icon'] as String? ?? json['categoryIcon'] as String? ?? json['category_icon'] as String?,
-      
-      subcategoryId: defaultSubcategory?['id'] as int? ?? json['subcategoryId'] as int? ?? json['subcategory_id'] as int?,
-      subcategoryName: defaultSubcategory?['name'] as String? ?? json['subcategoryName'] as String? ?? json['subcategory_name'] as String?,
-      subcategorySlug: defaultSubcategory?['slug'] as String? ?? json['subcategorySlug'] as String? ?? json['subcategory_slug'] as String?,
-      subcategoryIcon: defaultSubcategory?['icon'] as String? ?? json['subcategoryIcon'] as String? ?? json['subcategory_icon'] as String?,
+      locationName:
+          json['locationName'] as String? ??
+          json['location_name'] as String? ??
+          (json['location'] as Map<String, dynamic>?)?['name'] as String?,
+      locationFullPath:
+          json['locationFullPath'] as String? ??
+          json['location_full_path'] as String?,
 
-      createdAt: _parseDateTime(json['memberSince'] ?? json['createdAt'] ?? json['created_at']),
+      categoryId:
+          defaultCategory?['id'] as int? ??
+          json['categoryId'] as int? ??
+          json['category_id'] as int?,
+      categoryName:
+          defaultCategory?['name'] as String? ??
+          json['categoryName'] as String? ??
+          json['category_name'] as String?,
+      categorySlug:
+          defaultCategory?['slug'] as String? ??
+          json['categorySlug'] as String? ??
+          json['category_slug'] as String?,
+      categoryIcon:
+          defaultCategory?['icon'] as String? ??
+          json['categoryIcon'] as String? ??
+          json['category_icon'] as String?,
+
+      subcategoryId:
+          defaultSubcategory?['id'] as int? ??
+          json['subcategoryId'] as int? ??
+          json['subcategory_id'] as int?,
+      subcategoryName:
+          defaultSubcategory?['name'] as String? ??
+          json['subcategoryName'] as String? ??
+          json['subcategory_name'] as String?,
+      subcategorySlug:
+          defaultSubcategory?['slug'] as String? ??
+          json['subcategorySlug'] as String? ??
+          json['subcategory_slug'] as String?,
+      subcategoryIcon:
+          defaultSubcategory?['icon'] as String? ??
+          json['subcategoryIcon'] as String? ??
+          json['subcategory_icon'] as String?,
+
+      createdAt: _parseDateTime(
+        json['memberSince'] ?? json['createdAt'] ?? json['created_at'],
+      ),
       totalAds: json['totalAds'] as int? ?? json['total_ads'] as int? ?? 0,
-      totalViews: json['totalViews'] as int? ?? json['total_views'] as int? ?? 0,
-      featuredAds: json['featuredAds'] as int? ?? json['featured_ads'] as int? ?? 0,
+      totalViews:
+          json['totalViews'] as int? ?? json['total_views'] as int? ?? 0,
+      featuredAds:
+          json['featuredAds'] as int? ?? json['featured_ads'] as int? ?? 0,
     );
   }
 }

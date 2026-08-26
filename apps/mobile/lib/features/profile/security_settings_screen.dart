@@ -10,7 +10,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:mobile/core/utils/localized_helpers.dart';
 
 class SecuritySettingsScreen extends StatefulWidget {
-   // ... (rest of class)
+  // ... (rest of class)
   const SecuritySettingsScreen({super.key});
 
   @override
@@ -53,7 +53,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
       if (mounted) {
         setState(() => _isLoadingSessions = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'सुरक्षा सेटिङहरू लोड गर्न असफल: $e' : 'Failed to load security settings: $e')),
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'सुरक्षा सेटिङहरू लोड गर्न असफल: $e'
+                  : 'Failed to load security settings: $e',
+            ),
+          ),
         );
       }
     }
@@ -70,7 +76,9 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   Future<void> _navigateTo2FASetup() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => TwoFactorSetupScreen(onComplete: _fetchSecurityData)),
+      MaterialPageRoute(
+        builder: (_) => TwoFactorSetupScreen(onComplete: _fetchSecurityData),
+      ),
     );
     if (result == true) _fetchSecurityData();
   }
@@ -127,7 +135,10 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                 Navigator.pop(dialogContext);
                 await _disable2FA(passwordController.text, codeController.text);
               },
-              child: Text(lang == 'ne' ? 'निष्क्रिय गर्नुहोस्' : 'Disable', style: const TextStyle(color: Colors.white)),
+              child: Text(
+                lang == 'ne' ? 'निष्क्रिय गर्नुहोस्' : 'Disable',
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -138,7 +149,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   Future<void> _disable2FA(String password, String code) async {
     if (password.isEmpty || code.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'पासवर्ड र कोड आवश्यक छ' : 'Password and code are required')),
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'पासवर्ड र कोड आवश्यक छ'
+                : 'Password and code are required',
+          ),
+        ),
       );
       return;
     }
@@ -149,7 +166,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         setState(() => _is2faEnabled = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.locale.languageCode == 'ne' ? '2FA निष्क्रिय गरियो' : '2FA disabled successfully')),
+            SnackBar(
+              content: Text(
+                context.locale.languageCode == 'ne'
+                    ? '2FA निष्क्रिय गरियो'
+                    : '2FA disabled successfully',
+              ),
+            ),
           );
         }
       } else {
@@ -158,7 +181,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.locale.languageCode == 'ne' ? '2FA निष्क्रिय गर्न असफल: $e' : 'Failed to disable 2FA: $e')),
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? '2FA निष्क्रिय गर्न असफल: $e'
+                  : 'Failed to disable 2FA: $e',
+            ),
+          ),
         );
       }
     } finally {
@@ -175,7 +204,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'सत्र सफलतापूर्वक रद्द गरियो' : 'Session revoked successfully')),
+            SnackBar(
+              content: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'सत्र सफलतापूर्वक रद्द गरियो'
+                    : 'Session revoked successfully',
+              ),
+            ),
           );
         }
       } else {
@@ -184,7 +219,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'सत्र रद्द गर्न असफल: $e' : 'Failed to revoke session: $e')),
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'सत्र रद्द गर्न असफल: $e'
+                  : 'Failed to revoke session: $e',
+            ),
+          ),
         );
       }
     }
@@ -210,24 +251,42 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                 TextFormField(
                   controller: currentPasswordController,
                   obscureText: true,
-                  decoration: InputDecoration(labelText: lang == 'ne' ? 'हालको पासवर्ड' : 'Current Password'),
-                  validator: (v) => v?.isEmpty == true ? (lang == 'ne' ? 'आवश्यक' : 'Required') : null,
+                  decoration: InputDecoration(
+                    labelText: lang == 'ne'
+                        ? 'हालको पासवर्ड'
+                        : 'Current Password',
+                  ),
+                  validator: (v) => v?.isEmpty == true
+                      ? (lang == 'ne' ? 'आवश्यक' : 'Required')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: newPasswordController,
                   obscureText: true,
-                  decoration: InputDecoration(labelText: lang == 'ne' ? 'नयाँ पासवर्ड' : 'New Password'),
-                  validator: (v) => (v?.length ?? 0) < 6 ? (lang == 'ne' ? 'कम्तीमा ६ अक्षर' : 'Min 6 chars') : null,
+                  decoration: InputDecoration(
+                    labelText: lang == 'ne' ? 'नयाँ पासवर्ड' : 'New Password',
+                  ),
+                  validator: (v) => (v?.length ?? 0) < 6
+                      ? (lang == 'ne' ? 'कम्तीमा ६ अक्षर' : 'Min 6 chars')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: confirmPasswordController,
                   obscureText: true,
-                  decoration: InputDecoration(labelText: lang == 'ne' ? 'नयाँ पासवर्ड पुष्टि गर्नुहोस्' : 'Confirm New Password'),
+                  decoration: InputDecoration(
+                    labelText: lang == 'ne'
+                        ? 'नयाँ पासवर्ड पुष्टि गर्नुहोस्'
+                        : 'Confirm New Password',
+                  ),
                   validator: (v) {
-                    if (v?.isEmpty == true) return lang == 'ne' ? 'आवश्यक' : 'Required';
-                    if (v != newPasswordController.text) return lang == 'ne' ? 'पासवर्ड मिलेन' : 'Passwords do not match';
+                    if (v?.isEmpty == true)
+                      return lang == 'ne' ? 'आवश्यक' : 'Required';
+                    if (v != newPasswordController.text)
+                      return lang == 'ne'
+                          ? 'पासवर्ड मिलेन'
+                          : 'Passwords do not match';
                     return null;
                   },
                 ),
@@ -264,7 +323,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
       if (result['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'पासवर्ड सफलतापूर्वक परिवर्तन भयो' : 'Password changed successfully')),
+            SnackBar(
+              content: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'पासवर्ड सफलतापूर्वक परिवर्तन भयो'
+                    : 'Password changed successfully',
+              ),
+            ),
           );
         }
       } else {
@@ -273,7 +338,13 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'पासवर्ड परिवर्तन गर्न असफल: $e' : 'Failed to change password: $e')),
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'पासवर्ड परिवर्तन गर्न असफल: $e'
+                  : 'Failed to change password: $e',
+            ),
+          ),
         );
       }
     } finally {
@@ -285,7 +356,11 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.locale.languageCode == 'ne' ? 'सुरक्षा सेटिङहरू' : 'Security Settings'),
+        title: Text(
+          context.locale.languageCode == 'ne'
+              ? 'सुरक्षा सेटिङहरू'
+              : 'Security Settings',
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
@@ -295,7 +370,11 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _buildSectionTitle(context.locale.languageCode == 'ne' ? 'पासवर्ड र प्रमाणीकरण' : 'Password & Authentication'),
+                _buildSectionTitle(
+                  context.locale.languageCode == 'ne'
+                      ? 'पासवर्ड र प्रमाणीकरण'
+                      : 'Password & Authentication',
+                ),
                 Card(
                   elevation: 0,
                   color: Colors.grey[50],
@@ -307,29 +386,56 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     children: [
                       ListTile(
                         leading: Icon(
-                          _isPhoneVerified ? LucideIcons.badgeCheck : LucideIcons.smartphoneNfc, 
-                          color: _isPhoneVerified ? Colors.green : AppTheme.primary
+                          _isPhoneVerified
+                              ? LucideIcons.badgeCheck
+                              : LucideIcons.smartphoneNfc,
+                          color: _isPhoneVerified
+                              ? Colors.green
+                              : AppTheme.primary,
                         ),
-                        title: Text(context.locale.languageCode == 'ne' ? 'फोन प्रमाणीकरण' : 'Phone Verification'),
-                        subtitle: Text(_isPhoneVerified
-                            ? (context.locale.languageCode == 'ne' ? 'प्रमाणित: $_phone' : 'Verified: $_phone')
-                            : (context.locale.languageCode == 'ne' ? 'तपाईंको फोन नम्बर प्रमाणित गर्नुहोस्' : 'Verify your phone number')),
+                        title: Text(
+                          context.locale.languageCode == 'ne'
+                              ? 'फोन प्रमाणीकरण'
+                              : 'Phone Verification',
+                        ),
+                        subtitle: Text(
+                          _isPhoneVerified
+                              ? (context.locale.languageCode == 'ne'
+                                    ? 'प्रमाणित: $_phone'
+                                    : 'Verified: $_phone')
+                              : (context.locale.languageCode == 'ne'
+                                    ? 'तपाईंको फोन नम्बर प्रमाणित गर्नुहोस्'
+                                    : 'Verify your phone number'),
+                        ),
                         trailing: const Icon(LucideIcons.chevronRight),
                         onTap: () async {
-                           await Navigator.push(
+                          await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => PhoneVerificationScreen(
-                               onVerified: _fetchSecurityData,
-                            )),
+                            MaterialPageRoute(
+                              builder: (_) => PhoneVerificationScreen(
+                                onVerified: _fetchSecurityData,
+                              ),
+                            ),
                           );
                           _fetchSecurityData();
                         },
                       ),
                       const Divider(height: 1),
                       ListTile(
-                        leading: const Icon(LucideIcons.lock, color: AppTheme.primary),
-                        title: Text(context.locale.languageCode == 'ne' ? 'पासवर्ड परिवर्तन' : 'Change Password'),
-                        subtitle: Text(context.locale.languageCode == 'ne' ? 'तपाईंको लगइन पासवर्ड अपडेट गर्नुहोस्' : 'Update your login password'),
+                        leading: const Icon(
+                          LucideIcons.lock,
+                          color: AppTheme.primary,
+                        ),
+                        title: Text(
+                          context.locale.languageCode == 'ne'
+                              ? 'पासवर्ड परिवर्तन'
+                              : 'Change Password',
+                        ),
+                        subtitle: Text(
+                          context.locale.languageCode == 'ne'
+                              ? 'तपाईंको लगइन पासवर्ड अपडेट गर्नुहोस्'
+                              : 'Update your login password',
+                        ),
                         trailing: const Icon(LucideIcons.chevronRight),
                         onTap: _showChangePasswordDialog,
                       ),
@@ -337,12 +443,24 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                       ListTile(
                         leading: Icon(
                           LucideIcons.shield,
-                          color: _is2faEnabled ? Colors.green : AppTheme.primary,
+                          color: _is2faEnabled
+                              ? Colors.green
+                              : AppTheme.primary,
                         ),
-                        title: Text(context.locale.languageCode == 'ne' ? 'दुई-चरण प्रमाणीकरण' : 'Two-Factor Authentication'),
-                        subtitle: Text(_is2faEnabled
-                            ? (context.locale.languageCode == 'ne' ? 'सक्रिय — निष्क्रिय गर्न ट्याप गर्नुहोस्' : 'Enabled — Tap to disable')
-                            : (context.locale.languageCode == 'ne' ? '2FA सँग तपाईंको खाता सुरक्षित गर्नुहोस्' : 'Secure your account with 2FA')),
+                        title: Text(
+                          context.locale.languageCode == 'ne'
+                              ? 'दुई-चरण प्रमाणीकरण'
+                              : 'Two-Factor Authentication',
+                        ),
+                        subtitle: Text(
+                          _is2faEnabled
+                              ? (context.locale.languageCode == 'ne'
+                                    ? 'सक्रिय — निष्क्रिय गर्न ट्याप गर्नुहोस्'
+                                    : 'Enabled — Tap to disable')
+                              : (context.locale.languageCode == 'ne'
+                                    ? '2FA सँग तपाईंको खाता सुरक्षित गर्नुहोस्'
+                                    : 'Secure your account with 2FA'),
+                        ),
                         trailing: const Icon(LucideIcons.chevronRight),
                         onTap: _handle2FATap,
                       ),
@@ -350,11 +468,29 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildSectionTitle(context.locale.languageCode == 'ne' ? 'सक्रिय सत्रहरू' : 'Active Sessions'),
+                _buildSectionTitle(
+                  context.locale.languageCode == 'ne'
+                      ? 'सक्रिय सत्रहरू'
+                      : 'Active Sessions',
+                ),
                 if (_isLoadingSessions)
-                  const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
                 else if (_sessions.isEmpty)
-                  Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(context.locale.languageCode == 'ne' ? 'कुनै सक्रिय सत्र भेटिएन।' : 'No active sessions found.')))
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        context.locale.languageCode == 'ne'
+                            ? 'कुनै सक्रिय सत्र भेटिएन।'
+                            : 'No active sessions found.',
+                      ),
+                    ),
+                  )
                 else
                   ListView.separated(
                     shrinkWrap: true,
@@ -365,8 +501,12 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                       final session = _sessions[index];
                       final created = DateTime.parse(session['created_at']);
                       // We don't have device info yet, so we show date
-                      final dateStr = formatNepalTime(created, 'MMM d, yyyy h:mm a', context.locale.languageCode);
-                      
+                      final dateStr = formatNepalTime(
+                        created,
+                        'MMM d, yyyy h:mm a',
+                        context.locale.languageCode,
+                      );
+
                       return Card(
                         elevation: 0,
                         color: Colors.grey[50],
@@ -377,12 +517,22 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                         child: ListTile(
                           leading: const CircleAvatar(
                             backgroundColor: Colors.white,
-                            child: Icon(LucideIcons.monitor, color: Colors.grey),
+                            child: Icon(
+                              LucideIcons.monitor,
+                              color: Colors.grey,
+                            ),
                           ),
-                          title: Text(context.locale.languageCode == 'ne' ? 'सत्र सुरु भयो' : 'Session started'),
+                          title: Text(
+                            context.locale.languageCode == 'ne'
+                                ? 'सत्र सुरु भयो'
+                                : 'Session started',
+                          ),
                           subtitle: Text(dateStr),
                           trailing: IconButton(
-                            icon: const Icon(LucideIcons.trash2, color: Colors.red),
+                            icon: const Icon(
+                              LucideIcons.trash2,
+                              color: Colors.red,
+                            ),
                             onPressed: () => _revokeSession(session['id']),
                           ),
                         ),
@@ -390,7 +540,11 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     },
                   ),
                 const SizedBox(height: 24),
-                _buildSectionTitle(context.locale.languageCode == 'ne' ? 'खाता व्यवस्थापन' : 'Account Management'),
+                _buildSectionTitle(
+                  context.locale.languageCode == 'ne'
+                      ? 'खाता व्यवस्थापन'
+                      : 'Account Management',
+                ),
                 Card(
                   elevation: 0,
                   color: Colors.red[50],
@@ -401,7 +555,9 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                   child: ListTile(
                     leading: const Icon(LucideIcons.trash2, color: Colors.red),
                     title: Text(
-                      context.locale.languageCode == 'ne' ? 'खाता मेटाउनुहोस्' : 'Delete Account',
+                      context.locale.languageCode == 'ne'
+                          ? 'खाता मेटाउनुहोस्'
+                          : 'Delete Account',
                       style: const TextStyle(color: Colors.red),
                     ),
                     subtitle: Text(
@@ -410,11 +566,16 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                           : 'Permanently delete your account and data',
                       style: TextStyle(color: Colors.red[300]),
                     ),
-                    trailing: const Icon(LucideIcons.chevronRight, color: Colors.red),
+                    trailing: const Icon(
+                      LucideIcons.chevronRight,
+                      color: Colors.red,
+                    ),
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const DeleteAccountScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const DeleteAccountScreen(),
+                        ),
                       );
                     },
                   ),

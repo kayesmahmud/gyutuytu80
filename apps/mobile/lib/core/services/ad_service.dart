@@ -74,7 +74,8 @@ class AdService {
 
           _remoteBannerAndroid = android?['bannerUnitId'] as String? ?? '';
           _remoteBannerIos = ios?['bannerUnitId'] as String? ?? '';
-          _remoteInterstitialAndroid = android?['interstitialUnitId'] as String? ?? '';
+          _remoteInterstitialAndroid =
+              android?['interstitialUnitId'] as String? ?? '';
           _remoteInterstitialIos = ios?['interstitialUnitId'] as String? ?? '';
           _interstitialInterval = (mobile['interstitialInterval'] as int?) ?? 5;
           _configFetched = true;
@@ -82,16 +83,21 @@ class AdService {
 
           // Cache for offline use
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('ad_config', jsonEncode({
-            'enabled': true,
-            'bannerAndroid': _remoteBannerAndroid,
-            'bannerIos': _remoteBannerIos,
-            'interstitialAndroid': _remoteInterstitialAndroid,
-            'interstitialIos': _remoteInterstitialIos,
-            'interstitialInterval': _interstitialInterval,
-          }));
+          await prefs.setString(
+            'ad_config',
+            jsonEncode({
+              'enabled': true,
+              'bannerAndroid': _remoteBannerAndroid,
+              'bannerIos': _remoteBannerIos,
+              'interstitialAndroid': _remoteInterstitialAndroid,
+              'interstitialIos': _remoteInterstitialIos,
+              'interstitialInterval': _interstitialInterval,
+            }),
+          );
 
-          debugPrint('✅ Ad config fetched: banner=$_remoteBannerAndroid, interstitial=$_remoteInterstitialAndroid');
+          debugPrint(
+            '✅ Ad config fetched: banner=$_remoteBannerAndroid, interstitial=$_remoteInterstitialAndroid',
+          );
         } else {
           // Admin has disabled ads — clear any cached IDs
           _adsEnabled = false;
@@ -125,10 +131,12 @@ class AdService {
         if (enabled) {
           _remoteBannerAndroid = data['bannerAndroid'] as String? ?? '';
           _remoteBannerIos = data['bannerIos'] as String? ?? '';
-          _remoteInterstitialAndroid = data['interstitialAndroid'] as String? ?? '';
+          _remoteInterstitialAndroid =
+              data['interstitialAndroid'] as String? ?? '';
           _remoteInterstitialIos = data['interstitialIos'] as String? ?? '';
           _interstitialInterval = data['interstitialInterval'] as int? ?? 5;
-          _configFetched = _remoteBannerAndroid.isNotEmpty || _remoteBannerIos.isNotEmpty;
+          _configFetched =
+              _remoteBannerAndroid.isNotEmpty || _remoteBannerIos.isNotEmpty;
           _adsEnabled = _configFetched;
           debugPrint('✅ Ad config loaded from cache (enabled)');
         } else {
@@ -144,7 +152,8 @@ class AdService {
   // ── Test Ad Unit IDs (Google official) ──────────────────────────────
   static const _testBannerAndroid = 'ca-app-pub-3940256099942544/9214589741';
   static const _testBannerIos = 'ca-app-pub-3940256099942544/2435281174';
-  static const _testInterstitialAndroid = 'ca-app-pub-3940256099942544/1033173712';
+  static const _testInterstitialAndroid =
+      'ca-app-pub-3940256099942544/1033173712';
   static const _testInterstitialIos = 'ca-app-pub-3940256099942544/4411468910';
 
   /// Get the banner ad unit ID for the current platform.
@@ -165,11 +174,15 @@ class AdService {
   static String get interstitialUnitId {
     if (!_adsMasterEnabled) return '';
     if (kDebugMode) {
-      return Platform.isAndroid ? _testInterstitialAndroid : _testInterstitialIos;
+      return Platform.isAndroid
+          ? _testInterstitialAndroid
+          : _testInterstitialIos;
     }
     if (!_adsEnabled) return '';
     if (_configFetched) {
-      final id = Platform.isAndroid ? _remoteInterstitialAndroid : _remoteInterstitialIos;
+      final id = Platform.isAndroid
+          ? _remoteInterstitialAndroid
+          : _remoteInterstitialIos;
       if (id.isNotEmpty) return id;
     }
     return '';

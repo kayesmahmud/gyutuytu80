@@ -15,8 +15,10 @@ class ContactScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('contact.title'.tr(),
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        title: Text(
+          'contact.title'.tr(),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
         elevation: 0,
@@ -38,18 +40,29 @@ class ContactScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const Icon(LucideIcons.headphones, color: Colors.white, size: 36),
+                  const Icon(
+                    LucideIcons.headphones,
+                    color: Colors.white,
+                    size: 36,
+                  ),
                   const SizedBox(height: 12),
-                  Text('contact.wereHereToHelp'.tr(),
-                      style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600)),
+                  Text(
+                    'contact.wereHereToHelp'.tr(),
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text('contact.reachOut'.tr(),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                          color: Colors.white70, fontSize: 14)),
+                  Text(
+                    'contact.reachOut'.tr(),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -91,27 +104,34 @@ class ContactScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Quick action buttons
-            Text('contact.quickActions'.tr(),
-                style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1F2937))),
+            Text(
+              'contact.quickActions'.tr(),
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1F2937),
+              ),
+            ),
             const SizedBox(height: 12),
 
             _ActionButton(
               icon: LucideIcons.ticket,
               title: 'contact.createSupportTicket'.tr(),
               subtitle: 'contact.supportSubtitle'.tr(),
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const SupportTicketsScreen())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SupportTicketsScreen()),
+              ),
             ),
             const SizedBox(height: 8),
             _ActionButton(
               icon: LucideIcons.helpCircle,
               title: 'contact.browseFaqs'.tr(),
               subtitle: 'contact.faqSubtitle'.tr(),
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HelpCenterScreen()),
+              ),
             ),
 
             const SizedBox(height: 24),
@@ -176,22 +196,33 @@ class _ContactCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: GoogleFonts.inter(
-                            fontSize: 13, color: Colors.grey[500])),
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: Colors.grey[500],
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(value,
-                        style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: onTap != null
-                                ? iconColor
-                                : const Color(0xFF1F2937))),
+                    Text(
+                      value,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: onTap != null
+                            ? iconColor
+                            : const Color(0xFF1F2937),
+                      ),
+                    ),
                   ],
                 ),
               ),
               if (onTap != null)
-                Icon(LucideIcons.externalLink, size: 16, color: Colors.grey[400]),
+                Icon(
+                  LucideIcons.externalLink,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
             ],
           ),
         ),
@@ -232,12 +263,19 @@ class _ActionButton extends StatelessWidget {
           ),
           child: Icon(icon, size: 20, color: const Color(0xFFE11D48)),
         ),
-        title: Text(title,
-            style: GoogleFonts.inter(
-                fontSize: 15, fontWeight: FontWeight.w500)),
-        subtitle: Text(subtitle,
-            style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500])),
-        trailing: Icon(LucideIcons.chevronRight, size: 18, color: Colors.grey[400]),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500]),
+        ),
+        trailing: Icon(
+          LucideIcons.chevronRight,
+          size: 18,
+          color: Colors.grey[400],
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );

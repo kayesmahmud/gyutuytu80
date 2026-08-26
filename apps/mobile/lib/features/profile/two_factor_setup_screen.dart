@@ -63,9 +63,11 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
   Future<void> _verifyCode() async {
     final code = _codeController.text.trim();
     if (code.length != 6) {
-      setState(() => _error = context.locale.languageCode == 'ne'
-          ? '६-अंकको कोड प्रविष्ट गर्नुहोस्'
-          : 'Enter a 6-digit code');
+      setState(
+        () => _error = context.locale.languageCode == 'ne'
+            ? '६-अंकको कोड प्रविष्ट गर्नुहोस्'
+            : 'Enter a 6-digit code',
+      );
       return;
     }
 
@@ -98,9 +100,13 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
     if (_backupCodes == null) return;
     Clipboard.setData(ClipboardData(text: _backupCodes!.join('\n')));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.locale.languageCode == 'ne'
-          ? 'ब्याकअप कोडहरू कपि गरियो'
-          : 'Backup codes copied')),
+      SnackBar(
+        content: Text(
+          context.locale.languageCode == 'ne'
+              ? 'ब्याकअप कोडहरू कपि गरियो'
+              : 'Backup codes copied',
+        ),
+      ),
     );
   }
 
@@ -118,11 +124,11 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
       body: _error != null && _step == _SetupStep.loading
           ? _buildError()
           : _step == _SetupStep.loading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: _buildCurrentStep(lang),
-                ),
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: _buildCurrentStep(lang),
+            ),
     );
   }
 
@@ -171,7 +177,9 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          lang == 'ne' ? 'चरण १: QR कोड स्क्यान गर्नुहोस्' : 'Step 1: Scan QR Code',
+          lang == 'ne'
+              ? 'चरण १: QR कोड स्क्यान गर्नुहोस्'
+              : 'Step 1: Scan QR Code',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -199,7 +207,9 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
           ),
         const SizedBox(height: 24),
         Text(
-          lang == 'ne' ? 'वा म्यानुअल कोड प्रयोग गर्नुहोस्:' : 'Or enter this code manually:',
+          lang == 'ne'
+              ? 'वा म्यानुअल कोड प्रयोग गर्नुहोस्:'
+              : 'Or enter this code manually:',
           style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600]),
         ),
         const SizedBox(height: 8),
@@ -224,7 +234,10 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                 Flexible(
                   child: Text(
                     _secret ?? '',
-                    style: GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.robotoMono(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -241,11 +254,17 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(
               lang == 'ne' ? 'अर्को' : 'Next',
-              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -258,7 +277,9 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          lang == 'ne' ? 'चरण २: कोड प्रमाणित गर्नुहोस्' : 'Step 2: Verify Code',
+          lang == 'ne'
+              ? 'चरण २: कोड प्रमाणित गर्नुहोस्'
+              : 'Step 2: Verify Code',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -276,11 +297,19 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
           textAlign: TextAlign.center,
           maxLength: 6,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+          style: GoogleFonts.inter(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 8,
+          ),
           decoration: InputDecoration(
             counterText: '',
             hintText: '000000',
-            hintStyle: GoogleFonts.inter(fontSize: 24, color: Colors.grey[300], letterSpacing: 8),
+            hintStyle: GoogleFonts.inter(
+              fontSize: 24,
+              color: Colors.grey[300],
+              letterSpacing: 8,
+            ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -294,7 +323,10 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),
-          Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 14)),
+          Text(
+            _error!,
+            style: const TextStyle(color: Colors.red, fontSize: 14),
+          ),
         ],
         const SizedBox(height: 24),
         SizedBox(
@@ -304,13 +336,26 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: _isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
                 : Text(
                     lang == 'ne' ? 'प्रमाणित गर्नुहोस्' : 'Verify & Enable',
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
           ),
         ),
@@ -335,7 +380,11 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
         const SizedBox(height: 16),
         Text(
           lang == 'ne' ? '2FA सक्रिय भयो!' : '2FA Enabled!',
-          style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+          style: GoogleFonts.inter(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.green,
+          ),
         ),
         const SizedBox(height: 24),
         Container(
@@ -347,14 +396,21 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
           ),
           child: Row(
             children: [
-              const Icon(LucideIcons.alertTriangle, color: Colors.amber, size: 20),
+              const Icon(
+                LucideIcons.alertTriangle,
+                color: Colors.amber,
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   lang == 'ne'
                       ? 'यी ब्याकअप कोडहरू सुरक्षित रूपमा सेभ गर्नुहोस्। यो फेरि देखाइने छैन।'
                       : 'Save these backup codes securely. They won\'t be shown again.',
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.amber[900]),
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Colors.amber[900],
+                  ),
                 ),
               ),
             ],
@@ -371,35 +427,32 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
           child: Column(
             children: [
               if (_backupCodes != null)
-                ...List.generate(
-                  (_backupCodes!.length / 2).ceil(),
-                  (i) {
-                    final idx1 = i * 2;
-                    final idx2 = i * 2 + 1;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
+                ...List.generate((_backupCodes!.length / 2).ceil(), (i) {
+                  final idx1 = i * 2;
+                  final idx2 = i * 2 + 1;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _backupCodes![idx1],
+                            style: GoogleFonts.robotoMono(fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        if (idx2 < _backupCodes!.length)
                           Expanded(
                             child: Text(
-                              _backupCodes![idx1],
+                              _backupCodes![idx2],
                               style: GoogleFonts.robotoMono(fontSize: 14),
                               textAlign: TextAlign.center,
                             ),
                           ),
-                          if (idx2 < _backupCodes!.length)
-                            Expanded(
-                              child: Text(
-                                _backupCodes![idx2],
-                                style: GoogleFonts.robotoMono(fontSize: 14),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                      ],
+                    ),
+                  );
+                }),
             ],
           ),
         ),
@@ -412,7 +465,9 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
             foregroundColor: AppTheme.primary,
             side: const BorderSide(color: AppTheme.primary),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -426,11 +481,17 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(
               lang == 'ne' ? 'सम्पन्न' : 'Done',
-              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

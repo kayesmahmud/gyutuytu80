@@ -53,7 +53,9 @@ class IndividualInfoStep extends StatelessWidget {
         TextFormField(
           controller: fullNameController,
           decoration: InputDecoration(
-            hintText: lang == 'ne' ? 'आफ्नो पूरा नाम लेख्नुहोस्' : 'Enter your full name',
+            hintText: lang == 'ne'
+                ? 'आफ्नो पूरा नाम लेख्नुहोस्'
+                : 'Enter your full name',
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -94,9 +96,20 @@ class IndividualInfoStep extends StatelessWidget {
               value: idType,
               isExpanded: true,
               items: [
-                DropdownMenuItem(value: 'citizenship', child: Text(lang == 'ne' ? 'नागरिकता' : 'Citizenship')),
-                DropdownMenuItem(value: 'passport', child: Text(lang == 'ne' ? 'राहदानी' : 'Passport')),
-                DropdownMenuItem(value: 'driving_license', child: Text(lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License')),
+                DropdownMenuItem(
+                  value: 'citizenship',
+                  child: Text(lang == 'ne' ? 'नागरिकता' : 'Citizenship'),
+                ),
+                DropdownMenuItem(
+                  value: 'passport',
+                  child: Text(lang == 'ne' ? 'राहदानी' : 'Passport'),
+                ),
+                DropdownMenuItem(
+                  value: 'driving_license',
+                  child: Text(
+                    lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License',
+                  ),
+                ),
               ],
               onChanged: onIdTypeChanged,
             ),
@@ -117,7 +130,9 @@ class IndividualInfoStep extends StatelessWidget {
         TextFormField(
           controller: idNumberController,
           decoration: InputDecoration(
-            hintText: lang == 'ne' ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्' : 'Enter your ID number',
+            hintText: lang == 'ne'
+                ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्'
+                : 'Enter your ID number',
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -149,7 +164,11 @@ class IndividualInfoStep extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(LucideIcons.lightbulb, color: Color(0xFF6366F1), size: 20),
+                  const Icon(
+                    LucideIcons.lightbulb,
+                    color: Color(0xFF6366F1),
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     lang == 'ne' ? 'सुझावहरू' : 'Tips',
@@ -165,11 +184,11 @@ class IndividualInfoStep extends StatelessWidget {
               Text(
                 lang == 'ne'
                     ? '• तपाईंको परिचयपत्रमा देखिए अनुसारको नाम प्रयोग गर्नुहोस्\n'
-                      '• परिचयपत्र नम्बर शुद्ध छ भनी जाँच गर्नुहोस्\n'
-                      '• जानकारी तपाईंको कागजातसँग मिल्नुपर्छ'
+                          '• परिचयपत्र नम्बर शुद्ध छ भनी जाँच गर्नुहोस्\n'
+                          '• जानकारी तपाईंको कागजातसँग मिल्नुपर्छ'
                     : '• Use the exact name as shown on your ID\n'
-                      '• Double-check your ID number for accuracy\n'
-                      '• Information must match your documents',
+                          '• Double-check your ID number for accuracy\n'
+                          '• Information must match your documents',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: Colors.grey[700],

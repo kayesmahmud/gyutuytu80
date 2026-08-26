@@ -20,13 +20,27 @@ class SafetyTipsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(isNe ? 'सुरक्षा सुझावहरू' : "Safety Tips",
-              style: GoogleFonts.inter(
-                  color: const Color(0xFFC2410C), fontWeight: FontWeight.bold)),
+          Text(
+            isNe ? 'सुरक्षा सुझावहरू' : "Safety Tips",
+            style: GoogleFonts.inter(
+              color: const Color(0xFFC2410C),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
-          _buildBullet(isNe ? 'सार्वजनिक सुरक्षित ठाउँमा भेट्नुहोस्' : "Meet in a safe public place"),
-          _buildBullet(isNe ? 'भुक्तानी गर्नुअघि सामान जाँच्नुहोस्' : "Inspect the item before payment"),
-          _buildBullet(isNe ? 'अग्रिम भुक्तानी नगर्नुहोस्' : "Never pay in advance"),
+          _buildBullet(
+            isNe
+                ? 'सार्वजनिक सुरक्षित ठाउँमा भेट्नुहोस्'
+                : "Meet in a safe public place",
+          ),
+          _buildBullet(
+            isNe
+                ? 'भुक्तानी गर्नुअघि सामान जाँच्नुहोस्'
+                : "Inspect the item before payment",
+          ),
+          _buildBullet(
+            isNe ? 'अग्रिम भुक्तानी नगर्नुहोस्' : "Never pay in advance",
+          ),
         ],
       ),
     );
@@ -40,9 +54,14 @@ class SafetyTipsCard extends StatelessWidget {
           const Icon(LucideIcons.circle, size: 6, color: Color(0xFFC2410C)),
           const SizedBox(width: 8),
           Expanded(
-              child: Text(text,
-                  style: GoogleFonts.inter(
-                      fontSize: 12, color: const Color(0xFF9A3412)))),
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF9A3412),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -284,7 +284,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   Widget _buildTransactionCard(PaymentTransaction transaction) {
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -322,7 +321,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            formatNepalTime(transaction.createdAt, 'MMM dd, yyyy • hh:mm a', context.locale.languageCode),
+                            formatNepalTime(
+                              transaction.createdAt,
+                              'MMM dd, yyyy • hh:mm a',
+                              context.locale.languageCode,
+                            ),
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -335,7 +338,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          formatLocalizedPrice(transaction.amount, context.locale.languageCode),
+                          formatLocalizedPrice(
+                            transaction.amount,
+                            context.locale.languageCode,
+                          ),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -533,10 +539,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.errorMessage ??
-              (context.locale.languageCode == 'ne'
-                  ? 'रसिद डाउनलोड गर्न असफल'
-                  : 'Failed to download receipt')),
+          content: Text(
+            response.errorMessage ??
+                (context.locale.languageCode == 'ne'
+                    ? 'रसिद डाउनलोड गर्न असफल'
+                    : 'Failed to download receipt'),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -580,7 +588,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   _buildGatewayIcon(transaction.gateway),
                   const SizedBox(height: 16),
                   Text(
-                    formatLocalizedPrice(transaction.amount, context.locale.languageCode),
+                    formatLocalizedPrice(
+                      transaction.amount,
+                      context.locale.languageCode,
+                    ),
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -590,11 +601,21 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   _buildStatusBadge(transaction.status),
                   const SizedBox(height: 24),
                   _buildDetailRow('payment.order'.tr(), transaction.orderName),
-                  _buildDetailRow('payment.type'.tr(), transaction.type.displayName),
-                  _buildDetailRow('payment.gateway'.tr(), transaction.gateway.displayName),
+                  _buildDetailRow(
+                    'payment.type'.tr(),
+                    transaction.type.displayName,
+                  ),
+                  _buildDetailRow(
+                    'payment.gateway'.tr(),
+                    transaction.gateway.displayName,
+                  ),
                   _buildDetailRow(
                     'payment.date'.tr(),
-                    formatNepalTime(transaction.createdAt, 'MMM dd, yyyy • hh:mm a', context.locale.languageCode),
+                    formatNepalTime(
+                      transaction.createdAt,
+                      'MMM dd, yyyy • hh:mm a',
+                      context.locale.languageCode,
+                    ),
                   ),
                   if (transaction.transactionId != null)
                     _buildDetailRow(

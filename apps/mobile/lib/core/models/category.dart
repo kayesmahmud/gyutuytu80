@@ -34,7 +34,11 @@ class Category {
       icon: json['icon'] as String?,
       parentId: json['parentId'] as int? ?? json['parent_id'] as int?,
       isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
-      sortOrder: json['sortOrder'] as int? ?? json['sort_order'] as int? ?? json['display_order'] as int? ?? 0,
+      sortOrder:
+          json['sortOrder'] as int? ??
+          json['sort_order'] as int? ??
+          json['display_order'] as int? ??
+          0,
     );
   }
 
@@ -98,9 +102,12 @@ class CategoryWithSubcategories extends Category {
 
     // Parse subcategories - could be under different keys
     List<Category> subs = [];
-    final subsData = json['subcategories'] ?? json['other_categories'] ?? json['children'];
+    final subsData =
+        json['subcategories'] ?? json['other_categories'] ?? json['children'];
     if (subsData != null && subsData is List) {
-      subs = subsData.map((e) => Category.fromJson(e as Map<String, dynamic>)).toList();
+      subs = subsData
+          .map((e) => Category.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
 
     return CategoryWithSubcategories(

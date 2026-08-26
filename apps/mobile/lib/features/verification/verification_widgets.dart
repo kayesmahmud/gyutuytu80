@@ -34,27 +34,38 @@ class VerificationStatusCard extends StatelessWidget {
 
   Color get _bgColor {
     switch (status) {
-      case 'verified': return Colors.green.shade50;
-      case 'pending': return Colors.amber.shade50;
-      case 'rejected': return Colors.red.shade50;
-      default: return Colors.white;
+      case 'verified':
+        return Colors.green.shade50;
+      case 'pending':
+        return Colors.amber.shade50;
+      case 'rejected':
+        return Colors.red.shade50;
+      default:
+        return Colors.white;
     }
   }
 
   Color get _borderColor {
     switch (status) {
-      case 'verified': return Colors.green.shade200;
-      case 'pending': return Colors.amber.shade200;
-      case 'rejected': return Colors.red.shade200;
-      default: return Colors.grey.shade200;
+      case 'verified':
+        return Colors.green.shade200;
+      case 'pending':
+        return Colors.amber.shade200;
+      case 'rejected':
+        return Colors.red.shade200;
+      default:
+        return Colors.grey.shade200;
     }
   }
 
   Color get _accentColor {
     switch (status) {
-      case 'verified': return const Color(0xFF10B981);
-      case 'pending': return const Color(0xFFF59E0B);
-      case 'rejected': return const Color(0xFFEF4444);
+      case 'verified':
+        return const Color(0xFF10B981);
+      case 'pending':
+        return const Color(0xFFF59E0B);
+      case 'rejected':
+        return const Color(0xFFEF4444);
       default:
         return type == 'individual'
             ? const Color(0xFF3B82F6)
@@ -182,14 +193,14 @@ class VerificationStatusCard extends StatelessWidget {
     final overlayIcon = status == 'verified'
         ? LucideIcons.check
         : status == 'pending'
-            ? LucideIcons.clock
-            : LucideIcons.x;
+        ? LucideIcons.clock
+        : LucideIcons.x;
 
     final overlayColor = status == 'verified'
         ? const Color(0xFF10B981)
         : status == 'pending'
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFFEF4444);
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFFEF4444);
 
     return SizedBox(
       width: 52,
@@ -345,8 +356,18 @@ class VerificationStatusCard extends StatelessWidget {
     try {
       final date = DateTime.parse(dateStr);
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     } catch (_) {
@@ -463,8 +484,11 @@ class VerificationStatusBanner extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
               child: Row(
                 children: [
-                  Icon(LucideIcons.info, size: 14,
-                      color: Colors.white.withValues(alpha: 0.7)),
+                  Icon(
+                    LucideIcons.info,
+                    size: 14,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -562,20 +586,24 @@ class VerificationStatusBanner extends StatelessWidget {
   List<Widget> _buildPendingDetails() {
     final items = <Widget>[];
     if (individualStatus == 'pending') {
-      items.add(_buildDetailChip(
-        label: 'Individual',
-        name: individualName,
-        extra: _formatDate(individualCreatedAt),
-        badgeColor: const Color(0xFF6366F1),
-      ));
+      items.add(
+        _buildDetailChip(
+          label: 'Individual',
+          name: individualName,
+          extra: _formatDate(individualCreatedAt),
+          badgeColor: const Color(0xFF6366F1),
+        ),
+      );
     }
     if (businessStatus == 'pending') {
-      items.add(_buildDetailChip(
-        label: 'Business',
-        name: businessName,
-        extra: _formatDate(businessCreatedAt),
-        badgeColor: const Color(0xFFF59E0B),
-      ));
+      items.add(
+        _buildDetailChip(
+          label: 'Business',
+          name: businessName,
+          extra: _formatDate(businessCreatedAt),
+          badgeColor: const Color(0xFFF59E0B),
+        ),
+      );
     }
     if (items.isEmpty) return [];
     return [
@@ -589,16 +617,20 @@ class VerificationStatusBanner extends StatelessWidget {
   List<Widget> _buildRejectedDetails() {
     final items = <Widget>[];
     if (individualStatus == 'rejected' && individualRejectionReason != null) {
-      items.add(_buildRejectionChip(
-        label: 'Individual',
-        reason: individualRejectionReason!,
-      ));
+      items.add(
+        _buildRejectionChip(
+          label: 'Individual',
+          reason: individualRejectionReason!,
+        ),
+      );
     }
     if (businessStatus == 'rejected' && businessRejectionReason != null) {
-      items.add(_buildRejectionChip(
-        label: 'Business',
-        reason: businessRejectionReason!,
-      ));
+      items.add(
+        _buildRejectionChip(
+          label: 'Business',
+          reason: businessRejectionReason!,
+        ),
+      );
     }
     if (items.isEmpty) return [];
     return [
@@ -612,18 +644,22 @@ class VerificationStatusBanner extends StatelessWidget {
   List<Widget> _buildVerifiedDetails() {
     final items = <Widget>[];
     if (individualStatus == 'verified' && individualName != null) {
-      items.add(_buildVerifiedChip(
-        label: 'Individual',
-        name: individualName!,
-        daysRemaining: individualDaysRemaining,
-      ));
+      items.add(
+        _buildVerifiedChip(
+          label: 'Individual',
+          name: individualName!,
+          daysRemaining: individualDaysRemaining,
+        ),
+      );
     }
     if (businessStatus == 'verified' && businessName != null) {
-      items.add(_buildVerifiedChip(
-        label: 'Business',
-        name: businessName!,
-        daysRemaining: businessDaysRemaining,
-      ));
+      items.add(
+        _buildVerifiedChip(
+          label: 'Business',
+          name: businessName!,
+          daysRemaining: businessDaysRemaining,
+        ),
+      );
     }
     if (items.isEmpty) return [];
     return [
@@ -690,17 +726,17 @@ class VerificationStatusBanner extends StatelessWidget {
               ],
             ),
           ),
-          Icon(LucideIcons.loader, size: 16,
-              color: Colors.white.withValues(alpha: 0.6)),
+          Icon(
+            LucideIcons.loader,
+            size: 16,
+            color: Colors.white.withValues(alpha: 0.6),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRejectionChip({
-    required String label,
-    required String reason,
-  }) {
+  Widget _buildRejectionChip({required String label, required String reason}) {
     return Container(
       margin: const EdgeInsets.only(top: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -755,8 +791,11 @@ class VerificationStatusBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(LucideIcons.badgeCheck, size: 18,
-              color: Colors.white.withValues(alpha: 0.9)),
+          Icon(
+            LucideIcons.badgeCheck,
+            size: 18,
+            color: Colors.white.withValues(alpha: 0.9),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -786,8 +825,18 @@ class VerificationStatusBanner extends StatelessWidget {
     try {
       final date = DateTime.parse(dateStr);
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     } catch (_) {
@@ -817,8 +866,10 @@ class CampaignBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(campaign.bannerEmoji ?? '🎉',
-              style: const TextStyle(fontSize: 28)),
+          Text(
+            campaign.bannerEmoji ?? '🎉',
+            style: const TextStyle(fontSize: 28),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -837,7 +888,9 @@ class CampaignBanner extends StatelessWidget {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
@@ -856,10 +909,7 @@ class CampaignBanner extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${campaign.daysRemaining} days left',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
@@ -903,10 +953,7 @@ class FaqSection extends StatelessWidget {
         const SizedBox(height: 16),
         const Text(
           'Everything you need to know',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         _buildFaqItem(
@@ -954,7 +1001,11 @@ class FaqSection extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             answer,
-            style: TextStyle(color: Colors.grey[600], fontSize: 13, height: 1.4),
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 13,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -995,8 +1046,7 @@ class PlanSummaryCard extends StatelessWidget {
     }
   }
 
-  String get _typeLabel =>
-      type == 'individual' ? 'Individual' : 'Business';
+  String get _typeLabel => type == 'individual' ? 'Individual' : 'Business';
 
   @override
   Widget build(BuildContext context) {
@@ -1126,9 +1176,7 @@ class VerificationStepIndicator extends StatelessWidget {
             child: Container(
               height: 2,
               margin: const EdgeInsets.symmetric(horizontal: 8),
-              color: currentStep >= 2
-                  ? accentColor
-                  : Colors.grey.shade300,
+              color: currentStep >= 2 ? accentColor : Colors.grey.shade300,
             ),
           ),
           _buildStep(2, 'Payment'),

@@ -48,7 +48,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-            builder: (_) => TicketDetailScreen(ticketId: response.data!.id)),
+          builder: (_) => TicketDetailScreen(ticketId: response.data!.id),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,8 +66,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('support.newTicket'.tr(),
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        title: Text(
+          'support.newTicket'.tr(),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
         elevation: 0,
@@ -88,16 +91,20 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.lightbulb,
-                        size: 20, color: Color(0xFF2563EB)),
+                    const Icon(
+                      LucideIcons.lightbulb,
+                      size: 20,
+                      color: Color(0xFF2563EB),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'support.ticketHelper'.tr(),
                         style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: const Color(0xFF1E40AF),
-                            height: 1.4),
+                          fontSize: 13,
+                          color: const Color(0xFF1E40AF),
+                          height: 1.4,
+                        ),
                       ),
                     ),
                   ],
@@ -113,10 +120,15 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                 initialValue: _category,
                 decoration: _inputDecoration('support.selectCategory'.tr()),
                 items: SupportTicketCategory.values
-                    .map((c) => DropdownMenuItem(
+                    .map(
+                      (c) => DropdownMenuItem(
                         value: c,
-                        child: Text(c.label,
-                            style: GoogleFonts.inter(fontSize: 15))))
+                        child: Text(
+                          c.label,
+                          style: GoogleFonts.inter(fontSize: 15),
+                        ),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) {
                   if (v != null) setState(() => _category = v);
@@ -131,8 +143,9 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               TextFormField(
                 controller: _subjectController,
                 decoration: _inputDecoration('support.subjectHint'.tr()),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'support.subjectRequired'.tr() : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'support.subjectRequired'.tr()
+                    : null,
                 textInputAction: TextInputAction.next,
                 style: GoogleFonts.inter(fontSize: 15),
               ),
@@ -140,7 +153,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               const SizedBox(height: 20),
 
               // Description
-              _buildLabel('support.descriptionLabel'.tr(), LucideIcons.alignLeft),
+              _buildLabel(
+                'support.descriptionLabel'.tr(),
+                LucideIcons.alignLeft,
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _messageController,
@@ -164,7 +180,8 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     disabledBackgroundColor: Colors.grey[300],
                     elevation: 0,
                   ),
@@ -173,15 +190,22 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Icon(LucideIcons.send, size: 18),
                             const SizedBox(width: 8),
-                            Text('support.submitTicket'.tr(),
-                                style: GoogleFonts.inter(
-                                    fontSize: 16, fontWeight: FontWeight.w600)),
+                            Text(
+                              'support.submitTicket'.tr(),
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ],
                         ),
                 ),
@@ -198,11 +222,14 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
       children: [
         Icon(icon, size: 16, color: Colors.grey[500]),
         const SizedBox(width: 6),
-        Text(text,
-            style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF374151))),
+        Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF374151),
+          ),
+        ),
       ],
     );
   }

@@ -112,12 +112,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: provider.notifications.length + (provider.hasMore ? 1 : 0),
+              itemCount:
+                  provider.notifications.length + (provider.hasMore ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == provider.notifications.length) {
                   return const Padding(
                     padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   );
                 }
                 return _buildNotificationTile(provider.notifications[index]);
@@ -168,7 +171,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
         child: const Icon(LucideIcons.trash2, color: Colors.white),
       ),
       onDismissed: (_) {
-        context.read<NotificationProvider>().deleteNotification(notification.id);
+        context.read<NotificationProvider>().deleteNotification(
+          notification.id,
+        );
       },
       child: InkWell(
         onTap: () => _onNotificationTap(notification),
@@ -222,20 +227,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     const SizedBox(height: 4),
                     Text(
                       notification.body,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _formatTimestamp(notification.createdAt),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[400],
-                      ),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[400]),
                     ),
                   ],
                 ),

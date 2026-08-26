@@ -40,7 +40,8 @@ class _MainDrawerState extends State<MainDrawer> {
       if (!mounted) return;
       final free = pricing?.freeVerification;
       setState(() {
-        _isFreeEligible = (free?.enabled ?? false) && (free?.isEligible ?? false);
+        _isFreeEligible =
+            (free?.enabled ?? false) && (free?.isEligible ?? false);
       });
     } catch (_) {
       // Silent failure — badge just stays hidden
@@ -57,8 +58,9 @@ class _MainDrawerState extends State<MainDrawer> {
     // phones but looks fine on wider iOS screens. Constrain it to ~58% of the
     // screen on Android only; iOS keeps the default (width: null).
     final isAndroid = Theme.of(context).platform == TargetPlatform.android;
-    final drawerWidth =
-        isAndroid ? MediaQuery.of(context).size.width * 0.58 : null;
+    final drawerWidth = isAndroid
+        ? MediaQuery.of(context).size.width * 0.58
+        : null;
 
     return Drawer(
       width: drawerWidth,
@@ -66,144 +68,270 @@ class _MainDrawerState extends State<MainDrawer> {
       child: SafeArea(
         child: Column(
           children: [
-             // Header
-             Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-               child: Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                 children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      height: 28,
-                      errorBuilder: (context, error, stackTrace) => Text('common.appNameFallback'.tr(), style: GoogleFonts.poppins(color: const Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 28,
+                    errorBuilder: (context, error, stackTrace) => Text(
+                      'common.appNameFallback'.tr(),
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFFDC2626),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.x, color: Colors.grey, size: 28),
-                      onPressed: () => Navigator.pop(context),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      LucideIcons.x,
+                      color: Colors.grey,
+                      size: 28,
                     ),
-                 ],
-               ),
-             ),
-             const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFE5E7EB)),
 
-             Expanded(
-               child: SingleChildScrollView(
-                 padding: const EdgeInsets.symmetric(vertical: 16),
-                 child: Column(
-                   crossAxisAlignment: CrossAxisAlignment.start,
-                   children: [
-                     // Language Toggle
-                     _buildLanguageToggle(context),
-                     const SizedBox(height: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Language Toggle
+                    _buildLanguageToggle(context),
+                    const SizedBox(height: 8),
 
-                     _buildMenuItem('drawer.getVerified'.tr(),
-                       trailing: _isFreeEligible ? _buildFreeBadge() : null,
-                       onTap: () {
-                         Navigator.pop(context);
-                         Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
-                       },
-                     ),
+                    _buildMenuItem(
+                      'drawer.getVerified'.tr(),
+                      trailing: _isFreeEligible ? _buildFreeBadge() : null,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const VerificationScreen(),
+                          ),
+                        );
+                      },
+                    ),
 
-                     const SizedBox(height: 12),
-                     const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
-                     const SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: Divider(height: 1, color: Color(0xFFE5E7EB)),
+                    ),
+                    const SizedBox(height: 12),
 
-                     if (isLoggedIn) ...[
-                        _buildMenuItem('drawer.myProfile'.tr(), icon: LucideIcons.user, onTap: () {
+                    if (isLoggedIn) ...[
+                      _buildMenuItem(
+                        'drawer.myProfile'.tr(),
+                        icon: LucideIcons.user,
+                        onTap: () {
                           Navigator.pop(context);
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-                        }),
-                        _buildMenuItem('drawer.dashboard'.tr(), icon: LucideIcons.layoutDashboard, onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProfileScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildMenuItem(
+                        'drawer.dashboard'.tr(),
+                        icon: LucideIcons.layoutDashboard,
+                        onTap: () {
                           Navigator.pop(context);
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
-                        }),
-                        _buildMenuItem('drawer.myShop'.tr(), icon: LucideIcons.store, onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DashboardScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildMenuItem(
+                        'drawer.myShop'.tr(),
+                        icon: LucideIcons.store,
+                        onTap: () {
                           Navigator.pop(context);
-                          final shopSlug = user?['shopSlug'] ?? user?['shop_slug'] ?? user?['customShopSlug'] ?? user?['custom_shop_slug'] ?? 'user-${user?['id']}';
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => ShopScreen(shopSlug: shopSlug)));
-                        }),
+                          final shopSlug =
+                              user?['shopSlug'] ??
+                              user?['shop_slug'] ??
+                              user?['customShopSlug'] ??
+                              user?['custom_shop_slug'] ??
+                              'user-${user?['id']}';
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ShopScreen(shopSlug: shopSlug),
+                            ),
+                          );
+                        },
+                      ),
 
-                        const SizedBox(height: 24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: ElevatedButton(
-                             onPressed: () {
-                               authProvider.logout();
-                               Navigator.pop(context);
-                             },
-                             style: ElevatedButton.styleFrom(
-                               backgroundColor: const Color(0xFFDC2626),
-                               foregroundColor: Colors.white,
-                               minimumSize: const Size(double.infinity, 42),
-                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                               elevation: 0,
-                             ),
-                             child: Text('auth.signOut'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
-                           ),
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            authProvider.logout();
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 42),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'auth.signOut'.tr(),
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
-                     ] else ...[
-                       // Guest View
-                       Padding(
-                         padding: const EdgeInsets.symmetric(horizontal: 24),
-                         child: Column(
-                           children: [
-                             OutlinedButton(
-                               onPressed: () {
-                                 Navigator.pop(context);
-                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SignInScreen()));
-                               },
-                               style: OutlinedButton.styleFrom(
-                                 side: const BorderSide(color: Color(0xFFE11D48)),
-                                 foregroundColor: const Color(0xFFE11D48),
-                                 minimumSize: const Size(double.infinity, 42),
-                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                               ),
-                               child: Text('auth.signIn'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
-                             ),
-                             const SizedBox(height: 12),
-                             ElevatedButton(
-                               onPressed: () {
-                                 Navigator.pop(context);
-                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SignUpScreen()));
-                               },
-                               style: ElevatedButton.styleFrom(
-                                 backgroundColor: const Color(0xFFE11D48),
-                                 foregroundColor: Colors.white,
-                                 minimumSize: const Size(double.infinity, 42),
-                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                 elevation: 0,
-                               ),
-                               child: Text('auth.signUp'.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
-                             ),
-                           ],
-                         ),
-                       ),
-                     ],
+                      ),
+                    ] else ...[
+                      // Guest View
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          children: [
+                            OutlinedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SignInScreen(),
+                                  ),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                  color: Color(0xFFE11D48),
+                                ),
+                                foregroundColor: const Color(0xFFE11D48),
+                                minimumSize: const Size(double.infinity, 42),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'auth.signIn'.tr(),
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SignUpScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE11D48),
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(double.infinity, 42),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                'auth.signUp'.tr(),
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
 
-                     const SizedBox(height: 16),
-                     const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Divider(height: 1, color: Color(0xFFE5E7EB))),
-                     const SizedBox(height: 12),
+                    const SizedBox(height: 16),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: Divider(height: 1, color: Color(0xFFE5E7EB)),
+                    ),
+                    const SizedBox(height: 12),
 
-                     _buildMenuItem('drawer.helpCenter'.tr(), icon: LucideIcons.helpCircle, onTap: () {
-                       Navigator.pop(context);
-                       Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen()));
-                     }),
-                     _buildMenuItem('drawer.faq'.tr(), icon: LucideIcons.fileText, onTap: () {
-                       Navigator.pop(context);
-                       Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen()));
-                     }),
-                     _buildMenuItem('drawer.supportTickets'.tr(), icon: LucideIcons.ticket, onTap: () {
-                       Navigator.pop(context);
-                       Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportTicketsScreen()));
-                     }),
-                     _buildMenuItem('drawer.contactUs'.tr(), icon: LucideIcons.mail, onTap: () {
-                       Navigator.pop(context);
-                       Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactScreen()));
-                     }),
-                   ],
-                 ),
-               ),
-             ),
+                    _buildMenuItem(
+                      'drawer.helpCenter'.tr(),
+                      icon: LucideIcons.helpCircle,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HelpCenterScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuItem(
+                      'drawer.faq'.tr(),
+                      icon: LucideIcons.fileText,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HelpCenterScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuItem(
+                      'drawer.supportTickets'.tr(),
+                      icon: LucideIcons.ticket,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SupportTicketsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuItem(
+                      'drawer.contactUs'.tr(),
+                      icon: LucideIcons.mail,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ContactScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -231,7 +359,13 @@ class _MainDrawerState extends State<MainDrawer> {
                     color: !isNepali ? Colors.white : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: !isNepali
-                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
                         : null,
                   ),
                   child: Text(
@@ -240,7 +374,9 @@ class _MainDrawerState extends State<MainDrawer> {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: !isNepali ? FontWeight.w600 : FontWeight.w400,
-                      color: !isNepali ? const Color(0xFF374151) : const Color(0xFF9CA3AF),
+                      color: !isNepali
+                          ? const Color(0xFF374151)
+                          : const Color(0xFF9CA3AF),
                     ),
                   ),
                 ),
@@ -255,7 +391,13 @@ class _MainDrawerState extends State<MainDrawer> {
                     color: isNepali ? Colors.white : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: isNepali
-                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1))]
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
                         : null,
                   ),
                   child: Text(
@@ -264,7 +406,9 @@ class _MainDrawerState extends State<MainDrawer> {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: isNepali ? FontWeight.w600 : FontWeight.w400,
-                      color: isNepali ? const Color(0xFF374151) : const Color(0xFF9CA3AF),
+                      color: isNepali
+                          ? const Color(0xFF374151)
+                          : const Color(0xFF9CA3AF),
                     ),
                   ),
                 ),
@@ -276,18 +420,25 @@ class _MainDrawerState extends State<MainDrawer> {
     );
   }
 
-  Widget _buildMenuItem(String title, {IconData? icon, VoidCallback? onTap, Widget? trailing}) {
+  Widget _buildMenuItem(
+    String title, {
+    IconData? icon,
+    VoidCallback? onTap,
+    Widget? trailing,
+  }) {
     return ListTile(
       dense: true,
       visualDensity: VisualDensity.compact,
-      leading: icon != null ? Icon(icon, color: Colors.grey[600], size: 20) : null,
+      leading: icon != null
+          ? Icon(icon, color: Colors.grey[600], size: 20)
+          : null,
       title: Text(
         title,
         style: GoogleFonts.inter(
           color: const Color(0xFF374151),
           fontSize: 14,
-          fontWeight: FontWeight.w500
-        )
+          fontWeight: FontWeight.w500,
+        ),
       ),
       trailing: trailing,
       onTap: onTap,

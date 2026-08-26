@@ -63,10 +63,16 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
             color: Colors.orange.shade50,
             shape: BoxShape.circle,
           ),
-          child: Icon(LucideIcons.alertTriangle, color: Colors.orange.shade700, size: 32),
+          child: Icon(
+            LucideIcons.alertTriangle,
+            color: Colors.orange.shade700,
+            size: 32,
+          ),
         ),
         title: Text(
-          lang == 'ne' ? 'तपाईंको खाता मेटिने क्रममा छ' : 'Your Account Is Scheduled for Deletion',
+          lang == 'ne'
+              ? 'तपाईंको खाता मेटिने क्रममा छ'
+              : 'Your Account Is Scheduled for Deletion',
           style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18),
           textAlign: TextAlign.center,
         ),
@@ -88,12 +94,18 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   elevation: 0,
                 ),
                 child: Text(
                   lang == 'ne' ? 'मेरो खाता राख्नुहोस्' : 'Keep My Account',
-                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -106,8 +118,13 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: Text(
-                  lang == 'ne' ? 'मेटाउने प्रक्रिया जारी राख्नुहोस्' : 'Continue with Deletion',
-                  style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+                  lang == 'ne'
+                      ? 'मेटाउने प्रक्रिया जारी राख्नुहोस्'
+                      : 'Continue with Deletion',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ),
             ),
@@ -123,7 +140,12 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(cancelResult['message'] ?? (lang == 'ne' ? 'त्रुटि भयो' : 'Failed to cancel deletion'))),
+            SnackBar(
+              content: Text(
+                cancelResult['message'] ??
+                    (lang == 'ne' ? 'त्रुटि भयो' : 'Failed to cancel deletion'),
+              ),
+            ),
           );
         }
         return false;
@@ -141,9 +163,11 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
     // character doesn't fail an otherwise-correct code. Harmless for numeric TOTP.
     final code = _codeController.text.trim().toLowerCase();
     if (code.isEmpty) {
-      setState(() => _error = context.locale.languageCode == 'ne'
-          ? 'कृपया कोड प्रविष्ट गर्नुहोस्'
-          : 'Please enter the code');
+      setState(
+        () => _error = context.locale.languageCode == 'ne'
+            ? 'कृपया कोड प्रविष्ट गर्नुहोस्'
+            : 'Please enter the code',
+      );
       return;
     }
 
@@ -164,7 +188,9 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
         // Check for pending account deletion
         if (result['accountPendingDeletion'] == true) {
           if (!mounted) return;
-          final keepAccount = await _showAccountRecoveryDialog(result['deletionDate']?.toString());
+          final keepAccount = await _showAccountRecoveryDialog(
+            result['deletionDate']?.toString(),
+          );
           if (!keepAccount || !mounted) return;
         }
 
@@ -184,7 +210,12 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
       }
     } catch (e, st) {
       if (kDebugMode) {
-        developer.log('2FA verify failed', name: 'TwoFactorVerify', error: e, stackTrace: st);
+        developer.log(
+          '2FA verify failed',
+          name: 'TwoFactorVerify',
+          error: e,
+          stackTrace: st,
+        );
       }
       if (mounted) {
         setState(() => _error = e.toString());
@@ -205,7 +236,9 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
           icon: const Icon(LucideIcons.arrowLeft),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(lang == 'ne' ? 'दुई-चरण प्रमाणीकरण' : 'Two-Factor Authentication'),
+        title: Text(
+          lang == 'ne' ? 'दुई-चरण प्रमाणीकरण' : 'Two-Factor Authentication',
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
@@ -222,22 +255,31 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
                 color: AppTheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(LucideIcons.shield, size: 48, color: AppTheme.primary),
+              child: const Icon(
+                LucideIcons.shield,
+                size: 48,
+                color: AppTheme.primary,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
-              lang == 'ne' ? 'प्रमाणीकरण कोड प्रविष्ट गर्नुहोस्' : 'Enter Authentication Code',
-              style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
+              lang == 'ne'
+                  ? 'प्रमाणीकरण कोड प्रविष्ट गर्नुहोस्'
+                  : 'Enter Authentication Code',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               _useBackupCode
                   ? (lang == 'ne'
-                      ? 'आफ्नो ब्याकअप कोड मध्ये एउटा प्रविष्ट गर्नुहोस्'
-                      : 'Enter one of your 8-character backup codes')
+                        ? 'आफ्नो ब्याकअप कोड मध्ये एउटा प्रविष्ट गर्नुहोस्'
+                        : 'Enter one of your 8-character backup codes')
                   : (lang == 'ne'
-                      ? 'तपाईंको authenticator एपबाट ६-अंकको कोड प्रविष्ट गर्नुहोस्'
-                      : 'Enter the 6-digit code from your authenticator app'),
+                        ? 'तपाईंको authenticator एपबाट ६-अंकको कोड प्रविष्ट गर्नुहोस्'
+                        : 'Enter the 6-digit code from your authenticator app'),
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
             ),
@@ -246,31 +288,53 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
               controller: _codeController,
               // Backup codes are 8 hex chars (contain a–f), so they need a text
               // keyboard to type letters; TOTP codes use the number keyboard.
-              keyboardType:
-                  _useBackupCode ? TextInputType.text : TextInputType.number,
+              keyboardType: _useBackupCode
+                  ? TextInputType.text
+                  : TextInputType.number,
               textAlign: TextAlign.center,
               maxLength: 8, // TOTP is 6 digits; backup codes are 8 hex chars
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]'))],
-              style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]')),
+              ],
+              style: GoogleFonts.inter(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 8,
+              ),
               decoration: InputDecoration(
                 counterText: '',
                 hintText: _useBackupCode ? 'a1b2c3d4' : '000000',
-                hintStyle: GoogleFonts.inter(fontSize: 24, color: Colors.grey[300], letterSpacing: 8),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 24,
+                  color: Colors.grey[300],
+                  letterSpacing: 8,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppTheme.primary,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
               ),
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 14)),
+              Text(
+                _error!,
+                style: const TextStyle(color: Colors.red, fontSize: 14),
+              ),
             ],
             const SizedBox(height: 24),
             SizedBox(
@@ -280,13 +344,26 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: _isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : Text(
                         lang == 'ne' ? 'प्रमाणित गर्नुहोस्' : 'Verify',
-                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
               ),
             ),
@@ -295,18 +372,18 @@ class _TwoFactorVerifyScreenState extends State<TwoFactorVerifyScreen> {
               onPressed: _isLoading
                   ? null
                   : () => setState(() {
-                        _useBackupCode = !_useBackupCode;
-                        _codeController.clear();
-                        _error = null;
-                      }),
+                      _useBackupCode = !_useBackupCode;
+                      _codeController.clear();
+                      _error = null;
+                    }),
               child: Text(
                 _useBackupCode
                     ? (lang == 'ne'
-                        ? 'बरु authenticator एप प्रयोग गर्नुहोस्'
-                        : 'Use authenticator app instead')
+                          ? 'बरु authenticator एप प्रयोग गर्नुहोस्'
+                          : 'Use authenticator app instead')
                     : (lang == 'ne'
-                        ? 'ब्याकअप कोड पनि प्रयोग गर्नुहोस्'
-                        : 'You can also use a backup code'),
+                          ? 'ब्याकअप कोड पनि प्रयोग गर्नुहोस्'
+                          : 'You can also use a backup code'),
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: AppTheme.primary,

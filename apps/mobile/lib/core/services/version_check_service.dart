@@ -35,10 +35,12 @@ class VersionCheckService {
 
       // Fetch version config from backend (public, no auth)
       final baseUrl = ApiConfig.baseUrl.replaceFirst(RegExp(r'/api$'), '');
-      final dio = Dio(BaseOptions(
-        connectTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 5),
-      ));
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+        ),
+      );
       final response = await dio.get('$baseUrl/api/app/version');
 
       if (response.statusCode != 200 || response.data?['success'] != true) {
@@ -99,7 +101,9 @@ class VersionCheckService {
       final daysSinceFirstSeen = DateTime.now().difference(firstSeen).inDays;
 
       if (daysSinceFirstSeen >= gracePeriodDays) {
-        developer.log('Force update: grace period expired ($daysSinceFirstSeen days)');
+        developer.log(
+          'Force update: grace period expired ($daysSinceFirstSeen days)',
+        );
         return UpdateCheckResult(
           type: UpdateType.forceUpdate,
           storeUrl: storeUrl,
@@ -126,8 +130,12 @@ class VersionCheckService {
     final c = current.split('.').map((s) => int.tryParse(s) ?? 0).toList();
     final t = target.split('.').map((s) => int.tryParse(s) ?? 0).toList();
     // Pad to 3 segments
-    while (c.length < 3) { c.add(0); }
-    while (t.length < 3) { t.add(0); }
+    while (c.length < 3) {
+      c.add(0);
+    }
+    while (t.length < 3) {
+      t.add(0);
+    }
 
     for (var i = 0; i < 3; i++) {
       if (c[i] < t[i]) return true;

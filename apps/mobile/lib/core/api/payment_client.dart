@@ -22,10 +22,14 @@ class PaymentClient {
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
         return ApiResponse.success(
-          data.map((e) => GatewayInfo.fromJson(e as Map<String, dynamic>)).toList(),
+          data
+              .map((e) => GatewayInfo.fromJson(e as Map<String, dynamic>))
+              .toList(),
         );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to fetch gateways');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to fetch gateways',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['message'] ?? 'Failed to fetch payment gateways',
@@ -57,22 +61,29 @@ class PaymentClient {
     Map<String, dynamic>? metadata,
   }) async {
     try {
-      final response = await _dio.post('/payments/initiate', data: {
-        'gateway': gateway.apiValue,
-        'amount': amount,
-        'paymentType': paymentType.apiValue,
-        'relatedId': relatedId,
-        'orderName': orderName,
-        'returnUrl': returnUrl ?? _getDefaultReturnUrl(),
-        'metadata': metadata,
-      });
+      final response = await _dio.post(
+        '/payments/initiate',
+        data: {
+          'gateway': gateway.apiValue,
+          'amount': amount,
+          'paymentType': paymentType.apiValue,
+          'relatedId': relatedId,
+          'orderName': orderName,
+          'returnUrl': returnUrl ?? _getDefaultReturnUrl(),
+          'metadata': metadata,
+        },
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
-          PaymentInitiateResponse.fromJson(response.data['data'] as Map<String, dynamic>),
+          PaymentInitiateResponse.fromJson(
+            response.data['data'] as Map<String, dynamic>,
+          ),
         );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to initiate payment');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to initiate payment',
+      );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
         return ApiResponse.failure('Authentication required');
@@ -99,18 +110,25 @@ class PaymentClient {
     String? esewaData,
   }) async {
     try {
-      final response = await _dio.post('/payments/verify', data: {
-        'transactionId': transactionId,
-        'pidx': pidx,
-        'esewaData': esewaData,
-      });
+      final response = await _dio.post(
+        '/payments/verify',
+        data: {
+          'transactionId': transactionId,
+          'pidx': pidx,
+          'esewaData': esewaData,
+        },
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
-          PaymentVerifyResponse.fromJson(response.data['data'] as Map<String, dynamic>),
+          PaymentVerifyResponse.fromJson(
+            response.data['data'] as Map<String, dynamic>,
+          ),
         );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Payment verification failed');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Payment verification failed',
+      );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
         return ApiResponse.failure('Authentication required');
@@ -126,16 +144,22 @@ class PaymentClient {
   // ==========================================
 
   /// Get status of a specific payment
-  Future<ApiResponse<PaymentTransaction>> getPaymentStatus(String transactionId) async {
+  Future<ApiResponse<PaymentTransaction>> getPaymentStatus(
+    String transactionId,
+  ) async {
     try {
       final response = await _dio.get('/payments/status/$transactionId');
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
-          PaymentTransaction.fromJson(response.data['data'] as Map<String, dynamic>),
+          PaymentTransaction.fromJson(
+            response.data['data'] as Map<String, dynamic>,
+          ),
         );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to fetch payment status');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to fetch payment status',
+      );
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         return ApiResponse.failure('Transaction not found');
@@ -158,21 +182,25 @@ class PaymentClient {
     String? type,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
+      final queryParams = <String, dynamic>{'page': page, 'limit': limit};
       if (status != null) queryParams['status'] = status;
       if (type != null) queryParams['type'] = type;
 
-      final response = await _dio.get('/payments/history', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/payments/history',
+        queryParameters: queryParams,
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
         final pagination = response.data['pagination'] as Map<String, dynamic>?;
 
         return PaginatedResponse.success(
-          data.map((e) => PaymentTransaction.fromJson(e as Map<String, dynamic>)).toList(),
+          data
+              .map(
+                (e) => PaymentTransaction.fromJson(e as Map<String, dynamic>),
+              )
+              .toList(),
           pagination != null
               ? PaginationInfo(
                   page: pagination['page'] as int? ?? page,
@@ -180,10 +208,17 @@ class PaymentClient {
                   total: pagination['total'] as int? ?? data.length,
                   totalPages: pagination['totalPages'] as int? ?? 1,
                 )
-              : PaginationInfo(page: 1, limit: data.length, total: data.length, totalPages: 1),
+              : PaginationInfo(
+                  page: 1,
+                  limit: data.length,
+                  total: data.length,
+                  totalPages: 1,
+                ),
         );
       }
-      return PaginatedResponse.failure(response.data['message'] ?? 'Failed to fetch payment history');
+      return PaginatedResponse.failure(
+        response.data['message'] ?? 'Failed to fetch payment history',
+      );
     } on DioException catch (e) {
       return PaginatedResponse.failure(
         e.response?.data?['message'] ?? 'Failed to fetch payment history',
@@ -197,7 +232,10 @@ class PaymentClient {
 
   /// Download receipt PDF for a verified payment
   /// Returns the file path where the PDF was saved
-  Future<ApiResponse<String>> downloadReceipt(String transactionId, String savePath) async {
+  Future<ApiResponse<String>> downloadReceipt(
+    String transactionId,
+    String savePath,
+  ) async {
     try {
       final response = await _dio.download(
         '/payments/$transactionId/receipt',
@@ -209,7 +247,9 @@ class PaymentClient {
       return ApiResponse.failure('Failed to download receipt');
     } on DioException catch (e) {
       if (e.response?.statusCode == 400) {
-        return ApiResponse.failure('Receipt only available for verified payments');
+        return ApiResponse.failure(
+          'Receipt only available for verified payments',
+        );
       }
       return ApiResponse.failure(
         e.response?.data?['message'] ?? 'Failed to download receipt',

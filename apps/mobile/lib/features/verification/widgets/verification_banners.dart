@@ -28,7 +28,11 @@ class FreeVerificationBanner extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(LucideIcons.partyPopper, color: Colors.white, size: 24),
+            child: const Icon(
+              LucideIcons.partyPopper,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -78,8 +82,10 @@ class CampaignBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(campaign.bannerEmoji ?? '🎉',
-              style: const TextStyle(fontSize: 28)),
+          Text(
+            campaign.bannerEmoji ?? '🎉',
+            style: const TextStyle(fontSize: 28),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

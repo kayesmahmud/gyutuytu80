@@ -10,7 +10,8 @@ class UpdateDialog {
   static String get _storeName => Platform.isIOS ? 'App Store' : 'Play Store';
 
   /// Soft prompt: dismissible bottom sheet shown during grace period.
-  static void showSoftPrompt(BuildContext context, {
+  static void showSoftPrompt(
+    BuildContext context, {
     required String storeUrl,
     required String latestVersion,
   }) {
@@ -44,7 +45,9 @@ class UpdateDialog {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
-                Platform.isIOS ? Icons.apple_rounded : Icons.system_update_rounded,
+                Platform.isIOS
+                    ? Icons.apple_rounded
+                    : Icons.system_update_rounded,
                 size: 36,
                 color: AppTheme.primary,
               ),
@@ -74,16 +77,23 @@ class UpdateDialog {
               width: double.infinity,
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: storeUrl.isNotEmpty ? () => _openStore(storeUrl) : null,
+                onPressed: storeUrl.isNotEmpty
+                    ? () => _openStore(storeUrl)
+                    : null,
                 icon: Icon(
-                  Platform.isIOS ? Icons.apple_rounded : Icons.open_in_new_rounded,
+                  Platform.isIOS
+                      ? Icons.apple_rounded
+                      : Icons.open_in_new_rounded,
                   size: 18,
                 ),
                 label: Text(
                   storeUrl.isNotEmpty
                       ? 'Update on $_storeName'
                       : 'Update coming soon',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
@@ -103,10 +113,7 @@ class UpdateDialog {
               onPressed: () => Navigator.pop(ctx),
               child: Text(
                 'Later',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
               ),
             ),
           ],
@@ -116,7 +123,8 @@ class UpdateDialog {
   }
 
   /// Force update: full-screen blocking dialog. No dismiss, no back button.
-  static void showForceScreen(BuildContext context, {
+  static void showForceScreen(
+    BuildContext context, {
     required String storeUrl,
     required String latestVersion,
   }) {
@@ -142,7 +150,9 @@ class UpdateDialog {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Icon(
-                        Platform.isIOS ? Icons.apple_rounded : Icons.system_update_rounded,
+                        Platform.isIOS
+                            ? Icons.apple_rounded
+                            : Icons.system_update_rounded,
                         size: 52,
                         color: AppTheme.primary,
                       ),
@@ -181,16 +191,23 @@ class UpdateDialog {
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton.icon(
-                        onPressed: storeUrl.isNotEmpty ? () => _openStore(storeUrl) : null,
+                        onPressed: storeUrl.isNotEmpty
+                            ? () => _openStore(storeUrl)
+                            : null,
                         icon: Icon(
-                          Platform.isIOS ? Icons.apple_rounded : Icons.open_in_new_rounded,
+                          Platform.isIOS
+                              ? Icons.apple_rounded
+                              : Icons.open_in_new_rounded,
                           size: 20,
                         ),
                         label: Text(
                           storeUrl.isNotEmpty
                               ? 'Update on $_storeName'
                               : 'Update coming soon',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,

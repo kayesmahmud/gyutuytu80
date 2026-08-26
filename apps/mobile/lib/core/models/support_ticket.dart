@@ -127,7 +127,10 @@ class SupportTicket {
     final lastMsg = json['lastMessage'] as Map<String, dynamic>?;
     return SupportTicket(
       id: json['id'] as int,
-      ticketNumber: json['ticketNumber'] as String? ?? json['ticket_number'] as String? ?? '',
+      ticketNumber:
+          json['ticketNumber'] as String? ??
+          json['ticket_number'] as String? ??
+          '',
       subject: json['subject'] as String? ?? '',
       category: SupportTicketCategory.values.firstWhere(
         (e) => e.name == (json['category'] as String?),
@@ -138,8 +141,16 @@ class SupportTicket {
         orElse: () => SupportTicketPriority.normal,
       ),
       status: SupportTicketStatus.fromString(json['status'] as String?),
-      createdAt: DateTime.parse(json['createdAt'] as String? ?? json['created_at'] as String? ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updatedAt'] as String? ?? json['updated_at'] as String? ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+        json['createdAt'] as String? ??
+            json['created_at'] as String? ??
+            DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        json['updatedAt'] as String? ??
+            json['updated_at'] as String? ??
+            DateTime.now().toIso8601String(),
+      ),
       lastMessageContent: lastMsg?['content'] as String?,
       lastMessageAt: lastMsg?['createdAt'] != null
           ? DateTime.parse(lastMsg!['createdAt'] as String)
@@ -175,9 +186,16 @@ class SupportMessage {
       senderId: json['senderId'] as int? ?? json['sender_id'] as int? ?? 0,
       content: json['content'] as String? ?? '',
       type: json['type'] as String? ?? 'text',
-      attachmentUrl: json['attachmentUrl'] as String? ?? json['attachment_url'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String? ?? json['created_at'] as String? ?? DateTime.now().toIso8601String()),
-      sender: SupportMessageSender.fromMap(json['sender'] as Map<String, dynamic>? ?? {}),
+      attachmentUrl:
+          json['attachmentUrl'] as String? ?? json['attachment_url'] as String?,
+      createdAt: DateTime.parse(
+        json['createdAt'] as String? ??
+            json['created_at'] as String? ??
+            DateTime.now().toIso8601String(),
+      ),
+      sender: SupportMessageSender.fromMap(
+        json['sender'] as Map<String, dynamic>? ?? {},
+      ),
       isOwnMessage: json['isOwnMessage'] as bool? ?? false,
     );
   }
@@ -199,7 +217,10 @@ class SupportMessageSender {
   factory SupportMessageSender.fromMap(Map<String, dynamic> json) {
     return SupportMessageSender(
       id: json['id'] as int? ?? 0,
-      fullName: json['fullName'] as String? ?? json['full_name'] as String? ?? 'Unknown',
+      fullName:
+          json['fullName'] as String? ??
+          json['full_name'] as String? ??
+          'Unknown',
       avatar: json['avatar'] as String?,
       isStaff: json['isStaff'] as bool? ?? false,
     );
@@ -259,7 +280,10 @@ class SupportTicketDetail {
     final msgList = json['messages'] as List<dynamic>? ?? [];
     return SupportTicketDetail(
       id: json['id'] as int,
-      ticketNumber: json['ticketNumber'] as String? ?? json['ticket_number'] as String? ?? '',
+      ticketNumber:
+          json['ticketNumber'] as String? ??
+          json['ticket_number'] as String? ??
+          '',
       subject: json['subject'] as String? ?? '',
       category: SupportTicketCategory.values.firstWhere(
         (e) => e.name == (json['category'] as String?),
@@ -270,13 +294,27 @@ class SupportTicketDetail {
         orElse: () => SupportTicketPriority.normal,
       ),
       status: SupportTicketStatus.fromString(json['status'] as String?),
-      createdAt: DateTime.parse(json['createdAt'] as String? ?? json['created_at'] as String? ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updatedAt'] as String? ?? json['updated_at'] as String? ?? DateTime.now().toIso8601String()),
-      resolvedAt: json['resolvedAt'] != null ? DateTime.parse(json['resolvedAt'] as String) : null,
-      closedAt: json['closedAt'] != null ? DateTime.parse(json['closedAt'] as String) : null,
+      createdAt: DateTime.parse(
+        json['createdAt'] as String? ??
+            json['created_at'] as String? ??
+            DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        json['updatedAt'] as String? ??
+            json['updated_at'] as String? ??
+            DateTime.now().toIso8601String(),
+      ),
+      resolvedAt: json['resolvedAt'] != null
+          ? DateTime.parse(json['resolvedAt'] as String)
+          : null,
+      closedAt: json['closedAt'] != null
+          ? DateTime.parse(json['closedAt'] as String)
+          : null,
       csatScore: json['csatScore'] as int?,
       csatComment: json['csatComment'] as String?,
-      messages: msgList.map((e) => SupportMessage.fromMap(e as Map<String, dynamic>)).toList(),
+      messages: msgList
+          .map((e) => SupportMessage.fromMap(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

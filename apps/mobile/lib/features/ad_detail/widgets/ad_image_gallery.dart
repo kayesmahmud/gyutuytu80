@@ -44,10 +44,8 @@ class _AdImageGalleryState extends State<AdImageGallery> {
     Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => FullscreenImageViewer(
-          images: images,
-          initialIndex: index,
-        ),
+        builder: (_) =>
+            FullscreenImageViewer(images: images, initialIndex: index),
       ),
     );
   }
@@ -60,11 +58,7 @@ class _AdImageGalleryState extends State<AdImageGallery> {
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 36,
-          height: 36,
-          child: Center(child: child),
-        ),
+        child: SizedBox(width: 36, height: 36, child: Center(child: child)),
       ),
     );
   }
@@ -235,7 +229,10 @@ class _AdImageGalleryState extends State<AdImageGallery> {
                   if (widget.ad.favoritesCount > 0)
                     Container(
                       margin: const EdgeInsets.only(top: 2),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(8),

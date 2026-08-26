@@ -9,7 +9,8 @@ import '../../../core/utils/localized_helpers.dart';
 class DurationSelectorSheet extends StatefulWidget {
   final String verificationType; // 'individual' or 'business'
   final List<PricingOption> options;
-  final FreeVerificationInfo freeVerification; // kept for API compat, not used in UI
+  final FreeVerificationInfo
+  freeVerification; // kept for API compat, not used in UI
   final VerificationCampaign? campaign;
   final void Function(PricingOption option, bool isFree) onProceed;
 
@@ -59,7 +60,9 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                   children: [
                     Expanded(
                       child: Text(
-                        context.locale.languageCode == 'ne' ? 'अवधि छान्नुहोस्' : 'Select Duration',
+                        context.locale.languageCode == 'ne'
+                            ? 'अवधि छान्नुहोस्'
+                            : 'Select Duration',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -81,14 +84,19 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.purple.shade400, Colors.indigo.shade400],
+                        colors: [
+                          Colors.purple.shade400,
+                          Colors.indigo.shade400,
+                        ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        Text(widget.campaign!.bannerEmoji ?? '🎉',
-                            style: const TextStyle(fontSize: 24)),
+                        Text(
+                          widget.campaign!.bannerEmoji ?? '🎉',
+                          style: const TextStyle(fontSize: 24),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -151,10 +159,7 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Colors.indigo.shade50,
-                          Colors.purple.shade50,
-                        ],
+                        colors: [Colors.indigo.shade50, Colors.purple.shade50],
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -165,7 +170,9 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                context.locale.languageCode == 'ne' ? 'छानिएको योजना:' : 'Selected Plan:',
+                                context.locale.languageCode == 'ne'
+                                    ? 'छानिएको योजना:'
+                                    : 'Selected Plan:',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -181,8 +188,13 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                               ),
                               Text(
                                 _selected!.finalPrice <= 0
-                                    ? (context.locale.languageCode == 'ne' ? 'निःशुल्क' : 'FREE')
-                                    : formatLocalizedPrice(_selected!.finalPrice, context.locale.languageCode),
+                                    ? (context.locale.languageCode == 'ne'
+                                          ? 'निःशुल्क'
+                                          : 'FREE')
+                                    : formatLocalizedPrice(
+                                        _selected!.finalPrice,
+                                        context.locale.languageCode,
+                                      ),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
@@ -203,7 +215,9 @@ class _DurationSelectorSheetState extends State<DurationSelectorSheet> {
                             );
                           },
                           icon: const Icon(LucideIcons.arrowRight, size: 18),
-                          label: Text(l('proceed', context.locale.languageCode)),
+                          label: Text(
+                            l('proceed', context.locale.languageCode),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.indigo,
                             foregroundColor: Colors.white,
@@ -263,15 +277,15 @@ class _DurationOptionCard extends StatelessWidget {
           color: isSelected
               ? null
               : hasCampaign
-                  ? Colors.purple.shade50
-                  : Colors.grey.shade50,
+              ? Colors.purple.shade50
+              : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? Colors.transparent
                 : hasCampaign
-                    ? Colors.purple.shade300
-                    : Colors.grey.shade200,
+                ? Colors.purple.shade300
+                : Colors.grey.shade200,
             width: 2,
           ),
           boxShadow: isSelected
@@ -292,8 +306,10 @@ class _DurationOptionCard extends StatelessWidget {
                 top: 0,
                 right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.green.shade400, Colors.green.shade600],
@@ -315,8 +331,10 @@ class _DurationOptionCard extends StatelessWidget {
                 top: 0,
                 right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.purple.shade400, Colors.indigo.shade600],
@@ -338,8 +356,10 @@ class _DurationOptionCard extends StatelessWidget {
                 top: 0,
                 right: 0,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.amber.shade400, Colors.orange.shade500],
@@ -347,7 +367,9 @@ class _DurationOptionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    context.locale.languageCode == 'ne' ? 'लोकप्रिय' : 'POPULAR',
+                    context.locale.languageCode == 'ne'
+                        ? 'लोकप्रिय'
+                        : 'POPULAR',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -382,7 +404,10 @@ class _DurationOptionCard extends StatelessWidget {
                     ),
                     if (option.price > 0)
                       Text(
-                        formatLocalizedPrice(option.price, context.locale.languageCode),
+                        formatLocalizedPrice(
+                          option.price,
+                          context.locale.languageCode,
+                        ),
                         style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration.lineThrough,
@@ -394,7 +419,10 @@ class _DurationOptionCard extends StatelessWidget {
                   ] else ...[
                     if (option.discountPercentage > 0) ...[
                       Text(
-                        formatLocalizedPrice(option.finalPrice, context.locale.languageCode),
+                        formatLocalizedPrice(
+                          option.finalPrice,
+                          context.locale.languageCode,
+                        ),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -402,7 +430,10 @@ class _DurationOptionCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        formatLocalizedPrice(option.price, context.locale.languageCode),
+                        formatLocalizedPrice(
+                          option.price,
+                          context.locale.languageCode,
+                        ),
                         style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration.lineThrough,
@@ -413,7 +444,10 @@ class _DurationOptionCard extends StatelessWidget {
                       ),
                     ] else
                       Text(
-                        formatLocalizedPrice(option.price, context.locale.languageCode),
+                        formatLocalizedPrice(
+                          option.price,
+                          context.locale.languageCode,
+                        ),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -425,13 +459,15 @@ class _DurationOptionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? Colors.white.withValues(alpha: 0.2)
                             : hasCampaign
-                                ? Colors.purple.shade100
-                                : Colors.green.shade100,
+                            ? Colors.purple.shade100
+                            : Colors.green.shade100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -444,8 +480,8 @@ class _DurationOptionCard extends StatelessWidget {
                           color: isSelected
                               ? Colors.white
                               : hasCampaign
-                                  ? Colors.purple.shade700
-                                  : Colors.green.shade700,
+                              ? Colors.purple.shade700
+                              : Colors.green.shade700,
                         ),
                       ),
                     ),

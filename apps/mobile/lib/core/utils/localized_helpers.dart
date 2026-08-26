@@ -19,7 +19,10 @@ String formatNepalTime(DateTime dt, String pattern, [String locale = 'en']) {
 /// Formats price with commas and localized currency symbol.
 /// Returns "रु." for Nepali, "Rs." for English.
 String formatLocalizedPrice(double? price, String locale) {
-  if (price == null) return locale == 'ne' ? 'मूल्यको लागि सम्पर्क गर्नुहोस्' : 'Contact for price';
+  if (price == null)
+    return locale == 'ne'
+        ? 'मूल्यको लागि सम्पर्क गर्नुहोस्'
+        : 'Contact for price';
   if (price == 0) return locale == 'ne' ? 'निःशुल्क' : 'Free';
   final formatted = price
       .toStringAsFixed(0)

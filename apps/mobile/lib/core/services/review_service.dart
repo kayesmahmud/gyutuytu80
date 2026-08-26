@@ -35,14 +35,22 @@ class ReviewService {
       final prefs = await SharedPreferences.getInstance();
       // Stamp the very first launch so we can measure "days since install".
       if (prefs.getString(_firstLaunchKey) == null) {
-        await prefs.setString(_firstLaunchKey, DateTime.now().toIso8601String());
+        await prefs.setString(
+          _firstLaunchKey,
+          DateTime.now().toIso8601String(),
+        );
       }
       final count = (prefs.getInt(_significantActionsKey) ?? 0) + 1;
       await prefs.setInt(_significantActionsKey, count);
-      developer.log('Significant action recorded (total: $count)',
-          name: 'ReviewService');
+      developer.log(
+        'Significant action recorded (total: $count)',
+        name: 'ReviewService',
+      );
     } catch (e) {
-      developer.log('recordSignificantAction failed: $e', name: 'ReviewService');
+      developer.log(
+        'recordSignificantAction failed: $e',
+        name: 'ReviewService',
+      );
     }
   }
 
@@ -54,8 +62,10 @@ class ReviewService {
 
       if (!await _isEligible(prefs)) return;
       if (!await _inAppReview.isAvailable()) {
-        developer.log('In-app review not available on this device',
-            name: 'ReviewService');
+        developer.log(
+          'In-app review not available on this device',
+          name: 'ReviewService',
+        );
         return;
       }
 
@@ -65,8 +75,10 @@ class ReviewService {
       await prefs.setString(_lastPromptKey, DateTime.now().toIso8601String());
       final promptCount = (prefs.getInt(_promptCountKey) ?? 0) + 1;
       await prefs.setInt(_promptCountKey, promptCount);
-      developer.log('Review requested (prompt #$promptCount)',
-          name: 'ReviewService');
+      developer.log(
+        'Review requested (prompt #$promptCount)',
+        name: 'ReviewService',
+      );
     } catch (e) {
       developer.log('maybeRequestReview failed: $e', name: 'ReviewService');
     }

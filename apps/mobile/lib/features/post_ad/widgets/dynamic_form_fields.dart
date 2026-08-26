@@ -24,11 +24,15 @@ class DynamicFormFields extends StatelessWidget {
 
   /// Returns the localized placeholder for a field
   String? _localizedPlaceholder(FormFieldModel field) =>
-      locale == 'ne' && field.placeholderNe != null ? field.placeholderNe : field.placeholder;
+      locale == 'ne' && field.placeholderNe != null
+      ? field.placeholderNe
+      : field.placeholder;
 
   /// Returns the localized display text for an option at a given index
   String _localizedOption(FormFieldModel field, int index, String fallback) {
-    if (locale == 'ne' && field.optionsNe != null && index < field.optionsNe!.length) {
+    if (locale == 'ne' &&
+        field.optionsNe != null &&
+        index < field.optionsNe!.length) {
       return field.optionsNe![index];
     }
     return fallback;
@@ -51,7 +55,11 @@ class DynamicFormFields extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.clipboardList, color: Colors.blue, size: 20),
+              const Icon(
+                LucideIcons.clipboardList,
+                color: Colors.blue,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 locale == 'ne' ? 'थप विवरण' : 'Additional Details',
@@ -123,7 +131,9 @@ class DynamicFormFields extends StatelessWidget {
             }
             return null;
           },
-          decoration: _inputDecoration(placeholder ?? 'Enter ${field.label.toLowerCase()}'),
+          decoration: _inputDecoration(
+            placeholder ?? 'Enter ${field.label.toLowerCase()}',
+          ),
         );
 
       case FieldType.select:
@@ -140,7 +150,11 @@ class DynamicFormFields extends StatelessWidget {
             return null;
           },
           items: field.options?.asMap().entries.map((entry) {
-            final displayLabel = _localizedOption(field, entry.key, entry.value);
+            final displayLabel = _localizedOption(
+              field,
+              entry.key,
+              entry.value,
+            );
             return DropdownMenuItem(
               value: entry.value,
               child: Text(displayLabel, style: GoogleFonts.inter(fontSize: 14)),
@@ -155,7 +169,10 @@ class DynamicFormFields extends StatelessWidget {
         return CheckboxListTile(
           value: values[field.name] ?? false,
           onChanged: (val) => onChanged(field.name, val),
-          title: Text(_localizedLabel(field), style: GoogleFonts.inter(fontSize: 14)),
+          title: Text(
+            _localizedLabel(field),
+            style: GoogleFonts.inter(fontSize: 14),
+          ),
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
         );
@@ -219,9 +236,16 @@ class DynamicFormFields extends StatelessWidget {
     return TextFormField(
       readOnly: true,
       controller: TextEditingController(text: currentValue ?? ''),
-      decoration: _inputDecoration(_localizedPlaceholder(field) ?? 'Select date').copyWith(
-        suffixIcon: const Icon(LucideIcons.calendar, size: 18, color: Colors.grey),
-      ),
+      decoration:
+          _inputDecoration(
+            _localizedPlaceholder(field) ?? 'Select date',
+          ).copyWith(
+            suffixIcon: const Icon(
+              LucideIcons.calendar,
+              size: 18,
+              color: Colors.grey,
+            ),
+          ),
       validator: (val) {
         if (field.required && (val == null || val.isEmpty)) {
           return '${_localizedLabel(field)} is required';
@@ -237,7 +261,9 @@ class DynamicFormFields extends StatelessWidget {
           builder: (context, child) {
             return Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(primary: Color(0xFF10B981)),
+                colorScheme: const ColorScheme.light(
+                  primary: Color(0xFF10B981),
+                ),
               ),
               child: child!,
             );

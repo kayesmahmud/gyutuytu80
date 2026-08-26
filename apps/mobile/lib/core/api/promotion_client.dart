@@ -18,20 +18,30 @@ class PromotionClient {
   /// Parameters:
   /// - adId: Optional ad ID to get category-specific pricing
   /// - tier: Optional pricing tier override
-  Future<ApiResponse<PricingResponse>> getPricing({int? adId, String? tier}) async {
+  Future<ApiResponse<PricingResponse>> getPricing({
+    int? adId,
+    String? tier,
+  }) async {
     try {
       final queryParams = <String, dynamic>{};
       if (adId != null) queryParams['adId'] = adId;
       if (tier != null) queryParams['tier'] = tier;
 
-      final response = await _dio.get('/promotion-pricing', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/promotion-pricing',
+        queryParameters: queryParams,
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
-          PricingResponse.fromJson(response.data['data'] as Map<String, dynamic>),
+          PricingResponse.fromJson(
+            response.data['data'] as Map<String, dynamic>,
+          ),
         );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to fetch pricing');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to fetch pricing',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['message'] ?? 'Failed to fetch promotion pricing',
@@ -55,18 +65,25 @@ class PromotionClient {
     required int adId,
   }) async {
     try {
-      final response = await _dio.get('/promotion-pricing/calculate', queryParameters: {
-        'promotionType': promotionType.apiValue,
-        'durationDays': durationDays,
-        'adId': adId,
-      });
+      final response = await _dio.get(
+        '/promotion-pricing/calculate',
+        queryParameters: {
+          'promotionType': promotionType.apiValue,
+          'durationDays': durationDays,
+          'adId': adId,
+        },
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
-          CalculatedPrice.fromJson(response.data['data'] as Map<String, dynamic>),
+          CalculatedPrice.fromJson(
+            response.data['data'] as Map<String, dynamic>,
+          ),
         );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to calculate price');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to calculate price',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['message'] ?? 'Failed to calculate promotion price',
@@ -85,20 +102,22 @@ class PromotionClient {
     bool? activeOnly,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'limit': limit,
-      };
+      final queryParams = <String, dynamic>{'page': page, 'limit': limit};
       if (activeOnly != null) queryParams['active'] = activeOnly;
 
-      final response = await _dio.get('/promotions', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/promotions',
+        queryParameters: queryParams,
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
         final pagination = response.data['pagination'] as Map<String, dynamic>?;
 
         return PaginatedResponse.success(
-          data.map((e) => AdPromotion.fromJson(e as Map<String, dynamic>)).toList(),
+          data
+              .map((e) => AdPromotion.fromJson(e as Map<String, dynamic>))
+              .toList(),
           pagination != null
               ? PaginationInfo(
                   page: pagination['page'] as int? ?? page,
@@ -106,10 +125,17 @@ class PromotionClient {
                   total: pagination['total'] as int? ?? data.length,
                   totalPages: pagination['totalPages'] as int? ?? 1,
                 )
-              : PaginationInfo(page: 1, limit: data.length, total: data.length, totalPages: 1),
+              : PaginationInfo(
+                  page: 1,
+                  limit: data.length,
+                  total: data.length,
+                  totalPages: 1,
+                ),
         );
       }
-      return PaginatedResponse.failure(response.data['message'] ?? 'Failed to fetch promotions');
+      return PaginatedResponse.failure(
+        response.data['message'] ?? 'Failed to fetch promotions',
+      );
     } on DioException catch (e) {
       return PaginatedResponse.failure(
         e.response?.data?['message'] ?? 'Failed to fetch promotions',
@@ -129,11 +155,15 @@ class PromotionClient {
       if (response.data['success'] == true) {
         final data = response.data['data'];
         if (data != null) {
-          return ApiResponse.success(AdPromotion.fromJson(data as Map<String, dynamic>));
+          return ApiResponse.success(
+            AdPromotion.fromJson(data as Map<String, dynamic>),
+          );
         }
         return ApiResponse.success(null);
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to fetch ad promotion');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to fetch ad promotion',
+      );
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         return ApiResponse.success(null); // No active promotion
@@ -156,19 +186,24 @@ class PromotionClient {
     String? paymentReference,
   }) async {
     try {
-      final response = await _dio.post('/promotions', data: {
-        'adId': adId,
-        'promotionType': promotionType.apiValue,
-        'durationDays': durationDays,
-        'paymentReference': paymentReference,
-      });
+      final response = await _dio.post(
+        '/promotions',
+        data: {
+          'adId': adId,
+          'promotionType': promotionType.apiValue,
+          'durationDays': durationDays,
+          'paymentReference': paymentReference,
+        },
+      );
 
       if (response.data['success'] == true) {
         return ApiResponse.success(
           AdPromotion.fromJson(response.data['data'] as Map<String, dynamic>),
         );
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to apply promotion');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to apply promotion',
+      );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
         return ApiResponse.failure('Authentication required');
@@ -184,12 +219,17 @@ class PromotionClient {
   // ==========================================
 
   /// Get best active promotion campaign (highest discount)
-  Future<ApiResponse<PromotionCampaign?>> getActiveCampaign({String? tier}) async {
+  Future<ApiResponse<PromotionCampaign?>> getActiveCampaign({
+    String? tier,
+  }) async {
     try {
       final queryParams = <String, dynamic>{};
       if (tier != null) queryParams['tier'] = tier;
 
-      final response = await _dio.get('/promotion-pricing/active-campaigns', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/promotion-pricing/active-campaigns',
+        queryParameters: queryParams,
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as Map<String, dynamic>;
@@ -201,7 +241,9 @@ class PromotionClient {
         }
         return ApiResponse.success(null);
       }
-      return ApiResponse.failure(response.data['message'] ?? 'Failed to fetch campaigns');
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to fetch campaigns',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['message'] ?? 'Failed to fetch active campaigns',

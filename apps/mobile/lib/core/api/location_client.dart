@@ -21,7 +21,10 @@ class LocationClient {
       final queryParams = <String, dynamic>{};
       if (provinceId != null) queryParams['provinceId'] = provinceId;
 
-      final response = await _dio.get('/locations/hierarchy', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/locations/hierarchy',
+        queryParameters: queryParams,
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -31,7 +34,11 @@ class LocationClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching location hierarchy: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log(
+          'Error fetching location hierarchy: $e',
+          name: 'LocationClient',
+        );
       return [];
     }
   }
@@ -39,7 +46,10 @@ class LocationClient {
   /// Get all provinces
   Future<List<Province>> getProvinces() async {
     try {
-      final response = await _dio.get('/locations', queryParameters: {'type': 'province'});
+      final response = await _dio.get(
+        '/locations',
+        queryParameters: {'type': 'province'},
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -49,7 +59,8 @@ class LocationClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching provinces: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log('Error fetching provinces: $e', name: 'LocationClient');
       return [];
     }
   }
@@ -57,10 +68,10 @@ class LocationClient {
   /// Get districts for a province
   Future<List<District>> getDistricts(int provinceId) async {
     try {
-      final response = await _dio.get('/locations', queryParameters: {
-        'type': 'district',
-        'parent_id': provinceId,
-      });
+      final response = await _dio.get(
+        '/locations',
+        queryParameters: {'type': 'district', 'parent_id': provinceId},
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -70,7 +81,8 @@ class LocationClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching districts: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log('Error fetching districts: $e', name: 'LocationClient');
       return [];
     }
   }
@@ -78,10 +90,10 @@ class LocationClient {
   /// Get municipalities for a district
   Future<List<Municipality>> getMunicipalities(int districtId) async {
     try {
-      final response = await _dio.get('/locations', queryParameters: {
-        'type': 'municipality',
-        'parent_id': districtId,
-      });
+      final response = await _dio.get(
+        '/locations',
+        queryParameters: {'type': 'municipality', 'parent_id': districtId},
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -91,7 +103,11 @@ class LocationClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching municipalities: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log(
+          'Error fetching municipalities: $e',
+          name: 'LocationClient',
+        );
       return [];
     }
   }
@@ -106,14 +122,23 @@ class LocationClient {
       final queryParams = <String, dynamic>{};
       if (provinceId != null) queryParams['province_id'] = provinceId;
 
-      final response = await _dio.get('/areas/hierarchy', queryParameters: queryParams);
+      final response = await _dio.get(
+        '/areas/hierarchy',
+        queryParameters: queryParams,
+      );
 
       if (response.data['success'] == true) {
-        return AreasHierarchyResponse.fromJson(response.data['data'] as Map<String, dynamic>);
+        return AreasHierarchyResponse.fromJson(
+          response.data['data'] as Map<String, dynamic>,
+        );
       }
       return null;
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching areas hierarchy: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log(
+          'Error fetching areas hierarchy: $e',
+          name: 'LocationClient',
+        );
       return null;
     }
   }
@@ -121,10 +146,10 @@ class LocationClient {
   /// Get areas for a municipality
   Future<List<Area>> getAreas(int municipalityId) async {
     try {
-      final response = await _dio.get('/locations', queryParameters: {
-        'type': 'area',
-        'parent_id': municipalityId,
-      });
+      final response = await _dio.get(
+        '/locations',
+        queryParameters: {'type': 'area', 'parent_id': municipalityId},
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -134,7 +159,8 @@ class LocationClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error fetching areas: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log('Error fetching areas: $e', name: 'LocationClient');
       return [];
     }
   }
@@ -146,10 +172,10 @@ class LocationClient {
   /// Search locations by query
   Future<List<Location>> searchLocations(String query, {int limit = 10}) async {
     try {
-      final response = await _dio.get('/locations/search', queryParameters: {
-        'q': query,
-        'limit': limit,
-      });
+      final response = await _dio.get(
+        '/locations/search',
+        queryParameters: {'q': query, 'limit': limit},
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -159,18 +185,22 @@ class LocationClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error searching locations: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log('Error searching locations: $e', name: 'LocationClient');
       return [];
     }
   }
 
   /// Search ALL locations (prioritized by hierarchy)
-  Future<List<Location>> searchAllLocations(String query, {int limit = 15}) async {
+  Future<List<Location>> searchAllLocations(
+    String query, {
+    int limit = 15,
+  }) async {
     try {
-      final response = await _dio.get('/locations/search-all', queryParameters: {
-        'q': query,
-        'limit': limit,
-      });
+      final response = await _dio.get(
+        '/locations/search-all',
+        queryParameters: {'q': query, 'limit': limit},
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -180,7 +210,11 @@ class LocationClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error searching all locations: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log(
+          'Error searching all locations: $e',
+          name: 'LocationClient',
+        );
       return [];
     }
   }
@@ -188,10 +222,10 @@ class LocationClient {
   /// Search areas by query
   Future<List<Area>> searchAreas(String query, {int limit = 10}) async {
     try {
-      final response = await _dio.get('/areas/search', queryParameters: {
-        'q': query,
-        'limit': limit,
-      });
+      final response = await _dio.get(
+        '/areas/search',
+        queryParameters: {'q': query, 'limit': limit},
+      );
 
       if (response.data['success'] == true) {
         final data = response.data['data'] as List<dynamic>;
@@ -201,7 +235,8 @@ class LocationClient {
       }
       return [];
     } on DioException catch (e) {
-      if (kDebugMode) developer.log('Error searching areas: $e', name: 'LocationClient');
+      if (kDebugMode)
+        developer.log('Error searching areas: $e', name: 'LocationClient');
       return [];
     }
   }
@@ -220,7 +255,9 @@ class LocationClient {
           Location.fromJson(response.data['data'] as Map<String, dynamic>),
         );
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Location not found');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Location not found',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch location',
@@ -238,7 +275,9 @@ class LocationClient {
           Location.fromJson(response.data['data'] as Map<String, dynamic>),
         );
       }
-      return ApiResponse.failure(response.data['error'] ?? 'Location not found');
+      return ApiResponse.failure(
+        response.data['error'] ?? 'Location not found',
+      );
     } on DioException catch (e) {
       return ApiResponse.failure(
         e.response?.data?['error'] ?? 'Failed to fetch location',

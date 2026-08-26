@@ -41,10 +41,26 @@ class _ShopTabsState extends State<ShopTabs> {
           ),
           child: Row(
             children: [
-              _buildTab(l('about', context.locale.languageCode), 'about', LucideIcons.info),
-              _buildTab(context.locale.languageCode == 'ne' ? 'सम्पर्क' : 'Contact', 'contact', LucideIcons.phoneCall),
-              _buildTab(context.locale.languageCode == 'ne' ? 'वर्गहरू' : 'Categories', 'categories', LucideIcons.layoutGrid),
-              _buildTab(l('location', context.locale.languageCode), 'location', LucideIcons.mapPin),
+              _buildTab(
+                l('about', context.locale.languageCode),
+                'about',
+                LucideIcons.info,
+              ),
+              _buildTab(
+                context.locale.languageCode == 'ne' ? 'सम्पर्क' : 'Contact',
+                'contact',
+                LucideIcons.phoneCall,
+              ),
+              _buildTab(
+                context.locale.languageCode == 'ne' ? 'वर्गहरू' : 'Categories',
+                'categories',
+                LucideIcons.layoutGrid,
+              ),
+              _buildTab(
+                l('location', context.locale.languageCode),
+                'location',
+                LucideIcons.mapPin,
+              ),
             ],
           ),
         ),
@@ -67,7 +83,9 @@ class _ShopTabsState extends State<ShopTabs> {
         child: Container(
           decoration: BoxDecoration(
             border: isActive
-                ? const Border(bottom: BorderSide(color: Color(0xFFF43F5E), width: 2))
+                ? const Border(
+                    bottom: BorderSide(color: Color(0xFFF43F5E), width: 2),
+                  )
                 : null,
           ),
           child: Column(
@@ -110,14 +128,16 @@ class _ShopTabsState extends State<ShopTabs> {
         );
       case 'categories':
         return ShopCategorySection(
-            shop: widget.shop,
-            isOwner: widget.isOwner,
-            onUpdate: widget.onProfileUpdated);
+          shop: widget.shop,
+          isOwner: widget.isOwner,
+          onUpdate: widget.onProfileUpdated,
+        );
       case 'location':
         return ShopLocationSection(
-            shop: widget.shop,
-            isOwner: widget.isOwner,
-            onUpdate: widget.onProfileUpdated);
+          shop: widget.shop,
+          isOwner: widget.isOwner,
+          onUpdate: widget.onProfileUpdated,
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -132,8 +152,12 @@ class ShopAboutSection extends StatefulWidget {
   final bool isOwner;
   final Function(ShopProfile) onUpdate;
 
-  const ShopAboutSection(
-      {super.key, required this.shop, required this.isOwner, required this.onUpdate});
+  const ShopAboutSection({
+    super.key,
+    required this.shop,
+    required this.isOwner,
+    required this.onUpdate,
+  });
 
   @override
   State<ShopAboutSection> createState() => _ShopAboutSectionState();
@@ -150,8 +174,8 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
   /// same source of truth.
   String get _effectiveDescription =>
       widget.shop.businessDescription?.isNotEmpty == true
-          ? widget.shop.businessDescription!
-          : (widget.shop.bio ?? '');
+      ? widget.shop.businessDescription!
+      : (widget.shop.bio ?? '');
 
   @override
   void initState() {
@@ -169,17 +193,27 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
     setState(() => _saving = true);
     // Save to businessDescription (web's source of truth) so edits sync
     // across web and mobile. The API maps camelCase → snake_case server-side.
-    final response = await _shopClient.updateShopProfile(
-      {'businessDescription': _descriptionController.text.trim()},
-    );
+    final response = await _shopClient.updateShopProfile({
+      'businessDescription': _descriptionController.text.trim(),
+    });
     setState(() => _saving = false);
 
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
       setState(() => _isEditing = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'प्रोफाइल अपडेट भयो' : 'Profile updated')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'प्रोफाइल अपडेट भयो'
+                : 'Profile updated',
+          ),
+        ),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.errorMessage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
   }
 
@@ -194,7 +228,9 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
             maxLines: 5,
             maxLength: 500,
             decoration: InputDecoration(
-              hintText: context.locale.languageCode == 'ne' ? 'आफ्नो व्यवसाय वर्णन गर्नुहोस्...' : 'Describe your business...',
+              hintText: context.locale.languageCode == 'ne'
+                  ? 'आफ्नो व्यवसाय वर्णन गर्नुहोस्...'
+                  : 'Describe your business...',
               border: const OutlineInputBorder(),
             ),
           ),
@@ -204,8 +240,16 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving ? (context.locale.languageCode == 'ne' ? 'सेभ हुँदैछ...' : 'Saving...') : l('save', context.locale.languageCode)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF43F5E),
+                  ),
+                  child: Text(
+                    _saving
+                        ? (context.locale.languageCode == 'ne'
+                              ? 'सेभ हुँदैछ...'
+                              : 'Saving...')
+                        : l('save', context.locale.languageCode),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -233,10 +277,20 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l('about', context.locale.languageCode), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(
+              l('about', context.locale.languageCode),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (widget.isOwner)
               IconButton(
-                icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
+                icon: const Icon(
+                  LucideIcons.pencil,
+                  size: 20,
+                  color: Colors.grey,
+                ),
                 onPressed: () => setState(() => _isEditing = true),
               ),
           ],
@@ -245,8 +299,14 @@ class _ShopAboutSectionState extends State<ShopAboutSection> {
         Text(
           description.isNotEmpty
               ? description
-              : (context.locale.languageCode == 'ne' ? 'कुनै विवरण उपलब्ध छैन।' : 'No description available.'),
-          style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700], height: 1.5),
+              : (context.locale.languageCode == 'ne'
+                    ? 'कुनै विवरण उपलब्ध छैन।'
+                    : 'No description available.'),
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: Colors.grey[700],
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -259,8 +319,12 @@ class ShopContactSection extends StatefulWidget {
   final bool isOwner;
   final Function(ShopProfile) onUpdate;
 
-  const ShopContactSection(
-      {super.key, required this.shop, required this.isOwner, required this.onUpdate});
+  const ShopContactSection({
+    super.key,
+    required this.shop,
+    required this.isOwner,
+    required this.onUpdate,
+  });
 
   @override
   State<ShopContactSection> createState() => _ShopContactSectionState();
@@ -298,14 +362,22 @@ class _ShopContactSectionState extends State<ShopContactSection> {
   void _fillControllers() {
     _websiteController.text = widget.shop.businessWebsite ?? '';
     _googleMapsController.text = widget.shop.googleMapsLink ?? '';
-    _facebookController.text = _extractUsername(widget.shop.facebookUrl, 'facebook');
-    _instagramController.text = _extractUsername(widget.shop.instagramUrl, 'instagram');
+    _facebookController.text = _extractUsername(
+      widget.shop.facebookUrl,
+      'facebook',
+    );
+    _instagramController.text = _extractUsername(
+      widget.shop.instagramUrl,
+      'instagram',
+    );
     _tiktokController.text = _extractUsername(widget.shop.tiktokUrl, 'tiktok');
 
     final digits = RegExp(r'[^\d]');
     final registeredDigits = widget.shop.phone?.replaceAll(digits, '') ?? '';
-    final whatsappDigits = widget.shop.businessPhone?.replaceAll(digits, '') ?? '';
-    _usePhoneForWhatsApp = registeredDigits.isNotEmpty && registeredDigits == whatsappDigits;
+    final whatsappDigits =
+        widget.shop.businessPhone?.replaceAll(digits, '') ?? '';
+    _usePhoneForWhatsApp =
+        registeredDigits.isNotEmpty && registeredDigits == whatsappDigits;
     _whatsappController.text =
         widget.shop.businessPhone?.replaceAll(RegExp(r'^\+977\s*'), '') ?? '';
   }
@@ -318,7 +390,8 @@ class _ShopContactSectionState extends State<ShopContactSection> {
       'tiktok': RegExp(r'tiktok\.com/@?(.+?)/?$', caseSensitive: false),
     };
     final match = patterns[platform]?.firstMatch(url);
-    if (match != null) return match.group(1)?.replaceAll(RegExp(r'^@'), '') ?? url;
+    if (match != null)
+      return match.group(1)?.replaceAll(RegExp(r'^@'), '') ?? url;
     return url.replaceAll(RegExp(r'^@'), '');
   }
 
@@ -348,8 +421,10 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     if (await canLaunchUrl(appUri)) {
       await launchUrl(appUri, mode: LaunchMode.externalApplication);
     } else {
-      await launchUrl(Uri.parse('https://wa.me/$full'),
-          mode: LaunchMode.externalApplication);
+      await launchUrl(
+        Uri.parse('https://wa.me/$full'),
+        mode: LaunchMode.externalApplication,
+      );
     }
   }
 
@@ -399,13 +474,19 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
       setState(() => _isEditing = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(context.locale.languageCode == 'ne'
-              ? 'सम्पर्क जानकारी अपडेट भयो'
-              : 'Contact info updated')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'सम्पर्क जानकारी अपडेट भयो'
+                : 'Contact info updated',
+          ),
+        ),
+      );
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(response.errorMessage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
   }
 
@@ -430,12 +511,19 @@ class _ShopContactSectionState extends State<ShopContactSection> {
               ),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.phone, size: 15, color: Color(0xFF16A34A)),
+                  const Icon(
+                    LucideIcons.phone,
+                    size: 15,
+                    color: Color(0xFF16A34A),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '${isNe ? 'दर्ता नम्बर' : 'Registered'}: ${formatPhone(widget.shop.phone!)}',
-                      style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF15803D)),
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF15803D),
+                      ),
                     ),
                   ),
                 ],
@@ -445,7 +533,8 @@ class _ShopContactSectionState extends State<ShopContactSection> {
               onTap: () => setState(() {
                 _usePhoneForWhatsApp = !_usePhoneForWhatsApp;
                 if (_usePhoneForWhatsApp) {
-                  _whatsappController.text = widget.shop.phone
+                  _whatsappController.text =
+                      widget.shop.phone
                           ?.replaceAll(RegExp(r'^\+977\s*'), '')
                           .replaceAll(RegExp(r'[^\d]'), '') ??
                       '';
@@ -463,7 +552,8 @@ class _ShopContactSectionState extends State<ShopContactSection> {
                         onChanged: (v) => setState(() {
                           _usePhoneForWhatsApp = v ?? false;
                           if (_usePhoneForWhatsApp) {
-                            _whatsappController.text = widget.shop.phone
+                            _whatsappController.text =
+                                widget.shop.phone
                                     ?.replaceAll(RegExp(r'^\+977\s*'), '')
                                     .replaceAll(RegExp(r'[^\d]'), '') ??
                                 '';
@@ -479,7 +569,10 @@ class _ShopContactSectionState extends State<ShopContactSection> {
                         isNe
                             ? 'दर्ता नम्बर नै प्रयोग गर्नुहोस् (${formatPhone(widget.shop.phone!)})'
                             : 'Same as registered number (${formatPhone(widget.shop.phone!)})',
-                        style: GoogleFonts.inter(fontSize: 13, color: Colors.black87),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                   ],
@@ -505,7 +598,10 @@ class _ShopContactSectionState extends State<ShopContactSection> {
             decoration: const InputDecoration(
               hintText: 'https://example.com',
               border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -519,25 +615,39 @@ class _ShopContactSectionState extends State<ShopContactSection> {
               hintText: 'https://maps.google.com/...',
               prefixIcon: const Icon(LucideIcons.mapPin, size: 18),
               border: const OutlineInputBorder(),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
             ),
           ),
           const SizedBox(height: 14),
 
           // Facebook
           _buildLabel(isNe ? 'फेसबुक' : 'Facebook'),
-          _buildPrefixField(prefix: 'fb.com/', controller: _facebookController, hint: 'yourpage'),
+          _buildPrefixField(
+            prefix: 'fb.com/',
+            controller: _facebookController,
+            hint: 'yourpage',
+          ),
           const SizedBox(height: 14),
 
           // Instagram
           _buildLabel(isNe ? 'इन्स्टाग्राम' : 'Instagram'),
-          _buildPrefixField(prefix: 'ig.com/', controller: _instagramController, hint: 'yourprofile'),
+          _buildPrefixField(
+            prefix: 'ig.com/',
+            controller: _instagramController,
+            hint: 'yourprofile',
+          ),
           const SizedBox(height: 14),
 
           // TikTok
           _buildLabel(isNe ? 'टिकटक' : 'TikTok'),
           _buildPrefixField(
-              prefix: 'tiktok.com/@', controller: _tiktokController, hint: 'yourhandle'),
+            prefix: 'tiktok.com/@',
+            controller: _tiktokController,
+            hint: 'yourhandle',
+          ),
           const SizedBox(height: 16),
 
           Row(
@@ -545,10 +655,14 @@ class _ShopContactSectionState extends State<ShopContactSection> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving
-                      ? (isNe ? 'सेभ हुँदैछ...' : 'Saving...')
-                      : l('save', context.locale.languageCode)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF43F5E),
+                  ),
+                  child: Text(
+                    _saving
+                        ? (isNe ? 'सेभ हुँदैछ...' : 'Saving...')
+                        : l('save', context.locale.languageCode),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -571,7 +685,8 @@ class _ShopContactSectionState extends State<ShopContactSection> {
     final fbUser = _extractUsername(widget.shop.facebookUrl, 'facebook');
     final igUser = _extractUsername(widget.shop.instagramUrl, 'instagram');
     final ttUser = _extractUsername(widget.shop.tiktokUrl, 'tiktok');
-    final hasAny = widget.shop.businessPhone != null ||
+    final hasAny =
+        widget.shop.businessPhone != null ||
         widget.shop.phone != null ||
         widget.shop.businessWebsite != null ||
         (widget.shop.googleMapsLink?.isNotEmpty ?? false) ||
@@ -585,11 +700,20 @@ class _ShopContactSectionState extends State<ShopContactSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l('contactInfo', context.locale.languageCode),
-                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(
+              l('contactInfo', context.locale.languageCode),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (widget.isOwner)
               IconButton(
-                icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
+                icon: const Icon(
+                  LucideIcons.pencil,
+                  size: 20,
+                  color: Colors.grey,
+                ),
                 onPressed: () => setState(() => _isEditing = true),
               ),
           ],
@@ -598,8 +722,11 @@ class _ShopContactSectionState extends State<ShopContactSection> {
         if (!hasAny)
           Text(
             isNe ? 'सम्पर्क जानकारी छैन।' : 'No contact info.',
-            style:
-                GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic),
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: Colors.grey,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         if (widget.shop.phone != null)
           _buildContactTile(
@@ -665,11 +792,16 @@ class _ShopContactSectionState extends State<ShopContactSection> {
   }
 
   Widget _buildLabel(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(text,
-            style: GoogleFonts.inter(
-                fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87)),
-      );
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: Colors.black87,
+      ),
+    ),
+  );
 
   Widget _buildPrefixField({
     required String prefix,
@@ -687,10 +819,18 @@ class _ShopContactSectionState extends State<ShopContactSection> {
           decoration: BoxDecoration(
             color: const Color(0xFFF3F4F6),
             border: Border.all(color: const Color(0xFFD1D5DB)),
-            borderRadius: const BorderRadius.only(topLeft: radius8, bottomLeft: radius8),
+            borderRadius: const BorderRadius.only(
+              topLeft: radius8,
+              bottomLeft: radius8,
+            ),
           ),
-          child: Text(prefix,
-              style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF6B7280))),
+          child: Text(
+            prefix,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: const Color(0xFF6B7280),
+            ),
+          ),
         ),
         Expanded(
           child: TextField(
@@ -703,15 +843,30 @@ class _ShopContactSectionState extends State<ShopContactSection> {
               counterText: '',
               filled: !enabled,
               fillColor: const Color(0xFFF9FAFB),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 13,
+              ),
               border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.only(topRight: radius8, bottomRight: radius8)),
+                borderRadius: BorderRadius.only(
+                  topRight: radius8,
+                  bottomRight: radius8,
+                ),
+              ),
               enabledBorder: const OutlineInputBorder(
-                  borderRadius: BorderRadius.only(topRight: radius8, bottomRight: radius8),
-                  borderSide: BorderSide(color: Color(0xFFD1D5DB))),
+                borderRadius: BorderRadius.only(
+                  topRight: radius8,
+                  bottomRight: radius8,
+                ),
+                borderSide: BorderSide(color: Color(0xFFD1D5DB)),
+              ),
               disabledBorder: const OutlineInputBorder(
-                  borderRadius: BorderRadius.only(topRight: radius8, bottomRight: radius8),
-                  borderSide: BorderSide(color: Color(0xFFE5E7EB))),
+                borderRadius: BorderRadius.only(
+                  topRight: radius8,
+                  bottomRight: radius8,
+                ),
+                borderSide: BorderSide(color: Color(0xFFE5E7EB)),
+              ),
             ),
           ),
         ),
@@ -749,13 +904,20 @@ class _ShopContactSectionState extends State<ShopContactSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label,
-                        style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500])),
+                    Text(
+                      label,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                      ),
+                    ),
                     Text(
                       value,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: onTap != null ? const Color(0xFFF43F5E) : Colors.black87,
+                        color: onTap != null
+                            ? const Color(0xFFF43F5E)
+                            : Colors.black87,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -763,7 +925,11 @@ class _ShopContactSectionState extends State<ShopContactSection> {
                 ),
               ),
               if (onTap != null)
-                Icon(LucideIcons.externalLink, size: 14, color: Colors.grey[400]),
+                Icon(
+                  LucideIcons.externalLink,
+                  size: 14,
+                  color: Colors.grey[400],
+                ),
             ],
           ),
         ),
@@ -778,8 +944,12 @@ class ShopCategorySection extends StatefulWidget {
   final bool isOwner;
   final Function(ShopProfile) onUpdate;
 
-  const ShopCategorySection(
-      {super.key, required this.shop, required this.isOwner, required this.onUpdate});
+  const ShopCategorySection({
+    super.key,
+    required this.shop,
+    required this.isOwner,
+    required this.onUpdate,
+  });
 
   @override
   State<ShopCategorySection> createState() => _ShopCategorySectionState();
@@ -789,11 +959,11 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
   bool _isEditing = false;
   bool _saving = false;
   bool _loading = false;
-  
+
   List<CategoryWithSubcategories> _categories = [];
   CategoryWithSubcategories? _selectedCategory;
   Category? _selectedSubCategory;
-  
+
   final ShopClient _shopClient = ShopClient();
   final AdClient _adClient = AdClient();
 
@@ -808,16 +978,16 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
       setState(() {
         _categories = categories;
         _loading = false;
-        
+
         // Pre-select if exists (would need categoryId in ShopProfile, usually checking locationName/Icon isn't enough)
         // Since ShopProfile doesn't have raw category IDs easily in the model (it has strings? No, wait)
         // The API returns 'seller' block. Let's check ShopProfile model.
         // It has locationId, locationName. But NOT categoryId explicitly unless extended.
-        // Wait, ShopProfile model doesn't have defaultCategory info? 
+        // Wait, ShopProfile model doesn't have defaultCategory info?
         // Let me check ShopProfile model again.
         // It DOES look like ShopProfile in mobile model is missing defaultCategory/subcategory fields compared to web sidebar.
         // Web Sidebar props: categoryId, categoryName, etc.
-        // Mobile ShopProfile model has `locationId`, `locationName`. 
+        // Mobile ShopProfile model has `locationId`, `locationName`.
         // I need to add `defaultCategoryId` etc to ShopProfile model first?
         // Actually the `ShopProfile.fromJson` doesn't seem to parse them.
         // Let's assume for MVP we fetch and they pick new, or if model supports it we use it.
@@ -829,20 +999,30 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
 
   Future<void> _save() async {
     if (_selectedCategory == null) return;
-    
+
     setState(() => _saving = true);
     final response = await _shopClient.updateShopCategory(
       _selectedCategory!.id,
-      _selectedSubCategory?.id
+      _selectedSubCategory?.id,
     );
     setState(() => _saving = false);
 
     if (response.success && response.data != null) {
       widget.onUpdate(response.data!);
       setState(() => _isEditing = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.locale.languageCode == 'ne' ? 'वर्ग अपडेट भयो' : 'Category updated')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.locale.languageCode == 'ne'
+                ? 'वर्ग अपडेट भयो'
+                : 'Category updated',
+          ),
+        ),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.errorMessage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(response.errorMessage)));
     }
   }
 
@@ -850,38 +1030,59 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
   Widget build(BuildContext context) {
     if (_isEditing) {
       if (_loading) return const Center(child: CircularProgressIndicator());
-      
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           DropdownButtonFormField<CategoryWithSubcategories>(
             value: _selectedCategory,
-            hint: Text(context.locale.languageCode == 'ne' ? 'मुख्य वर्ग छान्नुहोस्' : 'Select Main Category'),
-            items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
+            hint: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'मुख्य वर्ग छान्नुहोस्'
+                  : 'Select Main Category',
+            ),
+            items: _categories
+                .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
+                .toList(),
             onChanged: (val) => setState(() {
               _selectedCategory = val;
               _selectedSubCategory = null;
             }),
-             decoration: const InputDecoration(border: OutlineInputBorder()),
+            decoration: const InputDecoration(border: OutlineInputBorder()),
           ),
           const SizedBox(height: 12),
-          if (_selectedCategory != null && _selectedCategory!.subcategories.isNotEmpty)
-             DropdownButtonFormField<Category>(
+          if (_selectedCategory != null &&
+              _selectedCategory!.subcategories.isNotEmpty)
+            DropdownButtonFormField<Category>(
               value: _selectedSubCategory,
-              hint: Text(context.locale.languageCode == 'ne' ? 'उपवर्ग छान्नुहोस्' : 'Select Subcategory'),
-              items: _selectedCategory!.subcategories.map((s) => DropdownMenuItem(value: s, child: Text(s.name))).toList(),
+              hint: Text(
+                context.locale.languageCode == 'ne'
+                    ? 'उपवर्ग छान्नुहोस्'
+                    : 'Select Subcategory',
+              ),
+              items: _selectedCategory!.subcategories
+                  .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
+                  .toList(),
               onChanged: (val) => setState(() => _selectedSubCategory = val),
-               decoration: const InputDecoration(border: OutlineInputBorder()),
+              decoration: const InputDecoration(border: OutlineInputBorder()),
             ),
-            
+
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving ? (context.locale.languageCode == 'ne' ? 'सेभ हुँदैछ...' : 'Saving...') : l('save', context.locale.languageCode)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF43F5E),
+                  ),
+                  child: Text(
+                    _saving
+                        ? (context.locale.languageCode == 'ne'
+                              ? 'सेभ हुँदैछ...'
+                              : 'Saving...')
+                        : l('save', context.locale.languageCode),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -903,10 +1104,20 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l('category', context.locale.languageCode), style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(
+              l('category', context.locale.languageCode),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (widget.isOwner)
               IconButton(
-                icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
+                icon: const Icon(
+                  LucideIcons.pencil,
+                  size: 20,
+                  color: Colors.grey,
+                ),
                 onPressed: _startEditing,
               ),
           ],
@@ -914,18 +1125,27 @@ class _ShopCategorySectionState extends State<ShopCategorySection> {
         const SizedBox(height: 12),
         // Since ShopProfile model on mobile might be missing category fields, we display placeholder or existing if I update model
         // For now, let's assume it displays text if available, or "No Category Set"
-         // I should update ShopProfile model to include these fields.
-         // Let's display simple text for now.
+        // I should update ShopProfile model to include these fields.
+        // Let's display simple text for now.
         if (widget.shop.categoryName != null)
           _buildCategoryRow(LucideIcons.layoutGrid, widget.shop.categoryName!),
         if (widget.shop.subcategoryName != null)
-           _buildCategoryRow(LucideIcons.cornerDownRight, widget.shop.subcategoryName!),
-        
+          _buildCategoryRow(
+            LucideIcons.cornerDownRight,
+            widget.shop.subcategoryName!,
+          ),
+
         if (widget.shop.categoryName == null)
-           Text(
-             context.locale.languageCode == 'ne' ? 'पूर्वनिर्धारित वर्ग सेट गरिएको छैन।' : 'No default category set.',
-             style: GoogleFonts.inter(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic), 
-           ),
+          Text(
+            context.locale.languageCode == 'ne'
+                ? 'पूर्वनिर्धारित वर्ग सेट गरिएको छैन।'
+                : 'No default category set.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: Colors.grey,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
       ],
     );
   }
@@ -950,8 +1170,12 @@ class ShopLocationSection extends StatefulWidget {
   final bool isOwner;
   final Function(ShopProfile) onUpdate;
 
-  const ShopLocationSection(
-      {super.key, required this.shop, required this.isOwner, required this.onUpdate});
+  const ShopLocationSection({
+    super.key,
+    required this.shop,
+    required this.isOwner,
+    required this.onUpdate,
+  });
 
   @override
   State<ShopLocationSection> createState() => _ShopLocationSectionState();
@@ -968,7 +1192,8 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
 
   List<Location> _searchResults = [];
   Location? _selectedLocation;
-  List<Location> _ancestryChain = []; // full hierarchy: [selected, parent, grandparent, ...]
+  List<Location> _ancestryChain =
+      []; // full hierarchy: [selected, parent, grandparent, ...]
   bool _loadingAncestry = false;
 
   // Display mode hierarchy
@@ -1082,7 +1307,9 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
     if (_selectedLocation == null) return;
 
     setState(() => _saving = true);
-    final response = await _shopClient.updateShopLocation(_selectedLocation!.slug);
+    final response = await _shopClient.updateShopLocation(
+      _selectedLocation!.slug,
+    );
     setState(() => _saving = false);
 
     if (response.success && response.data != null) {
@@ -1095,15 +1322,21 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
         _searchController.clear();
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(context.locale.languageCode == 'ne'
-                ? 'स्थान अपडेट भयो'
-                : 'Location updated')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'स्थान अपडेट भयो'
+                  : 'Location updated',
+            ),
+          ),
+        );
       }
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(response.errorMessage)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(response.errorMessage)));
       }
     }
   }
@@ -1133,21 +1366,23 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                       ),
                     )
                   : _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(LucideIcons.x, size: 18),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchResults = [];
-                              _selectedLocation = null;
-                              _ancestryChain = [];
-                            });
-                          },
-                        )
-                      : null,
+                  ? IconButton(
+                      icon: const Icon(LucideIcons.x, size: 18),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchResults = [];
+                          _selectedLocation = null;
+                          _ancestryChain = [];
+                        });
+                      },
+                    )
+                  : null,
               border: const OutlineInputBorder(),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
             ),
           ),
 
@@ -1167,21 +1402,27 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                   // Selected location name (bold)
                   Row(
                     children: [
-                      const Icon(LucideIcons.mapPin,
-                          size: 16, color: Color(0xFF16A34A)),
+                      const Icon(
+                        LucideIcons.mapPin,
+                        size: 16,
+                        color: Color(0xFF16A34A),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _selectedLocation!.name,
                           style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF15803D)),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF15803D),
+                          ),
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF86EFAC),
                           borderRadius: BorderRadius.circular(4),
@@ -1189,9 +1430,10 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                         child: Text(
                           _locationTypeLabel(_selectedLocation!.type, isNe),
                           style: GoogleFonts.inter(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF15803D)),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF15803D),
+                          ),
                         ),
                       ),
                     ],
@@ -1206,15 +1448,19 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                             width: 12,
                             height: 12,
                             child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                color: Color(0xFF16A34A)),
+                              strokeWidth: 1.5,
+                              color: Color(0xFF16A34A),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            isNe ? 'स्थान लोड हुँदैछ...' : 'Loading hierarchy...',
+                            isNe
+                                ? 'स्थान लोड हुँदैछ...'
+                                : 'Loading hierarchy...',
                             style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: const Color(0xFF16A34A)),
+                              fontSize: 12,
+                              color: const Color(0xFF16A34A),
+                            ),
                           ),
                         ],
                       ),
@@ -1230,22 +1476,26 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                               padding: const EdgeInsets.only(bottom: 2),
                               child: Row(
                                 children: [
-                                  Icon(LucideIcons.cornerDownRight,
-                                      size: 12,
-                                      color: Colors.green[400]),
+                                  Icon(
+                                    LucideIcons.cornerDownRight,
+                                    size: 12,
+                                    color: Colors.green[400],
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     _ancestryChain[i].name,
                                     style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: const Color(0xFF16A34A)),
+                                      fontSize: 12,
+                                      color: const Color(0xFF16A34A),
+                                    ),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '(${_locationTypeLabel(_ancestryChain[i].type, isNe)})',
                                     style: GoogleFonts.inter(
-                                        fontSize: 10,
-                                        color: Colors.green[400]),
+                                      fontSize: 10,
+                                      color: Colors.green[400],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1270,18 +1520,24 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _searchResults.length,
-                separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[200]),
+                separatorBuilder: (_, __) =>
+                    Divider(height: 1, color: Colors.grey[200]),
                 itemBuilder: (context, index) {
                   final loc = _searchResults[index];
                   return InkWell(
                     onTap: () => _selectAndLoadAncestry(loc),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       child: Row(
                         children: [
-                          Icon(LucideIcons.mapPin,
-                              size: 16, color: Colors.grey[500]),
+                          Icon(
+                            LucideIcons.mapPin,
+                            size: 16,
+                            color: Colors.grey[500],
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -1291,7 +1547,9 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.grey[100],
                               borderRadius: BorderRadius.circular(4),
@@ -1299,7 +1557,9 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                             child: Text(
                               _locationTypeLabel(loc.type, isNe),
                               style: GoogleFonts.inter(
-                                  fontSize: 10, color: Colors.grey[600]),
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ),
                         ],
@@ -1316,13 +1576,17 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed:
-                      _saving || _selectedLocation == null ? null : _save,
+                  onPressed: _saving || _selectedLocation == null
+                      ? null
+                      : _save,
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF43F5E)),
-                  child: Text(_saving
-                      ? (isNe ? 'सेभ हुँदैछ...' : 'Saving...')
-                      : l('save', context.locale.languageCode)),
+                    backgroundColor: const Color(0xFFF43F5E),
+                  ),
+                  child: Text(
+                    _saving
+                        ? (isNe ? 'सेभ हुँदैछ...' : 'Saving...')
+                        : l('save', context.locale.languageCode),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1350,12 +1614,20 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(l('location', context.locale.languageCode),
-                style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(
+              l('location', context.locale.languageCode),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (widget.isOwner)
               IconButton(
-                icon: const Icon(LucideIcons.pencil, size: 20, color: Colors.grey),
+                icon: const Icon(
+                  LucideIcons.pencil,
+                  size: 20,
+                  color: Colors.grey,
+                ),
                 onPressed: () => setState(() => _isEditing = true),
               ),
           ],
@@ -1366,7 +1638,8 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
             Row(
               children: [
                 const SizedBox(
-                  width: 16, height: 16,
+                  width: 16,
+                  height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 const SizedBox(width: 8),
@@ -1389,12 +1662,16 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                       child: Text(
                         _displayAncestry[0].name,
                         style: GoogleFonts.inter(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(4),
@@ -1402,7 +1679,9 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                       child: Text(
                         _locationTypeLabel(_displayAncestry[0].type, isNe),
                         style: GoogleFonts.inter(
-                            fontSize: 10, color: Colors.grey[600]),
+                          fontSize: 10,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],
@@ -1419,19 +1698,26 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
                             padding: const EdgeInsets.only(bottom: 2),
                             child: Row(
                               children: [
-                                Icon(LucideIcons.cornerDownRight,
-                                    size: 12, color: Colors.grey[400]),
+                                Icon(
+                                  LucideIcons.cornerDownRight,
+                                  size: 12,
+                                  color: Colors.grey[400],
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   _displayAncestry[i].name,
                                   style: GoogleFonts.inter(
-                                      fontSize: 12, color: Colors.grey[600]),
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '(${_locationTypeLabel(_displayAncestry[i].type, isNe)})',
                                   style: GoogleFonts.inter(
-                                      fontSize: 10, color: Colors.grey[400]),
+                                    fontSize: 10,
+                                    color: Colors.grey[400],
+                                  ),
                                 ),
                               ],
                             ),
@@ -1443,15 +1729,18 @@ class _ShopLocationSectionState extends State<ShopLocationSection> {
             )
           else
             _buildLocationRow(
-                LucideIcons.mapPin, widget.shop.locationFullPath ?? ''),
+              LucideIcons.mapPin,
+              widget.shop.locationFullPath ?? '',
+            ),
         ],
         if (widget.shop.locationId == null)
           Text(
             isNe ? 'स्थान सेट गरिएको छैन।' : 'No location set.',
             style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey,
-                fontStyle: FontStyle.italic),
+              fontSize: 14,
+              color: Colors.grey,
+              fontStyle: FontStyle.italic,
+            ),
           ),
       ],
     );

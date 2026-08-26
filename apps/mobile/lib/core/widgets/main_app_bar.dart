@@ -17,12 +17,14 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
-      leading: leading ?? IconButton(
-        icon: const Icon(LucideIcons.menu, color: Colors.black),
-        onPressed: () {
-          Scaffold.of(context).openDrawer();
-        },
-      ),
+      leading:
+          leading ??
+          IconButton(
+            icon: const Icon(LucideIcons.menu, color: Colors.black),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
       title: Image.asset(
         'assets/images/logo.png',
         height: 28,
@@ -85,9 +87,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const NotificationScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const NotificationScreen()),
                 );
               },
             );
@@ -100,5 +100,6 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
 }

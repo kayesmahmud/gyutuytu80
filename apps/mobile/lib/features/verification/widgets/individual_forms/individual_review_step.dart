@@ -61,13 +61,25 @@ class IndividualReviewStep extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _buildReviewRow(lang == 'ne' ? 'पूरा नाम' : 'Full Name', fullName),
+              _buildReviewRow(
+                lang == 'ne' ? 'पूरा नाम' : 'Full Name',
+                fullName,
+              ),
               const Divider(height: 24),
-              _buildReviewRow(lang == 'ne' ? 'परिचयपत्र प्रकार' : 'ID Type', _getIdTypeLabel(idType, lang)),
+              _buildReviewRow(
+                lang == 'ne' ? 'परिचयपत्र प्रकार' : 'ID Type',
+                _getIdTypeLabel(idType, lang),
+              ),
               const Divider(height: 24),
-              _buildReviewRow(lang == 'ne' ? 'परिचयपत्र नम्बर' : 'ID Number', idNumber),
+              _buildReviewRow(
+                lang == 'ne' ? 'परिचयपत्र नम्बर' : 'ID Number',
+                idNumber,
+              ),
               const Divider(height: 24),
-              _buildReviewRow(lang == 'ne' ? 'अवधि' : 'Duration', lang == 'ne' ? '$durationDays दिन' : '$durationDays days'),
+              _buildReviewRow(
+                lang == 'ne' ? 'अवधि' : 'Duration',
+                lang == 'ne' ? '$durationDays दिन' : '$durationDays days',
+              ),
               const Divider(height: 24),
               _buildReviewRow(
                 lang == 'ne' ? 'मूल्य' : 'Price',
@@ -95,23 +107,39 @@ class IndividualReviewStep extends StatelessWidget {
         Row(
           children: [
             if (idFrontFile != null)
-              Expanded(child: _buildDocPreview(lang == 'ne' ? 'परिचयपत्र अगाडि' : 'ID Front', idFrontFile!)),
+              Expanded(
+                child: _buildDocPreview(
+                  lang == 'ne' ? 'परिचयपत्र अगाडि' : 'ID Front',
+                  idFrontFile!,
+                ),
+              ),
             const SizedBox(width: 8),
             if (idBackFile != null)
-              Expanded(child: _buildDocPreview(lang == 'ne' ? 'परिचयपत्र पछाडि' : 'ID Back', idBackFile!))
+              Expanded(
+                child: _buildDocPreview(
+                  lang == 'ne' ? 'परिचयपत्र पछाडि' : 'ID Back',
+                  idBackFile!,
+                ),
+              )
             else
               const Spacer(),
           ],
         ),
         const SizedBox(height: 12),
         if (selfieFile != null)
-          _buildDocPreview(lang == 'ne' ? 'परिचयपत्रसहित सेल्फी' : 'Selfie with ID', selfieFile!),
+          _buildDocPreview(
+            lang == 'ne' ? 'परिचयपत्रसहित सेल्फी' : 'Selfie with ID',
+            selfieFile!,
+          ),
       ],
     );
   }
 
-  Widget _buildReviewRow(String label, String value,
-      {bool isHighlighted = false}) {
+  Widget _buildReviewRow(
+    String label,
+    String value, {
+    bool isHighlighted = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -138,9 +166,10 @@ class IndividualReviewStep extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600]),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[600],
+          ),
         ),
         const SizedBox(height: 4),
         Container(
@@ -149,10 +178,7 @@ class IndividualReviewStep extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey[300]!),
-            image: DecorationImage(
-              image: FileImage(file),
-              fit: BoxFit.cover,
-            ),
+            image: DecorationImage(image: FileImage(file), fit: BoxFit.cover),
           ),
         ),
       ],

@@ -11,22 +11,22 @@ class VerificationBenefitsGrid extends StatelessWidget {
       {
         'icon': LucideIcons.badgeCheck,
         'title': 'Verified Badge',
-        'desc': 'Stand out from the crowd'
+        'desc': 'Stand out from the crowd',
       },
       {
         'icon': LucideIcons.trendingUp,
         'title': 'More Visibility',
-        'desc': 'Higher in search results'
+        'desc': 'Higher in search results',
       },
       {
         'icon': LucideIcons.shield,
         'title': 'Build Trust',
-        'desc': 'Buyers trust verified sellers'
+        'desc': 'Buyers trust verified sellers',
       },
       {
         'icon': LucideIcons.star,
         'title': 'Premium Support',
-        'desc': 'Priority customer service'
+        'desc': 'Priority customer service',
       },
     ];
 
@@ -54,8 +54,11 @@ class VerificationBenefitsGrid extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(benefit['icon'] as IconData,
-                  color: const Color(0xFF6366F1), size: 28),
+              Icon(
+                benefit['icon'] as IconData,
+                color: const Color(0xFF6366F1),
+                size: 28,
+              ),
               const SizedBox(height: 8),
               Text(
                 benefit['title'] as String,

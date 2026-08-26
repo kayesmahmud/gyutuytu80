@@ -90,9 +90,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   Future<void> _confirmDeletion() async {
     final otp = _otpController.text.trim();
     if (otp.length != 6) {
-      setState(() => _error = context.locale.languageCode == 'ne'
-          ? '६-अंकको कोड प्रविष्ट गर्नुहोस्'
-          : 'Enter a 6-digit code');
+      setState(
+        () => _error = context.locale.languageCode == 'ne'
+            ? '६-अंकको कोड प्रविष्ट गर्नुहोस्'
+            : 'Enter a 6-digit code',
+      );
       return;
     }
 
@@ -149,7 +151,12 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       case _DeleteStep.confirmIntent:
         return _buildConfirmIntent(lang);
       case _DeleteStep.sendingOtp:
-        return const Center(child: Padding(padding: EdgeInsets.all(48), child: CircularProgressIndicator()));
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(48),
+            child: CircularProgressIndicator(),
+          ),
+        );
       case _DeleteStep.enterOtp:
         return _buildEnterOtp(lang);
       case _DeleteStep.deleting:
@@ -186,25 +193,56 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(LucideIcons.alertTriangle, color: Colors.red, size: 20),
+                  const Icon(
+                    LucideIcons.alertTriangle,
+                    color: Colors.red,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     lang == 'ne' ? 'चेतावनी' : 'Warning',
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red),
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              _buildBullet(lang == 'ne' ? 'तपाईंको प्रोफाइल र विज्ञापनहरू लुकाइनेछ' : 'Your profile and ads will be hidden', lang),
-              _buildBullet(lang == 'ne' ? 'सबै सक्रिय विज्ञापनहरू निष्क्रिय हुनेछन्' : 'All active ads will be deactivated', lang),
-              _buildBullet(lang == 'ne' ? '३० दिनभित्र तपाईं खाता पुनर्स्थापित गर्न सक्नुहुन्छ' : 'You can recover your account within 30 days', lang),
-              _buildBullet(lang == 'ne' ? '३० दिनपछि सबै डाटा स्थायी रूपमा मेटिनेछ' : 'After 30 days, all data will be permanently deleted', lang),
+              _buildBullet(
+                lang == 'ne'
+                    ? 'तपाईंको प्रोफाइल र विज्ञापनहरू लुकाइनेछ'
+                    : 'Your profile and ads will be hidden',
+                lang,
+              ),
+              _buildBullet(
+                lang == 'ne'
+                    ? 'सबै सक्रिय विज्ञापनहरू निष्क्रिय हुनेछन्'
+                    : 'All active ads will be deactivated',
+                lang,
+              ),
+              _buildBullet(
+                lang == 'ne'
+                    ? '३० दिनभित्र तपाईं खाता पुनर्स्थापित गर्न सक्नुहुन्छ'
+                    : 'You can recover your account within 30 days',
+                lang,
+              ),
+              _buildBullet(
+                lang == 'ne'
+                    ? '३० दिनपछि सबै डाटा स्थायी रूपमा मेटिनेछ'
+                    : 'After 30 days, all data will be permanently deleted',
+                lang,
+              ),
             ],
           ),
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),
-          Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 14)),
+          Text(
+            _error!,
+            style: const TextStyle(color: Colors.red, fontSize: 14),
+          ),
         ],
         const SizedBox(height: 24),
         SizedBox(
@@ -214,11 +252,19 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(
-              lang == 'ne' ? 'हो, प्रमाणीकरण कोड पठाउनुहोस्' : 'Yes, Send Verification Code',
-              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+              lang == 'ne'
+                  ? 'हो, प्रमाणीकरण कोड पठाउनुहोस्'
+                  : 'Yes, Send Verification Code',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -229,11 +275,16 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(
               lang == 'ne' ? 'रद्द गर्नुहोस्' : 'Cancel',
-              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -247,8 +298,16 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('  •  ', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-          Expanded(child: Text(text, style: GoogleFonts.inter(fontSize: 14, color: Colors.red[800]))),
+          const Text(
+            '  •  ',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.red[800]),
+            ),
+          ),
         ],
       ),
     );
@@ -261,13 +320,17 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         const Icon(LucideIcons.smartphone, size: 48, color: Colors.grey),
         const SizedBox(height: 16),
         Text(
-          lang == 'ne' ? 'प्रमाणीकरण कोड प्रविष्ट गर्नुहोस्' : 'Enter Verification Code',
+          lang == 'ne'
+              ? 'प्रमाणीकरण कोड प्रविष्ट गर्नुहोस्'
+              : 'Enter Verification Code',
           style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         if (_maskedPhone != null)
           Text(
-            lang == 'ne' ? '$_maskedPhone मा कोड पठाइयो' : 'Code sent to $_maskedPhone',
+            lang == 'ne'
+                ? '$_maskedPhone मा कोड पठाइयो'
+                : 'Code sent to $_maskedPhone',
             style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
           ),
         const SizedBox(height: 24),
@@ -277,11 +340,19 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           textAlign: TextAlign.center,
           maxLength: 6,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+          style: GoogleFonts.inter(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 8,
+          ),
           decoration: InputDecoration(
             counterText: '',
             hintText: '000000',
-            hintStyle: GoogleFonts.inter(fontSize: 24, color: Colors.grey[300], letterSpacing: 8),
+            hintStyle: GoogleFonts.inter(
+              fontSize: 24,
+              color: Colors.grey[300],
+              letterSpacing: 8,
+            ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -295,7 +366,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),
-          Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 14)),
+          Text(
+            _error!,
+            style: const TextStyle(color: Colors.red, fontSize: 14),
+          ),
         ],
         const SizedBox(height: 24),
         SizedBox(
@@ -305,11 +379,19 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(
-              lang == 'ne' ? 'खाता मेटाउने पुष्टि गर्नुहोस्' : 'Confirm Account Deletion',
-              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+              lang == 'ne'
+                  ? 'खाता मेटाउने पुष्टि गर्नुहोस्'
+                  : 'Confirm Account Deletion',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -318,7 +400,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           onPressed: _cooldown > 0 ? null : _requestDeletion,
           child: Text(
             _cooldown > 0
-                ? (lang == 'ne' ? 'पुन: पठाउनुहोस् ($_cooldown सेकेन्ड)' : 'Resend ($_cooldown s)')
+                ? (lang == 'ne'
+                      ? 'पुन: पठाउनुहोस् ($_cooldown सेकेन्ड)'
+                      : 'Resend ($_cooldown s)')
                 : (lang == 'ne' ? 'कोड पुन: पठाउनुहोस्' : 'Resend Code'),
           ),
         ),
@@ -335,7 +419,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     if (_recoveryDeadline != null) {
       try {
         final deadline = DateTime.parse(_recoveryDeadline!);
-        deadlineText = formatNepalTime(deadline, 'MMM d, yyyy', context.locale.languageCode);
+        deadlineText = formatNepalTime(
+          deadline,
+          'MMM d, yyyy',
+          context.locale.languageCode,
+        );
       } catch (_) {
         deadlineText = _recoveryDeadline!;
       }
@@ -348,7 +436,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         const Icon(LucideIcons.checkCircle, size: 64, color: Colors.amber),
         const SizedBox(height: 24),
         Text(
-          lang == 'ne' ? 'खाता मेटाउन तालिकाबद्ध' : 'Account Scheduled for Deletion',
+          lang == 'ne'
+              ? 'खाता मेटाउन तालिकाबद्ध'
+              : 'Account Scheduled for Deletion',
           style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -367,7 +457,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     ? 'तपाईंको खाता $deadlineText मा स्थायी रूपमा मेटिनेछ।'
                     : 'Your account will be permanently deleted on $deadlineText.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.amber[900]),
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.amber[900],
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -375,7 +468,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     ? 'त्यसअघि लगइन गरेर खाता पुनर्स्थापित गर्न सक्नुहुन्छ।'
                     : 'You can recover your account by logging in before then.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.amber[800]),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: Colors.amber[800],
+                ),
               ),
             ],
           ),
@@ -397,12 +493,18 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               elevation: 0,
             ),
             child: Text(
               lang == 'ne' ? 'ठीक छ' : 'OK',
-              style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

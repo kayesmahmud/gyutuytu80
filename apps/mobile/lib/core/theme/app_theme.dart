@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Brand Colors from globals.css
-  static const Color primary = Color(0xFFF43F5E);      // --color-primary
-  static const Color secondary = Color(0xFF3B82F6);    // --color-secondary
-  static const Color background = Color(0xFFFFFFFF);   // body background
-  static const Color textDark = Color(0xFF111827);     // body color
+  static const Color primary = Color(0xFFF43F5E); // --color-primary
+  static const Color secondary = Color(0xFF3B82F6); // --color-secondary
+  static const Color background = Color(0xFFFFFFFF); // body background
+  static const Color textDark = Color(0xFF111827); // body color
   static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFDC2626);
@@ -23,13 +23,13 @@ class AppTheme {
         error: error,
         surface: background,
       ),
-      
+
       // Typography
       textTheme: GoogleFonts.interTextTheme().apply(
         bodyColor: textDark,
         displayColor: textDark,
       ),
-      
+
       // App Bar Theme
       appBarTheme: AppBarTheme(
         backgroundColor: background,
@@ -48,9 +48,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           textStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
@@ -69,14 +67,16 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Input Fields
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFFF9FAFB), // gray-50
         // Default border
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12), // Slightly more rounded based on screenshots
+          borderRadius: BorderRadius.circular(
+            12,
+          ), // Slightly more rounded based on screenshots
           borderSide: const BorderSide(color: Color(0xFFE5E7EB)), // gray-200
         ),
         // Enabled state
@@ -89,7 +89,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primary, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         labelStyle: GoogleFonts.inter(color: Colors.grey[600]),
         hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
       ),

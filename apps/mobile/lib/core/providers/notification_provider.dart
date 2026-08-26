@@ -57,7 +57,10 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final items = await _client.getNotifications(page: _currentPage, limit: 20);
+      final items = await _client.getNotifications(
+        page: _currentPage,
+        limit: 20,
+      );
       if (items.isEmpty) {
         _hasMore = false;
       } else {
@@ -65,7 +68,10 @@ class NotificationProvider extends ChangeNotifier {
         _currentPage++;
       }
     } catch (e) {
-      developer.log('Error fetching notifications: $e', name: 'NotificationProvider');
+      developer.log(
+        'Error fetching notifications: $e',
+        name: 'NotificationProvider',
+      );
       _hasError = true;
       _isOffline = await _isOfflineError();
     }
@@ -106,7 +112,10 @@ class NotificationProvider extends ChangeNotifier {
     final success = await _client.markAllAsRead();
     if (success) {
       _notifications = _notifications
-          .map((n) => n.isRead ? n : n.copyWith(isRead: true, readAt: DateTime.now()))
+          .map(
+            (n) =>
+                n.isRead ? n : n.copyWith(isRead: true, readAt: DateTime.now()),
+          )
           .toList();
       _unreadCount = 0;
       notifyListeners();
@@ -117,7 +126,9 @@ class NotificationProvider extends ChangeNotifier {
   Future<void> deleteNotification(int notificationId) async {
     final success = await _client.deleteNotification(notificationId);
     if (success) {
-      final wasUnread = _notifications.any((n) => n.id == notificationId && !n.isRead);
+      final wasUnread = _notifications.any(
+        (n) => n.id == notificationId && !n.isRead,
+      );
       _notifications.removeWhere((n) => n.id == notificationId);
       if (wasUnread) {
         _unreadCount = (_unreadCount - 1).clamp(0, _unreadCount);
@@ -151,8 +162,10 @@ class NotificationProvider extends ChangeNotifier {
 
         notifyListeners();
       } catch (e) {
-        developer.log('Error parsing notification socket event: $e',
-            name: 'NotificationProvider');
+        developer.log(
+          'Error parsing notification socket event: $e',
+          name: 'NotificationProvider',
+        );
       }
     });
   }

@@ -56,11 +56,13 @@ class InterstitialAdService {
 
     // Show on 1st view, then every N views
     // e.g., interval=5: show on views 1, 6, 11, 16...
-    final shouldShow = _navigationCount == 1 ||
-        (_navigationCount - 1) % interval == 0;
+    final shouldShow =
+        _navigationCount == 1 || (_navigationCount - 1) % interval == 0;
 
     if (!shouldShow) {
-      debugPrint('📊 Interstitial skipped (view $_navigationCount, interval=$interval)');
+      debugPrint(
+        '📊 Interstitial skipped (view $_navigationCount, interval=$interval)',
+      );
       return false;
     }
 

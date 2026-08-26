@@ -120,17 +120,21 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     if (_searchQuery.isEmpty) return _categories;
     final query = _searchQuery.toLowerCase();
     return _categories
-        .map((cat) => _FaqCategory(
-              id: cat.id,
-              titleKey: cat.titleKey,
-              icon: cat.icon,
-              descriptionKey: cat.descriptionKey,
-              faqs: cat.faqs
-                  .where((faq) =>
+        .map(
+          (cat) => _FaqCategory(
+            id: cat.id,
+            titleKey: cat.titleKey,
+            icon: cat.icon,
+            descriptionKey: cat.descriptionKey,
+            faqs: cat.faqs
+                .where(
+                  (faq) =>
                       faq.questionKey.tr().toLowerCase().contains(query) ||
-                      faq.answerKey.tr().toLowerCase().contains(query))
-                  .toList(),
-            ))
+                      faq.answerKey.tr().toLowerCase().contains(query),
+                )
+                .toList(),
+          ),
+        )
         .where((cat) => cat.faqs.isNotEmpty)
         .toList();
   }
@@ -148,8 +152,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('help.title'.tr(),
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        title: Text(
+          'help.title'.tr(),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1F2937),
         elevation: 0,
@@ -167,12 +173,18 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               decoration: InputDecoration(
                 hintText: 'help.searchPlaceholder'.tr(),
                 hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
-                prefixIcon:
-                    Icon(LucideIcons.search, color: Colors.grey[400], size: 20),
+                prefixIcon: Icon(
+                  LucideIcons.search,
+                  color: Colors.grey[400],
+                  size: 20,
+                ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: Icon(LucideIcons.x,
-                            color: Colors.grey[400], size: 18),
+                        icon: Icon(
+                          LucideIcons.x,
+                          color: Colors.grey[400],
+                          size: 18,
+                        ),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _searchQuery = '');
@@ -218,21 +230,27 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         children: [
           Icon(LucideIcons.searchX, size: 48, color: Colors.grey[300]),
           const SizedBox(height: 12),
-          Text('help.noResults'.tr(),
-              style: GoogleFonts.inter(
-                  color: Colors.grey[500],
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500)),
+          Text(
+            'help.noResults'.tr(),
+            style: GoogleFonts.inter(
+              color: Colors.grey[500],
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('help.tryDifferentKeywords'.tr(),
-              style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14)),
+          Text(
+            'help.tryDifferentKeywords'.tr(),
+            style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildCategoryCard(_FaqCategory category) {
-    final isExpanded = _expandedCategoryId == category.id ||
+    final isExpanded =
+        _expandedCategoryId == category.id ||
         _searchQuery.isNotEmpty; // Auto-expand when searching
 
     return Card(
@@ -250,9 +268,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             onTap: _searchQuery.isNotEmpty
                 ? null
                 : () => setState(() {
-                      _expandedCategoryId =
-                          isExpanded ? null : category.id;
-                    }),
+                    _expandedCategoryId = isExpanded ? null : category.id;
+                  }),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -264,22 +281,32 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                       color: const Color(0xFFE11D48).withAlpha(25),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(category.icon,
-                        size: 20, color: const Color(0xFFE11D48)),
+                    child: Icon(
+                      category.icon,
+                      size: 20,
+                      color: const Color(0xFFE11D48),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(category.titleKey.tr(),
-                            style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                                color: const Color(0xFF1F2937))),
-                        Text(category.descriptionKey.tr(),
-                            style: GoogleFonts.inter(
-                                fontSize: 13, color: Colors.grey[500])),
+                        Text(
+                          category.titleKey.tr(),
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                        Text(
+                          category.descriptionKey.tr(),
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.grey[500],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -312,18 +339,23 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                     }),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               Expanded(
-                                child: Text(faq.questionKey.tr(),
-                                    style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFF374151))),
+                                child: Text(
+                                  faq.questionKey.tr(),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF374151),
+                                  ),
+                                ),
                               ),
                               Icon(
                                 isFaqExpanded
@@ -336,11 +368,14 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                           ),
                           if (isFaqExpanded) ...[
                             const SizedBox(height: 10),
-                            Text(faq.answerKey.tr(),
-                                style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                    height: 1.5)),
+                            Text(
+                              faq.answerKey.tr(),
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                                height: 1.5,
+                              ),
+                            ),
                           ],
                         ],
                       ),
@@ -368,33 +403,44 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         children: [
           const Icon(LucideIcons.messageCircle, color: Colors.white, size: 32),
           const SizedBox(height: 12),
-          Text('help.stillNeedHelp'.tr(),
-              style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600)),
+          Text(
+            'help.stillNeedHelp'.tr(),
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('help.supportTeamHere'.tr(),
-              style: GoogleFonts.inter(
-                  color: Colors.white70, fontSize: 14)),
+          Text(
+            'help.supportTeamHere'.tr(),
+            style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => const SupportTicketsScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SupportTicketsScreen(),
+                      ),
+                    );
                   },
                   icon: const Icon(LucideIcons.ticket, size: 16),
-                  label: Text('help.supportTicket'.tr(),
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+                  label: Text(
+                    'help.supportTicket'.tr(),
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white54),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -402,18 +448,23 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => const ContactScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ContactScreen()),
+                    );
                   },
                   icon: const Icon(LucideIcons.mail, size: 16),
-                  label: Text('help.contactUs'.tr(),
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
+                  label: Text(
+                    'help.contactUs'.tr(),
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white54),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),

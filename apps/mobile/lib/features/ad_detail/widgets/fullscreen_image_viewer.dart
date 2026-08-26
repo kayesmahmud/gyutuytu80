@@ -87,7 +87,10 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
               top: topPad + 14,
               right: 16,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(16),
@@ -139,13 +142,14 @@ class _ZoomableImageState extends State<_ZoomableImage>
   @override
   void initState() {
     super.initState();
-    _zoomAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    )..addListener(() {
-        final anim = _zoomAnimation;
-        if (anim != null) _transformController.value = anim.value;
-      });
+    _zoomAnimController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 250),
+        )..addListener(() {
+          final anim = _zoomAnimation;
+          if (anim != null) _transformController.value = anim.value;
+        });
   }
 
   @override
@@ -155,16 +159,13 @@ class _ZoomableImageState extends State<_ZoomableImage>
     super.dispose();
   }
 
-  bool get _isZoomedIn =>
-      _transformController.value.getMaxScaleOnAxis() > 1.05;
+  bool get _isZoomedIn => _transformController.value.getMaxScaleOnAxis() > 1.05;
 
   void _animateZoomTo(Matrix4 target) {
-    _zoomAnimation = Matrix4Tween(
-      begin: _transformController.value,
-      end: target,
-    ).animate(
-      CurvedAnimation(parent: _zoomAnimController, curve: Curves.easeOut),
-    );
+    _zoomAnimation =
+        Matrix4Tween(begin: _transformController.value, end: target).animate(
+          CurvedAnimation(parent: _zoomAnimController, curve: Curves.easeOut),
+        );
     _zoomAnimController.forward(from: 0);
   }
 
