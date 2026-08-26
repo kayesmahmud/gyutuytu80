@@ -22,6 +22,7 @@ export function LocationSection({ formData, onFormChange }: LocationSectionProps
           }}
           selectedLocationSlug={formData.locationSlug || null}
           selectedLocationName={formData.locationName || null}
+          minSelectableType="municipality"
         />
       </div>
     </div>

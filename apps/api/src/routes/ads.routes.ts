@@ -38,7 +38,7 @@ import {
 import { sendNotification, notifyEditors } from '../services/notification.service.js';
 import { moderateNewAd } from '../services/moderation.service.js';
 import { isAutofillAvailable, draftFromImages } from '../services/autofill.service.js';
-import { reportExplicitContent } from '../services/userReport.service.js';
+import { reportAiViolation } from '../services/userReport.service.js';
 import { imageBuffersToDataUrls } from '../lib/ai/images.js';
 
 const router = Router();
@@ -256,10 +256,12 @@ router.post(
 
     const draft = await draftFromImages(imageDataUrls);
     // Prohibited sexual/nude content → auto-report the uploader to the editor
-    // panel's user reports (fire-and-forget; the client hard-blocks the photos)
+    // panel's user reports (fire-and-forget; the client hard-blocks the photos).
+    // Banned items ('prohibited') are only warned here — the report happens at
+    // ad submission, when the seller actually tries to list the item.
     if (draft?.unsellableReason === 'explicit') {
-      reportExplicitContent(req.user!.userId, 'ai-draft').catch((err) =>
-        console.error('Explicit-content report error:', err)
+      reportAiViolation(req.user!.userId, 'ai-draft', 'explicit').catch((err) =>
+        console.error('AI violation report error:', err)
       );
     }
     res.json({ success: true, data: draft });
@@ -422,6 +424,7 @@ router.post(
         description: ad.description,
         price: parsedPrice ?? null,
         categoryName: ad.categories?.name ?? null,
+        categoryId: ad.category_id ?? null,
         ownerUserId: userId,
         imagePaths: files && files.length > 0 ? files.map((f) => f.path) : stagedPaths,
         adUpdatedAt: ad.updated_at,

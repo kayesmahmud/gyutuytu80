@@ -308,6 +308,11 @@ class AdWithDetails extends Ad {
   final String? subcategoryNameNe;
   final String locationName;
   final String? locationNameNe;
+
+  /// District only — what the ad card shows. Municipality names run to 43
+  /// characters and truncate in a card; districts top out at 16. English in
+  /// both locales, like every other place name in the app.
+  final String? districtName;
   final String? areaName;
   final String? areaNameNe;
   final List<AdLocationLevel> locationLevels;
@@ -360,6 +365,7 @@ class AdWithDetails extends Ad {
     this.subcategoryNameNe,
     required this.locationName,
     this.locationNameNe,
+    this.districtName,
     this.areaName,
     this.areaNameNe,
     this.locationLevels = const [],
@@ -441,6 +447,8 @@ class AdWithDetails extends Ad {
       locationNameNe:
           json['locationNameNe'] as String? ??
           json['location_name_ne'] as String?,
+      districtName:
+          json['districtName'] as String? ?? json['district_name'] as String?,
       areaName: json['areaName'] as String? ?? json['area_name'] as String?,
       areaNameNe:
           json['areaNameNe'] as String? ?? json['area_name_ne'] as String?,
@@ -470,6 +478,7 @@ class AdWithDetails extends Ad {
       'subcategoryNameNe': subcategoryNameNe,
       'locationName': locationName,
       'locationNameNe': locationNameNe,
+      'districtName': districtName,
       'areaName': areaName,
       'areaNameNe': areaNameNe,
       'accountType': accountType,

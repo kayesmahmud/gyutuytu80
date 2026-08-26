@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { MapPin } from 'lucide-react';
 import { formatPrice, formatDateTime } from '@thulobazaar/utils';
 import { getImageUrl } from '@/lib/images/imageUrl';
 
@@ -17,6 +18,8 @@ interface AdCardProps {
         primaryImage?: string | null;
         categoryName?: string | null;
         categoryIcon?: string | null;
+        /** District only — municipality names are far too long for a card. */
+        districtName?: string | null;
         createdAt?: string | Date;
         publishedAt?: string | Date;
         sellerName: string;
@@ -98,10 +101,10 @@ function DesktopCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lan
                 <h3 className="text-lg font-semibold mb-1.5 text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap">
                     {ad.title}
                 </h3>
-                {ad.categoryName && (
+                {ad.districtName && (
                     <div className="flex items-center gap-1 text-sm text-gray-500 mb-1.5">
-                        <span>{ad.categoryIcon || '📁'}</span>
-                        <span className="truncate">{ad.categoryName}</span>
+                        <MapPin size={14} className="flex-shrink-0" aria-hidden="true" />
+                        <span className="truncate">{ad.districtName}</span>
                     </div>
                 )}
                 <div className="flex items-center gap-2 mb-2">
@@ -174,11 +177,13 @@ function MobileCard({ ad, lang, adUrl, imageUrl }: { ad: AdCardProps['ad']; lang
                 <h3 className="text-[10px] sm:text-sm font-semibold mb-1 text-gray-900 truncate">
                     {ad.title}
                 </h3>
-                {/* Category - single line */}
-                <div className="flex items-center gap-1 text-[11px] text-gray-500 mb-1">
-                    <span className="text-[10px] flex-shrink-0">{ad.categoryIcon || '📁'}</span>
-                    <span className="truncate">{ad.categoryName}</span>
-                </div>
+                {/* District - single line */}
+                {ad.districtName && (
+                    <div className="flex items-center gap-1 text-[11px] text-gray-500 mb-1">
+                        <MapPin size={12} className="flex-shrink-0" aria-hidden="true" />
+                        <span className="truncate">{ad.districtName}</span>
+                    </div>
+                )}
                 {/* Price - prominent */}
                 <div className="text-xs sm:text-sm font-bold text-green-600 mb-1">
                     {formatPrice(ad.price)}

@@ -146,23 +146,29 @@ export function useCascadingLocationFilter({
     }
   }, [caches.municipalities]);
 
-  const fetchAreas = useCallback(async (municipalityId: number) => {
-    if (caches.areas[municipalityId]) return;
+  // Returns the areas as well as caching them — callers need to know whether a
+  // municipality is subdivided before deciding if it can be selected outright.
+  const fetchAreas = useCallback(async (municipalityId: number): Promise<Area[]> => {
+    const cached = caches.areas[municipalityId];
+    if (cached) return cached;
 
     try {
       setIsLoading(true);
       const response = await apiClient.getLocations({ parent_id: municipalityId });
       if (response.success && response.data) {
+        const areas = response.data as unknown as Area[];
         setCaches(prev => ({
           ...prev,
-          areas: { ...prev.areas, [municipalityId]: response.data as unknown as Area[] },
+          areas: { ...prev.areas, [municipalityId]: areas },
         }));
+        return areas;
       }
     } catch (error) {
       console.error('Error fetching areas:', error);
     } finally {
       setIsLoading(false);
     }
+    return [];
   }, [caches.areas]);
 
   // Initialize provinces
@@ -193,6 +199,32 @@ export function useCascadingLocationFilter({
       if (!caches.areas[id]) fetchAreas(id);
     });
   }, [expanded.municipalities, caches.areas, fetchAreas]);
+
+  /**
+   * Expand the tree down to a searched location so its ancestors end up open
+   * and visible — the web equivalent of the Flutter app filling its
+   * province/district/municipality dropdowns. Ancestors arrive root → leaf.
+   */
+  const expandToPath = useCallback(
+    async (chain: Array<{ id: number; type: string }>) => {
+      const province = chain.find((n) => n.type === 'province');
+      const district = chain.find((n) => n.type === 'district');
+      const municipality = chain.find((n) => n.type === 'municipality');
+
+      if (province) await fetchDistricts(province.id);
+      if (district) await fetchMunicipalities(district.id);
+      if (municipality) await fetchAreas(municipality.id);
+
+      setExpanded((prev) => ({
+        provinces: province ? new Set(prev.provinces).add(province.id) : prev.provinces,
+        districts: district ? new Set(prev.districts).add(district.id) : prev.districts,
+        municipalities: municipality
+          ? new Set(prev.municipalities).add(municipality.id)
+          : prev.municipalities,
+      }));
+    },
+    [fetchDistricts, fetchMunicipalities, fetchAreas]
+  );
 
   // Toggle functions
   const toggleProvince = async (provinceId: number) => {
@@ -279,5 +311,6 @@ export function useCascadingLocationFilter({
     toggleMunicipality,
     handleSearchChange,
     fetchAreas,
+    expandToPath,
   };
 }

@@ -233,6 +233,50 @@ export async function transformAdForDetail(ad: any) {
 }
 
 /** Location chain leaf → root (Area, District, Province) with ids so clients can link each level. */
+/**
+ * Tiers precise enough to be an ad's location. Mirrors the web picker's
+ * `minSelectableType` and the mobile app, which has always required a
+ * municipality — anything coarser leaves the ad's district unresolvable, so the
+ * ad card has no place name to show.
+ */
+const AD_LOCATION_TIERS = ['municipality', 'area'];
+
+// Bilingual on purpose: released app builds show this server string verbatim
+// in a snackbar, with no client-side localization layer in between.
+export const AD_LOCATION_TIER_MESSAGE =
+  'Please choose a municipality or area — province and district are too broad for an ad. कृपया नगरपालिका वा क्षेत्र छान्नुहोस् — प्रदेश र जिल्ला मात्र पर्याप्त छैन।';
+
+export const AD_LOCATION_AREA_MESSAGE =
+  'Please choose an area within this municipality — the municipality alone is too broad. कृपया यस नगरपालिकाभित्रको क्षेत्र (जस्तै ठमेल, नक्साल) छान्नुहोस्।';
+
+/**
+ * Validates an ad's location. Returns null when it passes, otherwise the
+ * message to show the seller.
+ */
+export async function validateAdLocation(locationId: number): Promise<string | null> {
+  const location = await prisma.locations.findUnique({
+    where: { id: locationId },
+    select: { type: true },
+  });
+
+  if (!location || !AD_LOCATION_TIERS.includes(location.type)) {
+    return AD_LOCATION_TIER_MESSAGE;
+  }
+
+  // A municipality that is subdivided into areas isn't precise enough on its
+  // own. Only Kathmandu Metropolitan City is subdivided today (104 areas —
+  // Thamel, Naxal, …), so this asks for an area exactly where one exists and
+  // leaves every other municipality as a valid stopping point.
+  if (location.type === 'municipality') {
+    const areaCount = await prisma.locations.count({
+      where: { parent_id: locationId, type: 'area' },
+    });
+    if (areaCount > 0) return AD_LOCATION_AREA_MESSAGE;
+  }
+
+  return null;
+}
+
 export async function getLocationLevels(locationId?: number): Promise<Array<{
   id: number;
   name: string;
@@ -555,10 +599,43 @@ export async function generateAdSlug(title: string, locationId?: number): Promis
 // CRUD Operations
 // ============================================================================
 
+/**
+ * Location plus two ancestors — enough to reach the district from the deepest
+ * tier we store (area → municipality → district).
+ */
+const adCardLocationSelect = {
+  name: true,
+  name_ne: true,
+  type: true,
+  locations: {
+    select: {
+      name: true,
+      name_ne: true,
+      type: true,
+      locations: { select: { name: true, name_ne: true, type: true } },
+    },
+  },
+};
+
+/**
+ * The place name an ad card shows. Always the district — municipality names
+ * average 26 characters against a district's 8, and truncate in a half-width
+ * card. Falls back to the ad's own location when nothing above it is a district
+ * (the legacy province-level ads). Mirrors the web's resolveDistrictName.
+ */
+export function resolveDistrictName(location: any): string | null {
+  let current = location;
+  while (current) {
+    if (current.type === 'district') return current.name;
+    current = current.locations;
+  }
+  return location?.name ?? null;
+}
+
 const adListSelect = {
   include: {
     categories: { select: { name: true, name_ne: true, icon: true } },
-    locations: { select: { name: true, name_ne: true } },
+    locations: { select: adCardLocationSelect },
     users_ads_user_idTousers: {
       select: {
         account_type: true,

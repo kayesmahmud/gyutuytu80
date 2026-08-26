@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { prisma } from '@thulobazaar/database';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AdCard, AdBanner, AdsPagination } from '@/components/ads';
+import { AD_CARD_LOCATION_SELECT, resolveDistrictName } from '@/lib/location/district';
 import HeroSearch from './HeroSearch';
 import FeaturedAdsCarousel from './FeaturedAdsCarousel';
 import CategoryIcon from './CategoryIcon';
@@ -141,7 +142,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
           where: { is_primary: true },
           take: 1,
         },
-        locations: true,
+        locations: { select: AD_CARD_LOCATION_SELECT },
         categories: true,
         users_ads_user_idTousers: {
           select: {
@@ -173,20 +174,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
             is_primary: true,
           },
         },
-        locations: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            locations: {
-              select: {
-                id: true,
-                name: true,
-                type: true,
-              },
-            },
-          },
-        },
+        locations: { select: AD_CARD_LOCATION_SELECT },
         categories: {
           select: {
             id: true,
@@ -248,6 +236,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
     categoryName: ad.categories?.name || null,
     categoryIcon: ad.categories?.icon || null,
     locationName: ad.locations?.name || null,
+    districtName: resolveDistrictName(ad.locations),
     slug: ad.slug || undefined,
     condition: ad.condition || null,
     publishedAt: ad.published_at || ad.reviewed_at || ad.created_at || new Date(),
@@ -264,6 +253,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
     primaryImage: ad.ad_images && ad.ad_images.length > 0 ? ad.ad_images[0]?.file_path || null : null,
     categoryName: ad.categories?.name || null,
     categoryIcon: ad.categories?.icon || null,
+    districtName: resolveDistrictName(ad.locations),
     // publishedAt = first time the ad went live (use for "time ago" display)
     publishedAt: ad.published_at || ad.reviewed_at || ad.created_at || new Date(),
     createdAt: ad.created_at || new Date(),

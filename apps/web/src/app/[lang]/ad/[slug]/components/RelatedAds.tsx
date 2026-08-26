@@ -8,6 +8,7 @@ export interface RelatedAd {
   primaryImage: string | null;
   categoryName: string | null;
   categoryIcon: string | null;
+  districtName: string | null;
   publishedAt: Date;
   sellerName: string;
   isFeatured: boolean;
@@ -47,6 +48,7 @@ export async function RelatedAds({ ads, lang }: RelatedAdsProps) {
               primaryImage: ad.primaryImage,
               categoryName: ad.categoryName,
               categoryIcon: ad.categoryIcon,
+              districtName: ad.districtName,
               publishedAt: ad.publishedAt,
               sellerName: ad.sellerName,
               isFeatured: ad.isFeatured,

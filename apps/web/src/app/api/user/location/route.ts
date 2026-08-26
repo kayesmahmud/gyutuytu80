@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { requireAuth } from '@/lib/auth';
+import { isValidAdLocationTier } from '@/lib/location/tiers';
 
 /**
  * GET /api/user/location
@@ -33,11 +34,59 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // A stored profile location is often unusable as an ad location: 3,353 users
+    // have none at all, and others predate the municipality-or-deeper rule. Fall
+    // back to the precise location the seller last posted from, so the post-ad
+    // form still prefills. `derived` tells the caller this wasn't their saved
+    // default, which is the cue to write it back after a successful post.
+    let location = user.locations;
+    let derived = false;
+
+    // Usable as an ad location = an area, or a municipality with no areas of
+    // its own. Kathmandu Metropolitan City is subdivided, so prefilling it
+    // would hand the seller a location the API rejects at submit — the same
+    // trap as prefilling a province, just one tier down.
+    let usable = isValidAdLocationTier(location?.type);
+    if (usable && location?.type === 'municipality') {
+      const areaCount = await prisma.locations.count({
+        where: { parent_id: location.id, type: 'area' },
+      });
+      usable = areaCount === 0;
+    }
+
+    if (!usable) {
+      const lastPreciseAd = await prisma.ads.findFirst({
+        where: {
+          user_id: userId,
+          locations: {
+            is: {
+              OR: [
+                { type: 'area' },
+                { type: 'municipality', other_locations: { none: { type: 'area' } } },
+              ],
+            },
+          },
+        },
+        orderBy: { created_at: 'desc' },
+        select: {
+          locations: {
+            select: { id: true, name: true, slug: true, type: true, parent_id: true },
+          },
+        },
+      });
+
+      if (lastPreciseAd?.locations) {
+        location = lastPreciseAd.locations;
+        derived = true;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
-        locationId: user.location_id,
-        location: user.locations,
+        locationId: location?.id ?? user.location_id,
+        location,
+        derived,
       },
     });
   } catch (error: any) {

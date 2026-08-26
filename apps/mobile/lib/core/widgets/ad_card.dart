@@ -35,7 +35,11 @@ class AdCard extends StatelessWidget {
     final isNew = ad.condition?.toLowerCase() == 'brand new';
 
     final lang = context.locale.languageCode;
-    final formattedDate = formatNepalTime(ad.publishedAt, "MMM d, yyyy • h:mm a", lang);
+    final formattedDate = formatNepalTime(
+      ad.publishedAt,
+      "MMM d, yyyy • h:mm a",
+      lang,
+    );
 
     return TapScale(
       onTap:
@@ -195,30 +199,34 @@ class AdCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  // Category: Folder icon + Traditional Wear
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.folderOpen,
-                        size: 14,
-                        color: Colors.grey[500],
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          ad.localizedCategoryName(context.locale.languageCode),
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  // District: pin icon + Kathmandu. District rather than the
+                  // ad's own municipality — those run to 43 characters and
+                  // truncate in a card, districts top out at 16.
+                  if (ad.districtName != null &&
+                      ad.districtName!.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          LucideIcons.mapPin,
+                          size: 14,
+                          color: Colors.grey[500],
                         ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 6),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            ad.districtName!,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                  ],
 
                   // Price: Rs. 4,444 (Green, Bold)
                   Text(

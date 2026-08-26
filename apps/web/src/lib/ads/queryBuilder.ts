@@ -4,6 +4,8 @@
  * Used by /ads page (consolidated from former /search and /all-ads pages)
  */
 
+import { AD_CARD_LOCATION_SELECT } from '@/lib/location/district';
+
 export interface AdsFilterOptions {
   categoryIds?: number[];
   locationIds?: number[];
@@ -185,4 +187,5 @@ export const standardAdInclude = {
       individual_verified: true,
     },
   },
+  locations: { select: AD_CARD_LOCATION_SELECT },
 } as const;

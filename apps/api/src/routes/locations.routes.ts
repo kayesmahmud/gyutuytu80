@@ -163,6 +163,69 @@ router.get(
 );
 
 /**
+ * Location search that carries each result's ancestors. Picking "Thamel" has to
+ * fill in Kathmandu Metropolitan City → Kathmandu → Bagmati, and the web picker
+ * loads its tree lazily so it cannot resolve the chain itself. Three joins cover
+ * the deepest chain we store (area → municipality → district → province).
+ *
+ * `hierarchy` runs root → leaf, the order clients reverse to render
+ * "Thamel, Kathmandu Metropolitan City, Kathmandu, Bagmati".
+ */
+async function searchLocationsWithAncestors(
+  searchTerm: string,
+  limit: number,
+  tierFirst: boolean
+) {
+  // Built here rather than at module scope: test files that mock
+  // @thulobazaar/database don't export `Prisma`, and evaluating this on import
+  // would crash the whole route module before a single test ran.
+  const orderBy = tierFirst
+    ? Prisma.sql`
+        CASE l.type
+          WHEN 'province' THEN 1
+          WHEN 'district' THEN 2
+          WHEN 'municipality' THEN 3
+          WHEN 'area' THEN 4
+          ELSE 5
+        END,
+        l.name ASC
+      `
+    : Prisma.sql`l.name ASC`;
+
+  const rows = await prisma.$queryRaw<Array<Record<string, unknown>>>`
+    SELECT l.id, l.name, l.name_ne, l.slug, l.type, l.parent_id,
+           p.id   AS p_id,   p.name   AS p_name,   p.type   AS p_type,
+           gp.id  AS gp_id,  gp.name  AS gp_name,  gp.type  AS gp_type,
+           ggp.id AS ggp_id, ggp.name AS ggp_name, ggp.type AS ggp_type
+    FROM locations l
+    LEFT JOIN locations p   ON p.id   = l.parent_id
+    LEFT JOIN locations gp  ON gp.id  = p.parent_id
+    LEFT JOIN locations ggp ON ggp.id = gp.parent_id
+    WHERE l.name ILIKE ${searchTerm}
+    ORDER BY ${orderBy}
+    LIMIT ${limit}
+  `;
+
+  return rows.map((row) => {
+    const ancestors = [
+      { id: row.ggp_id, name: row.ggp_name, type: row.ggp_type },
+      { id: row.gp_id, name: row.gp_name, type: row.gp_type },
+      { id: row.p_id, name: row.p_name, type: row.p_type },
+    ].filter((a) => a.id !== null && a.id !== undefined);
+
+    return {
+      id: row.id,
+      name: row.name,
+      name_ne: row.name_ne,
+      slug: row.slug,
+      type: row.type,
+      parent_id: row.parent_id,
+      hierarchy: [...ancestors, { id: row.id, name: row.name, type: row.type }],
+    };
+  });
+}
+
+/**
  * GET /api/locations/search
  * Search areas/places with autocomplete
  */
@@ -178,15 +241,9 @@ router.get(
     const searchTerm = `%${(q as string).trim()}%`;
     const limitNum = parseInt(limit as string);
 
-    const results = await prisma.$queryRaw`
-      SELECT id, name, name_ne, slug, type, parent_id
-      FROM locations
-      WHERE name ILIKE ${searchTerm}
-      ORDER BY name ASC
-      LIMIT ${limitNum}
-    `;
+    const results = await searchLocationsWithAncestors(searchTerm, limitNum, false);
 
-    console.log(`🔍 Area search for "${q}": Found ${Array.isArray(results) ? results.length : 0} results`);
+    console.log(`🔍 Area search for "${q}": Found ${results.length} results`);
 
     res.json({
       success: true,
@@ -211,23 +268,9 @@ router.get(
     const searchTerm = `%${(q as string).trim()}%`;
     const limitNum = parseInt(limit as string);
 
-    const results = await prisma.$queryRaw`
-      SELECT id, name, name_ne, slug, type, parent_id
-      FROM locations
-      WHERE name ILIKE ${searchTerm}
-      ORDER BY
-        CASE type
-          WHEN 'province' THEN 1
-          WHEN 'district' THEN 2
-          WHEN 'municipality' THEN 3
-          WHEN 'area' THEN 4
-          ELSE 5
-        END,
-        name ASC
-      LIMIT ${limitNum}
-    `;
+    const results = await searchLocationsWithAncestors(searchTerm, limitNum, true);
 
-    console.log(`🔍 All-location search for "${q}": Found ${Array.isArray(results) ? results.length : 0} results`);
+    console.log(`🔍 All-location search for "${q}": Found ${results.length} results`);
 
     res.json({
       success: true,

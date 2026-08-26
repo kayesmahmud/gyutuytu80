@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CascadingLocationFilterProps, SearchResult } from './types';
 import { useCascadingLocationFilter } from './useCascadingLocationFilter';
-import { getLocationTypeLabel, buildFullPath, buildReversedPath } from './helpers';
+import { getLocationTypeLabel, buildFullPath, buildReversedPath, buildParentHint } from './helpers';
+import { isTierAtLeast } from '@/lib/location/tiers';
 
 export default function CascadingLocationFilter({
   onLocationSelect,
   selectedLocationSlug,
   selectedLocationName,
   initialProvinces,
+  minSelectableType,
 }: CascadingLocationFilterProps) {
   const {
     provinces,
@@ -26,6 +28,7 @@ export default function CascadingLocationFilter({
     toggleMunicipality,
     handleSearchChange,
     fetchAreas,
+    expandToPath,
   } = useCascadingLocationFilter({
     initialProvinces,
     selectedLocationSlug,
@@ -33,6 +36,12 @@ export default function CascadingLocationFilter({
   });
 
   const searchInputRef = useRef<HTMLDivElement>(null);
+  // Set when a search result is too broad to be an ad's location. The tree rows
+  // can just refuse to select, but a search result has no row to explain itself.
+  const [narrowMessage, setNarrowMessage] = useState<string | null>(null);
+  // Full chain of whatever is currently selected, leaf first, so the seller can
+  // see the ancestors a search filled in for them.
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   // Close autocomplete when clicking outside
   useEffect(() => {
@@ -46,27 +55,78 @@ export default function CascadingLocationFilter({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [setShowAutocomplete]);
 
-  const handleAutocompleteSelect = (result: SearchResult) => {
-    setSearchTerm(result.name);
+  // Unconstrained (filtering) means every tier is selectable. When constrained
+  // (posting/editing), coarser rows survive as expanders only.
+  const canSelect = (type: string) => !minSelectableType || isTierAtLeast(type, minSelectableType);
+
+  // A municipality that is subdivided into areas isn't precise enough for an ad
+  // on its own — only Kathmandu Metropolitan City is subdivided today (104
+  // areas). Filtering is unconstrained, where picking the whole city is valid.
+  const needsArea = async (municipalityId: number) =>
+    !!minSelectableType && (await fetchAreas(municipalityId)).length > 0;
+
+  const handleAutocompleteSelect = async (result: SearchResult) => {
     setShowAutocomplete(false);
+    // Open the tree at the result whatever its tier — searching a district is
+    // useful even when a district can't be the answer, because it puts that
+    // district's municipalities on screen. Mirrors the Flutter app, which fills
+    // in whichever dropdowns the result determines.
+    await expandToPath(result.hierarchy ?? []);
+
+    if (!canSelect(result.type)) {
+      setNarrowMessage(
+        `${result.name} is too broad for an ad — opened below, choose a place inside it.`
+      );
+      return;
+    }
+    if (result.type === 'municipality' && (await needsArea(result.id))) {
+      setNarrowMessage(`${result.name} is divided into areas — opened below, choose one.`);
+      return;
+    }
+    setNarrowMessage(null);
+    setSearchTerm(result.name);
     const reversedPath = buildReversedPath(result);
+    setSelectedPath(reversedPath);
     onLocationSelect(result.slug, result.name, reversedPath);
   };
 
   const selectLocation = (slug: string, name: string, fullPath: string) => {
+    setNarrowMessage(null);
     setSearchTerm(name);
+    setSelectedPath(fullPath);
     onLocationSelect(slug, name, fullPath);
   };
 
   return (
     <div className="flex flex-col">
+      {minSelectableType === 'municipality' && (
+        <p className="mb-2 text-xs text-gray-500">
+          Search any place — a province or district opens the tree there. The ad
+          itself needs a municipality, or an area where the municipality has them.
+        </p>
+      )}
+
+      {selectedPath && !narrowMessage && (
+        <p className="mb-2 text-xs text-gray-700">
+          Selected: <span className="font-medium">{selectedPath}</span>
+        </p>
+      )}
+
+      {narrowMessage && (
+        <p className="mb-2 text-xs font-medium text-rose-600">{narrowMessage}</p>
+      )}
+
       {/* Search Input */}
       <div ref={searchInputRef} className="relative mb-4">
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="Search location..."
+          // Examples span the tiers deliberately: only one municipality in the
+          // country has areas, so leading with an area would imply they are the
+          // norm. A district is a fair example even when posting — it can't be
+          // the answer, but searching one opens the tree there.
+          placeholder="Search location, e.g. Kathmandu, Pokhara or Thamel"
           className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
             selectedLocationSlug
               ? 'border-rose-500 text-rose-600 font-semibold bg-rose-50'
@@ -103,7 +163,9 @@ export default function CascadingLocationFilter({
                   }`}
                 >
                   <div className="text-sm font-medium">{result.name}</div>
-                  <div className="text-xs text-gray-500">{getLocationTypeLabel(result.type)}</div>
+                  <div className="text-xs text-gray-500">
+                    {buildParentHint(result) || getLocationTypeLabel(result.type)}
+                  </div>
                 </button>
               ))
             )}
@@ -135,7 +197,11 @@ export default function CascadingLocationFilter({
 
             <button
               type="button"
-              onClick={() => selectLocation(province.slug, province.name, buildFullPath(province.name))}
+              onClick={() =>
+                canSelect('province')
+                  ? selectLocation(province.slug, province.name, buildFullPath(province.name))
+                  : toggleProvince(province.id)
+              }
               className={`flex-1 flex items-center gap-2 py-2.5 px-2 pl-0 border-none cursor-pointer text-sm text-left transition-all ${
                 selectedLocationSlug === province.slug
                   ? 'bg-indigo-50 text-rose-500 font-semibold'
@@ -164,7 +230,11 @@ export default function CascadingLocationFilter({
 
                     <button
                       type="button"
-                      onClick={() => selectLocation(district.slug, district.name, buildFullPath(province.name, district.name))}
+                      onClick={() =>
+                        canSelect('district')
+                          ? selectLocation(district.slug, district.name, buildFullPath(province.name, district.name))
+                          : toggleDistrict(district.id)
+                      }
                       className={`flex-1 flex items-center gap-2 py-2 px-2 pl-0 border-none cursor-pointer text-[0.8125rem] text-left transition-all ${
                         selectedLocationSlug === district.slug
                           ? 'bg-indigo-50 text-rose-500 font-semibold'
@@ -198,7 +268,20 @@ export default function CascadingLocationFilter({
 
                             <button
                               type="button"
-                              onClick={() => selectLocation(municipality.slug, municipality.name, buildFullPath(province.name, district.name, municipality.name))}
+                              onClick={async () => {
+                                if (await needsArea(municipality.id)) {
+                                  if (!expanded.municipalities.has(municipality.id)) {
+                                    toggleMunicipality(municipality.id);
+                                  }
+                                  // Say why the click didn't select, and replace
+                                  // any message left over from an earlier search.
+                                  setNarrowMessage(
+                                    `${municipality.name} is divided into areas — opened below, choose one.`
+                                  );
+                                  return;
+                                }
+                                selectLocation(municipality.slug, municipality.name, buildFullPath(province.name, district.name, municipality.name));
+                              }}
                               className={`flex-1 flex items-center gap-2 py-2 px-2 pl-0 border-none cursor-pointer text-[0.8125rem] text-left transition-all ${
                                 selectedLocationSlug === municipality.slug
                                   ? 'bg-indigo-50 text-rose-500 font-semibold'

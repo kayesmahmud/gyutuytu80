@@ -75,3 +75,17 @@ export function buildReversedPath(result: { hierarchy?: Array<{ name: string }>;
   }
   return null;
 }
+
+/**
+ * Parent chain of a search result, nearest first — "Kathmandu Metropolitan
+ * City, Kathmandu, Bagmati Province". Mirrors the hint the Flutter app shows
+ * under each result so the seller can tell two same-named places apart.
+ */
+export function buildParentHint(result: { hierarchy?: Array<{ name: string }> }): string {
+  if (!result.hierarchy || result.hierarchy.length < 2) return '';
+  return result.hierarchy
+    .slice(0, -1)
+    .map((h) => h.name)
+    .reverse()
+    .join(', ');
+}

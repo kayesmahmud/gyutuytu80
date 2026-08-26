@@ -1,4 +1,5 @@
 import type {
+  LocationType,
   LocationHierarchyProvince,
   LocationHierarchyDistrict,
   LocationHierarchyMunicipality,
@@ -33,6 +34,12 @@ export interface CascadingLocationFilterProps {
   selectedLocationSlug?: string | null;
   selectedLocationName?: string | null;
   initialProvinces?: Province[];
+  /**
+   * Coarsest tier the user may actually pick. Rows above it still expand, they
+   * just stop being selectable. Filtering leaves this unset (any tier is a valid
+   * filter); posting and editing an ad set 'municipality'.
+   */
+  minSelectableType?: LocationType;
 }
 
 export interface LocationCaches {

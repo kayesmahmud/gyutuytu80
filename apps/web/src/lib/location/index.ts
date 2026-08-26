@@ -26,3 +26,10 @@ export {
   getCategoryIdsIncludingChildren,
   type CategoryWithSubcategories,
 } from './categories';
+
+// Location tier rules (client-safe)
+export {
+  MIN_AD_LOCATION_TIER,
+  isTierAtLeast,
+  isValidAdLocationTier,
+} from './tiers';

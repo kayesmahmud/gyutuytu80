@@ -6,6 +6,7 @@ import { AdsFilter, AdsSearchBar, AdsFilterWrapper, AdCard, AdBanner, SortDropdo
 import { parseAdUrlParams, getFilterIds, generateAdListingMetadata } from '@/lib/urls';
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import { getLocationHierarchy } from '@/lib/location';
+import { resolveDistrictName } from '@/lib/location/district';
 import { getRootCategoriesWithChildren } from '@/lib/location';
 import { buildAdsWhereClause, buildAdsOrderBy, standardAdInclude } from '@/lib/ads';
 import { SearchX } from 'lucide-react';
@@ -341,6 +342,7 @@ export default async function AdsPage({ params, searchParams }: AdsPageProps) {
                             : null,
                           categoryName: ad.categories?.name || null,
                           categoryIcon: ad.categories?.icon || null,
+                          districtName: resolveDistrictName(ad.locations),
                           // publishedAt = when editor approved (use this for "time ago" display)
                           publishedAt: ad.published_at || ad.reviewed_at || ad.created_at || new Date(),
                           createdAt: ad.created_at || new Date(),

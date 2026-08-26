@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { MapPin } from 'lucide-react';
 import { getImageUrl } from '@/lib/images/imageUrl';
 import { formatPrice, formatDateTime } from '@thulobazaar/utils';
 
@@ -13,6 +14,7 @@ interface FeaturedAd {
   categoryName: string | null;
   categoryIcon: string | null;
   locationName: string | null;
+  districtName?: string | null;
   slug?: string;
   condition: string | null;
   publishedAt?: string | Date;
@@ -91,11 +93,11 @@ export default function FeaturedAdsCarousel({ ads, lang }: FeaturedAdsCarouselPr
               {ad.title}
             </h3>
 
-            {/* Category */}
-            {ad.categoryName && (
+            {/* District */}
+            {ad.districtName && (
               <div className="flex items-center gap-1 text-[10px] md:text-sm text-gray-500 mb-1 md:mb-2">
-                <span className="text-[10px] md:text-sm flex-shrink-0">{ad.categoryIcon || '📁'}</span>
-                <span className="truncate">{ad.categoryName}</span>
+                <MapPin size={14} className="flex-shrink-0" aria-hidden="true" />
+                <span className="truncate">{ad.districtName}</span>
               </div>
             )}
 
