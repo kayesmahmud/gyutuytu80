@@ -177,3 +177,6 @@ packages/database/verify_tables.mjs
 # Playwright artifacts
 apps/web/test-results/
 apps/web/playwright-report/
+
+# Local + prod database dumps (never commit: large, may contain user data)
+db-backups/
