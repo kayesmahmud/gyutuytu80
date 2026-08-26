@@ -6,6 +6,7 @@ import type { AxiosInstance } from 'axios';
 import type {
   Ad,
   AdWithDetails,
+  AiDraft,
   ApiResponse,
   PaginatedResponse,
   SearchFilters,
@@ -74,21 +75,63 @@ export function createAdMethods(client: AxiosInstance) {
         formData.append('attributes', JSON.stringify(data.attributes));
       }
 
-      // Append images - handle File, CrossPlatformFile, and string (existing URLs)
-      data.images.forEach((image) => {
-        if (typeof image === 'string') {
-          // Skip strings (these are existing image URLs, handled differently)
-          return;
-        }
+      if (data.stagedImageIds && data.stagedImageIds.length > 0) {
+        // Background-staged photos: ids only, no file bytes — Post Ad is instant
+        formData.append('stagedImages', JSON.stringify(data.stagedImageIds));
+      } else {
+        // Append images - handle File, CrossPlatformFile, and string (existing URLs)
+        data.images.forEach((image) => {
+          if (typeof image === 'string') {
+            // Skip strings (these are existing image URLs, handled differently)
+            return;
+          }
+          if (image instanceof File) {
+            formData.append('images', image);
+          } else if ('uri' in image) {
+            // CrossPlatformFile (React Native)
+            appendFileToFormData(formData, 'images', image);
+          }
+        });
+      }
+
+      const response = await client.post('/api/ads', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
+
+    /**
+     * Background-stage one ad photo the moment it is picked. The returned
+     * stagedId goes into createAd's stagedImageIds. Fail-open: on any error
+     * the client simply falls back to classic file upload at submit.
+     */
+    async stageAdImage(image: File | CrossPlatformFile): Promise<ApiResponse<{ stagedId: string }>> {
+      const formData = new FormData();
+      if (image instanceof File) {
+        formData.append('image', image);
+      } else if ('uri' in image) {
+        appendFileToFormData(formData, 'image', image);
+      }
+      const response = await client.post('/api/ads/stage-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
+
+    /**
+     * AI autofill: draft a listing from up to 3 photos. Returns data: null when
+     * the feature is off/unavailable — callers must treat that as "no suggestions".
+     */
+    async getAiDraft(images: (File | CrossPlatformFile)[]): Promise<ApiResponse<AiDraft | null>> {
+      const formData = new FormData();
+      images.slice(0, 3).forEach((image) => {
         if (image instanceof File) {
           formData.append('images', image);
         } else if ('uri' in image) {
-          // CrossPlatformFile (React Native)
           appendFileToFormData(formData, 'images', image);
         }
       });
-
-      const response = await client.post('/api/ads', formData, {
+      const response = await client.post('/api/ads/ai-draft', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;

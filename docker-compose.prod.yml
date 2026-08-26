@@ -103,6 +103,9 @@ services:
       - ESEWA_SECRET_KEY=${ESEWA_SECRET_KEY}
       - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
       - APPLE_CLIENT_ID=${APPLE_CLIENT_ID:-com.thulobazaar.mobile}
+      # AI features (DeepSeek). Optional — fail-open: when unset, AI moderation
+      # simply doesn't run and ads follow the normal pending/review flow.
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
     volumes:
       - uploads-data:/app/uploads
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro

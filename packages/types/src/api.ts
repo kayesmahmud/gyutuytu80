@@ -327,8 +327,32 @@ export interface PostAdFormData {
   longitude?: number;
   googleMapsLink?: string;
   images: (File | CrossPlatformFile | string)[];
+  /** Background-staged photo ids: when set, no file bytes are sent — Post Ad is instant */
+  stagedImageIds?: string[];
   attributes?: Record<string, any>;
   status?: string;
+}
+
+/**
+ * AI autofill draft from photos (POST /api/ads/ai-draft).
+ * Every field is a suggestion the user can edit; null = AI could not judge.
+ * sellable=false → photos show no listable item (drives a warning, never a block).
+ */
+export interface AiDraft {
+  title: string | null;
+  description: string | null;
+  categoryId: number | null;
+  subcategoryId: number | null;
+  attributes: {
+    condition: 'Brand New' | 'Used' | null;
+    brand: string | null;
+    model: string | null;
+  };
+  priceEstimate: number | null;
+  sellable: boolean;
+  /** Why the photos can't make a listing — only set when sellable is false */
+  unsellableReason: 'selfie' | 'screenshot' | 'unclear' | 'explicit' | 'other' | null;
+  confidence: number;
 }
 
 export interface LoginFormData {

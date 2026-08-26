@@ -157,6 +157,26 @@ export const rateLimiters = {
     message: 'Too many posts, please wait before posting again',
   }),
 
+  // Background image staging — one call per picked photo.
+  // Mount AFTER authenticateToken or the per-user key degrades to per-IP.
+  imageStaging: rateLimiter.createMiddleware({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 60, // plenty for several ads/hour, blocks abuse
+    keyGenerator: (req: Request) => (req.user ? `user_${req.user.userId}` : req.ip || 'unknown'),
+    message: 'Too many image uploads, please try again later',
+  }),
+
+  // AI draft-from-photos — each call costs a DeepSeek request, so keep it tight.
+  // Mount AFTER authenticateToken or the per-user key degrades to per-IP.
+  aiDraft: rateLimiter.createMiddleware({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    // Generous enough for photo retries across several ads (~$0.001/call);
+    // clients show an honest "limit reached" note on 429, never a photo blame.
+    max: 30,
+    keyGenerator: (req: Request) => (req.user ? `user_${req.user.userId}` : req.ip || 'unknown'),
+    message: 'Too many AI suggestions requested, please try again later',
+  }),
+
   // Message sending rate limit
   messaging: rateLimiter.createMiddleware({
     windowMs: 1 * 60 * 1000, // 1 minute

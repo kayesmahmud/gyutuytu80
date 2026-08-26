@@ -374,6 +374,70 @@ class AdClient {
     }
   }
 
+  /// Background-stage one ad photo the moment it is picked, so posting later
+  /// only sends ids (instant). Returns the stagedId, or null on any error —
+  /// the caller then falls back to the classic full upload (fail-open).
+  Future<String?> stageAdImage(String imagePath) async {
+    try {
+      final formData = FormData();
+      formData.files.add(
+        MapEntry(
+          'image',
+          await MultipartFile.fromFile(
+            imagePath,
+            filename: imagePath.split('/').last,
+          ),
+        ),
+      );
+      final response = await _dio.post('/ads/stage-image', data: formData);
+      final body = response.data;
+      if (body is Map<String, dynamic> && body['success'] == true) {
+        final data = body['data'];
+        if (data is Map<String, dynamic>) return data['stagedId'] as String?;
+      }
+      return null;
+    } catch (e) {
+      developer.log('Image staging unavailable: $e', name: 'AdClient');
+      return null;
+    }
+  }
+
+  /// AI autofill: draft a listing from up to 3 photos (paths of picked images).
+  /// draft is null when the feature is off/unavailable or on any error —
+  /// callers simply show no suggestions (fail-open). [rateLimited] separates
+  /// "our hourly AI quota is used up" from photo problems, so the UI never
+  /// blames the seller's photos for a 429.
+  Future<({AiDraft? draft, bool rateLimited})> getAiDraft(
+    List<String> imagePaths,
+  ) async {
+    try {
+      final formData = FormData();
+      for (final path in imagePaths.take(3)) {
+        formData.files.add(
+          MapEntry(
+            'images',
+            await MultipartFile.fromFile(path, filename: path.split('/').last),
+          ),
+        );
+      }
+      final response = await _dio.post('/ads/ai-draft', data: formData);
+      final body = response.data;
+      if (body is Map<String, dynamic> && body['success'] == true) {
+        final draft = body['data'];
+        if (draft is Map<String, dynamic>) {
+          return (draft: AiDraft.fromMap(draft), rateLimited: false);
+        }
+      }
+      return (draft: null, rateLimited: false);
+    } on DioException catch (e) {
+      developer.log('AI draft unavailable: $e', name: 'AdClient');
+      return (draft: null, rateLimited: e.response?.statusCode == 429);
+    } catch (e) {
+      developer.log('AI draft unavailable: $e', name: 'AdClient');
+      return (draft: null, rateLimited: false);
+    }
+  }
+
   /// Get category by slug
   Future<ApiResponse<CategoryWithSubcategories>> getCategoryBySlug(
     String slug,

@@ -3,7 +3,10 @@
  * Handles ad CRUD operations and transformations
  */
 
+import path from 'path';
+import fs from 'fs';
 import { prisma } from '@thulobazaar/database';
+import config from '../config/index.js';
 import { PAGINATION } from '../config/constants.js';
 import { clearExpiredPromotionFlags } from '../jobs/promotionCleanup.js';
 
@@ -81,6 +84,7 @@ export function transformAdForList(ad: any) {
     categoryIcon: ad.categories?.icon,
     locationName: ad.locations?.name,
     locationNameNe: ad.locations?.name_ne,
+    districtName: resolveDistrictName(ad.locations),
     accountType: ad.users_ads_user_idTousers?.account_type,
     businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status,
     individualVerified: ad.users_ads_user_idTousers?.individual_verified,
@@ -130,6 +134,7 @@ export function transformAdForDashboard(ad: any) {
     categoryIcon: ad.categories?.icon,
     locationName: ad.locations?.name,
     locationNameNe: ad.locations?.name_ne,
+    districtName: resolveDistrictName(ad.locations),
     primaryImage: ad.ad_images?.find((img: any) => img.is_primary)?.filename || ad.ad_images?.[0]?.filename,
     images: ad.ad_images?.map((img: any) => ({
       id: img.id,
@@ -162,6 +167,9 @@ export async function transformAdForDetail(ad: any) {
     deleted_by: _deletedBy,
     deletion_reason: _deletionReason,
     ad_edit_history: _editHistory,
+    ai_verdict: _aiVerdict,
+    ai_reason: _aiReason,
+    ai_checked_at: _aiCheckedAt,
     ...safeAd
   } = ad;
 
@@ -193,6 +201,11 @@ export async function transformAdForDetail(ad: any) {
     subcategoryId: ad.categories?.categories ? ad.categories.id : null,
     // Location chain leaf → root so clients can browse ads per province/district/area
     locationLevels,
+    // Same district rule as the list transformers, resolved from the chain the
+    // detail query already fetched — so a card built from a detail response
+    // shows the same place name as one built from the feed.
+    districtName:
+      locationLevels.find((l) => l.type === 'district')?.name ?? locationLevels[0]?.name ?? null,
     locationName: locName,
     publishedAt: ad.published_at || ad.reviewed_at || ad.created_at,
     reviewedAt: ad.published_at || ad.reviewed_at,
@@ -662,7 +675,7 @@ export async function getUserAds(userId: number) {
     where: { user_id: userId },
     include: {
       categories: { select: { name: true, name_ne: true, icon: true } },
-      locations: { select: { name: true, name_ne: true } },
+      locations: { select: adCardLocationSelect },
       ad_images: {
         orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
       },
@@ -812,6 +825,11 @@ export async function createAd(userId: number, input: CreateAdInput, options?: {
       // home/browse/shop feeds (NULLS LAST).
       reviewed_at: options?.directPublish ? new Date() : null,
       published_at: options?.directPublish ? new Date() : null,
+      // Verified businesses are never AI-screened — record why the verdict is absent
+      ai_verdict: options?.directPublish ? 'skipped' : null,
+      // Explicit ms-precision timestamp (not the DB's microsecond now()) so AI
+      // moderation can use equality on it as a content-unchanged guard.
+      updated_at: new Date(),
       slug,
       custom_fields: input.customFields && Object.keys(input.customFields).length > 0
         ? input.customFields
@@ -826,6 +844,126 @@ export async function createAd(userId: number, input: CreateAdInput, options?: {
 
   console.log(`✅ Ad created: ${ad.title} (ID: ${ad.id}) by user ${userId} - Status: ${ad.status}`);
   return ad;
+}
+
+/**
+ * A user's first ad seeds their shop page's Location + Categories tabs
+ * (users.location_id / default_category_id / default_subcategory_id) —
+ * only-if-empty, never overwrites, same rule the web client applies.
+ * Later post-ad forms prefill from these; editing the shop page changes them.
+ */
+export async function seedShopDefaultsFromAd(
+  userId: number,
+  ad: { category_id: number | null; location_id: number | null }
+) {
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    select: { location_id: true, default_category_id: true },
+  });
+  if (!user) return;
+
+  const data: Record<string, unknown> = {};
+  if (!user.location_id && ad.location_id) data.location_id = ad.location_id;
+  if (!user.default_category_id && ad.category_id) {
+    // ads store the leaf category; the shop Categories tab stores (main, sub)
+    const cat = await prisma.categories.findUnique({
+      where: { id: ad.category_id },
+      select: { id: true, parent_id: true },
+    });
+    if (cat) {
+      data.default_category_id = cat.parent_id ?? cat.id;
+      data.default_subcategory_id = cat.parent_id ? cat.id : null;
+    }
+  }
+  if (Object.keys(data).length > 0) {
+    await prisma.users.update({
+      where: { id: userId },
+      data: { ...data, updated_at: new Date() },
+    });
+    console.log(`🏪 Seeded shop defaults for user ${userId}:`, Object.keys(data).join(', '));
+  }
+}
+
+/** Staged uploads older than this are abandoned forms — swept opportunistically. */
+const STAGING_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+const STAGED_MIME_BY_EXT: Record<string, string> = {
+  '.avif': 'image/avif',
+  '.jpg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+};
+
+/**
+ * Consume background-staged images for a new ad: validate ownership (a staged
+ * id is just a filename inside THIS user's staging dir — basename() kills
+ * traversal), move the already-AVIF-converted files into uploads/ads, and
+ * create the ad_images rows. Returns the moved absolute paths (fed to AI
+ * moderation). Unknown/expired ids are skipped, not fatal — the client falls
+ * back to classic upload whenever staging looks incomplete.
+ */
+export async function consumeStagedImages(
+  adId: number,
+  userId: number,
+  stagedIds: string[],
+  limit: number
+): Promise<string[]> {
+  const uploadsDir = path.resolve(config.UPLOAD_DIR);
+  const userStagingDir = path.join(uploadsDir, 'staging', String(userId));
+  const adsDir = path.join(uploadsDir, 'ads');
+  const movedPaths: string[] = [];
+  const records: Array<Record<string, unknown>> = [];
+
+  for (const rawId of stagedIds.slice(0, limit)) {
+    const filename = path.basename(String(rawId));
+    if (!filename.startsWith('ad-')) continue;
+    const from = path.join(userStagingDir, filename);
+    const to = path.join(adsDir, filename);
+    try {
+      const stat = await fs.promises.stat(from);
+      await fs.promises.rename(from, to);
+      movedPaths.push(to);
+      records.push({
+        ad_id: adId,
+        filename,
+        original_name: filename,
+        file_path: `/uploads/ads/${filename}`,
+        file_size: stat.size,
+        mime_type: STAGED_MIME_BY_EXT[path.extname(filename).toLowerCase()] ?? 'image/avif',
+        is_primary: records.length === 0,
+      });
+    } catch {
+      // Missing/expired staged file — skip it
+    }
+  }
+
+  if (records.length > 0) {
+    await prisma.ad_images.createMany({ data: records as any });
+  }
+  console.log(`✅ Attached ${records.length}/${stagedIds.length} staged images to ad ${adId}`);
+  return movedPaths;
+}
+
+/** Opportunistic cleanup: drop this user's staged files older than 24h. */
+export async function sweepStagedImages(userId: number): Promise<void> {
+  const userStagingDir = path.join(path.resolve(config.UPLOAD_DIR), 'staging', String(userId));
+  let entries: string[];
+  try {
+    entries = await fs.promises.readdir(userStagingDir);
+  } catch {
+    return; // no staging dir yet
+  }
+  const cutoff = Date.now() - STAGING_MAX_AGE_MS;
+  for (const name of entries) {
+    const filePath = path.join(userStagingDir, name);
+    try {
+      const stat = await fs.promises.stat(filePath);
+      if (stat.mtimeMs < cutoff) await fs.promises.unlink(filePath);
+    } catch {
+      // already gone — fine
+    }
+  }
 }
 
 export async function createAdImages(adId: number, files: Express.Multer.File[]) {
@@ -889,6 +1027,10 @@ export async function updateAd(
         : existingAd.custom_fields,
       status: newStatus,
       status_reason: newStatus === 'pending' ? null : existingAd.status_reason,
+      // The content changed, so any prior AI verdict is about an ad that no
+      // longer exists — clear it (keep ai_checked_at: it's the budget counter).
+      ai_verdict: options?.directPublish ? 'skipped' : null,
+      ai_reason: null,
       updated_at: new Date(),
     },
   });

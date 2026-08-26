@@ -225,6 +225,11 @@ model ads {
   reviewed_at                  DateTime?          @db.Timestamp(6)
   /// First time the ad went live; never bumped by re-approval/unsuspend — public feeds sort by this
   published_at                 DateTime?          @db.Timestamp(6)
+  /// AI first-pass moderation: 'published' | 'held' | 'skipped' (verified business, not screened); NULL = not evaluated
+  ai_verdict                   String?            @db.VarChar(20)
+  ai_reason                    String?
+  /// Stamped only when a DeepSeek call was actually made — daily budget cap counts these rows
+  ai_checked_at                DateTime?          @db.Timestamp(6)
   latitude                     Decimal?           @db.Decimal(10, 8)
   longitude                    Decimal?           @db.Decimal(11, 8)
   deleted_at                   DateTime?          @db.Timestamp(6)
@@ -271,6 +276,7 @@ model ads {
   @@index([status, category_id, location_id, price], map: "idx_ads_status_cat_loc_price")
   @@index([status, created_at(sort: Desc)], map: "idx_ads_status_created")
   @@index([status, published_at(sort: Desc)], map: "idx_ads_status_published")
+  @@index([ai_checked_at], map: "idx_ads_ai_checked_at")
   @@index([user_id], map: "idx_ads_user_id")
   @@index([view_count(sort: Desc)], map: "idx_ads_view_count")
 }

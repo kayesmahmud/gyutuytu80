@@ -15,7 +15,9 @@ interface CategoryTileGridProps {
  */
 export function CategoryTileGrid({ categories, selectedId, onSelect }: CategoryTileGridProps) {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+    // App-style compact grid: 4-up on phones, densifying up to 8-up on desktop
+    // so the 16 categories sit in 2 rows instead of 4 stretched-flat ones.
+    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
       {categories.map((cat) => {
         const selected = selectedId === cat.id.toString();
         return (
@@ -24,15 +26,15 @@ export function CategoryTileGrid({ categories, selectedId, onSelect }: CategoryT
             type="button"
             onClick={() => onSelect(cat.id.toString())}
             aria-pressed={selected}
-            className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-colors cursor-pointer ${
+            className={`flex flex-col items-center justify-start gap-1.5 px-1.5 py-3 rounded-xl border-2 transition-colors cursor-pointer ${
               selected
                 ? 'border-indigo-500 bg-indigo-50'
                 : 'border-gray-200 bg-white hover:border-indigo-300 hover:bg-gray-50'
             }`}
           >
-            <CategoryIcon slug={cat.slug} emoji={cat.icon} name={cat.name} size={44} />
+            <CategoryIcon slug={cat.slug} emoji={cat.icon} name={cat.name} size={40} />
             <span
-              className={`text-xs font-medium text-center leading-tight ${
+              className={`text-[11px] font-medium text-center leading-tight ${
                 selected ? 'text-indigo-700' : 'text-gray-700'
               }`}
             >

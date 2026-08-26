@@ -33,6 +33,8 @@ export interface Ad {
   reviewedByName?: string | null;
   reviewedByRole?: string | null;
   deletedByName?: string | null;
+  aiVerdict?: string | null; // 'published' | 'held' | 'skipped' | null (not evaluated)
+  aiReason?: string | null;
 }
 
 export type TabStatus = 'pending' | 'approved' | 'rejected' | 'suspended' | 'deleted' | 'all';
@@ -79,5 +81,7 @@ export function transformAd(ad: any): Ad {
     reviewedByName: ad.reviewedByName ?? ad.reviewed_by_name ?? null,
     reviewedByRole: ad.reviewedByRole ?? ad.reviewed_by_role ?? null,
     deletedByName: ad.deletedByName ?? ad.deleted_by_name ?? null,
+    aiVerdict: ad.aiVerdict ?? ad.ai_verdict ?? null,
+    aiReason: ad.aiReason ?? ad.ai_reason ?? null,
   };
 }

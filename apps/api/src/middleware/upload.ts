@@ -111,6 +111,45 @@ export const uploadAdImages = multer({
   fileFilter: imageFilter,
 });
 
+// AI-draft images live only in memory (req.files[i].buffer) — they must never
+// be stored, and there is nothing to clean up. Do NOT chain optimizeImage()
+// after this: it reads file.path from disk, which memory files don't have.
+export const uploadAiDraftImages = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+  },
+  fileFilter: imageFilter,
+});
+
+// Staged (background) ad-image upload: photos upload the moment the user picks
+// them, into a PER-USER staging dir (the dir is the ownership check — a staged
+// id can only ever be consumed by the user whose folder it sits in). Chained
+// with optimizeImage('ad') so AVIF conversion also happens ahead of Post Ad.
+export const stagingDir = path.join(uploadsDir, 'staging');
+if (!fs.existsSync(stagingDir)) fs.mkdirSync(stagingDir, { recursive: true });
+
+const stagedAdImageStorage = multer.diskStorage({
+  destination: (req, _file, cb) => {
+    // authenticateToken runs before multer in the route chain
+    const userDir = path.join(stagingDir, String(req.user?.userId ?? 0));
+    fs.mkdirSync(userDir, { recursive: true });
+    cb(null, userDir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `ad-${uniqueSuffix}${safeExt(file.mimetype, IMAGE_MIME_TO_EXT)}`);
+  },
+});
+
+export const uploadStagedAdImage = multer({
+  storage: stagedAdImageStorage,
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+  },
+  fileFilter: imageFilter,
+});
+
 // Document upload configuration
 const documentStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {

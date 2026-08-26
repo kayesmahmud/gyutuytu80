@@ -42,6 +42,8 @@ async function getCurrentUserProfile(userId: number) {
         locations: true,
         oauth_provider: true,
         two_factor_enabled: true,
+        default_category_id: true,
+        default_subcategory_id: true,
       },
     }),
     // Separate minimal query — avoids loading the hash into the main user object
@@ -65,6 +67,9 @@ async function getCurrentUserProfile(userId: number) {
     locationId: user.location_id,
     location: user.locations,
     locationName: (user as any).locations?.name,
+    // Shop-page defaults (Categories tab) — post-ad forms prefill from these
+    categoryId: user.default_category_id,
+    subcategoryId: user.default_subcategory_id,
     accountType: user.account_type,
     shopSlug: user.custom_shop_slug || user.shop_slug,
     customShopSlug: user.custom_shop_slug,

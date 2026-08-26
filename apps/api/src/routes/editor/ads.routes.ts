@@ -139,6 +139,8 @@ router.get(
         reviewedAt: ad.reviewed_at,
         reviewedByName: ad.users_ads_reviewed_byTousers?.full_name || null,
         reviewedByRole: ad.users_ads_reviewed_byTousers?.role || null,
+        aiVerdict: ad.ai_verdict,
+        aiReason: ad.ai_reason,
         deletedAt: ad.deleted_at,
         deletedByName: ad.users_ads_deleted_byTousers?.full_name || null,
         categoryId: ad.category_id,

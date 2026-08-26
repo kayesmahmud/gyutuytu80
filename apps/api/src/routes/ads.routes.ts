@@ -2,8 +2,9 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '@thulobazaar/database';
 import { catchAsync, NotFoundError, ValidationError } from '../middleware/errorHandler.js';
 import { authenticateToken, optionalAuth } from '../middleware/auth.js';
-import { uploadAdImages } from '../middleware/upload.js';
+import { uploadAdImages, uploadAiDraftImages, uploadStagedAdImage } from '../middleware/upload.js';
 import { optimizeImage } from '../middleware/optimizeImage.js';
+import { rateLimiters } from '../middleware/rateLimiter.js';
 import {
   getAds,
   getUserAds,
@@ -17,10 +18,14 @@ import {
   updateAdImages,
   deleteAd,
   getDirectPublishInfo,
+  seedShopDefaultsFromAd,
+  consumeStagedImages,
+  sweepStagedImages,
   recordAdEditSnapshot,
   countLiveEditsThisMonth,
   getAdEditHistoryForOwner,
   MAX_LIVE_EDITS_PER_MONTH,
+  validateAdLocation,
 } from '../services/ad.service.js';
 import { logReviewHistory } from '../utils/responseHelpers.js';
 import {
@@ -31,6 +36,10 @@ import {
   getBooleanSetting,
 } from '../services/adLimits.service.js';
 import { sendNotification, notifyEditors } from '../services/notification.service.js';
+import { moderateNewAd } from '../services/moderation.service.js';
+import { isAutofillAvailable, draftFromImages } from '../services/autofill.service.js';
+import { reportExplicitContent } from '../services/userReport.service.js';
+import { imageBuffersToDataUrls } from '../lib/ai/images.js';
 
 const router = Router();
 
@@ -63,6 +72,20 @@ function parseAttributes(attributesStr?: string): Record<string, unknown> {
     if (err instanceof ValidationError) throw err;
     console.error('❌ Failed to parse attributes:', err);
     return {};
+  }
+}
+
+// Staged image ids arrive as a JSON-string array field alongside the normal
+// form fields (clients keep sending multipart, just without the heavy files).
+const MAX_STAGED_IMAGES = 10;
+function parseStagedImages(stagedStr?: string): string[] {
+  if (!stagedStr) return [];
+  try {
+    const parsed = JSON.parse(stagedStr);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((s): s is string => typeof s === 'string').slice(0, MAX_STAGED_IMAGES);
+  } catch {
+    return [];
   }
 }
 
@@ -183,6 +206,67 @@ router.get(
 );
 
 /**
+ * POST /api/ads/stage-image
+ * Background upload: one photo, staged into the user's own staging folder and
+ * AVIF-converted immediately, so Post Ad only has to MOVE files (instant).
+ * The returned stagedId is the staged filename; it can only ever be consumed
+ * from this user's folder. Abandoned files are swept after 24h.
+ */
+router.post(
+  '/stage-image',
+  authenticateToken,
+  rateLimiters.imageStaging,
+  uploadStagedAdImage.single('image'),
+  optimizeImage('ad'),
+  catchAsync(async (req: Request, res: Response) => {
+    if (!req.file) {
+      throw new ValidationError('An image file is required');
+    }
+    // Piggyback cleanup of this user's stale staged files — no cron needed
+    sweepStagedImages(req.user!.userId).catch(() => {});
+    res.status(201).json({ success: true, data: { stagedId: req.file.filename } });
+  })
+);
+
+/**
+ * POST /api/ads/ai-draft
+ * Phase 2 AI autofill: draft a listing from photos. Images are processed in
+ * memory only — never stored. Fail-open: data is null whenever AI is off or
+ * unavailable, and clients then simply show no suggestions.
+ */
+router.post(
+  '/ai-draft',
+  authenticateToken,
+  rateLimiters.aiDraft,
+  uploadAiDraftImages.array('images', 3),
+  catchAsync(async (req: Request, res: Response) => {
+    if (!(await isAutofillAvailable())) {
+      return res.json({ success: true, data: null });
+    }
+
+    const files = (req.files as Express.Multer.File[]) || [];
+    if (files.length === 0) {
+      throw new ValidationError('At least one image is required');
+    }
+
+    const imageDataUrls = await imageBuffersToDataUrls(files.map((f) => f.buffer));
+    if (imageDataUrls.length === 0) {
+      return res.json({ success: true, data: null });
+    }
+
+    const draft = await draftFromImages(imageDataUrls);
+    // Prohibited sexual/nude content → auto-report the uploader to the editor
+    // panel's user reports (fire-and-forget; the client hard-blocks the photos)
+    if (draft?.unsellableReason === 'explicit') {
+      reportExplicitContent(req.user!.userId, 'ai-draft').catch((err) =>
+        console.error('Explicit-content report error:', err)
+      );
+    }
+    res.json({ success: true, data: draft });
+  })
+);
+
+/**
  * POST /api/ads
  * Create a new ad with images (multipart/form-data)
  */
@@ -222,6 +306,11 @@ router.post(
 
     if (!locationId) {
       throw new ValidationError('Location is required');
+    }
+
+    const locationError = await validateAdLocation(parseInt(locationId));
+    if (locationError) {
+      throw new ValidationError(locationError);
     }
 
     // Enforce ad limits from site_settings (tiered by verification status)
@@ -279,9 +368,15 @@ router.post(
       expiresAt: calculateExpiresAt(limits.adExpiryDays),
     }, { directPublish: publishInfo.canDirectPublish });
 
-    // Handle uploaded images
+    // Handle images: classic multipart upload, or background-staged ids
+    // (Phase 2.5 — photos already uploaded+converted while the form was filled,
+    // so attaching them here is just a file move: Post Ad returns instantly).
+    const stagedIds = parseStagedImages(req.body.stagedImages);
+    let stagedPaths: string[] = [];
     if (files && files.length > 0) {
       await createAdImages(ad.id, files);
+    } else if (stagedIds.length > 0) {
+      stagedPaths = await consumeStagedImages(ad.id, userId, stagedIds, imageLimit);
     }
 
     if (publishInfo.canDirectPublish) {
@@ -300,15 +395,6 @@ router.post(
         },
         referenceId: ad.id,
       }).catch((err) => console.error('Live-ad editor notification error:', err));
-    } else {
-      // Notify editors that a new ad is pending review (editor APK push + desktop bell)
-      notifyEditors({
-        type: 'new_ad_pending',
-        title: 'New ad pending review',
-        body: `"${ad.title}" was just posted and needs review.`,
-        data: { route: '/editor/ad-management', adId: String(ad.id) },
-        referenceId: ad.id,
-      }).catch((err) => console.error('New-ad editor notification error:', err));
     }
 
     res.status(201).json({
@@ -319,6 +405,28 @@ router.post(
       data: ad,
       resultingStatus: ad.status,
     });
+
+    // First ad seeds the shop page's Location + Categories tabs (only-if-empty)
+    seedShopDefaultsFromAd(userId, ad).catch((err) =>
+      console.error('Shop defaults seeding error:', err)
+    );
+
+    if (!publishInfo.canDirectPublish) {
+      // AI first-pass moderation runs AFTER the response so posting stays fast
+      // (same fire-and-forget pattern as the FCM notifies). It also owns the
+      // editor "new ad pending" notification: held/unmoderated ads notify
+      // editors exactly as before, AI-published ads notify that it went live.
+      moderateNewAd({
+        adId: ad.id,
+        title: ad.title,
+        description: ad.description,
+        price: parsedPrice ?? null,
+        categoryName: ad.categories?.name ?? null,
+        ownerUserId: userId,
+        imagePaths: files && files.length > 0 ? files.map((f) => f.path) : stagedPaths,
+        adUpdatedAt: ad.updated_at,
+      }).catch((err) => console.error('AI moderation error:', err));
+    }
   })
 );
 
@@ -417,6 +525,15 @@ router.put(
         throw new ValidationError(
           `You have reached the monthly edit limit (${MAX_LIVE_EDITS_PER_MONTH}) for this ad. You can edit it again next month.`
         );
+      }
+    }
+
+    // Only when the edit actually carries a location — an omitted one leaves
+    // the ad's existing location untouched and needs no re-check.
+    if (locationId) {
+      const locationError = await validateAdLocation(parseInt(locationId));
+      if (locationError) {
+        throw new ValidationError(locationError);
       }
     }
 

@@ -121,6 +121,23 @@ export async function getBooleanSetting(key: string, defaultValue = true): Promi
 }
 
 /**
+ * Fetch a single numeric setting from site_settings.
+ * 0 is a valid stored value (Number.isFinite check, not ||) — e.g. a cap of 0 means "off".
+ */
+export async function getNumberSetting(key: string, defaultValue: number): Promise<number> {
+  try {
+    const setting = await prisma.site_settings.findUnique({
+      where: { setting_key: key },
+      select: { setting_value: true },
+    });
+    const parsed = parseInt(setting?.setting_value || '', 10);
+    return Number.isFinite(parsed) ? parsed : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+/**
  * Calculate expires_at date based on adExpiryDays setting
  * Returns null if adExpiryDays is 0 (no expiration)
  */

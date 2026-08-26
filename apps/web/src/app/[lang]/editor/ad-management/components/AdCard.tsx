@@ -202,6 +202,13 @@ export default function AdCard({
             )}
 
             {/* Status Messages */}
+            {ad.status === 'pending' && ad.aiVerdict === 'held' && ad.aiReason && (
+              <div className="mb-3 p-3 bg-violet-50 border border-violet-200 rounded-lg text-sm text-violet-800">
+                <span className="font-medium">AI: held —</span>{' '}
+                {ad.aiReason === 'ai_unavailable' ? 'AI check unavailable' : ad.aiReason}
+              </div>
+            )}
+
             {ad.status === 'rejected' && ad.statusReason && (
               <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
                 <span className="font-medium">Rejection Reason:</span> {ad.statusReason}

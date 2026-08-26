@@ -17,6 +17,7 @@ import 'package:mobile/core/widgets/app_cached_image.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
 import 'package:mobile/core/api/location_client.dart';
+import 'package:mobile/core/api/shop_client.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/services/analytics_service.dart';
 import 'package:mobile/core/services/review_service.dart';
@@ -117,6 +118,59 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   // Edit mode: track if initial prefill is done (to avoid clearing attributes)
   bool _editPrefillDone = false;
 
+  // AI autofill (Phase 2): every AI value is an editable suggestion; fail-open.
+  bool _aiDraftLoading = false;
+  bool _aiDraftRequested = false;
+  bool _aiConfirmed = false;
+  bool _applyingAiDraft = false;
+  // AI ran but couldn't fill (unsellable/off/error) — show the honest note
+  bool _aiFillFailed = false;
+  // Why it declined ('selfie'/'screenshot'/'unclear'/'other') for targeted copy
+  String? _aiUnsellableReason;
+  // Hourly AI quota hit — our limit, never the seller's photos' fault
+  bool _aiLimitReached = false;
+  // Prohibited sexual/nude content — HARD BLOCK: photos removed, user reported
+  bool _aiExplicitBlocked = false;
+
+  String get _aiCouldNotFillKey {
+    if (_aiLimitReached) return 'postAd.aiLimitReached';
+    return switch (_aiUnsellableReason) {
+      'selfie' => 'postAd.aiCouldNotFillSelfie',
+      'screenshot' => 'postAd.aiCouldNotFillScreenshot',
+      'unclear' => 'postAd.aiCouldNotFillUnclear',
+      _ => 'postAd.aiCouldNotFill',
+    };
+  }
+
+  // Background (staged) upload — Phase 2.5: photos upload as they are picked
+  // (XFile.path → stagedId) so Post Ad sends only ids and returns instantly.
+  // Fail-open: any photo without a stagedId at submit → classic full upload.
+  final Map<String, String> _stagedIds = {};
+  final Set<String> _stagingInFlight = {};
+
+  void _stageNewImages() {
+    if (widget.isEditMode) return;
+    for (final img in _selectedImages) {
+      final key = img.path;
+      if (_stagedIds.containsKey(key) || _stagingInFlight.contains(key)) {
+        continue;
+      }
+      _stagingInFlight.add(key);
+      _adClient.stageAdImage(key).then((stagedId) {
+        _stagingInFlight.remove(key);
+        if (stagedId != null) _stagedIds[key] = stagedId;
+      });
+    }
+  }
+
+  final Set<String> _aiFilled = {};
+  int? _aiPriceEstimate;
+  bool? _aiSellable;
+  // Shop-page memory prefill (Categories tab). The AI photo detection may
+  // override THIS (photo wins over memory) but never a user-chosen category.
+  int? _memoryCategoryId;
+  int? _memorySubcategoryId;
+
   // Draft State
   String? _currentDraftId;
   bool _isSaving = false;
@@ -135,6 +189,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _descriptionController.addListener(_onTitleChangedForSuggestion);
     _descriptionController.addListener(_onFormChanged);
     _priceController.addListener(_onFormChanged);
+    // The ✨ badge on an AI-filled field disappears the moment the user edits it
+    _titleController.addListener(() => _clearAiMarkOnEdit('title'));
+    _descriptionController.addListener(() => _clearAiMarkOnEdit('description'));
+    _priceController.addListener(() => _clearAiMarkOnEdit('price'));
+  }
+
+  void _clearAiMarkOnEdit(String field) {
+    if (_applyingAiDraft) return;
+    if (_aiFilled.remove(field) && mounted) setState(() {});
   }
 
   void _onTitleChangedForSuggestion() {
@@ -177,6 +240,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             await _restoreDraft(match.first);
           }
         }
+        // Shop-page memory: prefill location (+ category as fallback) from the
+        // seller's shop tabs — only into still-empty selections.
+        if (mounted) _prefillShopDefaults();
       }
     } catch (e) {
       log('Error initializing create ad screen: $e', name: 'CreateAdScreen');
@@ -581,6 +647,110 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     return null;
   }
 
+  /// Like [_resolveLocationPath] but by bare id at any level (the shop-page
+  /// default location can be a province, district, municipality, or area).
+  ({
+    LocationProvince p,
+    LocationDistrict? d,
+    LocationMunicipality? m,
+    LocationArea? a,
+  })?
+  _resolveLocationPathById(int id) {
+    for (final prov in _provinces) {
+      if (prov.id == id) return (p: prov, d: null, m: null, a: null);
+      for (final dist in prov.districts) {
+        if (dist.id == id) return (p: prov, d: dist, m: null, a: null);
+        for (final muni in dist.municipalities) {
+          if (muni.id == id) return (p: prov, d: dist, m: muni, a: null);
+          for (final area in muni.areas) {
+            if (area.id == id) return (p: prov, d: dist, m: muni, a: area);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Save the ad's location onto the seller's profile the first time they post.
+  /// Both platforms read and write the same `users.location_id`, so a location
+  /// saved from the app prefills the website's post-ad form and vice versa —
+  /// this is the write half that the app was missing.
+  ///
+  /// Only fills a missing or too-coarse default (a province/district can't
+  /// prefill a form that demands a municipality). A default the seller already
+  /// set to a municipality or area is never overwritten.
+  Future<void> _rememberDefaultLocation() async {
+    final existingId = (_authUser?['locationId'] as num?)?.toInt();
+    final existing = existingId == null
+        ? null
+        : _resolveLocationPathById(existingId);
+
+    // "Good enough" means it could actually prefill a valid form: an area, or a
+    // municipality that has no areas. A default of Kathmandu Metropolitan City
+    // is NOT good enough — it would prefill a location the API rejects — so it
+    // gets upgraded to the area the seller just picked.
+    final hasUsableDefault =
+        existing != null &&
+        (existing.a != null ||
+            (existing.m != null && existing.m!.areas.isEmpty));
+    if (hasUsableDefault) return;
+
+    final LocationHierarchyBase? chosen =
+        _selectedArea ?? _selectedMunicipality;
+    if (chosen == null) return;
+
+    try {
+      await ShopClient().updateShopLocation(chosen.slug);
+    } catch (e) {
+      // Non-critical: the ad posted fine, only the convenience memory failed.
+      debugPrint('Failed to save default location: $e');
+    }
+  }
+
+  /// Prefill from the seller's shop page (Location + Categories tabs), the same
+  /// memory the web post-ad form uses. Never overwrites a selection that a
+  /// restored draft (or the user) already made.
+  void _prefillShopDefaults() {
+    final user = _authUser;
+    if (user == null) return;
+
+    final locId = (user['locationId'] as num?)?.toInt();
+    if (locId != null &&
+        _selectedProvince == null &&
+        _selectedMunicipality == null) {
+      final path = _resolveLocationPathById(locId);
+      if (path != null) {
+        setState(() {
+          _selectedProvince = path.p;
+          _selectedDistrict = path.d;
+          _selectedMunicipality = path.m;
+          _selectedArea = path.a;
+        });
+      }
+    }
+
+    final catId = (user['categoryId'] as num?)?.toInt();
+    if (catId != null && _selectedCategory == null) {
+      for (final parent in _categories) {
+        if (parent.id != catId) continue;
+        Category? sub;
+        final subId = (user['subcategoryId'] as num?)?.toInt();
+        if (subId != null) {
+          for (final s in parent.subcategories) {
+            if (s.id == subId) sub = s;
+          }
+        }
+        setState(() {
+          _selectedCategory = parent;
+          _selectedSubCategory = sub;
+          _memoryCategoryId = catId;
+          _memorySubcategoryId = sub?.id;
+        });
+        break;
+      }
+    }
+  }
+
   void _selectSearchedLocation(Location loc) {
     final path = _resolveLocationPath(loc);
     FocusScope.of(context).unfocus();
@@ -745,6 +915,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       setState(() {
         _selectedImages.add(image);
       });
+      _stageNewImages();
+      _maybeRequestAiDraft();
     } catch (e) {
       debugPrint('Error capturing image: $e');
     }
@@ -792,6 +964,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             _selectedImages = _selectedImages.sublist(0, _maxImages);
           }
         });
+        _stageNewImages();
+        _maybeRequestAiDraft();
       }
     } catch (e) {
       debugPrint('Error picking images: $e');
@@ -869,11 +1043,166 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     setState(() {
       _selectedCategory = parent;
       _selectedSubCategory = _suggestedSub;
+      _aiFilled.remove('category');
       if (!widget.isEditMode || _editPrefillDone) {
         _attributeValues.clear();
       }
     });
     _onFormChanged();
+  }
+
+  // ── AI autofill (Phase 2) ────────────────────────────────────────────────
+
+  /// After the first photos land on an otherwise-untyped form, ask the AI to
+  /// draft the listing. Fail-open: null (off/unavailable/error) = no change.
+  Future<void> _maybeRequestAiDraft() async {
+    if (_aiExplicitBlocked) setState(() => _aiExplicitBlocked = false);
+    if (widget.isEditMode || _aiDraftRequested) return;
+    if (_selectedImages.isEmpty) return;
+    if (_titleController.text.trim().isNotEmpty ||
+        _descriptionController.text.trim().isNotEmpty) {
+      return;
+    }
+    _aiDraftRequested = true;
+    setState(() => _aiDraftLoading = true);
+    final result = await _adClient.getAiDraft(
+      _selectedImages.take(3).map((x) => x.path).toList(),
+    );
+    if (!mounted) return;
+    final draft = result.draft;
+    if (draft == null) {
+      // Adding/replacing photos may retry — the next attempt could succeed
+      _aiDraftRequested = false;
+      setState(() {
+        _aiDraftLoading = false;
+        _aiFillFailed = true;
+        _aiLimitReached = result.rateLimited;
+      });
+      return;
+    }
+    if (draft.unsellableReason == 'explicit') {
+      // Prohibited content: remove the photos and block this set outright
+      // (the server has already filed the user report)
+      _stagedIds.clear();
+      _aiDraftRequested = false;
+      setState(() {
+        _aiDraftLoading = false;
+        _aiFillFailed = false;
+        _aiExplicitBlocked = true;
+        _selectedImages = [];
+      });
+      return;
+    }
+    _aiSellable = draft.sellable;
+    _aiPriceEstimate = draft.priceEstimate;
+    if (!draft.sellable) _aiDraftRequested = false; // retry on new photos
+    setState(() {
+      _aiDraftLoading = false;
+      _aiFillFailed = !draft.sellable;
+      _aiLimitReached = false;
+      _aiUnsellableReason = draft.unsellableReason;
+    });
+    if (draft.sellable) _applyAiDraft(draft);
+  }
+
+  /// Apply an AI draft to whichever fields the user hasn't touched yet.
+  void _applyAiDraft(AiDraft draft) {
+    _applyingAiDraft = true;
+    final marks = <String>{};
+
+    final title = draft.title;
+    if (_titleController.text.trim().isEmpty && title != null) {
+      _titleController.text = title;
+      marks.add('title');
+    }
+    final description = draft.description;
+    if (_descriptionController.text.trim().isEmpty && description != null) {
+      _descriptionController.text = description;
+      marks.add('description');
+    }
+    final price = draft.priceEstimate;
+    if (_priceController.text.trim().isEmpty && price != null) {
+      _priceController.text = price.toString();
+      marks.add('price');
+    }
+
+    // Photo wins over shop-page memory; never override a user-chosen category.
+    final categoryUntouched =
+        _selectedCategory == null ||
+        (_selectedCategory?.id == _memoryCategoryId &&
+            _selectedSubCategory?.id == _memorySubcategoryId);
+    final draftCatId = draft.categoryId;
+    if (draftCatId != null && categoryUntouched) {
+      for (final parent in _categories) {
+        if (parent.id != draftCatId) continue;
+        Category? sub;
+        final subId = draft.subcategoryId;
+        if (subId != null) {
+          for (final s in parent.subcategories) {
+            if (s.id == subId) sub = s;
+          }
+        }
+        _selectedCategory = parent;
+        _selectedSubCategory = sub;
+        _attributeValues.clear();
+        marks.add('category');
+        break;
+      }
+    }
+
+    // AFTER category selection — selecting a category clears attribute values.
+    // Only when the AI applied the category (fresh attrs) and nothing already
+    // set a condition: the AI must never override a user's dropdown choice,
+    // nor inject an orphan key into templates without a condition field.
+    final condition = draft.condition;
+    if (condition != null &&
+        marks.contains('category') &&
+        !_attributeValues.containsKey('condition')) {
+      _attributeValues['condition'] = condition;
+    }
+
+    setState(() => _aiFilled.addAll(marks));
+    _applyingAiDraft = false;
+    _onFormChanged();
+  }
+
+  /// Pre-post confirmation for AI-assisted listings — warnings only, the user
+  /// can always post anyway; editors remain the only hard "no".
+  Future<bool?> _showAiConfirmDialog(List<String> warnings) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'postAd.aiConfirmTitle'.tr(),
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final warning in warnings)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '• $warning',
+                  style: GoogleFonts.inter(fontSize: 14, height: 1.5),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('postAd.aiReviewAgain'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('postAd.aiPostAnyway'.tr()),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _submitAd() async {
@@ -922,6 +1251,17 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       return;
     }
 
+    // A municipality that is subdivided into areas isn't precise enough on its
+    // own — Kathmandu Metropolitan City has 104 of them (Thamel, Naxal, …).
+    // Municipalities with no areas stay a valid stopping point. The area field
+    // has always been labelled "Area / Place *"; this enforces the asterisk.
+    if (_selectedMunicipality!.areas.isNotEmpty && _selectedArea == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('postAd.selectAreaError'.tr())));
+      return;
+    }
+
     // Phone must be verified before posting (mirrors the web post-ad flow).
     if (!_isPhoneVerified) {
       ScaffoldMessenger.of(
@@ -935,6 +1275,34 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('postAd.validContactError'.tr())));
       return;
+    }
+
+    // Pre-post AI checks — warnings only, never hard blocks (owner decision):
+    // junk photos, absurd price vs the AI estimate, unreviewed AI-filled fields.
+    if (!widget.isEditMode && !_aiConfirmed) {
+      final warnings = <String>[];
+      // Selfie gets its own wording; other declines share the generic warning
+      if (_aiSellable == false) {
+        warnings.add(
+          _aiUnsellableReason == 'selfie'
+              ? 'postAd.aiCouldNotFillSelfie'.tr()
+              : 'postAd.aiWarnJunk'.tr(),
+        );
+      }
+      final estimate = _aiPriceEstimate;
+      final typedPrice = double.tryParse(_priceController.text.trim());
+      if (estimate != null &&
+          typedPrice != null &&
+          typedPrice > 0 &&
+          (typedPrice < estimate * 0.1 || typedPrice > estimate * 10)) {
+        warnings.add('postAd.aiWarnPrice'.tr());
+      }
+      if (_aiFilled.isNotEmpty) warnings.add('postAd.aiWarnFilled'.tr());
+      if (warnings.isNotEmpty) {
+        final proceed = await _showAiConfirmDialog(warnings);
+        if (proceed != true) return;
+        _aiConfirmed = true;
+      }
     }
 
     setState(() => _isLoading = true);
@@ -1005,13 +1373,24 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       'attributes': jsonEncode(_buildSubmitAttributes()),
     });
 
-    for (var image in _selectedImages) {
-      formData.files.add(
-        MapEntry(
-          'images',
-          await MultipartFile.fromFile(image.path, filename: image.name),
-        ),
-      );
+    // Instant post: when every photo already finished its background upload,
+    // send only the staged ids — no file bytes (fall back to classic upload
+    // for any gap, e.g. a staging call that failed or is still in flight).
+    final stagedIds = _selectedImages
+        .map((img) => _stagedIds[img.path])
+        .toList();
+    final allStaged = _selectedImages.isNotEmpty && !stagedIds.contains(null);
+    if (allStaged) {
+      formData.fields.add(MapEntry('stagedImages', jsonEncode(stagedIds)));
+    } else {
+      for (var image in _selectedImages) {
+        formData.files.add(
+          MapEntry(
+            'images',
+            await MultipartFile.fromFile(image.path, filename: image.name),
+          ),
+        );
+      }
     }
 
     final result = await _adClient.createAd(
@@ -1021,6 +1400,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
     if (result.success) {
       await _deleteDraftAfterPost();
+      await _rememberDefaultLocation();
       AnalyticsService.logPostAd(
         adId: result.data?.id ?? 0,
         title: _titleController.text.trim(),
@@ -1385,12 +1765,19 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     final detailsFilled =
         _descriptionController.text.trim().isNotEmpty &&
         _priceController.text.trim().isNotEmpty;
-    final locationChosen = _selectedMunicipality != null;
+    final locationChosen =
+        _selectedMunicipality != null &&
+        (_selectedMunicipality!.areas.isEmpty || _selectedArea != null);
 
     // Photos first (always visible); the title also reveals from restored
-    // drafts, which carry text but no images.
+    // drafts, which carry text but no images. While the AI is filling, hold
+    // the title back so the user never stares at empty fields — it appears
+    // pre-filled (or empty with a note when the AI couldn't help).
     final photosAdded = _totalImageCount > 0;
-    final showTitle = _reveal('title', photosAdded || titleFilled);
+    final showTitle = _reveal(
+      'title',
+      (photosAdded && !_aiDraftLoading) || titleFilled,
+    );
     final showCategory = _reveal('category', titleFilled);
     final showDetails = _reveal('details', categoryComplete);
     final showLocation = _reveal('location', showDetails && detailsFilled);
@@ -1576,6 +1963,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     setState(() {
       _selectedCategory = picked;
       _selectedSubCategory = null;
+      _aiFilled.remove('category');
       if (!widget.isEditMode || _editPrefillDone) {
         _attributeValues.clear();
       }
@@ -1595,7 +1983,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         ),
         const SizedBox(height: 24),
 
-        _buildLabel('postAd.adTitle'.tr()),
+        _buildLabel('postAd.adTitle'.tr(), aiField: 'title'),
         _buildTextField(
           controller: _titleController,
           hintText: 'postAd.adTitleHint'.tr(),
@@ -1621,7 +2009,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        _buildLabel('postAd.selectCategory'.tr()),
+        _buildLabel('postAd.selectCategory'.tr(), aiField: 'category'),
         InkWell(
           onTap: _openCategoryPicker,
           borderRadius: BorderRadius.circular(8),
@@ -1663,41 +2051,70 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             selectedCategory.subcategories.isNotEmpty) ...[
           const SizedBox(height: 20),
           _buildLabel('postAd.selectSubcategory'.tr()),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: selectedCategory.subcategories.map((sub) {
+          // Same icon-tile grid as the category picker, so both steps match.
+          // Nested inside the form's scroll view, hence shrinkWrap + no physics.
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.95,
+            ),
+            itemCount: selectedCategory.subcategories.length,
+            itemBuilder: (context, i) {
+              final sub = selectedCategory.subcategories[i];
               final selected = _selectedSubCategory?.id == sub.id;
-              return ChoiceChip(
-                label: Text(
-                  sub.localizedName(locale),
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: selected ? Colors.white : Colors.black87,
-                  ),
-                ),
-                selected: selected,
-                showCheckmark: false,
-                selectedColor: const Color(0xFF10B981),
-                backgroundColor: Colors.white,
-                side: BorderSide(
-                  color: selected ? const Color(0xFF10B981) : Colors.grey[300]!,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                onSelected: (_) {
+              return InkWell(
+                onTap: () {
                   setState(() {
                     _selectedSubCategory = sub;
+                    _aiFilled.remove('category');
                     if (!widget.isEditMode || _editPrefillDone) {
                       _attributeValues.clear();
                     }
                   });
                   _onFormChanged();
                 },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: selected ? const Color(0xFFECFDF5) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: selected
+                          ? const Color(0xFF10B981)
+                          : Colors.grey[200]!,
+                      width: selected ? 2 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CategoryIcon(
+                        slug: sub.slug,
+                        emoji: sub.icon ?? '📁',
+                        size: 44,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        sub.localizedName(locale),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               );
-            }).toList(),
+            },
           ),
         ],
 
@@ -1742,7 +2159,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        _buildLabel('postAd.descriptionLabel'.tr()),
+        _buildLabel('postAd.descriptionLabel'.tr(), aiField: 'description'),
         _buildTextField(
           controller: _descriptionController,
           hintText: 'postAd.descriptionHint'.tr(),
@@ -1756,7 +2173,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         _buildCharCount("${_descriptionController.text.length}/5000"),
 
         const SizedBox(height: 24),
-        _buildLabel('postAd.priceLabel'.tr()),
+        _buildLabel('postAd.priceLabel'.tr(), aiField: 'price'),
         _buildTextField(
           controller: _priceController,
           hintText: "0",
@@ -1953,6 +2370,93 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   ),
           ),
         ),
+        if (_aiDraftLoading)
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F3FF),
+              border: Border.all(color: const Color(0xFFDDD6FE)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const _AiSparkle(),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'postAd.aiFillingWait'.tr(),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF5B21B6),
+                            ),
+                          ),
+                          Text(
+                            'postAd.aiFillingWaitHint'.tr(),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: const Color(0xFF7C3AED),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: const LinearProgressIndicator(
+                    minHeight: 3,
+                    color: Color(0xFF7C3AED),
+                    backgroundColor: Color(0xFFDDD6FE),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (_aiExplicitBlocked)
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF2F2),
+              border: Border.all(color: const Color(0xFFFCA5A5)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              'postAd.aiExplicitBlocked'.tr(),
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFFB91C1C),
+              ),
+            ),
+          ),
+        if (_aiFillFailed && _titleController.text.trim().isEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              _aiCouldNotFillKey.tr(),
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                color: const Color(0xFF92400E),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -2511,16 +3015,47 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     return isNepali ? 'प्रोसेस हुँदैछ...' : 'Processing...';
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, {String? aiField}) {
+    final showAiBadge = aiField != null && _aiFilled.contains(aiField);
+    // Per-field copy so each badge nudges the specific action needed
+    final aiBadgeKey = switch (aiField) {
+      'title' => 'postAd.aiSuggestedTitle',
+      'category' => 'postAd.aiSuggestedCategory',
+      'description' => 'postAd.aiSuggestedDescription',
+      'price' => 'postAd.aiSuggestedPrice',
+      _ => 'postAd.aiSuggested',
+    };
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: GoogleFonts.inter(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-          color: Colors.grey[800],
-        ),
+      child: Row(
+        children: [
+          Text(
+            text,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Colors.grey[800],
+            ),
+          ),
+          if (showAiBadge) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F3FF),
+                border: Border.all(color: const Color(0xFFDDD6FE)),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '✨ ${aiBadgeKey.tr()}',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  color: const Color(0xFF7C3AED),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -2577,6 +3112,44 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400]),
         ),
       ),
+    );
+  }
+}
+
+/// Twinkling sparkle for the AI-filling banner: gentle rotate + scale loop so
+/// the wait state reads as "actively working", never stalled.
+class _AiSparkle extends StatefulWidget {
+  const _AiSparkle();
+
+  @override
+  State<_AiSparkle> createState() => _AiSparkleState();
+}
+
+class _AiSparkleState extends State<_AiSparkle>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_controller.value);
+        return Transform.rotate(
+          angle: (t - 0.5) * 0.5,
+          child: Transform.scale(scale: 1 + t * 0.25, child: child),
+        );
+      },
+      child: const Text('✨', style: TextStyle(fontSize: 20)),
     );
   }
 }

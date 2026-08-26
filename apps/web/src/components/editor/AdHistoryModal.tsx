@@ -22,6 +22,7 @@ const ACTION_STYLES: Record<string, { label: string; dot: string }> = {
   owner_edit_live: { label: 'Owner Edited Live Ad', dot: 'bg-purple-500' },
   owner_edit_resubmit: { label: 'Owner Edited (Sent to Review)', dot: 'bg-yellow-500' },
   owner_direct_publish: { label: 'Owner Edit Published Directly', dot: 'bg-emerald-500' },
+  ai_auto_publish: { label: 'AI Auto-Published', dot: 'bg-violet-500' },
 };
 
 function formatDate(value: string) {

@@ -1,0 +1,427 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+vi.mock('@thulobazaar/database', () => ({
+  prisma: {
+    site_settings: { findUnique: vi.fn() },
+    ads: { count: vi.fn(), updateMany: vi.fn() },
+  },
+}));
+
+vi.mock('../../services/notification.service.js', () => ({
+  notifyEditors: vi.fn().mockResolvedValue(undefined),
+  sendNotification: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../utils/responseHelpers.js', () => ({
+  logReviewHistory: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../lib/ai/images.js', () => ({
+  imagesToDataUrls: vi.fn(),
+}));
+
+vi.mock('../../services/userReport.service.js', () => ({
+  reportExplicitContent: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+import { prisma } from '@thulobazaar/database';
+import { notifyEditors, sendNotification } from '../../services/notification.service.js';
+import { logReviewHistory } from '../../utils/responseHelpers.js';
+import { imagesToDataUrls } from '../../lib/ai/images.js';
+import { reportExplicitContent } from '../../services/userReport.service.js';
+import {
+  parseVerdict,
+  shouldModerateNewAds,
+  moderateAd,
+  moderateNewAd,
+  AI_UNAVAILABLE_REASON,
+  EDITED_DURING_CHECK_REASON,
+} from '../../services/moderation.service.js';
+
+function deepseekReply(content: string) {
+  return {
+    ok: true,
+    json: async () => ({ choices: [{ message: { content } }] }),
+  };
+}
+
+/** Route site_settings.findUnique by setting_key. */
+function mockSettings(map: Record<string, string>) {
+  vi.mocked(prisma.site_settings.findUnique).mockImplementation((async (args: any) => {
+    const key = args?.where?.setting_key;
+    return key in map ? { setting_value: map[key] } : null;
+  }) as any);
+}
+
+const testAd = {
+  title: 'iPhone 13 Pro 256GB',
+  description: 'Lightly used, box included',
+  categoryName: 'Mobile Phones',
+  price: 95000,
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockFetch.mockReset();
+  process.env.DEEPSEEK_API_KEY = 'test-key';
+});
+
+afterEach(() => {
+  delete process.env.DEEPSEEK_API_KEY;
+});
+
+describe('parseVerdict', () => {
+  it('publishes on a confident publish verdict', () => {
+    const result = parseVerdict(
+      JSON.stringify({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.98 })
+    );
+    expect(result).toEqual({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.98, explicit: false });
+  });
+
+  it('holds a publish verdict below the 0.95 threshold', () => {
+    const result = parseVerdict(
+      JSON.stringify({ verdict: 'publish', reason: 'Probably fine', confidence: 0.9 })
+    );
+    expect(result.verdict).toBe('hold');
+  });
+
+  it('passes through a hold verdict with its reason', () => {
+    const result = parseVerdict(
+      JSON.stringify({ verdict: 'hold', reason: 'Photo is a selfie', confidence: 0.99 })
+    );
+    expect(result.verdict).toBe('hold');
+    expect(result.reason).toBe('Photo is a selfie');
+  });
+
+  it('holds on unknown verdicts (the AI cannot invent "reject")', () => {
+    const result = parseVerdict(
+      JSON.stringify({ verdict: 'reject', reason: 'Bad ad', confidence: 1 })
+    );
+    expect(result.verdict).toBe('hold');
+  });
+
+  it('holds on unparseable output', () => {
+    expect(parseVerdict('sure, publishing it!').verdict).toBe('hold');
+  });
+
+  it('holds on non-object JSON', () => {
+    expect(parseVerdict('[1,2,3]').verdict).toBe('hold');
+    expect(parseVerdict('null').verdict).toBe('hold');
+    expect(parseVerdict('"publish"').verdict).toBe('hold');
+  });
+
+  it('holds when confidence is missing, non-numeric, or out of range', () => {
+    expect(parseVerdict(JSON.stringify({ verdict: 'publish', reason: 'x' })).verdict).toBe('hold');
+    expect(
+      parseVerdict(JSON.stringify({ verdict: 'publish', reason: 'x', confidence: '0.99' })).verdict
+    ).toBe('hold');
+    expect(
+      parseVerdict(JSON.stringify({ verdict: 'publish', reason: 'x', confidence: 1.5 })).verdict
+    ).toBe('hold');
+    expect(
+      parseVerdict(JSON.stringify({ verdict: 'publish', reason: 'x', confidence: NaN })).verdict
+    ).toBe('hold');
+  });
+
+  it('never publishes explicit content, whatever the model claims', () => {
+    const result = parseVerdict(
+      JSON.stringify({ verdict: 'publish', reason: 'Nice photo', confidence: 0.99, explicit: true })
+    );
+    expect(result.verdict).toBe('hold');
+    expect(result.explicit).toBe(true);
+    // only a literal true counts
+    expect(parseVerdict(JSON.stringify({ verdict: 'hold', reason: 'x', confidence: 0, explicit: 'yes' })).explicit).toBe(false);
+  });
+
+  it('caps runaway reasons at 300 chars and defaults empty ones', () => {
+    const long = parseVerdict(
+      JSON.stringify({ verdict: 'hold', reason: 'a'.repeat(1000), confidence: 0.5 })
+    );
+    expect(long.reason).toHaveLength(300);
+    const empty = parseVerdict(JSON.stringify({ verdict: 'hold', confidence: 0.5 }));
+    expect(empty.reason).toBe('No reason given');
+  });
+});
+
+describe('shouldModerateNewAds', () => {
+  it('is false without an API key', async () => {
+    delete process.env.DEEPSEEK_API_KEY;
+    mockSettings({ ai_moderation_enabled: 'true', ai_moderation_daily_cap: '500' });
+    expect(await shouldModerateNewAds()).toBe(false);
+  });
+
+  it('is false when the kill switch is off (and defaults to off when the row is missing)', async () => {
+    mockSettings({ ai_moderation_enabled: 'false', ai_moderation_daily_cap: '500' });
+    expect(await shouldModerateNewAds()).toBe(false);
+    mockSettings({});
+    expect(await shouldModerateNewAds()).toBe(false);
+  });
+
+  it('is true when enabled, keyed, and under the daily cap', async () => {
+    mockSettings({ ai_moderation_enabled: 'true', ai_moderation_daily_cap: '500' });
+    vi.mocked(prisma.ads.count).mockResolvedValue(3);
+    expect(await shouldModerateNewAds()).toBe(true);
+  });
+
+  it('is false at the daily cap or with a cap of 0', async () => {
+    mockSettings({ ai_moderation_enabled: 'true', ai_moderation_daily_cap: '500' });
+    vi.mocked(prisma.ads.count).mockResolvedValue(500);
+    expect(await shouldModerateNewAds()).toBe(false);
+
+    mockSettings({ ai_moderation_enabled: 'true', ai_moderation_daily_cap: '0' });
+    expect(await shouldModerateNewAds()).toBe(false);
+  });
+});
+
+describe('moderateAd', () => {
+  const images = ['data:image/jpeg;base64,aaaa'];
+
+  it('returns publish on a confident DeepSeek reply and sends the right payload', async () => {
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'Clear item photo', confidence: 0.99 }))
+    );
+
+    const result = await moderateAd(testAd, images);
+
+    expect(result.verdict).toBe('publish');
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe('https://api.deepseek.com/chat/completions');
+    const body = JSON.parse(init.body);
+    expect(body.model).toBe('deepseek-v4-flash-vision-exp');
+    expect(body.response_format).toEqual({ type: 'json_object' });
+    // images ride in the user message only, followed by the ad text block
+    const userContent = body.messages[1].content;
+    expect(userContent[0]).toEqual({ type: 'image_url', image_url: { url: images[0] } });
+    expect(userContent[1].text).toContain('iPhone 13 Pro 256GB');
+    expect(userContent[1].text).toContain('untrusted user data');
+  });
+
+  it('holds with ai_unavailable on HTTP errors', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500, text: async () => 'boom' });
+    const result = await moderateAd(testAd, images);
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false });
+  });
+
+  it('holds with ai_unavailable on timeout/network failure', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('The operation was aborted due to timeout'));
+    const result = await moderateAd(testAd, images);
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false });
+  });
+
+  it('holds with ai_unavailable when the reply has no content', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [] }) });
+    const result = await moderateAd(testAd, images);
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false });
+  });
+});
+
+describe('moderateNewAd', () => {
+  const createdAt = new Date('2026-08-26T04:00:00.000Z');
+  const params = {
+    adId: 42,
+    title: 'iPhone 13 Pro 256GB',
+    description: 'Lightly used',
+    price: 95000,
+    categoryName: 'Mobile Phones',
+    ownerUserId: 7,
+    imagePaths: ['/tmp/a.avif', '/tmp/b.avif'],
+    adUpdatedAt: createdAt,
+  };
+
+  function enableModeration() {
+    mockSettings({ ai_moderation_enabled: 'true', ai_moderation_daily_cap: '500' });
+    vi.mocked(prisma.ads.count).mockResolvedValue(0);
+    vi.mocked(imagesToDataUrls).mockResolvedValue(['data:image/jpeg;base64,aaaa']);
+  }
+
+  it('sends the plain pending notification when moderation is off (no AI calls, no DB stamps)', async () => {
+    delete process.env.DEEPSEEK_API_KEY;
+
+    await moderateNewAd(params);
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(prisma.ads.updateMany).not.toHaveBeenCalled();
+    expect(notifyEditors).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(notifyEditors).mock.calls[0][0]).toMatchObject({
+      type: 'new_ad_pending',
+      body: '"iPhone 13 Pro 256GB" was just posted and needs review.',
+    });
+  });
+
+  it('publishes a confident ad: approves with published_at, logs history, notifies editors + owner', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.99 }))
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // TOCTOU guard: publish only if updated_at still equals the creation snapshot
+        where: { id: 42, status: 'pending', deleted_at: null, updated_at: createdAt },
+        data: expect.objectContaining({
+          status: 'approved',
+          ai_verdict: 'published',
+          ai_reason: 'Genuine listing',
+          reviewed_at: expect.any(Date),
+          published_at: expect.any(Date),
+          ai_checked_at: expect.any(Date),
+        }),
+      })
+    );
+    expect(logReviewHistory).toHaveBeenCalledWith(
+      42,
+      'ai_auto_publish',
+      7,
+      'ai',
+      'Genuine listing',
+      expect.any(String)
+    );
+    expect(vi.mocked(notifyEditors).mock.calls[0][0]).toMatchObject({ type: 'ad_live_posted' });
+    expect(vi.mocked(sendNotification).mock.calls[0][0]).toMatchObject({
+      recipientUserIds: [7],
+      type: 'ad_approved',
+    });
+  });
+
+  it('holds a doubtful ad: stamps AI fields only and notifies editors with the reason', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'hold', reason: 'Photo is a selfie', confidence: 0.3 }))
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 42 },
+        data: expect.objectContaining({ ai_verdict: 'held', ai_reason: 'Photo is a selfie' }),
+      })
+    );
+    // never touches status on hold
+    const updateData = vi.mocked(prisma.ads.updateMany).mock.calls[0][0]!.data as any;
+    expect(updateData.status).toBeUndefined();
+    const notify = vi.mocked(notifyEditors).mock.calls[0][0];
+    expect(notify.type).toBe('new_ad_pending');
+    expect(notify.body).toContain('AI: Photo is a selfie');
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it('holds for human review when the owner edited the ad during the check', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.99 }))
+    );
+    // publish miss (updated_at changed) but the ad is still pending → held-as-edited
+    vi.mocked(prisma.ads.updateMany)
+      .mockResolvedValueOnce({ count: 0 } as any)
+      .mockResolvedValueOnce({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    expect(prisma.ads.updateMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: { id: 42, status: 'pending', deleted_at: null },
+        data: expect.objectContaining({
+          ai_verdict: 'held',
+          ai_reason: EDITED_DURING_CHECK_REASON,
+        }),
+      })
+    );
+    // must NOT publish-notify; editors get the normal pending notification instead
+    const notify = vi.mocked(notifyEditors).mock.calls[0][0];
+    expect(notify.type).toBe('new_ad_pending');
+    expect(notify.body).toContain(EDITED_DURING_CHECK_REASON);
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(logReviewHistory).not.toHaveBeenCalled();
+  });
+
+  it('stays silent when the ad was actioned or deleted during the check', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.99 }))
+    );
+    // publish miss AND no longer pending → only the spent call is recorded
+    vi.mocked(prisma.ads.updateMany)
+      .mockResolvedValueOnce({ count: 0 } as any)
+      .mockResolvedValueOnce({ count: 0 } as any)
+      .mockResolvedValueOnce({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    expect(prisma.ads.updateMany).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        where: { id: 42 },
+        data: { ai_checked_at: expect.any(Date) },
+      })
+    );
+    expect(notifyEditors).not.toHaveBeenCalled();
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(logReviewHistory).not.toHaveBeenCalled();
+  });
+
+  it('auto-reports the uploader when the AI flags explicit content', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(
+        JSON.stringify({ verdict: 'hold', reason: 'Nudity in photo', confidence: 0.9, explicit: true })
+      )
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    expect(reportExplicitContent).toHaveBeenCalledWith(7, 'ad-moderation');
+    // the ad is held, never published
+    const updateData = vi.mocked(prisma.ads.updateMany).mock.calls[0][0]!.data as any;
+    expect(updateData.ai_verdict).toBe('held');
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it('holds without spending an API call when the ad has no photos', async () => {
+    enableModeration();
+
+    await moderateNewAd({ ...params, imagePaths: [] });
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ ai_verdict: 'held', ai_reason: 'No photos to verify' }),
+      })
+    );
+    // no ai_checked_at stamp — no call was made, so it must not count against the budget
+    const updateData = vi.mocked(prisma.ads.updateMany).mock.calls[0][0]!.data as any;
+    expect(updateData.ai_checked_at).toBeUndefined();
+    expect(vi.mocked(notifyEditors).mock.calls[0][0]).toMatchObject({ type: 'new_ad_pending' });
+  });
+
+  it('falls back to the plain pending notification when the AI is unavailable', async () => {
+    enableModeration();
+    mockFetch.mockRejectedValueOnce(new Error('timeout'));
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    const notify = vi.mocked(notifyEditors).mock.calls[0][0];
+    expect(notify.type).toBe('new_ad_pending');
+    // editors should not see the internal ai_unavailable marker
+    expect(notify.body).not.toContain(AI_UNAVAILABLE_REASON);
+  });
+
+  it('never throws even when everything fails', async () => {
+    enableModeration();
+    mockFetch.mockRejectedValueOnce(new Error('down'));
+    vi.mocked(prisma.ads.updateMany).mockRejectedValue(new Error('db down'));
+
+    await expect(moderateNewAd(params)).resolves.toBeUndefined();
+  });
+});
