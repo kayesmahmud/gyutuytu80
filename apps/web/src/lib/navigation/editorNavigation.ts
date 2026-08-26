@@ -106,11 +106,19 @@ export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}
       title: 'Communication',
       items: [
         {
-          // The editor's own user↔user chats (started from ad cards) — lives on
-          // the public /messages page, authenticated by the same staff session.
+          // Shared inbox of all "Thulo Bazaar Team" ↔ user conversations —
+          // every editor sees every thread, sent under the team identity.
+          href: `/${lang}/editor/team-inbox`,
+          icon: 'Inbox',
+          label: 'Team Inbox',
+        },
+        {
+          // The editor's own personal chats (incl. legacy pre-team-inbox
+          // outreach) — lives on the public /messages page, authenticated by
+          // the same staff session.
           href: `/${lang}/messages`,
           icon: 'MessagesSquare',
-          label: 'User Messages',
+          label: 'My Messages',
         },
         {
           href: `/${lang}/editor/notifications`,

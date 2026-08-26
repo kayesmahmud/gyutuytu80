@@ -52,24 +52,24 @@ export default function AdCard({
   const router = useRouter();
   const [messageLoading, setMessageLoading] = useState(false);
 
-  // Open (or create) the editor↔seller chat linked to THIS ad, then jump to it.
-  // Auth rides on the editor's NextAuth session cookie — same-origin fetch.
+  // Open (or create) the shared TEAM conversation with this seller — the
+  // message is sent as "Thulo Bazaar Team" and every editor sees the thread
+  // in the Team Inbox. Auth rides on the editor's session cookie.
   const handleMessageSeller = async () => {
     if (!ad.seller?.id) return;
     setMessageLoading(true);
     try {
-      const res = await fetch('/api/messages/conversations', {
+      const res = await fetch('/api/editor/team-inbox/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          participantIds: [ad.seller.id],
-          type: 'direct',
+          userId: ad.seller.id,
           adId: ad.id,
         }),
       });
       const data = await res.json();
       if (data?.success && data.data?.id) {
-        router.push(`/${lang}/messages?conversation=${data.data.id}`);
+        router.push(`/${lang}/editor/team-inbox?conversation=${data.data.id}`);
       } else {
         alert(data?.message || 'Could not open the conversation. Please try again.');
       }

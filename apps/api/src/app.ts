@@ -95,7 +95,11 @@ export function createApp(): Express {
       const isAuthRoute = req.path.startsWith('/api/auth/') || req.path.startsWith('/auth/');
       // Allow if request carries a valid Bearer token (native mobile app)
       const hasBearer = req.headers.authorization?.startsWith('Bearer ');
-      if (!isAuthRoute && !hasBearer) {
+      // Internal server-to-server routes are exempt: Next.js fetch sends no
+      // Origin header, and these routes authenticate with INTERNAL_API_SECRET
+      // (fail-closed) — a stronger guarantee than an Origin check.
+      const isInternalRoute = req.path.startsWith('/api/internal/');
+      if (!isAuthRoute && !hasBearer && !isInternalRoute) {
         res.status(403).json({ success: false, message: 'Forbidden: Origin header required' });
         return;
       }
@@ -376,7 +380,7 @@ export function createApp(): Express {
   // Internal endpoint: Next.js → Express Socket.IO bridge
   // Called by Next.js API routes after saving a message to DB
   app.post('/api/internal/broadcast-message', (req, res) => {
-    const { secret, messageData, conversationId } = req.body;
+    const { secret, messageData, conversationId, sentBy } = req.body;
 
     // 🔒 SEC-2: shared secret to prevent unauthorized broadcasts. Fail closed —
     // if the secret isn't configured, reject (never fall back to a published literal,
@@ -395,6 +399,18 @@ export function createApp(): Express {
         timestamp: new Date(),
       });
       console.log(`📡 Broadcasted message ${messageData?.id} to conversation:${conversationId}`);
+
+      // Team threads also mirror into the shared editor inbox room. Editor
+      // attribution (sentBy) is added ONLY to the staff copy — the user-facing
+      // conversation payload above never carries it.
+      prisma.conversations
+        .findUnique({ where: { id: conversationId }, select: { team_user_id: true } })
+        .then((conversation) => {
+          if (!conversation?.team_user_id) return;
+          const staffPayload = sentBy ? { ...messageData, sentBy } : messageData;
+          io.to('team:inbox').emit('team-inbox:message-new', staffPayload);
+        })
+        .catch((err: Error) => console.error('Team inbox mirror error:', err));
     }
 
     // Create in-app notifications for recipients (fire-and-forget)
