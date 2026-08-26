@@ -112,13 +112,6 @@ export interface CategoryWithSubcategories extends Category {
   subcategories: Category[];
 }
 
-/** One entry of the keyword→category dictionary used for post-ad title suggestions. */
-export interface CategoryKeyword {
-  keyword: string;
-  categoryId: number;
-  subcategoryId: number | null;
-}
-
 // ============================================
 // API LOCATION TYPES
 // ============================================
@@ -351,7 +344,7 @@ export interface AiDraft {
   priceEstimate: number | null;
   sellable: boolean;
   /** Why the photos can't make a listing — only set when sellable is false */
-  unsellableReason: 'selfie' | 'screenshot' | 'unclear' | 'explicit' | 'other' | null;
+  unsellableReason: 'selfie' | 'screenshot' | 'unclear' | 'explicit' | 'prohibited' | 'other' | null;
   confidence: number;
 }
 

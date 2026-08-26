@@ -3,7 +3,7 @@
  */
 
 import type { AxiosInstance } from 'axios';
-import type { Category, CategoryKeyword, ApiResponse } from '@thulobazaar/types';
+import type { Category, ApiResponse } from '@thulobazaar/types';
 
 export function createCategoryMethods(client: AxiosInstance) {
   return {
@@ -12,11 +12,6 @@ export function createCategoryMethods(client: AxiosInstance) {
       parent_id?: number | null;
     }): Promise<ApiResponse<Category[]>> {
       const response = await client.get('/api/categories', { params });
-      return response.data;
-    },
-
-    async getCategoryKeywords(): Promise<ApiResponse<CategoryKeyword[]>> {
-      const response = await client.get('/api/categories/keywords');
       return response.data;
     },
 
