@@ -456,26 +456,37 @@ router.post(
       },
     });
 
-    // 2. Create a verification request record so editors can review it
-    const businessRequest = await prisma.business_verification_requests.create({
-      data: {
-        user_id: userId,
-        business_name: businessName,
-        business_license_document: licenseDocument,
-        business_category: businessCategory || null,
-        business_description: businessDescription || null,
-        business_website: businessWebsite || null,
-        business_phone: businessPhone || null,
-        business_address: businessAddress || null,
-        document_type: documentType || null,
-        document_number: documentNumber || null,
-        status: 'pending',
-        duration_days: durationDays || 365,
-        payment_status: paymentStatus || 'free',
-        ...(paymentAmount && { payment_amount: paymentAmount }),
-        ...(paymentReference && { payment_reference: paymentReference }),
-      },
-    });
+    // 2. Create a verification request record so editors can review it.
+    // Superseded REJECTED applications are deleted in the same transaction —
+    // otherwise each resubmission leaves a stale rejected card behind in the
+    // editor panel. If the create fails, the delete rolls back.
+    // NEVER delete pending_payment rows here: they are the related_id target of
+    // an in-flight Khalti/eSewa payment, and deleting one orphans the payment
+    // (money captured, no request row left for the callback to promote).
+    const [, businessRequest] = await prisma.$transaction([
+      prisma.business_verification_requests.deleteMany({
+        where: { user_id: userId, status: 'rejected' },
+      }),
+      prisma.business_verification_requests.create({
+        data: {
+          user_id: userId,
+          business_name: businessName,
+          business_license_document: licenseDocument,
+          business_category: businessCategory || null,
+          business_description: businessDescription || null,
+          business_website: businessWebsite || null,
+          business_phone: businessPhone || null,
+          business_address: businessAddress || null,
+          document_type: documentType || null,
+          document_number: documentNumber || null,
+          status: 'pending',
+          duration_days: durationDays || 365,
+          payment_status: paymentStatus || 'free',
+          ...(paymentAmount && { payment_amount: paymentAmount }),
+          ...(paymentReference && { payment_reference: paymentReference }),
+        },
+      }),
+    ]);
 
     console.log(`✅ Business verification submitted by user ${userId}`);
 
@@ -526,23 +537,34 @@ router.post(
       },
     });
 
-    // 2. Create a verification request record so editors can review it
-    const individualRequest = await prisma.individual_verification_requests.create({
-      data: {
-        user_id: userId,
-        full_name: fullName || null,
-        id_document_type: idType || 'citizenship',
-        id_document_number: idNumber || '',
-        id_document_front: documentUrls?.id_document_front?.filename || documentUrls?.id_document_front?.url || null,
-        id_document_back: documentUrls?.id_document_back?.filename || documentUrls?.id_document_back?.url || null,
-        selfie_with_id: documentUrls?.selfie_with_id?.filename || documentUrls?.selfie_with_id?.url || null,
-        status: 'pending',
-        duration_days: durationDays || 365,
-        payment_status: paymentStatus || 'free',
-        ...(paymentAmount && { payment_amount: paymentAmount }),
-        ...(paymentReference && { payment_reference: paymentReference }),
-      },
-    });
+    // 2. Create a verification request record so editors can review it.
+    // Superseded REJECTED applications are deleted in the same transaction —
+    // otherwise each resubmission leaves a stale rejected card behind in the
+    // editor panel. If the create fails, the delete rolls back.
+    // NEVER delete pending_payment rows here: they are the related_id target of
+    // an in-flight Khalti/eSewa payment, and deleting one orphans the payment
+    // (money captured, no request row left for the callback to promote).
+    const [, individualRequest] = await prisma.$transaction([
+      prisma.individual_verification_requests.deleteMany({
+        where: { user_id: userId, status: 'rejected' },
+      }),
+      prisma.individual_verification_requests.create({
+        data: {
+          user_id: userId,
+          full_name: fullName || null,
+          id_document_type: idType || 'citizenship',
+          id_document_number: idNumber || '',
+          id_document_front: documentUrls?.id_document_front?.filename || documentUrls?.id_document_front?.url || null,
+          id_document_back: documentUrls?.id_document_back?.filename || documentUrls?.id_document_back?.url || null,
+          selfie_with_id: documentUrls?.selfie_with_id?.filename || documentUrls?.selfie_with_id?.url || null,
+          status: 'pending',
+          duration_days: durationDays || 365,
+          payment_status: paymentStatus || 'free',
+          ...(paymentAmount && { payment_amount: paymentAmount }),
+          ...(paymentReference && { payment_reference: paymentReference }),
+        },
+      }),
+    ]);
 
     console.log(`✅ Individual verification submitted by user ${userId}`);
 
