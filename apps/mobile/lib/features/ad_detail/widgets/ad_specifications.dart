@@ -18,6 +18,8 @@ class AdSpecifications extends StatelessWidget {
     // Separate amenities from regular specs (matches web behavior)
     final filteredKeys = {
       'isNegotiable',
+      // Shown as a badge next to Negotiable, so keep it out of the raw rows.
+      'isCodAvailable',
       'amenities',
       'condition',
       'whatsapp_number',

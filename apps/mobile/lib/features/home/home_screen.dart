@@ -58,10 +58,17 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ScrollController _categoryScrollController = ScrollController();
-  bool _categoryArrowsVisible = false;
   bool _categoryCanScrollLeft = false;
   bool _categoryCanScrollRight = false;
-  Timer? _categoryArrowHideTimer;
+  // Which half the row is showing — drives the active dot.
+  int _categoryPage = 0;
+  // Fires exactly once, then never again for this screen.
+  Timer? _categoryNudgeTimer;
+  bool _categoryNudged = false;
+  // Set the moment the user touches the row; retires the pending nudge.
+  bool _categoryUserTook = false;
+  // True only while WE animate, so the nudge isn't mistaken for user input.
+  bool _categoryAutoScrolling = false;
   Timer? _newAdCheckTimer;
   final FocusNode _searchFocusNode = FocusNode();
   final LayerLink _searchLayerLink = LayerLink();
@@ -106,7 +113,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _searchController.dispose();
     _scrollController.dispose();
     _categoryScrollController.dispose();
-    _categoryArrowHideTimer?.cancel();
+    _categoryNudgeTimer?.cancel();
     _newAdCheckTimer?.cancel();
     super.dispose();
   }
@@ -251,9 +258,10 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       });
       // The feed now shows the newest ads, so retire the Home-tab dot.
       widget.newAdsNotifier?.value = false;
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _updateCategoryScrollEdges(),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateCategoryScrollEdges();
+        _nudgeCategoryRowOnce();
+      });
     } catch (e) {
       final offline = await _isOfflineError();
       if (reqId != _fetchSeq || !mounted) return;
@@ -595,33 +603,122 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
     );
 
-    return Listener(
-      onPointerDown: (_) => _pingCategoryActivity(),
-      onPointerMove: (_) => _pingCategoryActivity(),
-      onPointerUp: (_) => _pingCategoryActivity(),
-      onPointerCancel: (_) => _pingCategoryActivity(),
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (_) {
-          _pingCategoryActivity();
-          return false;
-        },
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            content,
-            _buildCategoryArrowButton(isLeft: true),
-            _buildCategoryArrowButton(isLeft: false),
-          ],
+    // Scroll notifications only keep the arrows' can-scroll state current.
+    // Nothing repeats on its own, so the screen is idle at 0% CPU at rest.
+    return Column(
+      children: [
+        Listener(
+          // Only POINTER events count as the user taking over. Scroll
+          // notifications don't, because the one-time nudge emits those too and
+          // would otherwise cancel itself on its own first frame.
+          onPointerDown: (_) => _onCategoryUserInteraction(),
+          onPointerMove: (_) => _onCategoryUserInteraction(),
+          onPointerUp: (_) => _onCategoryUserInteraction(),
+          onPointerCancel: (_) => _onCategoryUserInteraction(),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (_) {
+              _updateCategoryScrollEdges();
+              return false;
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                content,
+                _buildCategoryArrowButton(isLeft: true),
+                _buildCategoryArrowButton(isLeft: false),
+              ],
+            ),
+          ),
         ),
+        _buildCategoryDots(),
+      ],
+    );
+  }
+
+  /// Two page dots under the row — the permanent "there's a second half" cue.
+  /// Free at rest: two small boxes that repaint only when the scroll position
+  /// crosses the halfway point.
+  Widget _buildCategoryDots() {
+    final scrollable = _categoryCanScrollLeft || _categoryCanScrollRight;
+    if (!scrollable) return const SizedBox(height: 12);
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(2, (i) {
+          final active = i == _categoryPage;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: active ? 18 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: active ? AppTheme.primary : Colors.grey[300],
+              borderRadius: BorderRadius.circular(3),
+            ),
+          );
+        }),
       ),
     );
   }
 
-  /// Translucent round scroll-hint arrow, shown only while the category row
-  /// is being touched/scrolled and only on the side there's more to see.
+  /// The user grabbed the row — cancel the pending nudge so we never move the
+  /// content under a finger that's already reaching for a category.
+  void _onCategoryUserInteraction() {
+    if (!_categoryAutoScrolling && !_categoryUserTook) {
+      _categoryUserTook = true;
+      _categoryNudgeTimer?.cancel();
+    }
+    _updateCategoryScrollEdges();
+  }
+
+  /// ONE nudge shortly after the categories land: the row slides right far
+  /// enough to expose the next tile, then springs back to the start. It teaches
+  /// the gesture once and then the screen goes completely idle — unlike a
+  /// repeating timer, which wakes the device every few seconds forever even
+  /// with the phone face-down. Returning to 0 also means it can never leave the
+  /// user looking at a different set of categories than they reached for.
+  void _nudgeCategoryRowOnce() {
+    if (_categoryNudged || _categoryUserTook) return;
+    if (!mounted || MediaQuery.of(context).disableAnimations) return;
+    _categoryNudged = true;
+    _categoryNudgeTimer = Timer(const Duration(milliseconds: 900), () async {
+      if (!mounted || _categoryUserTook) return;
+      if (!_categoryScrollController.hasClients) return;
+      final max = _categoryScrollController.position.maxScrollExtent;
+      if (max <= 0) return;
+      _categoryAutoScrolling = true;
+      try {
+        // Travel the FULL width once, so the hidden categories are actually
+        // seen rather than merely hinted at. A short 64px twitch was firing
+        // correctly but read as a glitch, not as "there is more over here".
+        await _categoryScrollController.animateTo(
+          max,
+          duration: const Duration(milliseconds: 650),
+          curve: Curves.easeInOut,
+        );
+        // Hold long enough to actually read the second half.
+        await Future<void>.delayed(const Duration(milliseconds: 800));
+        if (!mounted || _categoryUserTook) return;
+        if (!_categoryScrollController.hasClients) return;
+        await _categoryScrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 550),
+          curve: Curves.easeInOut,
+        );
+      } finally {
+        _categoryAutoScrolling = false;
+      }
+    });
+  }
+
+  /// Translucent round scroll arrow. Shown WHENEVER there is more to see on
+  /// that side — not gated behind a touch, which was the old behaviour and made
+  /// the hint appear only after the user already knew to scroll. Being a plain
+  /// widget, it costs nothing at rest: no timer, no animation, 0% idle CPU.
   Widget _buildCategoryArrowButton({required bool isLeft}) {
     final canScroll = isLeft ? _categoryCanScrollLeft : _categoryCanScrollRight;
-    final visible = _categoryArrowsVisible && canScroll;
+    final visible = canScroll;
     return Positioned(
       left: isLeft ? 4 : null,
       right: isLeft ? null : 4,
@@ -651,31 +748,23 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  /// Reveal the scroll arrows on any touch/scroll of the category row, and
-  /// always (re)arm a single idle timer so they reliably fade out ~1.5s after
-  /// the last activity — no reliance on perfectly paired pointer-up/scroll-end
-  /// events, which scrollables can swallow and leave the arrows stuck visible.
-  void _pingCategoryActivity() {
-    _updateCategoryScrollEdges();
-    if (!_categoryArrowsVisible) {
-      setState(() => _categoryArrowsVisible = true);
-    }
-    _categoryArrowHideTimer?.cancel();
-    _categoryArrowHideTimer = Timer(const Duration(milliseconds: 1500), () {
-      if (mounted) setState(() => _categoryArrowsVisible = false);
-    });
-  }
 
   void _updateCategoryScrollEdges() {
     if (!_categoryScrollController.hasClients) return;
     final position = _categoryScrollController.position;
     final canLeft = position.pixels > 4;
     final canRight = position.pixels < position.maxScrollExtent - 4;
+    final page = position.maxScrollExtent > 0 &&
+            position.pixels > position.maxScrollExtent / 2
+        ? 1
+        : 0;
     if (canLeft != _categoryCanScrollLeft ||
-        canRight != _categoryCanScrollRight) {
+        canRight != _categoryCanScrollRight ||
+        page != _categoryPage) {
       setState(() {
         _categoryCanScrollLeft = canLeft;
         _categoryCanScrollRight = canRight;
+        _categoryPage = page;
       });
     }
   }
@@ -690,7 +779,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
-    _pingCategoryActivity();
+    _updateCategoryScrollEdges();
   }
 
   /// Find matching hardcoded category by slug or name for icon/shortName lookup

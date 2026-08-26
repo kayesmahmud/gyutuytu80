@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/widgets/category_icon.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/location_client.dart';
@@ -77,12 +78,13 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
   // Price controllers
   final TextEditingController _minPriceController = TextEditingController();
   final TextEditingController _maxPriceController = TextEditingController();
-  
+
   // Location Search
-  final TextEditingController _locationSearchController = TextEditingController();
+  final TextEditingController _locationSearchController =
+      TextEditingController();
   List<Location> _locationSearchResults = [];
   bool _isSearchingLocation = false;
-  
+
   void _searchLocations(String query) async {
     if (query.trim().isEmpty) {
       setState(() {
@@ -91,9 +93,9 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
       });
       return;
     }
-    
+
     setState(() => _isSearchingLocation = true);
-    
+
     // Debounce could be added here, but direct call for now
     try {
       final results = await _locationClient.searchAllLocations(query);
@@ -103,7 +105,8 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
         });
       }
     } catch (e) {
-      if (kDebugMode) developer.log('Search error: $e', name: 'SearchFilterModal');
+      if (kDebugMode)
+        developer.log('Search error: $e', name: 'SearchFilterModal');
     }
   }
 
@@ -159,30 +162,41 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
       if (response.data == null) return;
 
       final location = response.data!;
-      
+
       setState(() {
         _selectedLocationId = location.id;
-        _selectedLocationName = location.localizedName(context.locale.languageCode);
+        _selectedLocationName = location.localizedName(
+          context.locale.languageCode,
+        );
       });
 
       // Based on type, reconstruct the hierarchy
       if (location.type == LocationType.province) {
         setState(() {
-          _selectedProvince = Province(id: location.id, name: location.name, nameNe: location.nameNe);
+          _selectedProvince = Province(
+            id: location.id,
+            name: location.name,
+            nameNe: location.nameNe,
+          );
           _selectedDistrict = null;
           _selectedMunicipality = null;
           _selectedArea = null;
         });
         await _loadDistricts(location.id);
-      } 
-      else if (location.type == LocationType.district) {
+      } else if (location.type == LocationType.district) {
         if (location.parentId != null) {
           // 1. Fetch Parent (Province)
-          final provRes = await _locationClient.getLocationById(location.parentId!);
+          final provRes = await _locationClient.getLocationById(
+            location.parentId!,
+          );
           if (provRes.data != null) {
             final prov = provRes.data!;
             setState(() {
-              _selectedProvince = Province(id: prov.id, name: prov.name, nameNe: prov.nameNe);
+              _selectedProvince = Province(
+                id: prov.id,
+                name: prov.name,
+                nameNe: prov.nameNe,
+              );
               // Don't set children here
             });
             // 2. Load siblings for the dropdowns
@@ -190,23 +204,30 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
             await _loadMunicipalities(location.id);
           }
         }
-      } 
-      else if (location.type == LocationType.municipality) {
+      } else if (location.type == LocationType.municipality) {
         if (location.parentId != null) {
           // 1. Fetch Parent (District)
-          final distRes = await _locationClient.getLocationById(location.parentId!);
+          final distRes = await _locationClient.getLocationById(
+            location.parentId!,
+          );
           if (distRes.data != null) {
             final dist = distRes.data!;
-            
+
             // 2. Fetch Grandparent (Province)
             if (dist.parentId != null) {
-              final provRes = await _locationClient.getLocationById(dist.parentId!);
+              final provRes = await _locationClient.getLocationById(
+                dist.parentId!,
+              );
               if (provRes.data != null) {
                 final prov = provRes.data!;
-                
+
                 setState(() {
-                  _selectedProvince = Province(id: prov.id, name: prov.name, nameNe: prov.nameNe);
-                 // Don't set children here
+                  _selectedProvince = Province(
+                    id: prov.id,
+                    name: prov.name,
+                    nameNe: prov.nameNe,
+                  );
+                  // Don't set children here
                 });
 
                 // 3. Load siblings
@@ -217,28 +238,37 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
             }
           }
         }
-      }
-      else if (location.type == LocationType.area) {
+      } else if (location.type == LocationType.area) {
         if (location.parentId != null) {
           // 1. Fetch Parent (Municipality)
-          final munRes = await _locationClient.getLocationById(location.parentId!);
+          final munRes = await _locationClient.getLocationById(
+            location.parentId!,
+          );
           if (munRes.data != null) {
             final mun = munRes.data!;
 
             // 2. Fetch Grandparent (District)
             if (mun.parentId != null) {
-              final distRes = await _locationClient.getLocationById(mun.parentId!);
+              final distRes = await _locationClient.getLocationById(
+                mun.parentId!,
+              );
               if (distRes.data != null) {
                 final dist = distRes.data!;
 
                 // 3. Fetch Great-Grandparent (Province)
                 if (dist.parentId != null) {
-                  final provRes = await _locationClient.getLocationById(dist.parentId!);
+                  final provRes = await _locationClient.getLocationById(
+                    dist.parentId!,
+                  );
                   if (provRes.data != null) {
                     final prov = provRes.data!;
 
                     setState(() {
-                      _selectedProvince = Province(id: prov.id, name: prov.name, nameNe: prov.nameNe);
+                      _selectedProvince = Province(
+                        id: prov.id,
+                        name: prov.name,
+                        nameNe: prov.nameNe,
+                      );
                       // Don't set children here, let the load functions do it
                     });
 
@@ -253,9 +283,12 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
           }
         }
       }
-
     } catch (e) {
-      if (kDebugMode) developer.log('Error loading location hierarchy: $e', name: 'SearchFilterModal');
+      if (kDebugMode)
+        developer.log(
+          'Error loading location hierarchy: $e',
+          name: 'SearchFilterModal',
+        );
     }
   }
 
@@ -314,7 +347,7 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
             selected = districts.firstWhere((e) => e.id == autoSelectId);
           } catch (_) {}
         }
-        
+
         setState(() {
           _districts = districts;
           _selectedDistrict = selected;
@@ -338,7 +371,9 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
     });
 
     try {
-      final municipalities = await _locationClient.getMunicipalities(districtId);
+      final municipalities = await _locationClient.getMunicipalities(
+        districtId,
+      );
       if (mounted) {
         Municipality? selected;
         if (autoSelectId != null) {
@@ -434,14 +469,16 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
     final maxPrice = double.tryParse(_maxPriceController.text);
 
     // Use most specific location selection (area > municipality > district > province)
-    final locationId = _selectedArea?.id ??
+    final locationId =
+        _selectedArea?.id ??
         _selectedMunicipality?.id ??
         _selectedDistrict?.id ??
         _selectedProvince?.id;
 
     // Build location display name from most specific selection
     final locale = context.locale.languageCode;
-    final locationName = _selectedArea?.localizedName(locale) ??
+    final locationName =
+        _selectedArea?.localizedName(locale) ??
         _selectedMunicipality?.localizedName(locale) ??
         _selectedDistrict?.localizedName(locale) ??
         _selectedProvince?.localizedName(locale);
@@ -541,35 +578,45 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
               children: [
                 _buildExpandableSection(
                   title: "Categories",
-                  displayTitle: context.locale.languageCode == 'ne' ? 'वर्गहरू' : null,
+                  displayTitle: context.locale.languageCode == 'ne'
+                      ? 'वर्गहरू'
+                      : null,
                   isExpanded: _expandedSections["Categories"] ?? false,
                   content: _buildCategoriesContent(),
                 ),
                 _buildDivider(),
                 _buildExpandableSection(
                   title: "Locations",
-                  displayTitle: context.locale.languageCode == 'ne' ? 'स्थानहरू' : null,
+                  displayTitle: context.locale.languageCode == 'ne'
+                      ? 'स्थानहरू'
+                      : null,
                   isExpanded: _expandedSections["Locations"] ?? false,
                   content: _buildLocationsContent(),
                 ),
                 _buildDivider(),
                 _buildExpandableSection(
                   title: "Price Range",
-                  displayTitle: context.locale.languageCode == 'ne' ? 'मूल्य दायरा' : null,
+                  displayTitle: context.locale.languageCode == 'ne'
+                      ? 'मूल्य दायरा'
+                      : null,
                   isExpanded: _expandedSections["Price Range"] ?? false,
                   content: _buildPriceContent(),
                 ),
                 _buildDivider(),
                 _buildExpandableSection(
                   title: "Condition",
-                  displayTitle: context.locale.languageCode == 'ne' ? 'अवस्था' : null,
+                  displayTitle: context.locale.languageCode == 'ne'
+                      ? 'अवस्था'
+                      : null,
                   isExpanded: _expandedSections["Condition"] ?? false,
                   content: _buildConditionContent(),
                 ),
                 _buildDivider(),
                 _buildExpandableSection(
                   title: "Sort By",
-                  displayTitle: context.locale.languageCode == 'ne' ? 'क्रमबद्ध' : null,
+                  displayTitle: context.locale.languageCode == 'ne'
+                      ? 'क्रमबद्ध'
+                      : null,
                   isExpanded: _expandedSections["Sort By"] ?? false,
                   content: _buildSortContent(),
                 ),
@@ -580,7 +627,12 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
 
           // Bottom Action Bar
           Container(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              16 + MediaQuery.of(context).padding.bottom,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -624,7 +676,9 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                       ),
                     ),
                     child: Text(
-                      context.locale.languageCode == 'ne' ? 'नतिजा देखाउनुहोस्' : 'Show Results',
+                      context.locale.languageCode == 'ne'
+                          ? 'नतिजा देखाउनुहोस्'
+                          : 'Show Results',
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -700,16 +754,27 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
               _selectedCategoryName = null;
             }),
             child: Container(
-              color: _selectedCategoryId == null ? const Color(0xFFFFF1F2) : Colors.transparent,
+              color: _selectedCategoryId == null
+                  ? const Color(0xFFFFF1F2)
+                  : Colors.transparent,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   const Icon(LucideIcons.folderOpen, color: Colors.grey),
                   const SizedBox(width: 12),
-                  Text(context.locale.languageCode == 'ne' ? 'सबै वर्गहरू' : "All Categories", style: GoogleFonts.inter(fontSize: 14)),
+                  Text(
+                    context.locale.languageCode == 'ne'
+                        ? 'सबै वर्गहरू'
+                        : "All Categories",
+                    style: GoogleFonts.inter(fontSize: 14),
+                  ),
                   const Spacer(),
                   if (_selectedCategoryId == null)
-                    const Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
+                    const Icon(
+                      LucideIcons.check,
+                      color: AppTheme.primary,
+                      size: 18,
+                    ),
                 ],
               ),
             ),
@@ -725,7 +790,8 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
   Widget _buildCategoryItem(CategoryWithSubcategories category) {
     final hasSub = category.subcategories?.isNotEmpty ?? false;
     final isExpanded = _expandedItems.contains("cat_${category.id}");
-    final isSelected = _selectedCategoryId == category.id && _selectedSubcategoryId == null;
+    final isSelected =
+        _selectedCategoryId == category.id && _selectedSubcategoryId == null;
 
     return Column(
       children: [
@@ -734,7 +800,9 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
             setState(() {
               _selectedCategoryId = category.id;
               _selectedSubcategoryId = null;
-              _selectedCategoryName = category.localizedName(context.locale.languageCode);
+              _selectedCategoryName = category.localizedName(
+                context.locale.languageCode,
+              );
             });
           },
           child: Container(
@@ -749,7 +817,9 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Icon(
-                        isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+                        isExpanded
+                            ? LucideIcons.chevronDown
+                            : LucideIcons.chevronRight,
                         size: 18,
                         color: Colors.grey[600],
                       ),
@@ -759,7 +829,11 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                   const SizedBox(width: 26),
 
                 // Icon
-                Text(category.icon ?? "📁", style: const TextStyle(fontSize: 16)),
+                CategoryIcon(
+                  slug: category.slug,
+                  emoji: category.icon ?? "📁",
+                  size: 26,
+                ),
                 const SizedBox(width: 12),
 
                 // Name
@@ -769,20 +843,28 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: isSelected ? AppTheme.primary : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
 
                 if (isSelected)
-                  const Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
+                  const Icon(
+                    LucideIcons.check,
+                    color: AppTheme.primary,
+                    size: 18,
+                  ),
               ],
             ),
           ),
         ),
         // Draw Subcategories if expanded
         if (hasSub && isExpanded)
-          ...category.subcategories!.map((sub) => _buildSubcategoryItem(sub, category.id)),
+          ...category.subcategories!.map(
+            (sub) => _buildSubcategoryItem(sub, category.id),
+          ),
       ],
     );
   }
@@ -795,7 +877,9 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
         setState(() {
           _selectedCategoryId = parentId;
           _selectedSubcategoryId = subcategory.id;
-          _selectedCategoryName = subcategory.localizedName(context.locale.languageCode);
+          _selectedCategoryName = subcategory.localizedName(
+            context.locale.languageCode,
+          );
         });
       },
       child: Container(
@@ -803,7 +887,16 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
         child: Row(
           children: [
-            const SizedBox(width: 50), // Indentation
+            // Indent past the parent's chevron, then the icon — this keeps the
+            // subcategory name a step right of the parent name, so the nesting
+            // still reads even though both rows now carry artwork.
+            const SizedBox(width: 38),
+            CategoryIcon(
+              slug: subcategory.slug,
+              emoji: subcategory.icon ?? "📁",
+              size: 24,
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 subcategory.localizedName(context.locale.languageCode),
@@ -845,49 +938,82 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
             }),
             child: Container(
               decoration: BoxDecoration(
-                color: noLocationSelected ? const Color(0xFFFFF1F2) : Colors.white,
+                color: noLocationSelected
+                    ? const Color(0xFFFFF1F2)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: noLocationSelected ? AppTheme.primary.withOpacity(0.3) : Colors.grey[300]!,
+                  color: noLocationSelected
+                      ? AppTheme.primary.withOpacity(0.3)
+                      : Colors.grey[300]!,
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(
                 children: [
-                  Icon(LucideIcons.globe, color: noLocationSelected ? AppTheme.primary : Colors.grey, size: 20),
+                  Icon(
+                    LucideIcons.globe,
+                    color: noLocationSelected ? AppTheme.primary : Colors.grey,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Text(
-                    context.locale.languageCode == 'ne' ? 'सम्पूर्ण नेपाल' : "All Nepal",
+                    context.locale.languageCode == 'ne'
+                        ? 'सम्पूर्ण नेपाल'
+                        : "All Nepal",
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      fontWeight: noLocationSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: noLocationSelected ? AppTheme.primary : Colors.black87,
+                      fontWeight: noLocationSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                      color: noLocationSelected
+                          ? AppTheme.primary
+                          : Colors.black87,
                     ),
                   ),
                   const Spacer(),
                   if (noLocationSelected)
-                    const Icon(LucideIcons.check, color: AppTheme.primary, size: 18),
+                    const Icon(
+                      LucideIcons.check,
+                      color: AppTheme.primary,
+                      size: 18,
+                    ),
                 ],
               ),
             ),
           ),
 
           const SizedBox(height: 16),
-          
+
           // --- LOCATION SEARCH INPUT ---
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
                 controller: _locationSearchController,
-                style: GoogleFonts.inter(color: Colors.black87, fontSize: 14), // Explicit text color
+                style: GoogleFonts.inter(
+                  color: Colors.black87,
+                  fontSize: 14,
+                ), // Explicit text color
                 decoration: InputDecoration(
-                  hintText: context.locale.languageCode == 'ne' ? 'स्थान खोज्नुहोस्...' : "Search location...",
-                  hintStyle: GoogleFonts.inter(color: Colors.grey[500], fontSize: 14), // Explicit hint color
-                  prefixIcon: const Icon(LucideIcons.search, size: 20, color: Colors.grey),
+                  hintText: context.locale.languageCode == 'ne'
+                      ? 'स्थान खोज्नुहोस्...'
+                      : "Search location...",
+                  hintStyle: GoogleFonts.inter(
+                    color: Colors.grey[500],
+                    fontSize: 14,
+                  ), // Explicit hint color
+                  prefixIcon: const Icon(
+                    LucideIcons.search,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 12,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: Colors.grey[300]!),
@@ -898,24 +1024,27 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppTheme.primary, width: 1),
+                    borderSide: const BorderSide(
+                      color: AppTheme.primary,
+                      width: 1,
+                    ),
                   ),
-                  suffixIcon: _locationSearchController.text.isNotEmpty 
-                    ? IconButton(
-                        icon: const Icon(LucideIcons.x, size: 16),
-                        onPressed: () {
-                          _locationSearchController.clear();
-                          setState(() {
-                            _locationSearchResults = [];
-                            _isSearchingLocation = false;
-                          });
-                        },
-                      )
-                    : null,
+                  suffixIcon: _locationSearchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(LucideIcons.x, size: 16),
+                          onPressed: () {
+                            _locationSearchController.clear();
+                            setState(() {
+                              _locationSearchResults = [];
+                              _isSearchingLocation = false;
+                            });
+                          },
+                        )
+                      : null,
                 ),
                 onChanged: _searchLocations,
               ),
-              
+
               // Search Results List (Conditional)
               if (_isSearchingLocation) ...[
                 const SizedBox(height: 8),
@@ -936,7 +1065,12 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                   child: _locationSearchResults.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(12),
-                          child: Text(context.locale.languageCode == 'ne' ? 'स्थान भेटिएन' : "No locations found", style: const TextStyle(color: Colors.grey)),
+                          child: Text(
+                            context.locale.languageCode == 'ne'
+                                ? 'स्थान भेटिएन'
+                                : "No locations found",
+                            style: const TextStyle(color: Colors.grey),
+                          ),
                         )
                       : ListView.builder(
                           shrinkWrap: true,
@@ -952,16 +1086,23 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                                   _locationSearchResults = [];
                                   _isSearchingLocation = false;
                                 });
-                                FocusScope.of(context).unfocus(); // Close keyboard
+                                FocusScope.of(
+                                  context,
+                                ).unfocus(); // Close keyboard
                               },
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                  horizontal: 12,
+                                ),
                                 child: Row(
                                   children: [
                                     Icon(
-                                      loc.type == LocationType.province ? LucideIcons.map :
-                                      loc.type == LocationType.district ? LucideIcons.building2 :
-                                      LucideIcons.mapPin,
+                                      loc.type == LocationType.province
+                                          ? LucideIcons.map
+                                          : loc.type == LocationType.district
+                                          ? LucideIcons.building2
+                                          : LucideIcons.mapPin,
                                       size: 16,
                                       color: Colors.grey[600],
                                     ),
@@ -969,11 +1110,17 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                                     Expanded(
                                       child: RichText(
                                         text: TextSpan(
-                                          text: loc.localizedName(context.locale.languageCode),
-                                          style: const TextStyle(color: Colors.black87, fontSize: 14),
+                                          text: loc.localizedName(
+                                            context.locale.languageCode,
+                                          ),
+                                          style: const TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 14,
+                                          ),
                                           children: [
                                             TextSpan(
-                                              text: "  ${loc.type.name.toUpperCase()}",
+                                              text:
+                                                  "  ${loc.type.name.toUpperCase()}",
                                               style: TextStyle(
                                                 color: Colors.grey[400],
                                                 fontSize: 10,
@@ -994,15 +1141,17 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
               ],
             ],
           ),
-          // ----------------------------
 
+          // ----------------------------
           const SizedBox(height: 16),
 
           // Province Dropdown
           _buildLocationDropdown(
             label: context.locale.languageCode == 'ne' ? 'प्रदेश' : 'Province',
             isLoading: _loadingProvinces,
-            hint: context.locale.languageCode == 'ne' ? 'प्रदेश छान्नुहोस्' : 'Select Province',
+            hint: context.locale.languageCode == 'ne'
+                ? 'प्रदेश छान्नुहोस्'
+                : 'Select Province',
             value: _selectedProvince,
             items: _provinces,
             itemLabel: (p) => p.localizedName(context.locale.languageCode),
@@ -1021,8 +1170,12 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
             label: context.locale.languageCode == 'ne' ? 'जिल्ला' : 'District',
             isLoading: _loadingDistricts,
             hint: _selectedProvince == null
-                ? (context.locale.languageCode == 'ne' ? 'पहिले प्रदेश छान्नुहोस्' : 'Select Province first')
-                : (context.locale.languageCode == 'ne' ? 'जिल्ला छान्नुहोस्' : 'Select District'),
+                ? (context.locale.languageCode == 'ne'
+                      ? 'पहिले प्रदेश छान्नुहोस्'
+                      : 'Select Province first')
+                : (context.locale.languageCode == 'ne'
+                      ? 'जिल्ला छान्नुहोस्'
+                      : 'Select District'),
             value: _selectedDistrict,
             items: _districts,
             itemLabel: (d) => d.localizedName(context.locale.languageCode),
@@ -1039,11 +1192,17 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
 
           // Municipality Dropdown
           _buildLocationDropdown(
-            label: context.locale.languageCode == 'ne' ? 'नगरपालिका' : 'Municipality',
+            label: context.locale.languageCode == 'ne'
+                ? 'नगरपालिका'
+                : 'Municipality',
             isLoading: _loadingMunicipalities,
             hint: _selectedDistrict == null
-                ? (context.locale.languageCode == 'ne' ? 'पहिले जिल्ला छान्नुहोस्' : 'Select District first')
-                : (context.locale.languageCode == 'ne' ? 'नगरपालिका छान्नुहोस्' : 'Select Municipality'),
+                ? (context.locale.languageCode == 'ne'
+                      ? 'पहिले जिल्ला छान्नुहोस्'
+                      : 'Select District first')
+                : (context.locale.languageCode == 'ne'
+                      ? 'नगरपालिका छान्नुहोस्'
+                      : 'Select Municipality'),
             value: _selectedMunicipality,
             items: _municipalities,
             itemLabel: (m) => m.localizedName(context.locale.languageCode),
@@ -1060,13 +1219,21 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
 
           // Area Dropdown (Optional)
           _buildLocationDropdown(
-            label: context.locale.languageCode == 'ne' ? 'क्षेत्र (ऐच्छिक)' : 'Area (Optional)',
+            label: context.locale.languageCode == 'ne'
+                ? 'क्षेत्र (ऐच्छिक)'
+                : 'Area (Optional)',
             isLoading: _loadingAreas,
             hint: _selectedMunicipality == null
-                ? (context.locale.languageCode == 'ne' ? 'पहिले नगरपालिका छान्नुहोस्' : 'Select Municipality first')
+                ? (context.locale.languageCode == 'ne'
+                      ? 'पहिले नगरपालिका छान्नुहोस्'
+                      : 'Select Municipality first')
                 : (_areas.isEmpty
-                    ? (context.locale.languageCode == 'ne' ? 'क्षेत्र उपलब्ध छैन' : 'No areas available')
-                    : (context.locale.languageCode == 'ne' ? 'क्षेत्र छान्नुहोस्' : 'Select Area')),
+                      ? (context.locale.languageCode == 'ne'
+                            ? 'क्षेत्र उपलब्ध छैन'
+                            : 'No areas available')
+                      : (context.locale.languageCode == 'ne'
+                            ? 'क्षेत्र छान्नुहोस्'
+                            : 'Select Area')),
             value: _selectedArea,
             items: _areas,
             itemLabel: (a) => a.localizedName(context.locale.languageCode),
@@ -1088,7 +1255,11 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
               ),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.mapPin, color: AppTheme.primary, size: 18),
+                  const Icon(
+                    LucideIcons.mapPin,
+                    color: AppTheme.primary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1156,7 +1327,10 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
           decoration: InputDecoration(
             filled: true,
             fillColor: enabled ? Colors.white : Colors.grey[100],
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey[300]!),
@@ -1170,12 +1344,22 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
               borderSide: const BorderSide(color: AppTheme.primary, width: 1),
             ),
           ),
-          items: items.map((item) => DropdownMenuItem(
-            value: item,
-            child: Text(itemLabel(item), style: GoogleFonts.inter(fontSize: 14)),
-          )).toList(),
+          items: items
+              .map(
+                (item) => DropdownMenuItem(
+                  value: item,
+                  child: Text(
+                    itemLabel(item),
+                    style: GoogleFonts.inter(fontSize: 14),
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: enabled ? onChanged : null,
-          icon: Icon(LucideIcons.chevronDown, color: enabled ? Colors.grey[600] : Colors.grey[400]),
+          icon: Icon(
+            LucideIcons.chevronDown,
+            color: enabled ? Colors.grey[600] : Colors.grey[400],
+          ),
         ),
       ],
     );
@@ -1185,9 +1369,12 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
     final locale = context.locale.languageCode;
     final parts = <String>[];
     if (_selectedArea != null) parts.add(_selectedArea!.localizedName(locale));
-    if (_selectedMunicipality != null) parts.add(_selectedMunicipality!.localizedName(locale));
-    if (_selectedDistrict != null) parts.add(_selectedDistrict!.localizedName(locale));
-    if (_selectedProvince != null) parts.add(_selectedProvince!.localizedName(locale));
+    if (_selectedMunicipality != null)
+      parts.add(_selectedMunicipality!.localizedName(locale));
+    if (_selectedDistrict != null)
+      parts.add(_selectedDistrict!.localizedName(locale));
+    if (_selectedProvince != null)
+      parts.add(_selectedProvince!.localizedName(locale));
     return parts.join(', ');
   }
 
@@ -1203,8 +1390,12 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                   controller: _minPriceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: context.locale.languageCode == 'ne' ? 'न्यूनतम मूल्य (रु.)' : "Min Price (Rs.)",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    labelText: context.locale.languageCode == 'ne'
+                        ? 'न्यूनतम मूल्य (रु.)'
+                        : "Min Price (Rs.)",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -1214,8 +1405,12 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
                   controller: _maxPriceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: context.locale.languageCode == 'ne' ? 'अधिकतम मूल्य (रु.)' : "Max Price (Rs.)",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    labelText: context.locale.languageCode == 'ne'
+                        ? 'अधिकतम मूल्य (रु.)'
+                        : "Max Price (Rs.)",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -1229,12 +1424,18 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
   Widget _buildConditionContent() {
     final isNe = context.locale.languageCode == 'ne';
     final conditions = ["Any Condition", "Brand New", "Used"];
-    final conditionsNe = {'Any Condition': 'कुनै पनि अवस्था', 'Brand New': 'नयाँ', 'Used': 'पुरानो'};
+    final conditionsNe = {
+      'Any Condition': 'कुनै पनि अवस्था',
+      'Brand New': 'नयाँ',
+      'Used': 'पुरानो',
+    };
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: conditions.map((c) {
-          final val = c == "Any Condition" ? "" : c; // Use exact value for DB match
+          final val = c == "Any Condition"
+              ? ""
+              : c; // Use exact value for DB match
           return RadioListTile(
             title: Text(isNe ? conditionsNe[c]! : c),
             value: val,
@@ -1257,28 +1458,44 @@ class _SearchFilterModalState extends State<SearchFilterModal> {
             value: "newest",
             groupValue: _selectedSort,
             onChanged: (v) => setState(() => _selectedSort = v.toString()),
-            title: Text(context.locale.languageCode == 'ne' ? 'नयाँ पहिले' : "Newest First"),
+            title: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'नयाँ पहिले'
+                  : "Newest First",
+            ),
             activeColor: AppTheme.primary,
           ),
           RadioListTile(
             value: "oldest",
             groupValue: _selectedSort,
             onChanged: (v) => setState(() => _selectedSort = v.toString()),
-            title: Text(context.locale.languageCode == 'ne' ? 'पुरानो पहिले' : "Oldest First"),
+            title: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'पुरानो पहिले'
+                  : "Oldest First",
+            ),
             activeColor: AppTheme.primary,
           ),
           RadioListTile(
             value: "price_asc",
             groupValue: _selectedSort,
             onChanged: (v) => setState(() => _selectedSort = v.toString()),
-            title: Text(context.locale.languageCode == 'ne' ? 'मूल्य: कम देखि बढी' : "Price: Low to High"),
+            title: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'मूल्य: कम देखि बढी'
+                  : "Price: Low to High",
+            ),
             activeColor: AppTheme.primary,
           ),
           RadioListTile(
             value: "price_desc",
             groupValue: _selectedSort,
             onChanged: (v) => setState(() => _selectedSort = v.toString()),
-            title: Text(context.locale.languageCode == 'ne' ? 'मूल्य: बढी देखि कम' : "Price: High to Low"),
+            title: Text(
+              context.locale.languageCode == 'ne'
+                  ? 'मूल्य: बढी देखि कम'
+                  : "Price: High to Low",
+            ),
             activeColor: AppTheme.primary,
           ),
         ],

@@ -647,6 +647,29 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
                                   ),
                                 ),
                               ),
+                            // Deeper orange than Negotiable so COD reads as the
+                            // stronger buying signal without leaving the family.
+                            if (ad.attributes?['isCodAvailable'] == true)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEA580C),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  context.locale.languageCode == 'ne'
+                                      ? 'डेलिभरीमा नगद भुक्तानी'
+                                      : 'Cash on Delivery',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                             // Promotion badges
                             ..._buildPromotionBadges(ad),
                           ],

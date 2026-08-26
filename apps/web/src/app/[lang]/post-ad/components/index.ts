@@ -4,5 +4,5 @@ export * from './DraftsList';
 export * from './PhoneVerificationBanner';
 export * from './AdPostedModal';
 export * from './CategoryTileGrid';
-export * from './SubcategoryChips';
-export * from './SuggestionChip';
+export * from './SubcategoryTileGrid';
+export { default as AiConfirmModal } from './AiConfirmModal';

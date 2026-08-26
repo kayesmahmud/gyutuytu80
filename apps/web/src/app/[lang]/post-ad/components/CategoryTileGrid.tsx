@@ -15,8 +15,8 @@ interface CategoryTileGridProps {
  */
 export function CategoryTileGrid({ categories, selectedId, onSelect }: CategoryTileGridProps) {
   return (
-    // App-style compact grid: 4-up on phones, densifying up to 8-up on desktop
-    // so the 16 categories sit in 2 rows instead of 4 stretched-flat ones.
+    // 4-up on phones to mirror the Flutter picker sheet, densifying to 8-up on
+    // desktop so the 16 categories sit in 2 rows instead of 4 stretched-flat ones.
     <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
       {categories.map((cat) => {
         const selected = selectedId === cat.id.toString();

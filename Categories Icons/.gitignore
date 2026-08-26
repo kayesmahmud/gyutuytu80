@@ -2,6 +2,11 @@
 /flat/
 /glossy/
 /realistic/
+/subcategories/
+/pilot/
+
+# Scratch 5-icon trial run superseded by subcategories_processed/
+/pilot_processed/
 
 # U^2-Net model for realistic cutout (~168MB) — re-download, do not commit
 /models/

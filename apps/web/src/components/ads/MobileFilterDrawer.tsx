@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
+import CategoryIcon from '@/app/[lang]/CategoryIcon';
 import { useAdsFilters } from '@/hooks/useAdsFilters';
 import { SORT_OPTIONS, CONDITION_OPTIONS, DEFAULT_SORT } from '@/lib/filters';
 import type { LocationHierarchyProvince } from '@/lib/location/types';
@@ -17,7 +18,13 @@ interface Category {
   nameNe?: string | null;
   slug: string;
   icon: string | null;
-  subcategories: { id: number; name: string; nameNe?: string | null; slug: string }[];
+  subcategories: {
+    id: number;
+    name: string;
+    nameNe?: string | null;
+    slug: string;
+    icon?: string | null;
+  }[];
 }
 
 interface MobileFilterDrawerProps {
@@ -267,7 +274,13 @@ export default function MobileFilterDrawer({
                               : 'hover:bg-gray-100 text-gray-700'
                           }`}
                         >
-                          <span className="text-xl">{category.icon || '📁'}</span>
+                          <CategoryIcon
+                            slug={category.slug}
+                            emoji={category.icon}
+                            name={category.name}
+                            size={28}
+                            shadow={false}
+                          />
                           <span className="text-sm font-medium">{localizedName(category.name, category.nameNe)}</span>
                         </button>
                       </div>
@@ -279,12 +292,19 @@ export default function MobileFilterDrawer({
                             <button
                               key={subcat.id}
                               onClick={() => updateFilters({ category: subcat.slug })}
-                              className={`w-full text-left px-4 py-2.5 rounded-lg transition-colors ${
+                              className={`w-full text-left flex items-center gap-2.5 px-4 py-2.5 rounded-lg transition-colors ${
                                 selectedCategorySlug === subcat.slug
                                   ? 'bg-rose-50 text-rose-600'
                                   : 'hover:bg-gray-100 text-gray-700'
                               }`}
                             >
+                              <CategoryIcon
+                                slug={subcat.slug}
+                                emoji={subcat.icon}
+                                name={subcat.name}
+                                size={26}
+                                shadow={false}
+                              />
                               <span className="text-sm font-medium">{localizedName(subcat.name, subcat.nameNe)}</span>
                             </button>
                           ))}

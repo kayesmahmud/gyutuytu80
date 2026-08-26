@@ -11,7 +11,15 @@ export async function SpecificationsSection({ customFields, lang }: Specificatio
     return null;
   }
 
-  const filteredKeys = ['isNegotiable', 'amenities', 'condition', 'whatsapp_number'];
+  // isCodAvailable is surfaced as a badge up top, so keep it out of the raw
+  // spec rows (it would render as a bare "isCodAvailable: true").
+  const filteredKeys = [
+    'isNegotiable',
+    'isCodAvailable',
+    'amenities',
+    'condition',
+    'whatsapp_number',
+  ];
   const entries = Object.entries(customFields)
     .filter(([key, value]) =>
       !filteredKeys.includes(key) &&

@@ -28,7 +28,7 @@ router.get(
           select: { ads: true },
         },
       },
-      orderBy: { display_order: 'asc' },
+      orderBy: [{ display_order: 'asc' }, { id: 'asc' }],
     });
 
     const categoriesWithCounts = categories.map((cat) => ({

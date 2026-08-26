@@ -45,7 +45,7 @@ from pathlib import Path
 from google import genai
 from google.genai import types
 
-MODEL = "gemini-3-pro-image-preview"  # Nano Banana Pro
+MODEL = "gemini-3-pro-image"  # Nano Banana Pro (GA; the -preview id was retired)
 HERE = Path(__file__).resolve().parent
 
 
@@ -67,7 +67,17 @@ def save_image(response, out_path: Path) -> bool:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Thulobazaar category icons")
-    parser.add_argument("--set", required=True, choices=["flat", "glossy", "realistic"])
+    parser.add_argument(
+        "--set",
+        required=True,
+        help="Prompt set name; reads prompts-<set>.jsonl (flat, glossy, realistic, subcategories)",
+    )
+    parser.add_argument(
+        "--prompts",
+        default=None,
+        help="Override the prompt file while keeping --set's output folder. Lets a second "
+        "worker chew the same set from the other end; both skip files the other finished.",
+    )
     parser.add_argument(
         "--anchor",
         action="store_true",
@@ -82,11 +92,16 @@ def main() -> None:
     args = parser.parse_args()
     ref_bytes = Path(args.ref).read_bytes() if args.ref else None
 
-    client = genai.Client(vertexai=True, http_options=types.HttpOptions(timeout=90000))  # 90s timeout per request
+    # 2K Nano Banana Pro renders regularly exceed 60s; 90s was tight enough to 504.
+    client = genai.Client(vertexai=True, http_options=types.HttpOptions(timeout=240000))
 
     out_dir = HERE / args.set
     out_dir.mkdir(exist_ok=True)
-    prompts = load_prompts(args.set)
+    if args.prompts:
+        path = Path(args.prompts) if Path(args.prompts).is_absolute() else HERE / args.prompts
+        prompts = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    else:
+        prompts = load_prompts(args.set)
 
     anchor_bytes: bytes | None = None
 

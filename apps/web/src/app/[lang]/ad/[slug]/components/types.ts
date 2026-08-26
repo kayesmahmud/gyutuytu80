@@ -4,6 +4,7 @@ export interface AdBadgesProps {
   categoryLinks?: Array<{ name: string; href: string }>;
   condition: string | null;
   isNegotiable: boolean;
+  isCodAvailable: boolean;
   fullCategory: string;
   isFeatured: boolean;
   featuredUntil: Date | null;

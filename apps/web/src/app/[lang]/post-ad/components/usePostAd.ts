@@ -8,8 +8,7 @@ import { useFormTemplate } from '@/hooks/useFormTemplate';
 import { useAdDraft, AdDraft } from '@/hooks/useAdDraft';
 import { apiClient } from '@/lib/api';
 import { trackPostAd } from '@/lib/analytics';
-import { suggestCategory } from '@/lib/categorySuggest';
-import type { CategoryKeyword } from '@thulobazaar/types';
+import { isValidAdLocationTier } from '@/lib/location/tiers';
 import type { Category, PostAdFormData } from './types';
 import { INITIAL_FORM_DATA } from './types';
 
@@ -22,10 +21,6 @@ export function usePostAd(lang: string) {
   const [images, setImages] = useState<File[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
-
-  // Title → category suggestion (keyword dictionary, matched locally)
-  const [categoryKeywords, setCategoryKeywords] = useState<CategoryKeyword[]>([]);
-  const [suggestion, setSuggestion] = useState<CategoryKeyword | null>(null);
 
   // Loading states
   const [loading, setLoading] = useState(false);
@@ -46,6 +41,57 @@ export function usePostAd(lang: string) {
   const isLoadingUserDefaultsRef = useRef(false);
   const pendingDraftCustomFieldsRef = useRef<Record<string, unknown> | null>(null);
   const dataLoadedRef = useRef(false);
+
+  // AI autofill (Phase 2) — every AI value is a suggestion; fail-open everywhere
+  const [aiDraftLoading, setAiDraftLoading] = useState(false);
+  // 'filled' = draft applied; 'none' = AI ran but couldn't fill (unsellable/off/
+  // error); 'limited' = hourly AI quota hit (never blame the photos for that);
+  // 'explicit' = prohibited sexual/nude content — HARD BLOCK, photos removed,
+  // uploader auto-reported server-side (the one deliberate exception to
+  // warnings-never-block, per owner policy)
+  const [aiFillOutcome, setAiFillOutcome] = useState<
+    'filled' | 'none' | 'limited' | 'explicit' | null
+  >(null);
+  // Why the AI declined ('selfie' | 'screenshot' | 'unclear' | 'other') — drives
+  // the targeted "this looks like a selfie" style messages
+  const [aiUnsellableReason, setAiUnsellableReason] = useState<string | null>(null);
+  const [aiFilled, setAiFilled] = useState<Set<string>>(new Set());
+  const [aiPriceEstimate, setAiPriceEstimate] = useState<number | null>(null);
+  const [aiSellable, setAiSellable] = useState<boolean | null>(null);
+  // The pre-post confirmation dialog: list of warning keys, or null (hidden)
+  const [aiConfirm, setAiConfirm] = useState<string[] | null>(null);
+  const aiDraftRequestedRef = useRef(false);
+  const aiConfirmedRef = useRef(false);
+  const formDataRef = useRef(formData);
+  const imagesRef = useRef(images);
+  useEffect(() => {
+    formDataRef.current = formData;
+    imagesRef.current = images;
+  });
+
+  // Background (staged) upload — Phase 2.5: each photo uploads the moment it is
+  // picked, so Post Ad only sends ids and returns instantly. Entirely silent
+  // and fail-open: if any photo isn't staged by submit time, we fall back to
+  // the classic full upload. Keyed by File object identity.
+  const stagedIdsRef = useRef(new Map<File, string>());
+  const stagingInFlightRef = useRef(new Set<File>());
+  useEffect(() => {
+    for (const file of images) {
+      if (stagedIdsRef.current.has(file) || stagingInFlightRef.current.has(file)) continue;
+      stagingInFlightRef.current.add(file);
+      apiClient
+        .stageAdImage(file)
+        .then((res) => {
+          if (res?.data?.stagedId) stagedIdsRef.current.set(file, res.data.stagedId);
+        })
+        .catch(() => {})
+        .finally(() => stagingInFlightRef.current.delete(file));
+    }
+    // Removed photos: forget their staged ids (server sweeper cleans the files)
+    for (const file of Array.from(stagedIdsRef.current.keys())) {
+      if (!images.includes(file)) stagedIdsRef.current.delete(file);
+    }
+  }, [images]);
 
   // Draft management
   const {
@@ -99,16 +145,10 @@ export function usePostAd(lang: string) {
     try {
       setLoading(true);
 
-      const [categoriesRes, , keywordsRes] = await Promise.all([
+      const [categoriesRes] = await Promise.all([
         apiClient.getCategories({ includeSubcategories: true }),
         apiClient.getLocations({ type: 'municipality' }),
-        // Non-critical: suggestions simply stay off if this fails
-        apiClient.getCategoryKeywords().catch(() => null),
       ]);
-
-      if (keywordsRes?.success && keywordsRes.data) {
-        setCategoryKeywords(keywordsRes.data);
-      }
 
       // Map other_categories to subcategories (API returns other_categories, frontend expects subcategories)
       let mappedCategories: Category[] = [];
@@ -142,14 +182,23 @@ export function usePostAd(lang: string) {
           });
           const userLocationData = await userLocationRes.json();
 
-          if (userLocationData.success && userLocationData.data?.location) {
-            const userLocation = userLocationData.data.location;
+          const userLocation = userLocationData.data?.location;
+
+          // Never prefill a tier an ad can't legally use — prefilling a province
+          // is what put 97 of the 112 province-level ads in production, because
+          // the seller simply never touched the field. The endpoint already
+          // falls back to the location of their last ad, so this only stays
+          // empty for sellers with no usable location anywhere.
+          if (userLocationData.success && isValidAdLocationTier(userLocation?.type)) {
             setFormData((prev) => ({
               ...prev,
               locationSlug: userLocation.slug || '',
               locationName: userLocation.name || '',
             }));
-            setUserHasDefaultLocation(true);
+            // A derived location isn't their saved default. Reporting "no
+            // default" here is what makes the post-submit hook below write this
+            // precise location back to their profile.
+            setUserHasDefaultLocation(!userLocationData.data?.derived);
           } else {
             setUserHasDefaultLocation(false);
           }
@@ -268,36 +317,117 @@ export function usePostAd(lang: string) {
     saveDraft(formData, customFields);
   }, [formData, customFields, saveDraft]);
 
-  // Debounced title → category suggestion (description as fallback when the
-  // title matches nothing — descriptions are noisier, so title always wins)
-  useEffect(() => {
-    if (categoryKeywords.length === 0) return;
-    const timer = setTimeout(() => {
-      setSuggestion(
-        suggestCategory(formData.title, categoryKeywords) ??
-          suggestCategory(formData.description, categoryKeywords)
-      );
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [formData.title, formData.description, categoryKeywords]);
+  // Apply an AI draft. The photo is authoritative (owner, 2026-08-27): AI
+  // values REPLACE anything typed before the photos landed — every replaced
+  // field carries the ✨ badge and stays fully editable.
+  const applyAiDraft = useCallback(
+    (draft: any) => {
+      const snapshot = formDataRef.current;
+      const updates: Record<string, string> = {};
+      const marks = new Set<string>();
 
-  // Apply the suggested category + subcategory in one tap
-  const applySuggestion = useCallback(() => {
-    if (!suggestion) return;
-    setIsLoadingDraft(false);
-    pendingDraftCustomFieldsRef.current = null;
-    // Same ref trick as user defaults: stop the categoryId effect from
-    // clearing the subcategory we set alongside it.
-    isLoadingUserDefaultsRef.current = true;
-    setFormData((prev) => ({
-      ...prev,
-      categoryId: suggestion.categoryId.toString(),
-      subcategoryId: suggestion.subcategoryId ? suggestion.subcategoryId.toString() : '',
-    }));
-    loadSubcategories(suggestion.categoryId);
-    setCustomFields({});
-    setCustomFieldsErrors({});
-  }, [suggestion, loadSubcategories]);
+      if (draft.title) {
+        updates.title = draft.title;
+        marks.add('title');
+      }
+      if (draft.description) {
+        updates.description = draft.description;
+        marks.add('description');
+      }
+      // Price is deliberately NOT filled (owner, 2026-08-27): the seller types
+      // their own price. The estimate is still stored (aiPriceEstimate) so the
+      // absurd-price warning can fire on a wildly off typed price.
+      // NOTE: draft.attributes.condition is deliberately NOT applied on web —
+      // this form has no condition control, so an AI-set condition could never
+      // be reviewed (spec: every AI value must be visible and editable).
+      // Flutter applies it (its form has the condition dropdown).
+
+      // Photo wins over any pre-photo selection (incl. shop memory) — the AI
+      // saw the actual item. A no-op apply (AI agrees with the current
+      // selection) must not run the branch: it would wipe customFields typed
+      // during the wait and strand isLoadingUserDefaultsRef (the categoryId
+      // effect never re-fires on the same value).
+      const sameAsCurrent =
+        draft.categoryId?.toString() === snapshot.categoryId &&
+        (draft.subcategoryId ? draft.subcategoryId.toString() : '') === snapshot.subcategoryId;
+      if (draft.categoryId && !sameAsCurrent) {
+        // Same ref trick as user defaults/suggestions: stop the categoryId
+        // effect from clearing the subcategory we set alongside it.
+        isLoadingUserDefaultsRef.current = true;
+        updates.categoryId = draft.categoryId.toString();
+        updates.subcategoryId = draft.subcategoryId ? draft.subcategoryId.toString() : '';
+        loadSubcategories(draft.categoryId);
+        setCustomFields({});
+        setCustomFieldsErrors({});
+        marks.add('category');
+      }
+
+      if (Object.keys(updates).length > 0) {
+        setFormData((prev) => ({ ...prev, ...updates }));
+      }
+      if (marks.size > 0) setAiFilled(marks);
+      return marks.size > 0;
+    },
+    [loadSubcategories]
+  );
+
+  // AI autofill trigger: the first photos landing, typed fields or not — a
+  // seller who typed a title first still gets the full AI fill (photo wins).
+  // Fail-open: error or data:null = no suggestions, the form behaves as today.
+  useEffect(() => {
+    if (images.length === 0) {
+      // All photos removed — allow a fresh photo set to trigger a new draft
+      aiDraftRequestedRef.current = false;
+      return;
+    }
+    if (aiDraftRequestedRef.current) return;
+    aiDraftRequestedRef.current = true;
+    setAiDraftLoading(true);
+    const requestImages = images;
+    apiClient
+      .getAiDraft(images.slice(0, 3))
+      .then((res) => {
+        // Stale response: the photos this draft was made from are gone
+        if (imagesRef.current.length === 0 || imagesRef.current[0] !== requestImages[0]) return;
+        const draft = res?.data;
+        if (!draft) {
+          setAiFillOutcome('none');
+          aiDraftRequestedRef.current = false; // new/changed photos may retry
+          return;
+        }
+        if (draft.unsellableReason === 'explicit') {
+          // Prohibited content: remove the photos and block this set outright
+          // (the server has already filed the user report)
+          setImages([]);
+          setAiFillOutcome('explicit');
+          return;
+        }
+        setAiSellable(draft.sellable);
+        setAiPriceEstimate(draft.priceEstimate);
+        setAiUnsellableReason(draft.unsellableReason ?? null);
+        const applied = draft.sellable ? applyAiDraft(draft) : false;
+        setAiFillOutcome(applied ? 'filled' : 'none');
+        if (!applied) aiDraftRequestedRef.current = false; // retry on new photos
+      })
+      .catch((err) => {
+        console.warn('AI draft unavailable:', err);
+        // A 429 is OUR quota, not the seller's photos — say so honestly
+        setAiFillOutcome(err?.response?.status === 429 ? 'limited' : 'none');
+        aiDraftRequestedRef.current = false; // retry on new photos
+      })
+      .finally(() => setAiDraftLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length]);
+
+  // The ✨ badge disappears the moment the user edits that field
+  const clearAiMark = useCallback((field: string) => {
+    setAiFilled((prev) => {
+      if (!prev.has(field)) return prev;
+      const next = new Set(prev);
+      next.delete(field);
+      return next;
+    });
+  }, []);
 
   // Handle loading a draft
   const handleLoadDraft = useCallback(
@@ -322,6 +452,7 @@ export function usePostAd(lang: string) {
         locationName: draft.locationName,
         condition: draft.condition || 'Brand New',
         isNegotiable: draft.isNegotiable || false,
+        isCodAvailable: draft.isCodAvailable || false,
       });
 
       loadDraft(draft.id);
@@ -339,6 +470,7 @@ export function usePostAd(lang: string) {
   // Handle category change
   const handleCategoryChange = useCallback(
     (newCategoryId: string) => {
+      clearAiMark('category');
       setIsLoadingDraft(false);
       pendingDraftCustomFieldsRef.current = null;
 
@@ -366,10 +498,10 @@ export function usePostAd(lang: string) {
     });
   }, []);
 
-  // Handle form submission
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
+  // Handle form submission (runSubmit is also called by the AI confirm dialog's
+  // "Post anyway", which is why it takes no event)
+  const runSubmit = useCallback(
+    async () => {
       setError('');
 
       if (!phoneVerified) {
@@ -415,6 +547,29 @@ export function usePostAd(lang: string) {
         }
       }
 
+      // Pre-post AI checks — warnings only, never hard blocks (owner decision):
+      // junk photos, absurd price vs the AI estimate, unreviewed AI-filled fields.
+      if (!aiConfirmedRef.current) {
+        const warnings: string[] = [];
+        // Selfie gets its own wording; other declines share the generic warning
+        if (aiSellable === false) {
+          warnings.push(aiUnsellableReason === 'selfie' ? 'junkSelfie' : 'junk');
+        }
+        const typedPrice = parseFloat(formData.price);
+        if (
+          aiPriceEstimate &&
+          typedPrice > 0 &&
+          (typedPrice < aiPriceEstimate * 0.1 || typedPrice > aiPriceEstimate * 10)
+        ) {
+          warnings.push('price');
+        }
+        if (aiFilled.size > 0) warnings.push('aiFilled');
+        if (warnings.length > 0) {
+          setAiConfirm(warnings);
+          return;
+        }
+      }
+
       try {
         setSubmitting(true);
 
@@ -422,9 +577,21 @@ export function usePostAd(lang: string) {
         if (formData.locationSlug) {
           const locationResponse = await apiClient.getLocationBySlug(formData.locationSlug);
           if (locationResponse.success && locationResponse.data) {
+            // A slug alone doesn't prove precision — a province slug is just as
+            // valid a slug. Check the tier before it becomes the ad's location.
+            const locationType = (locationResponse.data as { type?: string | null }).type;
+            if (!isValidAdLocationTier(locationType)) {
+              setError('Please choose a municipality or area — province and district are too broad for an ad.');
+              return;
+            }
             locationId = locationResponse.data.id;
           }
         }
+
+        // Instant post: when every photo finished its background upload, send
+        // only the staged ids (no file bytes). Any gap → classic upload.
+        const stagedImageIds = images.map((file) => stagedIdsRef.current.get(file));
+        const allStaged = images.length > 0 && stagedImageIds.every(Boolean);
 
         const adData = {
           title: formData.title,
@@ -435,12 +602,22 @@ export function usePostAd(lang: string) {
           subcategoryId: formData.subcategoryId ? parseInt(formData.subcategoryId) : undefined,
           locationId: locationId,
           images: images,
+          stagedImageIds: allStaged ? (stagedImageIds as string[]) : undefined,
           attributes: {
             condition: formData.condition,
             ...customFields,
             // Persist negotiable inside custom_fields so it survives + pre-fills
             // on edit (mirrors the mobile app; the top-level field is dropped).
             isNegotiable: formData.isNegotiable,
+            isCodAvailable: formData.isCodAvailable,
+            // Only persist a WhatsApp number when it actually differs from the
+            // verified phone — same rule the mobile app applies, so an ad posted
+            // from either client stores the identical shape.
+            ...(!formData.whatsappSameAsPhone &&
+            formData.whatsappNumber.trim() &&
+            formData.whatsappNumber.trim() !== userPhone
+              ? { whatsapp_number: formData.whatsappNumber.trim() }
+              : {}),
           },
         };
 
@@ -522,8 +699,31 @@ export function usePostAd(lang: string) {
       session,
       router,
       lang,
+      aiSellable,
+      aiPriceEstimate,
+      aiUnsellableReason,
+      aiFilled,
     ]
   );
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      runSubmit();
+    },
+    [runSubmit]
+  );
+
+  // AI confirm dialog: "Post anyway" proceeds once and for all; "Review again" just closes
+  const handleAiConfirmProceed = useCallback(() => {
+    aiConfirmedRef.current = true;
+    setAiConfirm(null);
+    runSubmit();
+  }, [runSubmit]);
+
+  const handleAiConfirmReview = useCallback(() => {
+    setAiConfirm(null);
+  }, []);
 
   const handleAdPostedClose = useCallback(() => {
     router.push(`/${lang}/dashboard?tab=pending`);
@@ -560,9 +760,15 @@ export function usePostAd(lang: string) {
     customFields,
     customFieldsErrors,
     selectedSubcategory,
-    // Title → category suggestion
-    suggestion,
-    applySuggestion,
+    // AI autofill
+    aiDraftLoading,
+    aiFillOutcome,
+    aiUnsellableReason,
+    aiFilled,
+    clearAiMark,
+    aiConfirm,
+    handleAiConfirmProceed,
+    handleAiConfirmReview,
     // Handlers
     handleLoadDraft,
     handleStartNew,

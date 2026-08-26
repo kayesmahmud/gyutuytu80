@@ -20,6 +20,7 @@ import {
   AdContactBar,
 } from './components';
 import { getImageUrl } from '@/lib/images/imageUrl';
+import { AD_CARD_LOCATION_SELECT, resolveDistrictName } from '@/lib/location/district';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AdJsonLd } from '@/components/seo/AdJsonLd';
 
@@ -56,6 +57,7 @@ const getRelatedAds = cache(async (categoryId: number | null, currentAdId: numbe
           icon: true,
         },
       },
+      locations: { select: AD_CARD_LOCATION_SELECT },
       users_ads_user_idTousers: {
         select: {
           full_name: true,
@@ -304,6 +306,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
     primaryImage: relAd.ad_images?.[0]?.file_path || null,
     categoryName: relAd.categories?.name || null,
     categoryIcon: relAd.categories?.icon || null,
+    districtName: resolveDistrictName(relAd.locations),
     publishedAt: relAd.published_at || relAd.reviewed_at || relAd.created_at || new Date(),
     sellerName: relAd.users_ads_user_idTousers?.business_name || relAd.users_ads_user_idTousers?.full_name || tc('unknownSeller'),
     isFeatured: relAd.is_featured || false,
@@ -466,6 +469,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                 }
                 condition={ad.condition}
                 isNegotiable={customFields?.isNegotiable || false}
+                isCodAvailable={customFields?.isCodAvailable || false}
                 categoryLinks={categoryLinks}
                 fullCategory={fullCategory}
                 isFeatured={ad.is_featured ?? false}

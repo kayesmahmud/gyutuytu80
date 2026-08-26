@@ -14,8 +14,8 @@ import {
   PhoneVerificationBanner,
   AdPostedModal,
   CategoryTileGrid,
-  SubcategoryChips,
-  SuggestionChip,
+  SubcategoryTileGrid,
+  AiConfirmModal,
 } from './components';
 
 interface PostAdPageProps {
@@ -52,8 +52,14 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     customFields,
     customFieldsErrors,
     selectedSubcategory,
-    suggestion,
-    applySuggestion,
+    aiDraftLoading,
+    aiFillOutcome,
+    aiUnsellableReason,
+    aiFilled,
+    clearAiMark,
+    aiConfirm,
+    handleAiConfirmProceed,
+    handleAiConfirmReview,
     handleLoadDraft,
     handleStartNew,
     handleCategoryChange,
@@ -63,6 +69,31 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     handleAdPostedClose,
     isUserVerified,
   } = usePostAd(lang);
+
+  // Small ✨ marker for AI-filled fields; disappears when the user edits the
+  // field. Per-field copy so each badge nudges the specific action needed.
+  const AI_BADGE_KEYS: Record<string, string> = {
+    title: 'aiSuggestedTitle',
+    category: 'aiSuggestedCategory',
+    description: 'aiSuggestedDescription',
+  };
+  const aiBadge = (field: string) =>
+    aiFilled.has(field) ? (
+      <span className="ml-2 text-xs font-normal text-violet-600 bg-violet-50 border border-violet-200 rounded-full px-2 py-0.5">
+        ✨ {t(AI_BADGE_KEYS[field] ?? 'aiSuggested')}
+      </span>
+    ) : null;
+
+  // Photos-first reveal: before any photo only the Photos section shows; while
+  // the AI is filling, the wait banner holds the space; once the AI is done
+  // (filled or failed) — or content already exists (draft restore) — EVERY
+  // remaining field appears at once, AI-filled or empty. The gate wraps all
+  // non-photo sections so nothing shows out of order.
+  // Typed text only — a category alone doesn't count, because the shop-page
+  // memory prefill sets one on load and must not reveal an empty form.
+  const detailsRevealed = Boolean(
+    formData.title || formData.description || (images.length > 0 && !aiDraftLoading)
+  );
 
   // Image limits fetched from API settings
   const MAX_IMAGES_VERIFIED = 10;
@@ -84,19 +115,6 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     };
     fetchAdLimits();
   }, []);
-
-  // Resolve the keyword suggestion to displayable category objects
-  const suggestedCategory = suggestion
-    ? categories.find((c) => c.id === suggestion.categoryId) || null
-    : null;
-  const suggestedSubcategory =
-    suggestion?.subcategoryId && suggestedCategory?.subcategories
-      ? suggestedCategory.subcategories.find((s) => s.id === suggestion.subcategoryId) || null
-      : null;
-  const suggestionApplied =
-    !!suggestion &&
-    suggestion.categoryId.toString() === formData.categoryId &&
-    (suggestion.subcategoryId ? suggestion.subcategoryId.toString() === formData.subcategoryId : true);
 
   if (status === 'loading' || loading) {
     return (
@@ -218,39 +236,106 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                   maxImages={maxImages}
                   maxSizeMB={5}
                 />
+
+                {aiDraftLoading && (
+                  <div className="relative mt-4 p-4 pb-5 bg-violet-50 border border-violet-200 rounded-xl flex items-center gap-3 overflow-hidden">
+                    <span className="text-2xl tb-ai-sparkle" aria-hidden>
+                      ✨
+                    </span>
+                    <div>
+                      <p className="m-0 font-medium text-violet-900">{t('aiFillingWait')}</p>
+                      <p className="m-0 mt-0.5 text-sm text-violet-700">{t('aiFillingWaitHint')}</p>
+                    </div>
+                    <span className="tb-ai-shimmer" aria-hidden />
+                    <style>{`
+                      .tb-ai-sparkle {
+                        display: inline-block;
+                        transform-origin: 50% 60%;
+                        animation: tbSparkle 1.6s ease-in-out infinite;
+                      }
+                      @keyframes tbSparkle {
+                        0%, 100% { transform: rotate(-8deg) scale(1); opacity: 0.7; }
+                        50% { transform: rotate(10deg) scale(1.25); opacity: 1; }
+                      }
+                      .tb-ai-shimmer {
+                        position: absolute;
+                        left: 0; right: 0; bottom: 0;
+                        height: 3px;
+                        background: #ddd6fe;
+                      }
+                      .tb-ai-shimmer::after {
+                        content: '';
+                        position: absolute;
+                        top: 0; bottom: 0;
+                        width: 35%;
+                        border-radius: 9999px;
+                        background: linear-gradient(90deg, transparent, #7c3aed, transparent);
+                        animation: tbShimmer 1.4s ease-in-out infinite;
+                      }
+                      @keyframes tbShimmer {
+                        0% { left: -35%; }
+                        100% { left: 100%; }
+                      }
+                    `}</style>
+                  </div>
+                )}
+
+                {aiFillOutcome === 'explicit' && (
+                  <p className="mt-3 mb-0 text-sm font-medium text-red-700 bg-red-50 border border-red-300 rounded-lg p-3">
+                    {t('aiExplicitBlocked')}
+                  </p>
+                )}
+
+                {(aiFillOutcome === 'none' || aiFillOutcome === 'limited') &&
+                  !formData.title &&
+                  !formData.description && (
+                    <p className="mt-3 mb-0 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      {aiFillOutcome === 'limited'
+                        ? t('aiLimitReached')
+                        : aiUnsellableReason === 'selfie'
+                          ? t('aiCouldNotFillSelfie')
+                          : aiUnsellableReason === 'screenshot'
+                            ? t('aiCouldNotFillScreenshot')
+                            : aiUnsellableReason === 'unclear'
+                              ? t('aiCouldNotFillUnclear')
+                              : aiUnsellableReason === 'prohibited'
+                                ? t('aiCouldNotFillProhibited')
+                                : t('aiCouldNotFill')}
+                    </p>
+                  )}
               </div>
 
+              {detailsRevealed && (
+                <>
               {/* Ad Title + suggestion */}
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('adDetails')}</h2>
 
                 <div>
-                  <label className="block mb-2 font-medium text-gray-700">{t('adTitle')} *</label>
+                  <label className="block mb-2 font-medium text-gray-700">
+                    {t('adTitle')} *{aiBadge('title')}
+                  </label>
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) => {
+                      clearAiMark('title');
+                      setFormData({ ...formData, title: e.target.value });
+                    }}
                     placeholder="e.g., iPhone 15 Pro Max 256GB"
                     required
                     maxLength={100}
                     className="w-full p-3 rounded-lg border border-gray-300 text-base"
                   />
                   <small className="text-gray-500">{formData.title.length}/100</small>
-                  {suggestedCategory && !suggestionApplied && (
-                    <div>
-                      <SuggestionChip
-                        category={suggestedCategory}
-                        subcategory={suggestedSubcategory}
-                        onApply={applySuggestion}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* Category Selection — right after the title so the suggestion lands next to it */}
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">{t('category')} *</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-900">
+                  {t('category')} *{aiBadge('category')}
+                </h2>
 
                 <CategoryTileGrid
                   categories={categories}
@@ -263,23 +348,44 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                     <label className="block mb-2 font-medium text-gray-700">
                       {t('selectSubcategory')} *
                     </label>
-                    <SubcategoryChips
+                    <SubcategoryTileGrid
                       subcategories={subcategories}
                       selectedId={formData.subcategoryId}
-                      onSelect={(subcategoryId) => setFormData({ ...formData, subcategoryId })}
+                      onSelect={(subcategoryId) => {
+                        clearAiMark('category');
+                        setFormData({ ...formData, subcategoryId });
+                      }}
                     />
                   </div>
                 )}
               </div>
 
-              {/* Description, Price, Negotiable */}
+              {/* Category-specific fields sit directly under the subcategory that
+                  generates them, so the category choice reads as one step — and so
+                  web matches the mobile app's order. */}
+              {fields.length > 0 && (
+                <DynamicFormFields
+                  fields={fields}
+                  values={customFields}
+                  errors={customFieldsErrors}
+                  onChange={handleCustomFieldChange}
+                  subcategoryName={selectedSubcategory?.name}
+                />
+              )}
+
+              {/* Description, Price, Negotiable, Cash on delivery */}
               <div className="mb-8">
                 <div className="flex flex-col gap-4">
                   <div>
-                    <label className="block mb-2 font-medium text-gray-700">{t('description')} *</label>
+                    <label className="block mb-2 font-medium text-gray-700">
+                      {t('description')} *{aiBadge('description')}
+                    </label>
                     <textarea
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={(e) => {
+                        clearAiMark('description');
+                        setFormData({ ...formData, description: e.target.value });
+                      }}
                       placeholder={t('describeItem')}
                       required
                       rows={6}
@@ -291,11 +397,16 @@ export default function PostAdPage({ params }: PostAdPageProps) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block mb-2 font-medium text-gray-700">{t('priceNpr')} *</label>
+                      <label className="block mb-2 font-medium text-gray-700">
+                        {t('priceNpr')} *
+                      </label>
                       <input
                         type="number"
                         value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: Math.floor(Number(e.target.value)).toString() })}
+                        onChange={(e) => {
+                          clearAiMark('price');
+                          setFormData({ ...formData, price: Math.floor(Number(e.target.value)).toString() });
+                        }}
                         placeholder="50000"
                         required
                         min="0"
@@ -318,19 +429,24 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                       <span className="font-medium text-gray-700">{t('priceIsNegotiable')}</span>
                     </label>
                   </div>
+
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.isCodAvailable}
+                        onChange={(e) =>
+                          setFormData({ ...formData, isCodAvailable: e.target.checked })
+                        }
+                        className="w-[18px] h-[18px] cursor-pointer"
+                      />
+                      <span className="font-medium text-gray-700">
+                        {t('cashOnDeliveryAvailable')}
+                      </span>
+                    </label>
+                  </div>
                 </div>
               </div>
-
-              {/* Dynamic Category-Specific Fields */}
-              {fields.length > 0 && (
-                <DynamicFormFields
-                  fields={fields}
-                  values={customFields}
-                  errors={customFieldsErrors}
-                  onChange={handleCustomFieldChange}
-                  subcategoryName={selectedSubcategory?.name}
-                />
-              )}
 
               {/* Location */}
               <div className="mb-8">
@@ -348,11 +464,73 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                     }}
                     selectedLocationSlug={formData.locationSlug || null}
                     selectedLocationName={formData.locationName || null}
+                    minSelectableType="municipality"
                   />
                   <small className="block mt-3 text-gray-500 text-xs">
                     {t('selectLocation')}
                   </small>
                 </div>
+              </div>
+
+              {/* Contact Information — mirrors the mobile app's final step:
+                  the verified phone shown read-only, then WhatsApp which
+                  defaults to that same number. */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4 text-gray-900">
+                  {t('contactInformation')}
+                </h2>
+
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 mb-6">
+                  <p className="m-0 mb-3 text-sm font-semibold text-gray-900">
+                    {t('phoneNumber')}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base text-gray-900 font-medium">
+                      {userPhone || <span className="text-gray-500">{t('noPhoneAdded')}</span>}
+                    </span>
+                    {phoneVerified && (
+                      <span className="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-xs font-semibold">
+                        ✓ {t('verified')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <h3 className="text-base font-semibold text-gray-900 m-0 mb-3">{t('whatsapp')}</h3>
+
+                <label className="flex items-center gap-2 cursor-pointer mb-3">
+                  <input
+                    type="checkbox"
+                    checked={formData.whatsappSameAsPhone}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        whatsappSameAsPhone: e.target.checked,
+                        // Mirror the phone when ticked, clear it when unticked so
+                        // the seller types a fresh number rather than editing one.
+                        whatsappNumber: e.target.checked ? userPhone || '' : '',
+                      })
+                    }
+                    className="w-[18px] h-[18px] cursor-pointer"
+                  />
+                  <span className="font-medium text-gray-700">{t('sameAsPhoneNumber')}</span>
+                </label>
+
+                <input
+                  type="tel"
+                  value={
+                    formData.whatsappSameAsPhone ? userPhone || '' : formData.whatsappNumber
+                  }
+                  onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                  disabled={formData.whatsappSameAsPhone}
+                  placeholder={t('enterWhatsappNumber')}
+                  className="w-full p-3 rounded-lg border border-gray-300 text-base disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                />
+                {formData.whatsappSameAsPhone && (
+                  <small className="block mt-1 text-gray-500 italic">
+                    {t('uncheckToEditWhatsapp')}
+                  </small>
+                )}
               </div>
 
               {/* Submit */}
@@ -367,11 +545,20 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                   {submitting ? t('posting') : t('postAd')}
                 </Button>
               </div>
+                </>
+              )}
             </form>
           </>
         )}
       </div>
 
+      {aiConfirm && (
+        <AiConfirmModal
+          warnings={aiConfirm}
+          onProceed={handleAiConfirmProceed}
+          onReview={handleAiConfirmReview}
+        />
+      )}
       {adPosted && <AdPostedModal lang={lang} onClose={handleAdPostedClose} />}
     </div>
   );

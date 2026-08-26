@@ -14,6 +14,7 @@ export interface CategoryWithSubcategories {
     name: string;
     nameNe: string | null;
     slug: string;
+    icon: string | null;
   }[];
 }
 
@@ -26,7 +27,9 @@ export interface CategoryWithSubcategories {
 export async function getRootCategoriesWithChildren(): Promise<CategoryWithSubcategories[]> {
   const categories = await prisma.categories.findMany({
     where: { parent_id: null },
-    orderBy: { display_order: 'asc' },
+    // id breaks display_order ties — without it, equal values let Postgres
+    // return physical row order, which silently scrambles the category list.
+    orderBy: [{ display_order: 'asc' }, { id: 'asc' }],
     select: {
       id: true,
       name: true,
@@ -40,6 +43,7 @@ export async function getRootCategoriesWithChildren(): Promise<CategoryWithSubca
           name: true,
           name_ne: true,
           slug: true,
+          icon: true,
         },
       },
     },
@@ -56,6 +60,7 @@ export async function getRootCategoriesWithChildren(): Promise<CategoryWithSubca
       name: sub.name,
       nameNe: sub.name_ne,
       slug: sub.slug,
+      icon: sub.icon,
     })),
   }));
 }

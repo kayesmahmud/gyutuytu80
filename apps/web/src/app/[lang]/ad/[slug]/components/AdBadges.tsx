@@ -7,6 +7,7 @@ export async function AdBadges({
   categoryLinks,
   condition,
   isNegotiable,
+  isCodAvailable,
   fullCategory,
   isFeatured,
   featuredUntil,
@@ -48,6 +49,14 @@ export async function AdBadges({
       {isNegotiable && (
         <span className="bg-amber-50 text-amber-900 px-3 py-1 rounded text-sm font-semibold">
           {t('priceIsNegotiable')}
+        </span>
+      )}
+
+      {/* Deeper orange than negotiable so COD stands out as the stronger
+          buying signal, while still reading as the same family of badge. */}
+      {isCodAvailable && (
+        <span className="bg-orange-100 text-orange-900 px-3 py-1 rounded text-sm font-semibold">
+          {t('cashOnDeliveryAvailable')}
         </span>
       )}
 

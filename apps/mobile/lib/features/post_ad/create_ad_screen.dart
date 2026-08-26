@@ -21,7 +21,6 @@ import 'package:mobile/core/api/shop_client.dart';
 import 'package:mobile/core/models/models.dart';
 import 'package:mobile/core/services/analytics_service.dart';
 import 'package:mobile/core/services/review_service.dart';
-import 'package:mobile/core/utils/category_suggest.dart';
 import 'package:mobile/core/widgets/category_icon.dart';
 import 'package:mobile/core/widgets/success_checkmark.dart';
 import 'package:mobile/features/dashboard/dashboard_screen.dart';
@@ -48,7 +47,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   // filled, and never collapse again (monotonic) so editing doesn't hide work.
   final _formKey = GlobalKey<FormState>();
   final _scrollController = ScrollController();
-  final Set<String> _revealedSections = {};
   final Map<String, GlobalKey> _sectionKeys = {
     'title': GlobalKey(),
     'category': GlobalKey(),
@@ -56,13 +54,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     'location': GlobalKey(),
     'contact': GlobalKey(),
   };
-  String? _pendingRevealScroll;
-  bool _initialBuildDone = false;
-
-  // Title → category suggestion (keyword dictionary, matched locally)
-  List<CategoryKeyword> _categoryKeywords = [];
-  CategoryKeyword? _suggestion;
-  Timer? _suggestDebounce;
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -70,6 +61,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
   bool _isLoading = false;
   bool _priceNegotiable = false;
+  bool _codAvailable = false;
 
   // 0..1 while the multipart body is uploading; null once the server is
   // processing (or when idle). Drives the "Uploading X%" label on the button.
@@ -138,6 +130,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       'selfie' => 'postAd.aiCouldNotFillSelfie',
       'screenshot' => 'postAd.aiCouldNotFillScreenshot',
       'unclear' => 'postAd.aiCouldNotFillUnclear',
+      'prohibited' => 'postAd.aiCouldNotFillProhibited',
       _ => 'postAd.aiCouldNotFill',
     };
   }
@@ -166,11 +159,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   final Set<String> _aiFilled = {};
   int? _aiPriceEstimate;
   bool? _aiSellable;
-  // Shop-page memory prefill (Categories tab). The AI photo detection may
-  // override THIS (photo wins over memory) but never a user-chosen category.
-  int? _memoryCategoryId;
-  int? _memorySubcategoryId;
-
   // Draft State
   String? _currentDraftId;
   bool _isSaving = false;
@@ -185,8 +173,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     _whatsappController.text = _verifiedPhone;
     _initializeScreen();
     _titleController.addListener(_onFormChanged);
-    _titleController.addListener(_onTitleChangedForSuggestion);
-    _descriptionController.addListener(_onTitleChangedForSuggestion);
     _descriptionController.addListener(_onFormChanged);
     _priceController.addListener(_onFormChanged);
     // The ✨ badge on an AI-filled field disappears the moment the user edits it
@@ -198,20 +184,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   void _clearAiMarkOnEdit(String field) {
     if (_applyingAiDraft) return;
     if (_aiFilled.remove(field) && mounted) setState(() {});
-  }
-
-  void _onTitleChangedForSuggestion() {
-    _suggestDebounce?.cancel();
-    _suggestDebounce = Timer(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      // Title wins; description is only a fallback (it's noisier text).
-      final next =
-          suggestCategory(_titleController.text, _categoryKeywords) ??
-          suggestCategory(_descriptionController.text, _categoryKeywords);
-      if (next?.keyword != _suggestion?.keyword) {
-        setState(() => _suggestion = next);
-      }
-    });
   }
 
   // Full ad details fetched for edit mode (dashboard data is incomplete)
@@ -269,6 +241,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     // isNegotiable is stored in custom_fields (like web), check there first
     _priceNegotiable =
         ad.attributes?['isNegotiable'] as bool? ?? ad.isNegotiable;
+    _codAvailable = ad.attributes?['isCodAvailable'] as bool? ?? false;
 
     // Pre-fill existing images — use paths as-is (getAdImageUrl handles them)
     _existingImagePaths = List<String>.from(ad.images);
@@ -385,18 +358,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         _adClient.getCategories(),
         _adClient.getLocationHierarchy(),
         _adClient.getAdLimits(),
-        _adClient.getCategoryKeywords(),
       ]);
       final categories = results[0] as List<CategoryWithSubcategories>;
       final provinces = results[1] as List<LocationProvince>;
       final limits = results[2] as AdLimitsResponse;
-      final keywords = results[3] as List<CategoryKeyword>;
 
       setState(() {
         _categories = categories;
         _provinces = provinces;
         _maxImages = limits.effectiveImageLimit;
-        _categoryKeywords = keywords;
       });
     } catch (e) {
       debugPrint("Error loading initial data: $e");
@@ -539,6 +509,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       _selectedMunicipality = municipality;
       _selectedArea = area;
       _priceNegotiable = draft.isNegotiable;
+      // COD has no dedicated draft column; it rides along in customFields.
+      _codAvailable = draft.customFields['isCodAvailable'] as bool? ?? false;
       _attributeValues
         ..clear()
         ..addAll(draft.customFields);
@@ -572,11 +544,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
-    _suggestDebounce?.cancel();
     _locationSearchDebounce?.cancel();
     _titleController.removeListener(_onFormChanged);
-    _titleController.removeListener(_onTitleChangedForSuggestion);
-    _descriptionController.removeListener(_onTitleChangedForSuggestion);
     _descriptionController.removeListener(_onFormChanged);
     _priceController.removeListener(_onFormChanged);
     _titleController.dispose();
@@ -743,8 +712,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         setState(() {
           _selectedCategory = parent;
           _selectedSubCategory = sub;
-          _memoryCategoryId = catId;
-          _memorySubcategoryId = sub?.id;
         });
         break;
       }
@@ -972,97 +939,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     }
   }
 
-  // ── Progressive reveal ───────────────────────────────────────────────────
-
-  /// Marks [key] revealed once [condition] first becomes true; sections never
-  /// collapse again. Called from build (top-down), so a newly satisfied
-  /// condition schedules an auto-scroll to the freshly revealed section.
-  bool _reveal(String key, bool condition) {
-    if (widget.isEditMode) return true;
-    if (condition && !_revealedSections.contains(key)) {
-      _revealedSections.add(key);
-      if (_initialBuildDone) {
-        _pendingRevealScroll = key;
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => _scrollToPendingReveal(),
-        );
-      }
-    }
-    return _revealedSections.contains(key);
-  }
-
-  void _scrollToPendingReveal() {
-    final key = _pendingRevealScroll;
-    _pendingRevealScroll = null;
-    if (key == null || !mounted) return;
-    final ctx = _sectionKeys[key]?.currentContext;
-    if (ctx != null) {
-      Scrollable.ensureVisible(
-        ctx,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-        alignment: 0.05,
-      );
-    }
-  }
-
-  // ── Title → category suggestion ──────────────────────────────────────────
-
-  CategoryWithSubcategories? get _suggestedParent {
-    final suggestion = _suggestion;
-    if (suggestion == null) return null;
-    for (final cat in _categories) {
-      if (cat.id == suggestion.categoryId) return cat;
-    }
-    return null;
-  }
-
-  Category? get _suggestedSub {
-    final suggestion = _suggestion;
-    final parent = _suggestedParent;
-    if (suggestion == null || parent == null) return null;
-    final subId = suggestion.subcategoryId;
-    if (subId == null) return null;
-    for (final sub in parent.subcategories) {
-      if (sub.id == subId) return sub;
-    }
-    return null;
-  }
-
-  bool get _suggestionApplied {
-    final suggestion = _suggestion;
-    if (suggestion == null) return false;
-    if (_selectedCategory?.id != suggestion.categoryId) return false;
-    final subId = suggestion.subcategoryId;
-    return subId == null || _selectedSubCategory?.id == subId;
-  }
-
-  void _applySuggestion() {
-    final parent = _suggestedParent;
-    if (parent == null) return;
-    setState(() {
-      _selectedCategory = parent;
-      _selectedSubCategory = _suggestedSub;
-      _aiFilled.remove('category');
-      if (!widget.isEditMode || _editPrefillDone) {
-        _attributeValues.clear();
-      }
-    });
-    _onFormChanged();
-  }
-
   // ── AI autofill (Phase 2) ────────────────────────────────────────────────
 
-  /// After the first photos land on an otherwise-untyped form, ask the AI to
-  /// draft the listing. Fail-open: null (off/unavailable/error) = no change.
+  /// After the first photos land, ask the AI to draft the listing — typed
+  /// fields or not (owner, 2026-08-27: a seller who typed a title first still
+  /// gets the full AI fill; the photo wins). Fail-open: null = no change.
   Future<void> _maybeRequestAiDraft() async {
     if (_aiExplicitBlocked) setState(() => _aiExplicitBlocked = false);
     if (widget.isEditMode || _aiDraftRequested) return;
     if (_selectedImages.isEmpty) return;
-    if (_titleController.text.trim().isNotEmpty ||
-        _descriptionController.text.trim().isNotEmpty) {
-      return;
-    }
     _aiDraftRequested = true;
     setState(() => _aiDraftLoading = true);
     final result = await _adClient.getAiDraft(
@@ -1105,34 +990,31 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     if (draft.sellable) _applyAiDraft(draft);
   }
 
-  /// Apply an AI draft to whichever fields the user hasn't touched yet.
+  /// Apply an AI draft. The photo is authoritative (owner, 2026-08-27): AI
+  /// values REPLACE anything typed before the photos landed — every replaced
+  /// field carries the ✨ badge and stays fully editable.
   void _applyAiDraft(AiDraft draft) {
     _applyingAiDraft = true;
     final marks = <String>{};
 
     final title = draft.title;
-    if (_titleController.text.trim().isEmpty && title != null) {
+    if (title != null) {
       _titleController.text = title;
       marks.add('title');
     }
     final description = draft.description;
-    if (_descriptionController.text.trim().isEmpty && description != null) {
+    if (description != null) {
       _descriptionController.text = description;
       marks.add('description');
     }
-    final price = draft.priceEstimate;
-    if (_priceController.text.trim().isEmpty && price != null) {
-      _priceController.text = price.toString();
-      marks.add('price');
-    }
+    // Price is deliberately NOT filled (owner, 2026-08-27): the seller types
+    // their own price. The estimate is still kept (_aiPriceEstimate) so the
+    // absurd-price warning can fire on a wildly off typed price.
 
-    // Photo wins over shop-page memory; never override a user-chosen category.
-    final categoryUntouched =
-        _selectedCategory == null ||
-        (_selectedCategory?.id == _memoryCategoryId &&
-            _selectedSubCategory?.id == _memorySubcategoryId);
+    // Photo wins over any pre-photo selection (incl. shop-page memory) —
+    // the AI saw the actual item.
     final draftCatId = draft.categoryId;
-    if (draftCatId != null && categoryUntouched) {
+    if (draftCatId != null) {
       for (final parent in _categories) {
         if (parent.id != draftCatId) continue;
         Category? sub;
@@ -1167,40 +1049,132 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   }
 
   /// Pre-post confirmation for AI-assisted listings — warnings only, the user
-  /// can always post anyway; editors remain the only hard "no".
-  Future<bool?> _showAiConfirmDialog(List<String> warnings) {
+  /// can always post anyway; editors remain the only hard "no". Takes i18n
+  /// KEYS (not translated strings) so each warning can carry a matching icon.
+  Future<bool?> _showAiConfirmDialog(List<String> warningKeys) {
+    IconData iconFor(String key) => switch (key) {
+      'postAd.aiWarnPrice' => LucideIcons.wallet,
+      'postAd.aiWarnJunk' ||
+      'postAd.aiCouldNotFillSelfie' => LucideIcons.camera,
+      'postAd.aiWarnFilled' => LucideIcons.sparkles,
+      _ => LucideIcons.alertTriangle,
+    };
     return showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'postAd.aiConfirmTitle'.tr(),
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 17),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final warning in warnings)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '• $warning',
-                  style: GoogleFonts.inter(fontSize: 14, height: 1.5),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Gradient AI icon disc, matching the web modal
+              Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF8B5CF6), Color(0xFF4F46E5)],
+                  ),
+                ),
+                child: const Icon(
+                  LucideIcons.sparkles,
+                  color: Colors.white,
+                  size: 30,
                 ),
               ),
-          ],
+              const SizedBox(height: 14),
+              Text(
+                'postAd.aiConfirmTitle'.tr(),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 18),
+              for (final key in warningKeys)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        iconFor(key),
+                        size: 20,
+                        color: const Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          key.tr(),
+                          style: GoogleFonts.inter(
+                            fontSize: 13.5,
+                            height: 1.45,
+                            color: const Color(0xFF78350F),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 50,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'postAd.aiReviewAgain'.tr(),
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFFBEB),
+                    side: const BorderSide(color: Color(0xFFFCD34D)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'postAd.aiPostAnyway'.tr(),
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('postAd.aiReviewAgain'.tr()),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('postAd.aiPostAnyway'.tr()),
-          ),
-        ],
       ),
     );
   }
@@ -1285,8 +1259,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       if (_aiSellable == false) {
         warnings.add(
           _aiUnsellableReason == 'selfie'
-              ? 'postAd.aiCouldNotFillSelfie'.tr()
-              : 'postAd.aiWarnJunk'.tr(),
+              ? 'postAd.aiCouldNotFillSelfie'
+              : 'postAd.aiWarnJunk',
         );
       }
       final estimate = _aiPriceEstimate;
@@ -1295,9 +1269,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           typedPrice != null &&
           typedPrice > 0 &&
           (typedPrice < estimate * 0.1 || typedPrice > estimate * 10)) {
-        warnings.add('postAd.aiWarnPrice'.tr());
+        warnings.add('postAd.aiWarnPrice');
       }
-      if (_aiFilled.isNotEmpty) warnings.add('postAd.aiWarnFilled'.tr());
+      if (_aiFilled.isNotEmpty) warnings.add('postAd.aiWarnFilled');
       if (warnings.isNotEmpty) {
         final proceed = await _showAiConfirmDialog(warnings);
         if (proceed != true) return;
@@ -1346,6 +1320,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     final attrs = <String, dynamic>{
       ..._attributeValues,
       'isNegotiable': _priceNegotiable,
+      'isCodAvailable': _codAvailable,
     };
     final whatsapp = _whatsappController.text.trim();
     if (!_whatsappSameAsPhone &&
@@ -1755,127 +1730,102 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     );
   }
 
-  Widget _buildFormContent() {
-    final selectedCategory = _selectedCategory;
-    final titleFilled = _titleController.text.trim().isNotEmpty;
-    final categoryComplete =
-        selectedCategory != null &&
-        (selectedCategory.subcategories.isEmpty ||
-            _selectedSubCategory != null);
-    final detailsFilled =
-        _descriptionController.text.trim().isNotEmpty &&
-        _priceController.text.trim().isNotEmpty;
-    final locationChosen =
-        _selectedMunicipality != null &&
-        (_selectedMunicipality!.areas.isEmpty || _selectedArea != null);
-
-    // Photos first (always visible); the title also reveals from restored
-    // drafts, which carry text but no images. While the AI is filling, hold
-    // the title back so the user never stares at empty fields — it appears
-    // pre-filled (or empty with a note when the AI couldn't help).
-    final photosAdded = _totalImageCount > 0;
-    final showTitle = _reveal(
-      'title',
-      (photosAdded && !_aiDraftLoading) || titleFilled,
-    );
-    final showCategory = _reveal('category', titleFilled);
-    final showDetails = _reveal('details', categoryComplete);
-    final showLocation = _reveal('location', showDetails && detailsFilled);
-    final showContact = _reveal('contact', showLocation && locationChosen);
-
-    if (!_initialBuildDone) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _initialBuildDone = true,
-      );
+  /// Photos-first reveal: before any photo only the Photos section shows;
+  /// while the AI is filling, the wait banner holds the space; once the AI is
+  /// done (filled or failed) — or content already exists (draft restore, edit
+  /// mode) — every remaining field appears at once, AI-filled or empty.
+  bool get _detailsRevealed {
+    if (widget.isEditMode) return true;
+    // Typed text only — a category alone doesn't count, because the shop-page
+    // memory prefill sets one on load and must not reveal an empty form.
+    if (_titleController.text.trim().isNotEmpty ||
+        _descriptionController.text.trim().isNotEmpty) {
+      return true;
     }
+    return (_selectedImages.isNotEmpty || _existingImagePaths.isNotEmpty) &&
+        !_aiDraftLoading;
+  }
 
+  Widget _buildFormContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildPhotosSection(),
-        _buildRevealedSection('title', showTitle, _buildTitleSection),
-        _buildRevealedSection('category', showCategory, _buildCategorySection),
-        _buildRevealedSection('details', showDetails, _buildDetailsSection),
-        _buildRevealedSection('location', showLocation, _buildLocationSection),
-        _buildRevealedSection('contact', showContact, _buildContactSection),
+        if (_detailsRevealed) ...[
+          _buildSection('title', _buildTitleSection),
+          _buildSection('category', _buildCategorySection),
+          _buildSection('details', _buildDetailsSection),
+          _buildSection('location', _buildLocationSection),
+          _buildSection('contact', _buildContactSection),
+        ],
       ],
     );
   }
 
-  /// Animates a section into view the first time its reveal condition is met.
-  Widget _buildRevealedSection(
-    String key,
-    bool visible,
-    Widget Function() builder,
-  ) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
-      alignment: Alignment.topCenter,
-      child: visible
-          ? KeyedSubtree(key: _sectionKeys[key], child: builder())
-          : const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildSuggestionChip() {
-    final parent = _suggestedParent;
-    if (parent == null) return const SizedBox.shrink();
-    final sub = _suggestedSub;
-    final locale = context.locale.languageCode;
-    final label = sub == null
-        ? parent.localizedName(locale)
-        : '${parent.localizedName(locale)} › ${sub.localizedName(locale)}';
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: InkWell(
-        onTap: _applySuggestion,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFECFDF5),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CategoryIcon(
-                slug: parent.slug,
-                emoji: parent.icon ?? '📁',
-                size: 22,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  '${'postAd.suggestedCategory'.tr()}: $label',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF047857),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'postAd.tapToUse'.tr(),
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: const Color(0xFF10B981),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  /// Keeps each section keyed so its state survives rebuilds.
+  Widget _buildSection(String key, Widget Function() builder) {
+    return KeyedSubtree(key: _sectionKeys[key], child: builder());
   }
 
   Future<void> _openCategoryPicker() async {
     final locale = context.locale.languageCode;
-    final picked = await showModalBottomSheet<CategoryWithSubcategories>(
+    final picked = await _openTilePickerSheet<CategoryWithSubcategories>(
+      title: 'postAd.selectCategoryHint'.tr(),
+      items: _categories,
+      slugOf: (cat) => cat.slug,
+      iconOf: (cat) => cat.icon,
+      labelOf: (cat) => cat.localizedName(locale),
+      isSelected: (cat) => _selectedCategory?.id == cat.id,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedCategory = picked;
+      _selectedSubCategory = null;
+      _aiFilled.remove('category');
+      if (!widget.isEditMode || _editPrefillDone) {
+        _attributeValues.clear();
+      }
+    });
+    _onFormChanged();
+  }
+
+  Future<void> _openSubcategoryPicker() async {
+    final parent = _selectedCategory;
+    if (parent == null) return;
+    final locale = context.locale.languageCode;
+    final picked = await _openTilePickerSheet<Category>(
+      title: 'postAd.selectSubcategoryHint'.tr(),
+      items: parent.subcategories,
+      slugOf: (sub) => sub.slug,
+      iconOf: (sub) => sub.icon,
+      labelOf: (sub) => sub.localizedName(locale),
+      isSelected: (sub) => _selectedSubCategory?.id == sub.id,
+      // A touch smaller than the parent grid, so the two read as a hierarchy.
+      iconSize: 34,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedSubCategory = picked;
+      _aiFilled.remove('category');
+      if (!widget.isEditMode || _editPrefillDone) {
+        _attributeValues.clear();
+      }
+    });
+    _onFormChanged();
+  }
+
+  // Shared bottom-sheet icon-tile grid: category and subcategory pickers look
+  // and behave identically (tap the field → grid opens → pick → sheet closes).
+  Future<T?> _openTilePickerSheet<T>({
+    required String title,
+    required List<T> items,
+    required String Function(T) slugOf,
+    required String? Function(T) iconOf,
+    required String Function(T) labelOf,
+    required bool Function(T) isSelected,
+    double iconSize = 38,
+  }) {
+    return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -1890,7 +1840,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'postAd.selectCategoryHint'.tr(),
+                  title,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -1899,19 +1849,20 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                 const SizedBox(height: 12),
                 Expanded(
                   child: GridView.builder(
+                    // 4-up so all 16 categories fit without scrolling.
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          childAspectRatio: 0.95,
+                          crossAxisCount: 4,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 0.82,
                         ),
-                    itemCount: _categories.length,
+                    itemCount: items.length,
                     itemBuilder: (ctx2, i) {
-                      final cat = _categories[i];
-                      final selected = _selectedCategory?.id == cat.id;
+                      final item = items[i];
+                      final selected = isSelected(item);
                       return InkWell(
-                        onTap: () => Navigator.pop(ctx, cat),
+                        onTap: () => Navigator.pop(ctx, item),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           padding: const EdgeInsets.all(8),
@@ -1931,18 +1882,18 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               CategoryIcon(
-                                slug: cat.slug,
-                                emoji: cat.icon ?? '📁',
-                                size: 44,
+                                slug: slugOf(item),
+                                emoji: iconOf(item) ?? '📁',
+                                size: iconSize,
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 5),
                               Text(
-                                cat.localizedName(locale),
+                                labelOf(item),
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -1959,16 +1910,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         ),
       ),
     );
-    if (picked == null || !mounted) return;
-    setState(() {
-      _selectedCategory = picked;
-      _selectedSubCategory = null;
-      _aiFilled.remove('category');
-      if (!widget.isEditMode || _editPrefillDone) {
-        _attributeValues.clear();
-      }
-    });
-    _onFormChanged();
   }
 
   // Title (after photos) — the suggestion chip appears right under it.
@@ -1994,16 +1935,15 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               : null,
         ),
         _buildCharCount("${_titleController.text.length}/100"),
-        if (_suggestedParent != null && !_suggestionApplied)
-          _buildSuggestionChip(),
       ],
     );
   }
 
-  // Category right after the title: tappable field opening the icon tile
-  // grid, then subcategory chips, then category-specific dynamic fields.
+  // Category right after the title: tappable fields (category, then
+  // subcategory) opening the icon tile grid, then dynamic fields.
   Widget _buildCategorySection() {
     final selectedCategory = _selectedCategory;
+    final selectedSub = _selectedSubCategory;
     final locale = context.locale.languageCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2051,70 +1991,42 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             selectedCategory.subcategories.isNotEmpty) ...[
           const SizedBox(height: 20),
           _buildLabel('postAd.selectSubcategory'.tr()),
-          // Same icon-tile grid as the category picker, so both steps match.
-          // Nested inside the form's scroll view, hence shrinkWrap + no physics.
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.zero,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.95,
-            ),
-            itemCount: selectedCategory.subcategories.length,
-            itemBuilder: (context, i) {
-              final sub = selectedCategory.subcategories[i];
-              final selected = _selectedSubCategory?.id == sub.id;
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedSubCategory = sub;
-                    _aiFilled.remove('category');
-                    if (!widget.isEditMode || _editPrefillDone) {
-                      _attributeValues.clear();
-                    }
-                  });
-                  _onFormChanged();
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: selected ? const Color(0xFFECFDF5) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: selected
-                          ? const Color(0xFF10B981)
-                          : Colors.grey[200]!,
-                      width: selected ? 2 : 1,
+          // Same tappable field + bottom-sheet grid as the category above.
+          InkWell(
+            onTap: _openSubcategoryPicker,
+            borderRadius: BorderRadius.circular(8),
+            child: InputDecorator(
+              decoration: _inputDecoration(),
+              child: Row(
+                children: [
+                  if (selectedSub != null) ...[
+                    CategoryIcon(
+                      slug: selectedSub.slug,
+                      emoji: selectedSub.icon ?? '📁',
+                      size: 24,
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(
+                    child: Text(
+                      selectedSub?.localizedName(locale) ??
+                          'postAd.selectSubcategoryHint'.tr(),
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: selectedSub == null
+                            ? Colors.grey[400]
+                            : Colors.black87,
+                      ),
                     ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CategoryIcon(
-                        slug: sub.slug,
-                        emoji: sub.icon ?? '📁',
-                        size: 44,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        sub.localizedName(locale),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  const Icon(
+                    LucideIcons.chevronDown,
+                    color: Colors.grey,
+                    size: 18,
                   ),
-                ),
-              );
-            },
+                ],
+              ),
+            ),
           ),
         ],
 
@@ -2173,7 +2085,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         _buildCharCount("${_descriptionController.text.length}/5000"),
 
         const SizedBox(height: 24),
-        _buildLabel('postAd.priceLabel'.tr(), aiField: 'price'),
+        _buildLabel('postAd.priceLabel'.tr()),
         _buildTextField(
           controller: _priceController,
           hintText: "0",
@@ -2204,6 +2116,29 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             const SizedBox(width: 8),
             Text(
               'postAd.priceNegotiable'.tr(),
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.black87),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            SizedBox(
+              height: 24,
+              width: 24,
+              child: Checkbox(
+                value: _codAvailable,
+                activeColor: const Color(0xFF10B981),
+                onChanged: (val) {
+                  setState(() => _codAvailable = val ?? false);
+                  _onFormChanged();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'postAd.cashOnDelivery'.tr(),
               style: GoogleFonts.inter(fontSize: 14, color: Colors.black87),
             ),
           ],
@@ -2818,14 +2753,14 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
 
         const SizedBox(height: 12),
 
+        // Locked while "same as phone" is ticked: the value is derived from the
+        // verified number, so an edit here would be silently discarded on submit.
+        // Untick to type a different number.
         _buildTextField(
           controller: _whatsappController,
           hintText: 'postAd.enterWhatsapp'.tr(),
           keyboardType: TextInputType.phone,
-          // Disable if checked
-          // We can't easily 'disable' with just _buildTextField custom method unless we add 'enabled' prop
-          // For now, let's keep it editable but auto-filled, or assume user unchecks to edit.
-          // Ideally: enabled: !_whatsappSameAsPhone
+          enabled: !_whatsappSameAsPhone,
         ),
         if (_whatsappSameAsPhone)
           Padding(
@@ -3022,7 +2957,6 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       'title' => 'postAd.aiSuggestedTitle',
       'category' => 'postAd.aiSuggestedCategory',
       'description' => 'postAd.aiSuggestedDescription',
-      'price' => 'postAd.aiSuggestedPrice',
       _ => 'postAd.aiSuggested',
     };
     return Padding(
@@ -3087,6 +3021,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     List<TextInputFormatter>? inputFormatters,
+    bool enabled = true,
   }) {
     return TextFormField(
       controller: controller,
@@ -3094,10 +3029,18 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       keyboardType: keyboardType,
       validator: validator,
       inputFormatters: inputFormatters,
-      style: GoogleFonts.inter(fontSize: 15, color: Colors.black87),
+      enabled: enabled,
+      style: GoogleFonts.inter(
+        fontSize: 15,
+        color: enabled ? Colors.black87 : Colors.grey[600],
+      ),
       decoration: _inputDecoration().copyWith(
         hintText: hintText,
         hintStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+        // Greyed background makes "you can't type here" obvious at a glance,
+        // rather than the field looking editable and silently rejecting edits.
+        filled: !enabled,
+        fillColor: enabled ? null : Colors.grey[100],
       ),
     );
   }

@@ -12,13 +12,18 @@ interface CategoryIconProps {
   name: string;
   /** Rendered width/height in px */
   size: number;
+  /**
+   * Drop shadow under the icon. Tuned for the large home/post-ad tiles; turn it
+   * off for small inline icons (filter rows), where a 5px offset reads as blur.
+   */
+  shadow?: boolean;
 }
 
 /**
  * Renders the custom category icon (single source of truth in /public/category-icons),
  * falling back to the database emoji if the image is missing or fails to load.
  */
-export default function CategoryIcon({ slug, emoji, name, size }: CategoryIconProps) {
+export default function CategoryIcon({ slug, emoji, name, size, shadow = true }: CategoryIconProps) {
   const [failed, setFailed] = React.useState(false);
 
   if (failed || !slug) {
@@ -35,7 +40,7 @@ export default function CategoryIcon({ slug, emoji, name, size }: CategoryIconPr
       alt={name}
       width={size}
       height={size}
-      className="object-contain drop-shadow-[0_5px_4px_rgba(15,23,42,0.22)]"
+      className={`object-contain${shadow ? ' drop-shadow-[0_5px_4px_rgba(15,23,42,0.22)]' : ''}`}
       onError={() => setFailed(true)}
     />
   );

@@ -14,7 +14,7 @@ interface Category {
   name: string;
   slug: string;
   icon: string | null;
-  subcategories: { id: number; name: string; slug: string }[];
+  subcategories: { id: number; name: string; slug: string; icon?: string | null }[];
 }
 
 interface AdsFilterWrapperProps {

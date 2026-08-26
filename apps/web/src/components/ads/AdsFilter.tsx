@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import CascadingLocationFilter from '@/components/CascadingLocationFilter';
 import FilterSection from '@/components/shared/FilterSection';
 import RadioOption from '@/components/shared/RadioOption';
+import CategoryIcon from '@/app/[lang]/CategoryIcon';
 import { useAdsFilters } from '@/hooks/useAdsFilters';
 import { CONDITION_OPTIONS } from '@/lib/filters';
 import type { LocationHierarchyProvince } from '@/lib/location/types';
@@ -16,7 +17,13 @@ interface Category {
   nameNe?: string | null;
   slug: string;
   icon: string | null;
-  subcategories: { id: number; name: string; nameNe?: string | null; slug: string }[];
+  subcategories: {
+    id: number;
+    name: string;
+    nameNe?: string | null;
+    slug: string;
+    icon?: string | null;
+  }[];
 }
 
 interface AdsFilterProps {
@@ -179,7 +186,16 @@ export default function AdsFilter({
                   )}
                   {!hasSubcategories && <span className="w-6" />}
                   <RadioOption
-                    label={`${cat.icon} ${localizedName(cat.name, cat.nameNe)}`}
+                    label={localizedName(cat.name, cat.nameNe)}
+                    icon={
+                      <CategoryIcon
+                        slug={cat.slug}
+                        emoji={cat.icon}
+                        name={cat.name}
+                        size={26}
+                        shadow={false}
+                      />
+                    }
                     checked={isSelected}
                     onChange={() => updateFilters({ category: cat.slug })}
                   />
@@ -192,6 +208,15 @@ export default function AdsFilter({
                       <RadioOption
                         key={subcat.id}
                         label={localizedName(subcat.name, subcat.nameNe)}
+                        icon={
+                          <CategoryIcon
+                            slug={subcat.slug}
+                            emoji={subcat.icon}
+                            name={subcat.name}
+                            size={24}
+                            shadow={false}
+                          />
+                        }
                         checked={selectedCategorySlug === subcat.slug}
                         onChange={() => updateFilters({ category: subcat.slug })}
                       />

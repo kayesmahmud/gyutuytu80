@@ -27,7 +27,9 @@ router.get(
             orderBy: { name: 'asc' },
           },
         },
-        orderBy: { display_order: 'asc' },
+        // id breaks display_order ties — without it, equal values let Postgres
+        // return physical row order, which silently scrambles the category list.
+        orderBy: [{ display_order: 'asc' }, { id: 'asc' }],
       });
     } else {
       // Get categories with ad count
@@ -37,7 +39,7 @@ router.get(
         LEFT JOIN ads a ON c.id = a.category_id AND a.status = 'approved'
         WHERE c.parent_id IS NULL
         GROUP BY c.id
-        ORDER BY c.display_order ASC
+        ORDER BY c.display_order ASC, c.id ASC
       `;
     }
 
