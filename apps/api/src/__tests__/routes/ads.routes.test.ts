@@ -243,7 +243,7 @@ describe('Ads Routes', () => {
           orderBy: [
             { is_urgent: 'desc' },
             { is_sticky: 'desc' },
-            { reviewed_at: { sort: 'desc', nulls: 'last' } },
+            { published_at: { sort: 'desc', nulls: 'last' } },
           ],
         })
       );
@@ -260,7 +260,7 @@ describe('Ads Routes', () => {
       expect(response.status).toBe(200);
       expect(prisma.ads.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: { reviewed_at: { sort: 'desc', nulls: 'last' } },
+          orderBy: { published_at: { sort: 'desc', nulls: 'last' } },
         })
       );
     });

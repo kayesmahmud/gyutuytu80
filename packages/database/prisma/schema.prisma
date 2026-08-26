@@ -223,6 +223,8 @@ model ads {
   status_reason                String?
   reviewed_by                  Int?
   reviewed_at                  DateTime?          @db.Timestamp(6)
+  /// First time the ad went live; never bumped by re-approval/unsuspend — public feeds sort by this
+  published_at                 DateTime?          @db.Timestamp(6)
   latitude                     Decimal?           @db.Decimal(10, 8)
   longitude                    Decimal?           @db.Decimal(11, 8)
   deleted_at                   DateTime?          @db.Timestamp(6)
@@ -268,6 +270,7 @@ model ads {
   @@index([status, category_id, location_id], map: "idx_ads_status_category_location")
   @@index([status, category_id, location_id, price], map: "idx_ads_status_cat_loc_price")
   @@index([status, created_at(sort: Desc)], map: "idx_ads_status_created")
+  @@index([status, published_at(sort: Desc)], map: "idx_ads_status_published")
   @@index([user_id], map: "idx_ads_user_id")
   @@index([view_count(sort: Desc)], map: "idx_ads_view_count")
 }

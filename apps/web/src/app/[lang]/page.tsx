@@ -212,7 +212,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
         },
       },
       orderBy: {
-        reviewed_at: { sort: 'desc', nulls: 'last' }, // Sort by approval time, nulls last
+        published_at: { sort: 'desc', nulls: 'last' }, // Sort by first-publish time, nulls last
       },
       take: ADS_PER_PAGE,
       skip: offset,
@@ -250,7 +250,7 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
     locationName: ad.locations?.name || null,
     slug: ad.slug || undefined,
     condition: ad.condition || null,
-    publishedAt: ad.reviewed_at || ad.created_at || new Date(),
+    publishedAt: ad.published_at || ad.reviewed_at || ad.created_at || new Date(),
     sellerName: ad.users_ads_user_idTousers?.business_name || ad.users_ads_user_idTousers?.full_name || tc('unknownSeller'),
     accountType: ad.users_ads_user_idTousers?.account_type || undefined,
     businessVerificationStatus: ad.users_ads_user_idTousers?.business_verification_status || undefined,
@@ -264,8 +264,8 @@ export default async function HomePage({ params, searchParams }: HomePageProps) 
     primaryImage: ad.ad_images && ad.ad_images.length > 0 ? ad.ad_images[0]?.file_path || null : null,
     categoryName: ad.categories?.name || null,
     categoryIcon: ad.categories?.icon || null,
-    // publishedAt = when editor approved (use this for "time ago" display)
-    publishedAt: ad.reviewed_at || ad.created_at || new Date(),
+    // publishedAt = first time the ad went live (use for "time ago" display)
+    publishedAt: ad.published_at || ad.reviewed_at || ad.created_at || new Date(),
     createdAt: ad.created_at || new Date(),
     sellerName: ad.users_ads_user_idTousers?.full_name || tc('unknownSeller'),
     isFeatured: ad.is_featured || false,

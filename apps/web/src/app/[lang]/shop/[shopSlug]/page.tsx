@@ -83,7 +83,7 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
       // homepage-only signal and is intentionally not pinned in listings.
       { is_urgent: 'desc' },
       { is_sticky: 'desc' },
-      { reviewed_at: { sort: 'desc', nulls: 'last' } }, // approval time, nulls last
+      { published_at: { sort: 'desc', nulls: 'last' } }, // first-publish time, nulls last
     ],
   });
 
@@ -228,7 +228,7 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
                       categoryName: ad.categories?.name || null,
                       categoryIcon: ad.categories?.icon || null,
                       // publishedAt = when editor approved (use this for "time ago" display)
-                      publishedAt: ad.reviewed_at || ad.created_at || new Date(),
+                      publishedAt: ad.published_at || ad.reviewed_at || ad.created_at || new Date(),
                       createdAt: ad.created_at || new Date(),
                       sellerName: shop.businessName || shop.fullName,
                       isFeatured: ad.is_featured || false,

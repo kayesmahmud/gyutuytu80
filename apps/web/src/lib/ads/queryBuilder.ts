@@ -115,8 +115,9 @@ export interface OrderByOptions {
 
 /**
  * Build Prisma orderBy clause for ads queries
- * Uses reviewed_at (when editor approved) for chronological sorting,
- * not created_at (when user submitted)
+ * Uses published_at (first time the ad went live) for chronological sorting —
+ * not created_at (submit time), and not reviewed_at (last moderation action,
+ * which re-approvals after owner edits would bump back to the top)
  *
  * Sorting priority for promoted ads (only when applyPromotionPriority is true):
  * - Urgent: Appears at TOP of listings (highest priority)
@@ -133,12 +134,12 @@ export function buildAdsOrderBy(options: OrderByOptions | AdsSortBy = 'newest') 
 
   const base =
     sortBy === 'oldest'
-      ? { reviewed_at: { sort: 'asc' as const, nulls: 'last' as const } }
+      ? { published_at: { sort: 'asc' as const, nulls: 'last' as const } }
       : sortBy === 'price_asc'
         ? { price: 'asc' as const }
         : sortBy === 'price_desc'
           ? { price: 'desc' as const }
-          : { reviewed_at: { sort: 'desc' as const, nulls: 'last' as const } };
+          : { published_at: { sort: 'desc' as const, nulls: 'last' as const } };
 
   // On filtered browse/search listings, pin promoted ads on top — Urgent >
   // Sticky — then apply the chosen sort within each group (so promotions stay

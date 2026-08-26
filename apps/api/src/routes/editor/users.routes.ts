@@ -254,6 +254,16 @@ router.put(
     const editorId = req.user!.userId;
     const userId = parseInt(id);
 
+    // Capture the flipped set first: any of them never published (suspended
+    // while pending) needs a publish stamp or it sorts to the bottom of every
+    // feed — and the stamp must not touch the user's other approved ads.
+    const suspendedAdIds = (
+      await prisma.ads.findMany({
+        where: { user_id: userId, status: 'suspended' },
+        select: { id: true },
+      })
+    ).map((a) => a.id);
+
     const [user, adsRestored] = await prisma.$transaction([
       prisma.users.update({
         where: { id: userId },
@@ -274,6 +284,10 @@ router.put(
           status: 'approved',
           status_reason: null,
         },
+      }),
+      prisma.ads.updateMany({
+        where: { id: { in: suspendedAdIds }, published_at: null },
+        data: { published_at: new Date() },
       }),
     ]);
 

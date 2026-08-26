@@ -66,6 +66,7 @@ export async function GET(
         description: true,
         created_at: true,
         reviewed_at: true,
+        published_at: true,
         view_count: true,
         is_featured: true,
         is_sticky: true,
@@ -99,7 +100,7 @@ export async function GET(
         // Urgent > Sticky (Featured has its own homepage section)
         { is_urgent: 'desc' },
         { is_sticky: 'desc' },
-        { reviewed_at: { sort: 'desc', nulls: 'last' } }, // Sort by approval time, nulls last
+        { published_at: { sort: 'desc', nulls: 'last' } }, // Sort by first-publish time, nulls last
       ],
       skip: offset,
       take: limit,
@@ -113,9 +114,9 @@ export async function GET(
       condition: ad.condition,
       description: ad.description,
       // publishedAt = when editor approved (use this for "time ago" display)
-      publishedAt: ad.reviewed_at || ad.created_at,
+      publishedAt: ad.published_at || ad.reviewed_at || ad.created_at,
       createdAt: ad.created_at,
-      reviewedAt: ad.reviewed_at,
+      reviewedAt: ad.published_at || ad.reviewed_at,
       viewCount: ad.view_count,
       isFeatured: ad.is_featured,
       isSticky: ad.is_sticky,

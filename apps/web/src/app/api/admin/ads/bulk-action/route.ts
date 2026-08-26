@@ -51,6 +51,13 @@ export async function POST(request: NextRequest) {
           data: updateData,
         });
 
+        // First approval stamps the go-live time; re-approvals (after owner
+        // edits) keep it so ads don't jump back to the top of the feeds.
+        await prisma.ads.updateMany({
+          where: { id: { in: adIds }, deleted_at: null, published_at: null },
+          data: { published_at: new Date() },
+        });
+
         console.log(`✅ ${result.count} ads approved by editor ${editor.userId}`);
         break;
 
