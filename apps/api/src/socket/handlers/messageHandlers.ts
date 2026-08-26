@@ -104,9 +104,10 @@ export function initializeMessageHandlers(
       });
 
       // Update conversation last_message_at timestamp
-      await prisma.conversations.update({
+      const conversation = await prisma.conversations.update({
         where: { id: conversationId },
         data: { last_message_at: new Date() },
+        select: { team_user_id: true },
       });
 
       // Broadcast conversation update
@@ -115,6 +116,14 @@ export function initializeMessageHandlers(
         lastMessage: messageData,
         timestamp: new Date(),
       });
+
+      // Team threads also mirror into the shared editor inbox room, so every
+      // staff member sees the user's reply — not just the editor who wrote last.
+      // Distinct event name: staff sockets also get plain message:new for their
+      // own personal chats, and the inbox must not confuse the two.
+      if (conversation.team_user_id) {
+        io.to('team:inbox').emit('team-inbox:message-new', messageData);
+      }
 
       // Send push notifications to offline participants AND create in-app notifications
       prisma.conversation_participants

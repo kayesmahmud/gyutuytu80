@@ -1,10 +1,14 @@
 import { prisma } from '@thulobazaar/database';
+import { isTeamAccount } from './teamAccount.js';
 
 /**
  * Returns true if either user has blocked the other (bidirectional).
  * One blocked_users row prevents messaging in both directions.
  */
 export async function isBlockedBetween(userA: number, userB: number): Promise<boolean> {
+  // The team account is exempt: a block here would silently cut off all
+  // staff/moderation outreach (and blocking it is rejected at the API anyway).
+  if ((await isTeamAccount(userA)) || (await isTeamAccount(userB))) return false;
   const block = await prisma.blocked_users.findFirst({
     where: {
       OR: [

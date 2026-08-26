@@ -9,6 +9,7 @@ import { isUserOnline } from '../socket/index.js';
 import { containsProfanity, getDetectedWords, censorProfanity } from '../utils/profanityFilter.js';
 import { isBlockedBetween, getBlockStatus } from '../utils/blockCheck.js';
 import { isStaffRole } from '../utils/staffRoles.js';
+import { isTeamAccount } from '../utils/teamAccount.js';
 
 const router = Router();
 
@@ -28,6 +29,9 @@ router.post(
     }
     if (blockedId === userId) {
       return res.status(400).json({ success: false, message: 'You cannot block yourself' });
+    }
+    if (await isTeamAccount(blockedId)) {
+      return res.status(400).json({ success: false, message: 'Thulo Bazaar Team cannot be blocked' });
     }
 
     await prisma.blocked_users.upsert({
@@ -503,9 +507,10 @@ router.post(
     });
 
     // Update conversation timestamp and sender's last_read_at
-    await prisma.conversations.update({
+    const updatedConversation = await prisma.conversations.update({
       where: { id: conversationId },
       data: { last_message_at: new Date() },
+      select: { team_user_id: true },
     });
     await prisma.conversation_participants.update({
       where: { conversation_id_user_id: { conversation_id: conversationId, user_id: userId } },
@@ -533,6 +538,12 @@ router.post(
         lastMessage: messageData,
         timestamp: new Date(),
       });
+
+      // Team threads also mirror into the shared editor inbox room (distinct
+      // event name so staff sockets can tell it apart from their own chats)
+      if (updatedConversation.team_user_id) {
+        io.to('team:inbox').emit('team-inbox:message-new', messageData);
+      }
     }
 
     // Send push notifications to offline participants (fire-and-forget)

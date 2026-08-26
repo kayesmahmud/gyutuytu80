@@ -15,6 +15,7 @@ import { initializeMessageHandlers } from './handlers/messageHandlers.js';
 import { initializeTypingHandlers } from './handlers/typingHandlers.js';
 import { initializeConversationHandlers } from './handlers/conversationHandlers.js';
 import { initializeSupportHandlers } from './handlers/supportHandlers.js';
+import { initializeTeamInboxHandlers } from './handlers/teamInboxHandlers.js';
 import { joinUserConversations, broadcastUserOnlineStatus } from './utils/roomManagement.js';
 import type { AuthenticatedSocket } from './types.js';
 
@@ -91,6 +92,7 @@ export function initializeSocketIO(httpServer: HttpServer): Server {
     initializeTypingHandlers(io, authSocket);
     initializeConversationHandlers(io, authSocket, onlineUsers);
     initializeSupportHandlers(io, authSocket);
+    initializeTeamInboxHandlers(authSocket);
 
     // =====================
     // DYNAMIC ROOM JOINING
