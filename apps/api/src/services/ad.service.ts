@@ -88,8 +88,10 @@ export function transformAdForList(ad: any) {
     userAvatar: ad.users_ads_user_idTousers?.avatar,
     latitude: ad.latitude ? Number(ad.latitude) : null,
     longitude: ad.longitude ? Number(ad.longitude) : null,
-    publishedAt: ad.reviewed_at || ad.created_at,
-    reviewedAt: ad.reviewed_at,
+    publishedAt: ad.published_at || ad.reviewed_at || ad.created_at,
+    // Mobile computes its display time as reviewedAt ?? createdAt, so public
+    // responses serve the stable publish time here — not the last review stamp.
+    reviewedAt: ad.published_at || ad.reviewed_at,
     primaryImage: ad.ad_images?.find((img: any) => img.is_primary)?.filename || ad.ad_images?.[0]?.filename,
     images: ad.ad_images?.map((img: any) => ({
       id: img.id,
@@ -119,8 +121,8 @@ export function transformAdForDashboard(ad: any) {
     stickyUntil: ad.sticky_until,
     createdAt: ad.created_at,
     updatedAt: ad.updated_at,
-    publishedAt: ad.reviewed_at || ad.created_at,
-    reviewedAt: ad.reviewed_at,
+    publishedAt: ad.published_at || ad.reviewed_at || ad.created_at,
+    reviewedAt: ad.published_at || ad.reviewed_at,
     categoryId: ad.category_id,
     locationId: ad.location_id,
     categoryName: ad.categories?.name,
@@ -192,8 +194,8 @@ export async function transformAdForDetail(ad: any) {
     // Location chain leaf → root so clients can browse ads per province/district/area
     locationLevels,
     locationName: locName,
-    publishedAt: ad.reviewed_at || ad.created_at,
-    reviewedAt: ad.reviewed_at,
+    publishedAt: ad.published_at || ad.reviewed_at || ad.created_at,
+    reviewedAt: ad.published_at || ad.reviewed_at,
     editCount: editTimes.length,
     edit_count: editTimes.length,
     lastEditedAt,
@@ -452,8 +454,8 @@ function buildAdOrderBy(sortBy: string = 'newest', pinPromotions: boolean = fals
   let base: any;
   if (sortBy === 'price-low') base = { price: 'asc' };
   else if (sortBy === 'price-high') base = { price: 'desc' };
-  else if (sortBy === 'oldest') base = { reviewed_at: { sort: 'asc', nulls: 'last' } };
-  else base = { reviewed_at: { sort: 'desc', nulls: 'last' } };
+  else if (sortBy === 'oldest') base = { published_at: { sort: 'asc', nulls: 'last' } };
+  else base = { published_at: { sort: 'desc', nulls: 'last' } };
 
   // On filtered browse/search listings, pin paid promotions to the top —
   // urgent above sticky — then apply the chosen sort within each group.
@@ -805,10 +807,11 @@ export async function createAd(userId: number, input: CreateAdInput, options?: {
       condition: normalizeCondition(input.condition),
       user_id: userId,
       status: options?.directPublish ? 'approved' : 'pending',
-      // Public listings sort by reviewed_at (approval time); direct-published
-      // ads have no editor review, so stamp publish time or they sink to the
-      // bottom of home/browse/shop feeds (NULLS LAST).
+      // Public listings sort by published_at; direct-published ads have no
+      // editor review, so stamp publish time or they sink to the bottom of
+      // home/browse/shop feeds (NULLS LAST).
       reviewed_at: options?.directPublish ? new Date() : null,
+      published_at: options?.directPublish ? new Date() : null,
       slug,
       custom_fields: input.customFields && Object.keys(input.customFields).length > 0
         ? input.customFields

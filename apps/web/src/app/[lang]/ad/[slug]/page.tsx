@@ -67,7 +67,7 @@ const getRelatedAds = cache(async (categoryId: number | null, currentAdId: numbe
       },
     },
     orderBy: {
-      reviewed_at: { sort: 'desc', nulls: 'last' },
+      published_at: { sort: 'desc', nulls: 'last' },
     },
     take: limit,
   });
@@ -304,7 +304,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
     primaryImage: relAd.ad_images?.[0]?.file_path || null,
     categoryName: relAd.categories?.name || null,
     categoryIcon: relAd.categories?.icon || null,
-    publishedAt: relAd.reviewed_at || relAd.created_at || new Date(),
+    publishedAt: relAd.published_at || relAd.reviewed_at || relAd.created_at || new Date(),
     sellerName: relAd.users_ads_user_idTousers?.business_name || relAd.users_ads_user_idTousers?.full_name || tc('unknownSeller'),
     isFeatured: relAd.is_featured || false,
     isUrgent: relAd.is_urgent || false,
@@ -392,7 +392,7 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
         category={fullCategory || undefined}
         location={fullLocation || undefined}
         adId={ad.id}
-        publishedAt={ad.reviewed_at || ad.created_at}
+        publishedAt={ad.published_at || ad.reviewed_at || ad.created_at}
         expiresAt={ad.expires_at}
         breadcrumbItems={breadcrumbItems.filter(b => b.path).map(b => ({
           name: b.label,
@@ -438,8 +438,8 @@ export default async function AdDetailPage({ params, searchParams }: AdDetailPag
                 <div>
                   <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2">{ad.title}</h1>
                   <div className="flex gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 flex-wrap">
-                    {/* Show when ad was approved (reviewed_at), not when submitted */}
-                    <span>{formatRelativeTime(ad.reviewed_at || ad.created_at || new Date())}</span>
+                    {/* Show when the ad first went live, not when submitted */}
+                    <span>{formatRelativeTime(ad.published_at || ad.reviewed_at || ad.created_at || new Date())}</span>
                     <span>•</span>
                     <span>{ad.view_count || 0} {t('views')}</span>
                   </div>

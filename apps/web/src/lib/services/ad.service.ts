@@ -66,6 +66,7 @@ export function transformAdForList(ad: any) {
     stickyUntil: ad.sticky_until,
     createdAt: ad.created_at,
     updatedAt: ad.updated_at,
+    publishedAt: ad.published_at || ad.reviewed_at || ad.created_at,
     category: ad.categories
       ? {
           id: ad.categories.id,
@@ -162,7 +163,7 @@ function buildOrderBy(sort: string = 'newest', applyPromotionPriority = false) {
         ? { price: 'desc' as const }
         : sort === 'popular'
           ? { view_count: 'desc' as const }
-          : { reviewed_at: { sort: 'desc' as const, nulls: 'last' as const } };
+          : { published_at: { sort: 'desc' as const, nulls: 'last' as const } };
 
   // Pin promotions on filtered browse/search listings only — urgent > sticky,
   // then the chosen sort within each group (pinned even under a price sort).
@@ -220,6 +221,8 @@ export async function listAds(filters: AdFilters) {
         sticky_until: true,
         created_at: true,
         updated_at: true,
+        reviewed_at: true,
+        published_at: true,
         categories: {
           select: { id: true, name: true, slug: true, icon: true },
         },
@@ -339,9 +342,10 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
       slug,
       custom_fields: customFields,
       status: canDirectPublish ? 'approved' : 'pending',
-      // Listings sort by reviewed_at (approval time) — stamp publish time on
-      // direct publish or the ad sinks to the bottom of every feed (NULLS LAST).
+      // Listings sort by published_at — stamp publish time on direct publish
+      // or the ad sinks to the bottom of every feed (NULLS LAST).
       reviewed_at: canDirectPublish ? new Date() : null,
+      published_at: canDirectPublish ? new Date() : null,
       expires_at: input.expiresAt ?? null,
     },
   });

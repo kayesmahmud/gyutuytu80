@@ -191,6 +191,14 @@ router.put(
 
     const adId = parseInt(id);
 
+    const existing = await prisma.ads.findUnique({
+      where: { id: adId },
+      select: { published_at: true },
+    });
+    if (!existing) {
+      throw new NotFoundError('Ad not found');
+    }
+
     const ad = await prisma.ads.update({
       where: { id: adId },
       data: {
@@ -198,6 +206,11 @@ router.put(
         status_reason: status === 'rejected' ? rejection_reason : null,
         reviewed_at: new Date(),
         reviewed_by: req.user!.userId,
+        // First approval stamps the go-live time; re-approvals (after owner
+        // edits) keep it so the ad doesn't jump back to the top of the feeds.
+        ...(status === 'approved' && !existing.published_at
+          ? { published_at: new Date() }
+          : {}),
       },
     });
 
@@ -389,6 +402,13 @@ router.post(
       },
     });
 
+    // An ad suspended before it ever went live has no publish time yet —
+    // stamp it now or it sorts to the bottom of every feed (NULLS LAST).
+    await prisma.ads.updateMany({
+      where: { id: adId, published_at: null },
+      data: { published_at: new Date() },
+    });
+
     await logReviewHistory(
       adId,
       'unsuspended',
@@ -425,7 +445,7 @@ router.post(
 
     const existingAd = await prisma.ads.findUnique({
       where: { id: adId },
-      select: { id: true, title: true, deleted_at: true, status: true },
+      select: { id: true, title: true, deleted_at: true, status: true, published_at: true },
     });
 
     if (!existingAd) {
@@ -447,6 +467,9 @@ router.post(
           status: 'approved',
           reviewed_at: new Date(),
           reviewed_by: req.user!.userId,
+          // Restoring a previously live ad keeps its feed position; an ad
+          // deleted while never approved goes live fresh.
+          ...(existingAd.published_at ? {} : { published_at: new Date() }),
         },
       });
 

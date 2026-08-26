@@ -87,7 +87,7 @@ router.get(
             take: 1,
           },
         },
-        orderBy: { reviewed_at: { sort: 'desc', nulls: 'last' } }, // Sort by approval time, nulls last
+        orderBy: { published_at: { sort: 'desc', nulls: 'last' } }, // Sort by first-publish time, nulls last
         take: limitNum,
         skip: offsetNum,
       }),
@@ -107,9 +107,10 @@ router.get(
       business_verification_status: ad.users_ads_user_idTousers?.business_verification_status,
       individual_verified: ad.users_ads_user_idTousers?.individual_verified,
       primary_image: ad.ad_images[0]?.filename,
-      // publishedAt = when editor approved (use this for "time ago" display)
-      publishedAt: ad.reviewed_at || ad.created_at,
-      reviewedAt: ad.reviewed_at,
+      // publishedAt = first time the ad went live (use for "time ago" display);
+      // re-approvals after owner edits don't move it
+      publishedAt: ad.published_at || ad.reviewed_at || ad.created_at,
+      reviewedAt: ad.published_at || ad.reviewed_at,
       };
     });
 

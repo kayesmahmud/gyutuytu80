@@ -186,7 +186,7 @@ router.get(
           // Sticky), then newest-approved. Featured is homepage-only, not pinned.
           { is_urgent: 'desc' },
           { is_sticky: 'desc' },
-          { reviewed_at: { sort: 'desc', nulls: 'last' } },
+          { published_at: { sort: 'desc', nulls: 'last' } },
         ],
         take: limitNum,
         skip: offsetNum,
@@ -249,6 +249,10 @@ router.get(
             location_name: ad.locations?.name,
             location_name_ne: ad.locations?.name_ne,
             primary_image: ad.ad_images[0]?.filename,
+            // Same display-time contract as /api/ads and /api/search: the
+            // stable first-publish time, not the last moderation stamp.
+            publishedAt: ad.published_at || ad.reviewed_at || ad.created_at,
+            reviewedAt: ad.published_at || ad.reviewed_at,
           };
         }),
         pagination: {

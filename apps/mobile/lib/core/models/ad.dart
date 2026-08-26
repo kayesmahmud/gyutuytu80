@@ -339,6 +339,7 @@ class AdWithDetails extends Ad {
     required super.isNegotiable,
     required super.createdAt,
     required super.updatedAt,
+    super.reviewedAt,
     super.isFeatured,
     super.isUrgent,
     super.isSticky,
@@ -391,6 +392,9 @@ class AdWithDetails extends Ad {
       isNegotiable: ad.isNegotiable,
       createdAt: ad.createdAt,
       updatedAt: ad.updatedAt,
+      // Keep the API's display time (reviewedAt = stable publish time) —
+      // dropping it made publishedAt degrade to createdAt on every screen.
+      reviewedAt: ad.reviewedAt,
       isFeatured: ad.isFeatured,
       isUrgent: ad.isUrgent,
       isSticky: ad.isSticky,
