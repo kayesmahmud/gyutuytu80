@@ -435,7 +435,7 @@ export async function POST(request: NextRequest) {
           where: {
             user_id: userId,
             id: { not: existingRequest.id },
-            status: { in: ['rejected', 'pending_payment'] },
+            status: 'rejected',
           },
         }),
       ]);

@@ -1,5 +1,6 @@
 'use client';
 
+import { RejectTemplatePicker } from '../../components/RejectTemplatePicker';
 import type { BusinessVerification } from './types';
 
 interface RejectModalProps {
@@ -28,6 +29,7 @@ export function RejectModal({
         <p className="text-gray-600 mb-4">
           You are about to reject: <strong>{verification.businessName}</strong>
         </p>
+        <RejectTemplatePicker currentText={rejectReason} onPick={setRejectReason} />
         <textarea
           value={rejectReason}
           onChange={(e) => setRejectReason(e.target.value)}
