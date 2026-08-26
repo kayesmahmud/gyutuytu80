@@ -84,6 +84,8 @@ RUN apk add --no-cache vips
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/
+# AI moderation policy library (.md files live outside src/, see lib/ai/policies.ts)
+COPY --from=builder /app/apps/api/policies ./apps/api/policies
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 COPY --from=builder /app/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
 COPY --from=builder /app/packages/types/dist ./packages/types/dist

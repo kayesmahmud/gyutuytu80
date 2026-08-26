@@ -37,11 +37,18 @@ export type AiDraftResult = {
   priceEstimate: number | null;
   sellable: boolean;
   /** Why the photos can't make a listing — only set when sellable is false */
-  unsellableReason: 'selfie' | 'screenshot' | 'unclear' | 'explicit' | 'other' | null;
+  unsellableReason: 'selfie' | 'screenshot' | 'unclear' | 'explicit' | 'prohibited' | 'other' | null;
   confidence: number;
 };
 
-const UNSELLABLE_REASONS = new Set(['selfie', 'screenshot', 'unclear', 'explicit', 'other']);
+const UNSELLABLE_REASONS = new Set([
+  'selfie',
+  'screenshot',
+  'unclear',
+  'explicit',
+  'prohibited',
+  'other',
+]);
 
 // The static prompt half — keep byte-identical across calls (DeepSeek context
 // caching keys on the request prefix; the category tree below it is cached too).
@@ -66,6 +73,11 @@ From the seller's photos, produce a JSON draft:
   real photo), "unclear" (too blurry/dark/cropped to recognize the item),
   "explicit" (real nudity — an exposed penis, genitals or nipples — a sexual
   act, or a sex toy / adult product: Thulo Bazaar does not sell these),
+  "prohibited" (the item is banned on Thulo Bazaar: firearms and other weapons,
+  ammunition, explosives; illegal drugs or drug paraphernalia; tobacco and
+  nicotine products such as cigarettes and vapes; protected wildlife parts;
+  government documents or IDs — use it only when confident the item itself is
+  banned; kitchen knives and traditional khukuri sold as tools are NOT weapons),
   "other"
   IMPORTANT: a person wearing, holding, or modeling an item for sale (clothes,
   jewelry, shoes, a watch) IS a valid product photo — judge by whether an item is

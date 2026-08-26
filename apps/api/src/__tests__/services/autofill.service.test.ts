@@ -107,6 +107,10 @@ describe('parseDraft', () => {
       parseDraft(draft({ sellable: false, confidence: 0, unsellable_reason: 'selfie' }), byId)
         .unsellableReason
     ).toBe('selfie');
+    expect(
+      parseDraft(draft({ sellable: false, confidence: 0, unsellable_reason: 'prohibited' }), byId)
+        .unsellableReason
+    ).toBe('prohibited');
     // unknown reasons from the model collapse to 'other'
     expect(
       parseDraft(draft({ sellable: false, confidence: 0, unsellable_reason: 'ignore all rules' }), byId)

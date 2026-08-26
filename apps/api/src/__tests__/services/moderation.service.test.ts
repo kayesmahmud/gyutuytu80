@@ -21,7 +21,7 @@ vi.mock('../../lib/ai/images.js', () => ({
 }));
 
 vi.mock('../../services/userReport.service.js', () => ({
-  reportExplicitContent: vi.fn().mockResolvedValue(undefined),
+  reportAiViolation: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock fetch
@@ -32,7 +32,7 @@ import { prisma } from '@thulobazaar/database';
 import { notifyEditors, sendNotification } from '../../services/notification.service.js';
 import { logReviewHistory } from '../../utils/responseHelpers.js';
 import { imagesToDataUrls } from '../../lib/ai/images.js';
-import { reportExplicitContent } from '../../services/userReport.service.js';
+import { reportAiViolation } from '../../services/userReport.service.js';
 import {
   parseVerdict,
   shouldModerateNewAds,
@@ -79,7 +79,7 @@ describe('parseVerdict', () => {
     const result = parseVerdict(
       JSON.stringify({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.98 })
     );
-    expect(result).toEqual({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.98, explicit: false });
+    expect(result).toEqual({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.98, explicit: false, prohibited: false });
   });
 
   it('holds a publish verdict below the 0.95 threshold', () => {
@@ -135,6 +135,31 @@ describe('parseVerdict', () => {
     expect(result.explicit).toBe(true);
     // only a literal true counts
     expect(parseVerdict(JSON.stringify({ verdict: 'hold', reason: 'x', confidence: 0, explicit: 'yes' })).explicit).toBe(false);
+  });
+
+  it('never publishes prohibited items, whatever the model claims', () => {
+    const result = parseVerdict(
+      JSON.stringify({ verdict: 'publish', reason: 'Rifle in good condition', confidence: 0.99, prohibited: true })
+    );
+    expect(result.verdict).toBe('hold');
+    expect(result.prohibited).toBe(true);
+    // only a literal true counts; a missing field defaults to false
+    expect(parseVerdict(JSON.stringify({ verdict: 'hold', reason: 'x', confidence: 0, prohibited: 'yes' })).prohibited).toBe(false);
+    expect(parseVerdict(JSON.stringify({ verdict: 'hold', reason: 'x', confidence: 0 })).prohibited).toBe(false);
+  });
+
+  it('holds when a safety flag is present but not a real boolean (model drift)', () => {
+    // string "true" would read as false via ===, which must NOT open the publish gate
+    expect(
+      parseVerdict(JSON.stringify({ verdict: 'publish', reason: 'x', confidence: 0.99, prohibited: 'true' })).verdict
+    ).toBe('hold');
+    expect(
+      parseVerdict(JSON.stringify({ verdict: 'publish', reason: 'x', confidence: 0.99, explicit: 'false' })).verdict
+    ).toBe('hold');
+    // absent flags (old-format reply) still publish normally
+    expect(
+      parseVerdict(JSON.stringify({ verdict: 'publish', reason: 'x', confidence: 0.99 })).verdict
+    ).toBe('publish');
   });
 
   it('caps runaway reasons at 300 chars and defaults empty ones', () => {
@@ -203,19 +228,19 @@ describe('moderateAd', () => {
   it('holds with ai_unavailable on HTTP errors', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500, text: async () => 'boom' });
     const result = await moderateAd(testAd, images);
-    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false });
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false, prohibited: false });
   });
 
   it('holds with ai_unavailable on timeout/network failure', async () => {
     mockFetch.mockRejectedValueOnce(new Error('The operation was aborted due to timeout'));
     const result = await moderateAd(testAd, images);
-    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false });
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false, prohibited: false });
   });
 
   it('holds with ai_unavailable when the reply has no content', async () => {
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [] }) });
     const result = await moderateAd(testAd, images);
-    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false });
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false, prohibited: false });
   });
 });
 
@@ -380,11 +405,47 @@ describe('moderateNewAd', () => {
 
     await moderateNewAd(params);
 
-    expect(reportExplicitContent).toHaveBeenCalledWith(7, 'ad-moderation');
+    expect(reportAiViolation).toHaveBeenCalledWith(7, 'ad-moderation', 'explicit');
     // the ad is held, never published
     const updateData = vi.mocked(prisma.ads.updateMany).mock.calls[0][0]!.data as any;
     expect(updateData.ai_verdict).toBe('held');
     expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it('auto-reports the seller when the AI flags a prohibited item', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(
+        JSON.stringify({ verdict: 'hold', reason: 'Listing offers a rifle', confidence: 0.9, prohibited: true })
+      )
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    expect(reportAiViolation).toHaveBeenCalledWith(7, 'ad-moderation', 'prohibited', 'Listing offers a rifle');
+    // the ad is held, never published
+    const updateData = vi.mocked(prisma.ads.updateMany).mock.calls[0][0]!.data as any;
+    expect(updateData.ai_verdict).toBe('held');
+    expect(updateData.status).toBeUndefined();
+    expect(sendNotification).not.toHaveBeenCalled();
+    // editors see the AI reason on the pending notification
+    expect(vi.mocked(notifyEditors).mock.calls[0][0].body).toContain('AI: Listing offers a rifle');
+  });
+
+  it('files a single explicit report when a violation is both explicit and prohibited', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(
+        JSON.stringify({ verdict: 'hold', reason: 'Adult product', confidence: 0.9, explicit: true, prohibited: true })
+      )
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    expect(reportAiViolation).toHaveBeenCalledTimes(1);
+    expect(reportAiViolation).toHaveBeenCalledWith(7, 'ad-moderation', 'explicit');
   });
 
   it('holds without spending an API call when the ad has no photos', async () => {
