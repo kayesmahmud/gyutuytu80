@@ -349,6 +349,69 @@ describe('moderateNewAd', () => {
     });
   });
 
+  it('edit re-publish preserves the original first-live published_at (feed sort is immutable)', async () => {
+    enableModeration();
+    const firstLive = new Date('2026-08-01T00:00:00.000Z');
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'Still genuine', confidence: 0.99 }))
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd({ ...params, edit: { firstPublishedAt: firstLive } });
+
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'approved', published_at: firstLive }),
+      })
+    );
+    // Wording flips to the re-publish variants
+    expect(vi.mocked(notifyEditors).mock.calls[0][0]).toMatchObject({
+      type: 'ad_live_posted',
+      title: 'Edited ad re-published by AI',
+    });
+    expect(vi.mocked(sendNotification).mock.calls[0][0]).toMatchObject({
+      body: 'Your updated ad "iPhone 13 Pro 256GB" is live again!',
+    });
+  });
+
+  it('edit re-publish of a never-live ad stamps published_at now', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'Genuine', confidence: 0.99 }))
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd({ ...params, edit: { firstPublishedAt: null } });
+
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ published_at: expect.any(Date) }),
+      })
+    );
+  });
+
+  it('edit hold stamps AI fields but never pings editors (the edit route owns that)', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(
+        JSON.stringify({ verdict: 'hold', reason: 'Photos changed to stock images', reason_code: 'stock_photo', confidence: 0.4 })
+      )
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd({ ...params, edit: { firstPublishedAt: new Date() } });
+
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          ai_verdict: 'held',
+          ai_reason_code: 'stock_photo',
+        }),
+      })
+    );
+    expect(notifyEditors).not.toHaveBeenCalled();
+  });
+
   it('holds a doubtful ad: stamps AI fields only and notifies editors with the reason', async () => {
     enableModeration();
     mockFetch.mockResolvedValueOnce(

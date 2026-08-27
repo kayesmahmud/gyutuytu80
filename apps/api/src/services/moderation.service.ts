@@ -255,6 +255,14 @@ export async function moderateNewAd(params: {
    * must never publish content it did not review.
    */
   adUpdatedAt: Date | null;
+  /**
+   * Present when re-checking an EDITED ad (owner edits go back through the
+   * same screening as new ads — a changed photo/title must never keep an old
+   * approval). Preserves the original first-live timestamp on re-publish,
+   * switches notification wording, and suppresses the hold-path editor ping
+   * (the edit route already notified editors).
+   */
+  edit?: { firstPublishedAt: Date | null };
 }): Promise<void> {
   const { adId, title, ownerUserId } = params;
   let published = false;
@@ -307,9 +315,11 @@ export async function moderateNewAd(params: {
           const now = new Date();
           if (decision.verdict === 'publish') {
             // Promote with the same fields the verified-business direct-publish
-            // path sets. This ad was created pending moments ago, so this is its
-            // first go-live and stamping published_at here is correct.
-            // updated_at must still equal the creation snapshot: publish ONLY
+            // path sets. For a brand-new ad this is its first go-live, so
+            // stamping published_at = now is correct; for a re-checked EDIT the
+            // original first-live timestamp is immutable and must be preserved
+            // (published_at drives all public feed sorting).
+            // updated_at must still equal the post-edit snapshot: publish ONLY
             // the exact content the model reviewed (TOCTOU guard against
             // owner edits landing during the check).
             const updated = await prisma.ads.updateMany({
@@ -322,7 +332,7 @@ export async function moderateNewAd(params: {
               data: {
                 status: 'approved',
                 reviewed_at: now,
-                published_at: now,
+                published_at: params.edit ? (params.edit.firstPublishedAt ?? now) : now,
                 ai_verdict: 'published',
                 ai_reason: decision.reason,
                 ai_checked_at: now,
@@ -370,6 +380,7 @@ export async function moderateNewAd(params: {
   }
 
   // Notifications run last so no failure above can silently eat them.
+  const isEdit = params.edit !== undefined;
   if (published && decision) {
     logReviewHistory(
       adId,
@@ -377,13 +388,17 @@ export async function moderateNewAd(params: {
       ownerUserId,
       'ai',
       decision.reason,
-      'Published automatically after AI moderation check'
+      isEdit
+        ? 'Re-published automatically after AI re-check of an owner edit'
+        : 'Published automatically after AI moderation check'
     ).catch((err) => console.error('Review history error:', err));
     // Editors keep visibility over auto-published ads, same as business direct-publish
     notifyEditors({
       type: 'ad_live_posted',
-      title: 'Ad auto-published by AI',
-      body: `"${title}" passed the AI check and is now live.`,
+      title: isEdit ? 'Edited ad re-published by AI' : 'Ad auto-published by AI',
+      body: isEdit
+        ? `"${title}" passed the AI re-check after an owner edit and is live again.`
+        : `"${title}" passed the AI check and is now live.`,
       data: {
         route: `/editor/ad-management?status=approved&search=${encodeURIComponent(title)}`,
         adId: String(adId),
@@ -395,11 +410,13 @@ export async function moderateNewAd(params: {
       recipientUserIds: [ownerUserId],
       type: 'ad_approved',
       title: 'Ad Approved!',
-      body: `Your ad "${title}" is now live!`,
+      body: isEdit
+        ? `Your updated ad "${title}" is live again!`
+        : `Your ad "${title}" is now live!`,
       data: { route: '/ad', adId: String(adId) },
       referenceId: adId,
     }).catch((err) => console.error('AI-publish owner notification error:', err));
-  } else if (!raced) {
+  } else if (!raced && !isEdit) {
     const aiNote =
       decision && decision.reason !== AI_UNAVAILABLE_REASON ? ` AI: ${decision.reason}` : '';
     notifyEditors({

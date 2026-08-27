@@ -1113,6 +1113,7 @@ export async function updateAd(
       // longer exists — clear it (keep ai_checked_at: it's the budget counter).
       ai_verdict: options?.directPublish ? 'skipped' : null,
       ai_reason: null,
+      ai_reason_code: null,
       updated_at: new Date(),
     },
   });

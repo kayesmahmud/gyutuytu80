@@ -640,6 +640,39 @@ router.put(
       data: ad,
       resultingStatus: newStatus,
     });
+
+    if (newStatus === 'pending' && !directPublish) {
+      // Edited ads go through the SAME AI screening as new ads (owner rule:
+      // a changed photo/title must never coast on an old approval). Runs
+      // post-response and fire-and-forget, exactly like the create path.
+      (async () => {
+        const [category, images] = await Promise.all([
+          ad.category_id
+            ? prisma.categories.findUnique({
+                where: { id: ad.category_id },
+                select: { name: true },
+              })
+            : Promise.resolve(null),
+          prisma.ad_images.findMany({
+            where: { ad_id: ad.id },
+            orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
+            select: { filename: true },
+          }),
+        ]);
+        await moderateNewAd({
+          adId: ad.id,
+          title: ad.title,
+          description: ad.description,
+          price: ad.price ? Number(ad.price) : null,
+          categoryName: category?.name ?? null,
+          categoryId: ad.category_id ?? null,
+          ownerUserId: userId,
+          imagePaths: images.map((img) => `uploads/ads/${img.filename}`),
+          adUpdatedAt: ad.updated_at,
+          edit: { firstPublishedAt: existingAd.published_at ?? null },
+        });
+      })().catch((err) => console.error('AI edit re-moderation error:', err));
+    }
   })
 );
 
