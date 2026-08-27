@@ -8,6 +8,7 @@ import { getFirebaseMessaging } from './firebase.js';
 import type { NotificationType } from '@thulobazaar/types';
 import { transformDbNotificationToApi } from '@thulobazaar/types';
 import { getIO } from '../socket/index.js';
+import { isEngagementType, hasRecentEngagementPush } from './notificationPolicy.js';
 
 interface SendNotificationParams {
   recipientUserIds: number[];
@@ -19,6 +20,15 @@ interface SendNotificationParams {
   saveToDb?: boolean;   // default true
   sendPush?: boolean;   // default true
   referenceId?: number; // for dedup logging (adId, ticketId, etc.)
+  /**
+   * Write one log row per id instead of a single row for `referenceId`.
+   *
+   * For notifications that collapse several items into one message: the user
+   * sees one push, but each underlying item still needs its own cooldown
+   * record so it is not re-included in tomorrow's batch. Overrides
+   * `referenceId` when provided.
+   */
+  logReferenceIds?: number[];
 }
 
 export async function sendNotification({
@@ -31,11 +41,18 @@ export async function sendNotification({
   saveToDb = true,
   sendPush = true,
   referenceId,
+  logReferenceIds,
 }: SendNotificationParams): Promise<void> {
   if (recipientUserIds.length === 0) return;
 
+  const capped = sendPush && isEngagementType(type);
+
   for (const userId of recipientUserIds) {
     try {
+      // Engagement types share one budget per recipient. When it is spent the
+      // notification still reaches the in-app centre — it just does not buzz
+      // the phone, which is the part users were complaining about.
+      const pushAllowed = capped ? !(await hasRecentEngagementPush(userId)) : sendPush;
       // 1. Save to DB (notification center)
       let notificationId: number | undefined;
       if (saveToDb) {
@@ -65,17 +82,24 @@ export async function sendNotification({
       }
 
       // 3. Send FCM push
-      if (sendPush) {
-        await sendPushToUser(userId, title, body, { type, ...data });
-      }
+      const pushed = pushAllowed
+        ? await sendPushToUser(userId, title, body, { type, ...data })
+        : false;
 
-      // 4. Log for dedup/rate limiting
-      await prisma.notification_log.create({
-        data: {
+      // 4. Log for dedup/rate limiting. `pushed` reflects whether a device was
+      // actually reached, so users with no registered token never burn their
+      // own engagement window on a push that went nowhere.
+      const referenceIds = logReferenceIds?.length
+        ? logReferenceIds
+        : [referenceId ?? null];
+
+      await prisma.notification_log.createMany({
+        data: referenceIds.map((ref) => ({
           user_id: userId,
           notification_type: type,
-          reference_id: referenceId ?? null,
-        },
+          reference_id: ref,
+          pushed,
+        })),
       }).catch((err) => console.error('Notification log error:', err));
     } catch (error) {
       console.error(`❌ Notification error for user ${userId}:`, error);
@@ -120,6 +144,25 @@ export async function canSendNotification(
 }
 
 /**
+ * How many times this notification has EVER been sent to the user for a given
+ * reference. Cooldowns space repeats out; this is for rules that must stop
+ * repeating altogether after N attempts.
+ */
+export async function countNotificationsSent(
+  userId: number,
+  type: string,
+  referenceId: number
+): Promise<number> {
+  return prisma.notification_log.count({
+    where: {
+      user_id: userId,
+      notification_type: type,
+      reference_id: referenceId,
+    },
+  });
+}
+
+/**
  * Convenience: send an operational alert to all editors (push + DB + socket).
  * Resolves editor recipient IDs and, when cooldownMinutes is set, drops any
  * editor who already got the same (type, referenceId) within the window so a
@@ -152,23 +195,26 @@ export async function notifyEditors(params: {
 }
 
 /**
- * Send FCM push to a single user's devices
+ * Send FCM push to a single user's devices.
+ * Returns true only when at least one device was actually reached — the
+ * engagement frequency cap keys off this, so "no token" and "every token
+ * stale" must not count as a delivered push.
  */
 async function sendPushToUser(
   userId: number,
   title: string,
   body: string,
   data: Record<string, string>
-): Promise<void> {
+): Promise<boolean> {
   const messaging = getFirebaseMessaging();
-  if (!messaging) return;
+  if (!messaging) return false;
 
   const tokenRows = await prisma.fcm_tokens.findMany({
     where: { user_id: userId },
     select: { id: true, token: true },
   });
 
-  if (tokenRows.length === 0) return;
+  if (tokenRows.length === 0) return false;
 
   const tokens = tokenRows.map((r) => r.token);
 
@@ -216,7 +262,9 @@ async function sendPushToUser(
     }
 
     console.log(`📱 Push [${data.type}]: ${response.successCount} success, ${response.failureCount} failed (user ${userId})`);
+    return response.successCount > 0;
   } catch (error) {
     console.error(`❌ FCM error for user ${userId}:`, error);
+    return false;
   }
 }
