@@ -727,6 +727,7 @@
     "emptyBody": "Ask anything about buying, selling, ads, verification or payments.",
     "inputPlaceholder": "Type your message...",
     "aiNotice": "Our AI assistant answers first and passes you to the team when needed.",
-    "profanityWarning": "Please use respectful language."
+    "profanityWarning": "Please use respectful language.",
+    "assistantTyping": "Assistant is typing"
   }
 }

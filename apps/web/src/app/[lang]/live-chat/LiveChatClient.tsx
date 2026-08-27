@@ -38,31 +38,65 @@ export default function LiveChatClient() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [warning, setWarning] = useState<string | null>(null);
+  // Shown between the user's message and the assistant's reply — the AI takes
+  // several seconds to think, and without this the screen looks frozen.
+  const [assistantTyping, setAssistantTyping] = useState(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  const stopTypingIndicator = useCallback(() => {
+    setAssistantTyping(false);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Safety net: if no reply ever arrives (AI disabled, timeout, escalation
+  // handled by a human later), the dots must not hang around forever.
+  const startTypingIndicator = useCallback(() => {
+    setAssistantTyping(true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => setAssistantTyping(false), 30000);
+  }, []);
+
+  useEffect(() => () => {
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
   }, []);
 
-  // Socket delivers staff/AI replies live. Handlers are memoised because
-  // useSupportSocket rebuilds the connection whenever one changes identity.
+  // Read the live thread id without making it a socket-handler dependency
+  // (useSupportSocket rebuilds the connection when a handler changes identity).
+  const ticketIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    ticketIdRef.current = ticketId;
+  }, [ticketId]);
+
+  // Socket delivers staff/AI replies live.
   const handleNewMessage = useCallback(
     (data: { ticketId: number; message: any }) => {
-      setTicketId((current) => {
-        if (current !== null && data.ticketId !== current) return current;
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === data.message.id)) return prev;
-          const currentUserId = Number((session?.user as any)?.id);
-          return [
-            ...prev,
-            { ...data.message, isOwnMessage: data.message.senderId === currentUserId },
-          ];
-        });
-        scrollToBottom();
-        return current;
-      });
+      const current = ticketIdRef.current;
+      if (current !== null && data.ticketId !== current) return;
+
+      const incoming = data.message;
+      // Keyed on who sent it, not on id arithmetic: the socket also echoes the
+      // user's own message back, and a staff/assistant reply is the only thing
+      // that should stop the typing dots.
+      if (incoming?.sender?.isStaff) stopTypingIndicator();
+
+      const currentUserId = Number((session?.user as any)?.id);
+      const isOwn = incoming.senderId === currentUserId;
+      setMessages((prev) =>
+        prev.some((m) => m.id === incoming.id)
+          ? prev
+          : [...prev, { ...incoming, isOwnMessage: isOwn }]
+      );
+      scrollToBottom();
     },
-    [session?.user, scrollToBottom]
+    [session?.user, scrollToBottom, stopTypingIndicator]
   );
 
   const { isConnected, joinTicket, leaveTicket } = useSupportSocket({
@@ -132,6 +166,7 @@ export default function LiveChatClient() {
             ? prev
             : [...prev, { ...data.data.message, isOwnMessage: true }]
         );
+        startTypingIndicator();
         scrollToBottom();
       }
     } catch (err) {
@@ -230,6 +265,22 @@ export default function LiveChatClient() {
                 </div>
               );
             })
+          )}
+          {assistantTyping && (
+            <div className="flex justify-start mt-4" aria-live="polite">
+              <div className="bg-white border border-gray-100 rounded-r-2xl rounded-tl-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                <span className="sr-only">{t('assistantTyping')}</span>
+                <div className="flex items-center gap-1">
+                  {[0, 150, 300].map((delay) => (
+                    <span
+                      key={delay}
+                      className="w-2 h-2 bg-rose-400 rounded-full animate-bounce"
+                      style={{ animationDelay: `${delay}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
           <div ref={bottomRef} />
         </div>

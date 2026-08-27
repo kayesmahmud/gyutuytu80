@@ -1151,6 +1151,7 @@
     "profanityWarning": "Please use respectful language. Offensive words are not allowed on Thulo Bazaar.",
     "signInRequired": "Please sign in",
     "signInMessage": "Sign in to start chatting with us.",
-    "signIn": "Sign In"
+    "signIn": "Sign In",
+    "assistantTyping": "Assistant is typing"
   }
 }

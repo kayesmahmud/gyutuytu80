@@ -35,6 +35,10 @@ class _LiveChatScreenState extends State<LiveChatScreen>
   bool _isPolling = false;
   String? _error;
   Timer? _pollTimer;
+  // Shown between the user's message and the assistant's reply: the AI needs
+  // several seconds, and without it the screen looks stuck.
+  bool _assistantTyping = false;
+  Timer? _typingTimeout;
 
   @override
   void initState() {
@@ -48,6 +52,7 @@ class _LiveChatScreenState extends State<LiveChatScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _pollTimer?.cancel();
+    _typingTimeout?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -61,6 +66,20 @@ class _LiveChatScreenState extends State<LiveChatScreen>
     } else {
       _pollTimer?.cancel();
     }
+  }
+
+  void _startTyping() {
+    _typingTimeout?.cancel();
+    setState(() => _assistantTyping = true);
+    // Safety net so the dots can never hang around when no reply arrives.
+    _typingTimeout = Timer(const Duration(seconds: 30), () {
+      if (mounted) setState(() => _assistantTyping = false);
+    });
+  }
+
+  void _stopTyping() {
+    _typingTimeout?.cancel();
+    if (_assistantTyping) setState(() => _assistantTyping = false);
   }
 
   void _startPolling() {
@@ -95,7 +114,9 @@ class _LiveChatScreenState extends State<LiveChatScreen>
       if (!mounted || !response.hasData) return;
       final fresh = response.data!.messages;
       if (fresh.length == _messages.length) return;
+      final gotReply = fresh.isNotEmpty && !fresh.last.isOwnMessage;
       setState(() => _messages = fresh);
+      if (gotReply) _stopTyping();
       _scrollToBottom();
     } finally {
       _isPolling = false;
@@ -146,6 +167,7 @@ class _LiveChatScreenState extends State<LiveChatScreen>
       );
       return;
     }
+    _startTyping();
     _scrollToBottom();
   }
 
@@ -221,9 +243,10 @@ class _LiveChatScreenState extends State<LiveChatScreen>
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) =>
-                        _buildMessageBubble(_messages[index]),
+                    itemCount: _messages.length + (_assistantTyping ? 1 : 0),
+                    itemBuilder: (context, index) => index == _messages.length
+                        ? const _TypingBubble()
+                        : _buildMessageBubble(_messages[index]),
                   ),
                 ),
         ),
@@ -415,6 +438,80 @@ class _LiveChatScreenState extends State<LiveChatScreen>
               style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF9CA3AF)),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Three softly pulsing dots in an incoming-message bubble, shown while the
+/// assistant composes a reply.
+class _TypingBubble extends StatefulWidget {
+  const _TypingBubble();
+
+  @override
+  State<_TypingBubble> createState() => _TypingBubbleState();
+}
+
+class _TypingBubbleState extends State<_TypingBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Semantics(
+        label: 'liveChat.assistantTyping'.tr(),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+              bottomLeft: Radius.circular(4),
+            ),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (i) {
+                  // Stagger each dot a third of the cycle apart.
+                  final t = (_controller.value + i / 3) % 1.0;
+                  final opacity = 0.35 + 0.65 * (1 - (t - 0.5).abs() * 2);
+                  return Padding(
+                    padding: EdgeInsets.only(right: i == 2 ? 0 : 5),
+                    child: Opacity(
+                      opacity: opacity.clamp(0.0, 1.0),
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE11D48),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              );
+            },
+          ),
         ),
       ),
     );
