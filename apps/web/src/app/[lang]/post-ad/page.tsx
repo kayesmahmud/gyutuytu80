@@ -13,8 +13,7 @@ import {
   DraftsList,
   PhoneVerificationBanner,
   AdPostedModal,
-  CategoryTileGrid,
-  SubcategoryTileGrid,
+  TilePickerField,
   AiConfirmModal,
 } from './components';
 
@@ -337,10 +336,11 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                   {t('category')} *{aiBadge('category')}
                 </h2>
 
-                <CategoryTileGrid
-                  categories={categories}
+                <TilePickerField
+                  items={categories}
                   selectedId={formData.categoryId}
                   onSelect={handleCategoryChange}
+                  placeholder={t('selectCategory')}
                 />
 
                 {formData.categoryId && subcategories.length > 0 && (
@@ -348,13 +348,15 @@ export default function PostAdPage({ params }: PostAdPageProps) {
                     <label className="block mb-2 font-medium text-gray-700">
                       {t('selectSubcategory')} *
                     </label>
-                    <SubcategoryTileGrid
-                      subcategories={subcategories}
+                    <TilePickerField
+                      items={subcategories}
                       selectedId={formData.subcategoryId}
                       onSelect={(subcategoryId) => {
                         clearAiMark('category');
                         setFormData({ ...formData, subcategoryId });
                       }}
+                      placeholder={t('selectSubcategory')}
+                      iconSize={34}
                     />
                   </div>
                 )}

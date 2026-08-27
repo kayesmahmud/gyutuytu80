@@ -1793,7 +1793,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       labelOf: (sub) => sub.localizedName(locale),
       isSelected: (sub) => _selectedSubCategory?.id == sub.id,
       // A touch smaller than the parent grid, so the two read as a hierarchy.
-      iconSize: 34,
+      iconSize: 40,
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -1815,7 +1815,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     required String? Function(T) iconOf,
     required String Function(T) labelOf,
     required bool Function(T) isSelected,
-    double iconSize = 38,
+    double iconSize = 44,
   }) {
     return showModalBottomSheet<T>(
       context: context,
@@ -1844,10 +1844,14 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                     // 4-up so all 16 categories fit without scrolling.
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
+                          crossAxisCount: 3,
                           mainAxisSpacing: 8,
                           crossAxisSpacing: 8,
-                          childAspectRatio: 0.82,
+                          // Fixed height decoupled from screen width so the
+                          // 2-line labels never overflow on narrow phones.
+                          // 3-up so long names like "Women's Fashion & Beauty"
+                          // fit in 2 lines untruncated (owner, 2026-08-27).
+                          mainAxisExtent: 104,
                         ),
                     itemCount: items.length,
                     itemBuilder: (ctx2, i) {
@@ -1885,8 +1889,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w500,
+                                  height: 1.25,
                                 ),
                               ),
                             ],
