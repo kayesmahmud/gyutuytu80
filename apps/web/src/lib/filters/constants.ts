@@ -6,11 +6,12 @@
 
 import type { FilterOption } from './types';
 
+// Labels are translation keys in the 'ads' namespace, like CONDITION_OPTIONS
 export const SORT_OPTIONS: FilterOption[] = [
-  { value: 'newest', label: 'Newest First', icon: '📅' },
-  { value: 'oldest', label: 'Oldest First', icon: '📅' },
-  { value: 'price_asc', label: 'Price: Low to High', icon: '💰' },
-  { value: 'price_desc', label: 'Price: High to Low', icon: '💰' },
+  { value: 'newest', label: 'newestFirst', icon: '📅' },
+  { value: 'oldest', label: 'oldestFirst', icon: '📅' },
+  { value: 'price_asc', label: 'priceLowToHigh', icon: '💰' },
+  { value: 'price_desc', label: 'priceHighToLow', icon: '💰' },
 ];
 
 export const CONDITION_OPTIONS: FilterOption[] = [

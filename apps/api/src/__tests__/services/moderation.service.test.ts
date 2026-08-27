@@ -528,7 +528,9 @@ describe('moderateNewAd', () => {
 
     expect(prisma.ads.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 42 },
+        // Hold stamps are TOCTOU-guarded like publish: never pin a verdict
+        // about old content onto an ad that changed mid-check
+        where: { id: 42, deleted_at: null, updated_at: createdAt },
         data: expect.objectContaining({ ai_verdict: 'held', ai_reason: 'Photo is a selfie' }),
       })
     );

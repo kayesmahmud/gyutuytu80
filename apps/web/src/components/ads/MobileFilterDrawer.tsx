@@ -478,7 +478,7 @@ export default function MobileFilterDrawer({
                     }`}
                   >
                     <span className="text-sm font-medium">
-                      {opt.icon ? `${opt.icon} ${opt.label}` : opt.label}
+                      {opt.icon ? `${opt.icon} ${t(opt.label)}` : t(opt.label)}
                     </span>
                   </button>
                 ))}

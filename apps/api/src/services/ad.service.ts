@@ -1147,12 +1147,18 @@ export async function updateAd(
   return { ad, newStatus };
 }
 
+/**
+ * Returns the ad's updated_at AFTER the image changes. Changing photos IS a
+ * content change, so it must bump the TOCTOU stamp the AI publish/unpublish
+ * guards compare against — otherwise a concurrent edit's unreviewed images
+ * could ride an older check's verdict.
+ */
 export async function updateAdImages(
   adId: number,
   existingImages: any[],
   imagesToKeep: string[],
   newFiles: Express.Multer.File[]
-) {
+): Promise<Date | null> {
   const normalizePath = (p: string) => p.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/+/, '');
   const normalizedKeepPaths = imagesToKeep.map(normalizePath);
 
@@ -1188,6 +1194,16 @@ export async function updateAdImages(
     await prisma.ad_images.createMany({ data: imageRecords });
     console.log(`✅ Added ${newFiles.length} new images for ad ${adId}`);
   }
+
+  if (imagesToDelete.length > 0 || newFiles.length > 0) {
+    const stamped = await prisma.ads.update({
+      where: { id: adId },
+      data: { updated_at: new Date() },
+      select: { updated_at: true },
+    });
+    return stamped.updated_at;
+  }
+  return null;
 }
 
 export async function deleteAd(adId: number, userId: number) {

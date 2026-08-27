@@ -114,6 +114,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   // AI autofill (Phase 2): every AI value is an editable suggestion; fail-open.
   bool _aiDraftLoading = false;
   bool _aiDraftRequested = false;
+  // A restored draft must show the full form even without typed title/desc.
+  bool _draftRestored = false;
   bool _aiConfirmed = false;
   bool _applyingAiDraft = false;
   // AI ran but couldn't fill (unsellable/off/error) — show the honest note
@@ -453,6 +455,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   }
 
   Future<void> _restoreDraft(AdDraft draft) async {
+    _draftRestored = true;
     _titleController.text = draft.title;
     _descriptionController.text = draft.description;
     _priceController.text = draft.price;
@@ -1025,10 +1028,18 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
             if (s.id == subId) sub = s;
           }
         }
-        _selectedCategory = parent;
-        _selectedSubCategory = sub;
-        _attributeValues.clear();
-        marks.add('category');
+        // When the AI picks the seller's CURRENT selection, keep everything —
+        // clearing would wipe attribute values (condition, brand, …) the
+        // seller already filled, for no category change at all.
+        final sameSelection =
+            _selectedCategory?.id == parent.id &&
+            _selectedSubCategory?.id == sub?.id;
+        if (!sameSelection) {
+          _selectedCategory = parent;
+          _selectedSubCategory = sub;
+          _attributeValues.clear();
+          marks.add('category');
+        }
         break;
       }
     }
@@ -1308,6 +1319,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       }
     } catch (e) {
       debugPrint("🔴 ${widget.isEditMode ? 'Update' : 'Post'} Ad Error: $e");
+      // Re-arm the pre-post checks: the seller will likely edit fields before
+      // retrying, and a stale confirmation would skip every warning and the
+      // server precheck on the retry.
+      _aiConfirmed = false;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1445,14 +1460,21 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   }
 
   /// Polls briefly after posting: did the AI publish the ad already?
-  /// Bounded at ~10s; anything unresolved counts as "still pending".
+  /// Uses the owner-only edit-context endpoint — the public get-ad endpoint
+  /// would increment the new ad's view count on every poll. Bounded at ~10s;
+  /// anything unresolved (including any error) counts as "still pending".
   Future<bool> _waitForInstantApproval(int adId) async {
-    for (var i = 0; i < 4; i++) {
-      await Future.delayed(const Duration(milliseconds: 2500));
-      final res = await _adClient.getAdById(adId);
-      final status = res.data?.status;
-      if (status == AdStatus.active) return true;
-      if (res.success && status != AdStatus.pending) return false;
+    try {
+      for (var i = 0; i < 4; i++) {
+        await Future.delayed(const Duration(milliseconds: 2500));
+        final res = await _adClient.getEditContext(adId);
+        final status = res.data?.status;
+        if (status == 'approved' || status == 'active') return true;
+        if (status != null && status != 'pending') return false;
+      }
+    } catch (_) {
+      // Advisory only — a polling failure must never surface after a
+      // successful post.
     }
     return false;
   }
@@ -1460,10 +1482,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   /// Awaits the approval poll, showing a spinner only if it is still running
   /// (the seller usually spends those seconds reading the success dialog).
   Future<bool> _awaitWithSpinner(Future<bool> future) async {
+    final safeFuture = future.catchError((_) => false);
     var completed = false;
     var value = false;
     unawaited(
-      future.then((v) {
+      safeFuture.then((v) {
         completed = true;
         value = v;
       }),
@@ -1471,14 +1494,23 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     // Give the then() a microtask to run for an already-finished future.
     await Future.delayed(Duration.zero);
     if (completed) return value;
-    if (!mounted) return future;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+    if (!mounted) return safeFuture;
+    // PopScope: the Android back button must not dismiss this spinner — if it
+    // did, the later pop would remove the SCREEN instead and corrupt the
+    // navigation stack when the poll resolves.
+    var dialogOpen = true;
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const PopScope(
+          canPop: false,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ).whenComplete(() => dialogOpen = false),
     );
-    value = await future;
-    if (mounted) Navigator.pop(context);
+    value = await safeFuture;
+    if (mounted && dialogOpen) Navigator.pop(context);
     return value;
   }
 
@@ -1608,7 +1640,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               children: [
                 IconButton(
                   icon: const Icon(LucideIcons.fileText, color: Colors.black87),
-                  tooltip: 'Drafts',
+                  tooltip: 'postAd.draftsTooltip'.tr(),
                   onPressed: () =>
                       setState(() => _showDraftsPanel = !_showDraftsPanel),
                 ),
@@ -1676,17 +1708,17 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
     if (_isSaving) {
       return _buildStatusRow(
         LucideIcons.arrowUpFromLine,
-        'Saving draft...',
+        'postAd.draftSaving'.tr(),
         Colors.grey[500]!,
       );
     }
     if (_lastSaved != null) {
       final diff = DateTime.now().difference(_lastSaved!);
       final label = diff.inSeconds < 10
-          ? 'Draft saved'
+          ? 'postAd.draftSaved'.tr()
           : diff.inMinutes < 1
-          ? 'Saved ${diff.inSeconds}s ago'
-          : 'Saved ${diff.inMinutes}m ago';
+          ? 'postAd.draftSavedSecondsAgo'.tr(args: ['${diff.inSeconds}'])
+          : 'postAd.draftSavedMinutesAgo'.tr(args: ['${diff.inMinutes}']);
       return _buildStatusRow(
         LucideIcons.cloudLightning,
         label,
@@ -1715,7 +1747,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Text(
-          'No saved drafts',
+          'postAd.noSavedDrafts'.tr(),
           style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[500]),
         ),
       );
@@ -1734,7 +1766,7 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Text(
-              'Saved Drafts',
+              'postAd.savedDrafts'.tr(),
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -1752,12 +1784,12 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                 final isActive = draft.id == _currentDraftId;
                 final diff = DateTime.now().difference(draft.updatedAt);
                 final timeLabel = diff.inMinutes < 1
-                    ? 'Just now'
+                    ? 'postAd.justNow'.tr()
                     : diff.inHours < 1
-                    ? '${diff.inMinutes}m ago'
+                    ? 'postAd.minutesAgo'.tr(args: ['${diff.inMinutes}'])
                     : diff.inDays < 1
-                    ? '${diff.inHours}h ago'
-                    : '${diff.inDays}d ago';
+                    ? 'postAd.hoursAgo'.tr(args: ['${diff.inHours}'])
+                    : 'postAd.daysAgo'.tr(args: ['${diff.inDays}']);
 
                 return ListTile(
                   dense: true,
@@ -1815,6 +1847,9 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
   /// mode) — every remaining field appears at once, AI-filled or empty.
   bool get _detailsRevealed {
     if (widget.isEditMode) return true;
+    // A restored draft always reveals: it may legitimately carry only
+    // photos/price/category and still be the seller's in-progress work.
+    if (_draftRestored) return true;
     // Typed text only — a category alone doesn't count, because the shop-page
     // memory prefill sets one on load and must not reveal an empty form.
     if (_titleController.text.trim().isNotEmpty ||
@@ -2366,6 +2401,17 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                                     _selectedImages.removeAt(
                                       index - _existingImagePaths.length,
                                     );
+                                  }
+                                  // All photos gone: the AI's one-shot draft
+                                  // was about photos that no longer exist —
+                                  // reset so the NEXT photos get a fresh
+                                  // draft and stale warnings can't fire.
+                                  if (_selectedImages.isEmpty &&
+                                      _existingImagePaths.isEmpty) {
+                                    _aiDraftRequested = false;
+                                    _aiPriceEstimate = null;
+                                    _aiSellable = null;
+                                    _aiUnsellableReason = null;
                                   }
                                 });
                               },

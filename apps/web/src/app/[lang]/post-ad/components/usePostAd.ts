@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useFormTemplate } from '@/hooks/useFormTemplate';
@@ -13,6 +14,7 @@ import type { Category, PostAdFormData } from './types';
 import { INITIAL_FORM_DATA } from './types';
 
 export function usePostAd(lang: string) {
+  const t = useTranslations('ads');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -28,6 +30,14 @@ export function usePostAd(lang: string) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [adPosted, setAdPosted] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const approvalPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearApprovalPoll = useCallback(() => {
+    if (approvalPollRef.current) {
+      clearInterval(approvalPollRef.current);
+      approvalPollRef.current = null;
+    }
+  }, []);
   // Instant AI publish: auto-approved ads redirect to their own page instead
   // of the dashboard Pending tab (owner spec). Ref mirrors state so the
   // close handler always reads the freshest value.
@@ -98,6 +108,9 @@ export function usePostAd(lang: string) {
       if (!images.includes(file)) stagedIdsRef.current.delete(file);
     }
   }, [images]);
+
+  // The approval poll must not outlive the page (leaks + setState-on-unmounted)
+  useEffect(() => clearApprovalPoll, [clearApprovalPoll]);
 
   // Draft management
   const {
@@ -448,7 +461,10 @@ export function usePostAd(lang: string) {
         loadSubcategories(parseInt(draft.categoryId));
       }
 
-      setFormData({
+      // MERGE into prev — a full replace drops fields the draft doesn't carry
+      // (whatsappSameAsPhone/whatsappNumber), and submit then crashes on them.
+      setFormData((prev) => ({
+        ...prev,
         title: draft.title,
         description: draft.description,
         price: draft.price,
@@ -459,8 +475,11 @@ export function usePostAd(lang: string) {
         condition: draft.condition || 'Brand New',
         isNegotiable: draft.isNegotiable || false,
         isCodAvailable: draft.isCodAvailable || false,
-      });
+      }));
 
+      // A restored draft must show the full form even when it has no typed
+      // title/description yet (photos/price/category-only drafts).
+      setDraftRestored(true);
       loadDraft(draft.id);
       setShowDrafts(false);
     },
@@ -470,6 +489,7 @@ export function usePostAd(lang: string) {
   // Handle starting a new ad
   const handleStartNew = useCallback(() => {
     startNewDraft();
+    setDraftRestored(false);
     setShowDrafts(false);
   }, [startNewDraft]);
 
@@ -519,27 +539,27 @@ export function usePostAd(lang: string) {
       }
 
       if (!formData.categoryId) {
-        setError('Please select a category');
+        setError(t('errSelectCategory'));
         return;
       }
 
       if (subcategories.length > 0 && !formData.subcategoryId) {
-        setError('Please select a subcategory');
+        setError(t('errSelectSubcategory'));
         return;
       }
 
       if (!formData.locationSlug) {
-        setError('Please select a location');
+        setError(t('errSelectLocation'));
         return;
       }
 
       if (images.length === 0) {
-        setError('Please upload at least one image');
+        setError(t('errUploadImage'));
         return;
       }
 
       if (!formData.price || parseFloat(formData.price) <= 0) {
-        setError('Please enter a valid price');
+        setError(t('errValidPrice'));
         return;
       }
 
@@ -547,7 +567,7 @@ export function usePostAd(lang: string) {
         const { isValid, errors } = validateFields(customFields);
         if (!isValid) {
           setCustomFieldsErrors(errors);
-          setError('Please fill in all required fields');
+          setError(t('errRequiredFields'));
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -715,29 +735,35 @@ export function usePostAd(lang: string) {
             // Watch for an instant AI publish while the modal is open — the
             // modal flips to "your ad is live" the moment it lands.
             let tries = 0;
-            const poll = setInterval(async () => {
+            // Owner-only edit-context, NOT the public get-ad endpoint — that
+            // one increments view_count, and a poll must not inflate views.
+            approvalPollRef.current = setInterval(async () => {
               tries += 1;
               try {
-                const r = await apiClient.getAdById(created.id as number);
-                const s = (r?.data as { status?: string } | undefined)?.status;
+                const r = await apiClient.getAdEditContext(created.id as number);
+                const s = r?.data?.status;
                 if (s === 'approved' || s === 'active') {
                   adPostedLiveRef.current = true;
                   setAdPostedLive(true);
-                  clearInterval(poll);
+                  clearApprovalPoll();
                   return;
                 }
-                if (s && s !== 'pending') clearInterval(poll);
+                if (s && s !== 'pending') clearApprovalPoll();
               } catch {
                 // Advisory only — polling trouble never affects the flow
               }
-              if (tries >= 5) clearInterval(poll);
+              if (tries >= 5) clearApprovalPoll();
             }, 2500);
           }
           setAdPosted(true);
         }
       } catch (err: any) {
         console.error('Error creating ad:', err);
-        setError(err.message || 'Failed to create ad. Please try again.');
+        // Re-arm the pre-post checks: the seller will likely edit fields
+        // before retrying, and a stale "confirmed" flag would skip every
+        // warning and the server precheck on the retry.
+        aiConfirmedRef.current = false;
+        setError(err.message || t('errCreateFailed'));
       } finally {
         setSubmitting(false);
       }
@@ -840,6 +866,7 @@ export function usePostAd(lang: string) {
     handleSubmit,
     adPosted,
     adPostedLive,
+    draftRestored,
     handleAdPostedClose,
     // Verification status for image limits
     isUserVerified:

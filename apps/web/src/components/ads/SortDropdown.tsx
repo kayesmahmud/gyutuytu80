@@ -1,20 +1,23 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface SortDropdownProps {
   currentSort: string;
   basePath: string;
 }
 
+// Labels are translation keys in the 'ads' namespace
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest First' },
-  { value: 'oldest', label: 'Oldest First' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
+  { value: 'newest', label: 'newestFirst' },
+  { value: 'oldest', label: 'oldestFirst' },
+  { value: 'price_asc', label: 'priceLowToHigh' },
+  { value: 'price_desc', label: 'priceHighToLow' },
 ];
 
 export default function SortDropdown({ currentSort, basePath }: SortDropdownProps) {
+  const t = useTranslations('ads');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -41,7 +44,7 @@ export default function SortDropdown({ currentSort, basePath }: SortDropdownProp
   return (
     <div className="flex items-center gap-2">
       <label htmlFor="sort" className="text-sm text-gray-500 whitespace-nowrap hidden sm:inline">
-        Sort by:
+        {t('sortByLabel')}
       </label>
       <select
         id="sort"
@@ -51,7 +54,7 @@ export default function SortDropdown({ currentSort, basePath }: SortDropdownProp
       >
         {SORT_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </option>
         ))}
       </select>

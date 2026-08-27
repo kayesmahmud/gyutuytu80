@@ -37,7 +37,7 @@ export default function FilterCarousel({
   const getSortLabel = () => {
     if (!sortBy || sortBy === DEFAULT_SORT) return t('sortBy');
     const option = SORT_OPTIONS.find((opt) => opt.value === sortBy);
-    return option?.label || t('sortBy');
+    return option ? t(option.label) : t('sortBy');
   };
 
   // Get condition label from constants

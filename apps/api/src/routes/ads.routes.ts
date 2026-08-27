@@ -683,7 +683,15 @@ router.put(
 
     // Update images
     const files = req.files as Express.Multer.File[];
-    await updateAdImages(ad.id, existingAd.ad_images, imagesToKeep, files || []);
+    const imagesStampedAt = await updateAdImages(
+      ad.id,
+      existingAd.ad_images,
+      imagesToKeep,
+      files || []
+    );
+    // TOCTOU stamp for the AI check below: image changes bump updated_at, so
+    // the check must compare against the FINAL post-edit value.
+    const moderationSnapshotAt = imagesStampedAt ?? ad.updated_at;
 
     res.json({
       success: true,
@@ -743,7 +751,7 @@ router.put(
           categoryId: ad.category_id ?? null,
           ownerUserId: userId,
           imagePaths: images.map((img) => `uploads/ads/${img.filename}`),
-          adUpdatedAt: ad.updated_at,
+          adUpdatedAt: moderationSnapshotAt,
         };
         if (directPublish) {
           // Verified business: the edit stayed live — audit it right after.

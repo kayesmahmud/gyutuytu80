@@ -66,6 +66,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     handleSubmit,
     adPosted,
     adPostedLive,
+    draftRestored,
     handleAdPostedClose,
     isUserVerified,
   } = usePostAd(lang);
@@ -91,8 +92,13 @@ export default function PostAdPage({ params }: PostAdPageProps) {
   // non-photo sections so nothing shows out of order.
   // Typed text only — a category alone doesn't count, because the shop-page
   // memory prefill sets one on load and must not reveal an empty form.
+  // A restored draft always reveals: it may legitimately have only
+  // photos/price/category and still be the seller's in-progress work.
   const detailsRevealed = Boolean(
-    formData.title || formData.description || (images.length > 0 && !aiDraftLoading)
+    draftRestored ||
+      formData.title ||
+      formData.description ||
+      (images.length > 0 && !aiDraftLoading)
   );
 
   // Image limits fetched from API settings
