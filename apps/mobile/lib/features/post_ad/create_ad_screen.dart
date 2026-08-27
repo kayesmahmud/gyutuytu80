@@ -23,6 +23,7 @@ import 'package:mobile/core/services/analytics_service.dart';
 import 'package:mobile/core/services/review_service.dart';
 import 'package:mobile/core/widgets/category_icon.dart';
 import 'package:mobile/core/widgets/success_checkmark.dart';
+import 'package:mobile/features/ad_detail/ad_detail_screen.dart';
 import 'package:mobile/features/dashboard/dashboard_screen.dart';
 import 'package:mobile/features/post_ad/models/ad_draft_model.dart';
 import 'package:mobile/features/post_ad/models/location_models.dart';
@@ -1404,13 +1405,22 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       await ReviewService.maybeRequestReview();
       if (mounted) {
         final isNepali = context.locale.languageCode == 'ne';
+        final adId = result.data?.id;
         if (result.isLive) {
           // Verified business: ad published instantly, no review needed.
           await showSuccessDialog(
             context,
             message: isNepali ? 'तपाईंको विज्ञापन लाइभ छ!' : 'Your ad is live!',
           );
+          if (!mounted) return;
+          _goAfterPost(live: true, adId: adId);
         } else {
+          // Watch for an instant AI publish while the seller reads the dialog —
+          // auto-approved ads land on their detail page, held ones on the
+          // dashboard Pending tab (owner spec).
+          final approvalFuture = adId == null
+              ? Future<bool>.value(false)
+              : _waitForInstantApproval(adId);
           await showSuccessDialog(
             context,
             message: 'postAd.adPosted'.tr(),
@@ -1419,16 +1429,10 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                 ? null
                 : 'postAd.adPostedReviewNoteLatin'.tr(),
           );
-        }
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DashboardScreen(
-                initialFilter: result.isLive ? 'Active' : 'Pending',
-              ),
-            ),
-          );
+          if (!mounted) return;
+          final live = await _awaitWithSpinner(approvalFuture);
+          if (!mounted) return;
+          _goAfterPost(live: live, adId: adId);
         }
       }
     } else {
@@ -1437,6 +1441,63 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text(result.errorMessage)));
       }
+    }
+  }
+
+  /// Polls briefly after posting: did the AI publish the ad already?
+  /// Bounded at ~10s; anything unresolved counts as "still pending".
+  Future<bool> _waitForInstantApproval(int adId) async {
+    for (var i = 0; i < 4; i++) {
+      await Future.delayed(const Duration(milliseconds: 2500));
+      final res = await _adClient.getAdById(adId);
+      final status = res.data?.status;
+      if (status == AdStatus.active) return true;
+      if (res.success && status != AdStatus.pending) return false;
+    }
+    return false;
+  }
+
+  /// Awaits the approval poll, showing a spinner only if it is still running
+  /// (the seller usually spends those seconds reading the success dialog).
+  Future<bool> _awaitWithSpinner(Future<bool> future) async {
+    var completed = false;
+    var value = false;
+    unawaited(
+      future.then((v) {
+        completed = true;
+        value = v;
+      }),
+    );
+    // Give the then() a microtask to run for an already-finished future.
+    await Future.delayed(Duration.zero);
+    if (completed) return value;
+    if (!mounted) return future;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    value = await future;
+    if (mounted) Navigator.pop(context);
+    return value;
+  }
+
+  /// Post-submit destination: live → the ad's own page, pending → dashboard
+  /// Pending tab (unchanged).
+  void _goAfterPost({required bool live, required int? adId}) {
+    if (live && adId != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => AdDetailScreen(adId: adId)),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              DashboardScreen(initialFilter: live ? 'Active' : 'Pending'),
+        ),
+      );
     }
   }
 

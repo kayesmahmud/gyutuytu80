@@ -288,6 +288,8 @@
     "posting": "Posting...",
     "postAd": "Post Ad",
     "adPostedTitle": "Ad posted successfully!",
+    "adPostedLiveTitle": "Your ad is live! 🎉",
+    "adPostedLiveNote": "It passed the automatic check and buyers can see it now. Close this to view your ad.",
     "adPostedReviewNote": "Please wait — our team will review your ad and it will be published within 2 hours.",
     "adPostedReviewNoteLatin": "Kripaya parkhanuhos — hamro team le tapaiko ad review garera 2 ghanta bhitra publish garnechha.",
     "views": "views",

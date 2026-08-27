@@ -288,6 +288,8 @@
     "posting": "पोस्ट गर्दैछ...",
     "postAd": "विज्ञापन पोस्ट गर्नुहोस्",
     "adPostedTitle": "विज्ञापन सफलतापूर्वक पोस्ट भयो!",
+    "adPostedLiveTitle": "तपाईंको विज्ञापन लाइभ छ! 🎉",
+    "adPostedLiveNote": "स्वचालित जाँच पास भयो — खरिदकर्ताहरूले अहिले नै देख्न सक्छन्। आफ्नो विज्ञापन हेर्न यो बन्द गर्नुहोस्।",
     "adPostedReviewNote": "कृपया पर्खनुहोस् — हाम्रो टोलीले तपाईंको विज्ञापन समीक्षा गरी २ घण्टाभित्र प्रकाशित गर्नेछ।",
     "adPostedReviewNoteLatin": "Kripaya parkhanuhos — hamro team le tapaiko ad review garera 2 ghanta bhitra publish garnechha.",
     "views": "हेराइहरू",

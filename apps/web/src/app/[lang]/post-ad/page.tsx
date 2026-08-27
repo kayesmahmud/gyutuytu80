@@ -65,6 +65,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
     handleCustomFieldChange,
     handleSubmit,
     adPosted,
+    adPostedLive,
     handleAdPostedClose,
     isUserVerified,
   } = usePostAd(lang);
@@ -561,7 +562,7 @@ export default function PostAdPage({ params }: PostAdPageProps) {
           onReview={handleAiConfirmReview}
         />
       )}
-      {adPosted && <AdPostedModal lang={lang} onClose={handleAdPostedClose} />}
+      {adPosted && <AdPostedModal lang={lang} live={adPostedLive} onClose={handleAdPostedClose} />}
     </div>
   );
 }

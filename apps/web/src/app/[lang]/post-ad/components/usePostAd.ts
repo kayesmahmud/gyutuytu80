@@ -28,6 +28,12 @@ export function usePostAd(lang: string) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [adPosted, setAdPosted] = useState(false);
+  // Instant AI publish: auto-approved ads redirect to their own page instead
+  // of the dashboard Pending tab (owner spec). Ref mirrors state so the
+  // close handler always reads the freshest value.
+  const [adPostedLive, setAdPostedLive] = useState(false);
+  const adPostedLiveRef = useRef(false);
+  const postedAdSlugRef = useRef<string | null>(null);
 
   // User state
   const [userHasDefaultLocation, setUserHasDefaultLocation] = useState(false);
@@ -699,6 +705,34 @@ export function usePostAd(lang: string) {
           }
 
           // Show the "under review" modal; redirect happens when the user closes it.
+          const created = response.data as { id?: number; slug?: string; status?: string };
+          postedAdSlugRef.current = created.slug ?? null;
+          if (created.status === 'approved') {
+            // Verified business: published instantly.
+            adPostedLiveRef.current = true;
+            setAdPostedLive(true);
+          } else if (created.id) {
+            // Watch for an instant AI publish while the modal is open — the
+            // modal flips to "your ad is live" the moment it lands.
+            let tries = 0;
+            const poll = setInterval(async () => {
+              tries += 1;
+              try {
+                const r = await apiClient.getAdById(created.id as number);
+                const s = (r?.data as { status?: string } | undefined)?.status;
+                if (s === 'approved' || s === 'active') {
+                  adPostedLiveRef.current = true;
+                  setAdPostedLive(true);
+                  clearInterval(poll);
+                  return;
+                }
+                if (s && s !== 'pending') clearInterval(poll);
+              } catch {
+                // Advisory only — polling trouble never affects the flow
+              }
+              if (tries >= 5) clearInterval(poll);
+            }, 2500);
+          }
           setAdPosted(true);
         }
       } catch (err: any) {
@@ -749,7 +783,13 @@ export function usePostAd(lang: string) {
   }, []);
 
   const handleAdPostedClose = useCallback(() => {
-    router.push(`/${lang}/dashboard?tab=pending`);
+    // Live (business direct-publish or instant AI approval) → the ad's own
+    // page; still pending → dashboard Pending tab, as always.
+    if (adPostedLiveRef.current && postedAdSlugRef.current) {
+      router.push(`/${lang}/ad/${postedAdSlugRef.current}`);
+    } else {
+      router.push(`/${lang}/dashboard?tab=pending`);
+    }
   }, [router, lang]);
 
   return {
@@ -799,6 +839,7 @@ export function usePostAd(lang: string) {
     handleCustomFieldChange,
     handleSubmit,
     adPosted,
+    adPostedLive,
     handleAdPostedClose,
     // Verification status for image limits
     isUserVerified:

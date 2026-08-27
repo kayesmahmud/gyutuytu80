@@ -4,10 +4,13 @@ import { useTranslations } from 'next-intl';
 
 interface AdPostedModalProps {
   lang: string;
+  /** The ad already went live (business direct-publish or instant AI
+      approval) — closing goes to the ad's page instead of the dashboard. */
+  live?: boolean;
   onClose: () => void;
 }
 
-export function AdPostedModal({ lang, onClose }: AdPostedModalProps) {
+export function AdPostedModal({ lang, live = false, onClose }: AdPostedModalProps) {
   const t = useTranslations('ads');
 
   return (
@@ -32,12 +35,16 @@ export function AdPostedModal({ lang, onClose }: AdPostedModalProps) {
           </svg>
         </div>
 
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">{t('adPostedTitle')}</h2>
+        <h2 className="mb-3 text-lg font-semibold text-gray-900">
+          {t(live ? 'adPostedLiveTitle' : 'adPostedTitle')}
+        </h2>
 
-        <p className="mb-0 text-sm leading-relaxed text-gray-700">{t('adPostedReviewNote')}</p>
+        <p className="mb-0 text-sm leading-relaxed text-gray-700">
+          {t(live ? 'adPostedLiveNote' : 'adPostedReviewNote')}
+        </p>
 
         {/* Romanized Nepali line for the English locale (Nepali locale reads it natively above) */}
-        {lang !== 'ne' && (
+        {!live && lang !== 'ne' && (
           <p className="mb-0 mt-3 text-[13px] italic leading-relaxed text-gray-500">
             {t('adPostedReviewNoteLatin')}
           </p>
