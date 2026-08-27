@@ -834,8 +834,8 @@ export async function getDirectPublishInfo(userId: number) {
   return { canDirectPublish: computeCanDirectPublish(user) };
 }
 
-/** Live-ad edits are limited per calendar month to prevent bait-and-switch churn. */
-export const MAX_LIVE_EDITS_PER_MONTH = 4;
+/** Live-ad edits are limited per calendar month to prevent bait-and-switch churn (owner policy: 3). */
+export const MAX_LIVE_EDITS_PER_MONTH = 3;
 
 /** How many times this ad was edited WHILE LIVE during the current calendar month. */
 export async function countLiveEditsThisMonth(adId: number): Promise<number> {
