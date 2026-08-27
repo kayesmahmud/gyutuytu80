@@ -62,18 +62,19 @@ export default function AiConfirmModal({ warnings, onProceed, onReview }: AiConf
           })}
         </ul>
 
+        {/* Red review / green post — matching the Flutter dialog (owner, 2026-08-27) */}
         <div className="flex flex-col gap-2.5">
           <button
             type="button"
             onClick={onReview}
-            className="w-full cursor-pointer rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 py-3 font-semibold text-white shadow-md shadow-indigo-200 transition-opacity hover:opacity-90"
+            className="w-full cursor-pointer rounded-xl bg-red-500 py-3 font-semibold text-white shadow-md shadow-red-200 transition-colors hover:bg-red-600"
           >
             {t('aiReviewAgain')}
           </button>
           <button
             type="button"
             onClick={onProceed}
-            className="w-full cursor-pointer rounded-xl border border-amber-300 bg-amber-50 py-3 font-medium text-amber-800 transition-colors hover:bg-amber-100"
+            className="w-full cursor-pointer rounded-xl bg-emerald-500 py-3 font-semibold text-white shadow-md shadow-emerald-200 transition-colors hover:bg-emerald-600"
           >
             {t('aiPostAnyway')}
           </button>

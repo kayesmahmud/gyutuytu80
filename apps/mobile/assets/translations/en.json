@@ -303,7 +303,7 @@
     "aiConfirmTitle": "Quick check before posting",
     "aiWarnJunk": "Your photos don't seem to show an item for sale. Ads like this are usually rejected.",
     "aiWarnPrice": "Your price looks very different from similar items. Is it correct?",
-    "aiWarnFilled": "Some details were filled automatically from your photos. Did you check that the title, category, description and price are correct?",
+    "aiWarnFilled": "Some details were filled automatically from your photos. Did you check that the title, category and description are correct?",
     "aiReviewAgain": "Review again",
     "aiPostAnyway": "Post anyway",
     "aiFillingWait": "Please wait — AI is filling all the details from your photos…",

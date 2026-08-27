@@ -1128,7 +1128,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                 child: FilledButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
+                    backgroundColor: const Color(0xFFEF4444),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -1145,11 +1146,11 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
               const SizedBox(height: 10),
               SizedBox(
                 height: 50,
-                child: OutlinedButton(
+                child: FilledButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFFBEB),
-                    side: const BorderSide(color: Color(0xFFFCD34D)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -1157,9 +1158,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
                   child: Text(
                     'postAd.aiPostAnyway'.tr(),
                     style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       fontSize: 15,
-                      color: const Color(0xFF92400E),
                     ),
                   ),
                 ),
