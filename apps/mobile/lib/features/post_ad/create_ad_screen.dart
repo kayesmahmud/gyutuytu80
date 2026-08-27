@@ -1049,6 +1049,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       'postAd.aiWarnJunk' ||
       'postAd.aiCouldNotFillSelfie' => LucideIcons.camera,
       'postAd.aiWarnFilled' => LucideIcons.sparkles,
+      'postAd.aiWarnCategoryMismatch' => LucideIcons.tag,
+      'postAd.aiWarnSpelling' => LucideIcons.type,
       _ => LucideIcons.alertTriangle,
     };
     return showDialog<bool>(
@@ -1264,6 +1266,30 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         warnings.add('postAd.aiWarnPrice');
       }
       if (_aiFilled.isNotEmpty) warnings.add('postAd.aiWarnFilled');
+
+      // Server pre-check only when title or category is the seller's own work
+      // (AI-filled-and-untouched fields were already chosen from the photos).
+      // Fail-open: any trouble returns no warnings and posting proceeds.
+      if (!_aiFilled.contains('title') || !_aiFilled.contains('category')) {
+        setState(() => _isLoading = true);
+        final precheck = await _adClient.precheckAd(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          categoryName: _selectedCategory?.name,
+          price: typedPrice,
+        );
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        for (final code in precheck) {
+          switch (code) {
+            case 'category_mismatch':
+              warnings.add('postAd.aiWarnCategoryMismatch');
+            case 'spelling':
+              warnings.add('postAd.aiWarnSpelling');
+          }
+        }
+      }
+
       if (warnings.isNotEmpty) {
         final proceed = await _showAiConfirmDialog(warnings);
         if (proceed != true) return;

@@ -564,6 +564,29 @@ export function usePostAd(lang: string) {
           warnings.push('price');
         }
         if (aiFilled.size > 0) warnings.push('aiFilled');
+        // Server pre-check only when title or category is the seller's own
+        // work (AI-filled-and-untouched fields were already chosen from the
+        // photos). Fail-open: any trouble adds no warnings.
+        if (!aiFilled.has('title') || !aiFilled.has('category')) {
+          try {
+            setSubmitting(true);
+            const pre = await apiClient.precheckAd({
+              title: formData.title,
+              description: formData.description || null,
+              categoryName:
+                categories.find((c) => c.id.toString() === formData.categoryId)?.name ?? null,
+              price: parseFloat(formData.price) || null,
+            });
+            for (const w of pre?.data?.warnings ?? []) {
+              if (w.code === 'category_mismatch') warnings.push('categoryMismatch');
+              if (w.code === 'spelling') warnings.push('spelling');
+            }
+          } catch {
+            // fail-open — never let an advisory check block posting
+          } finally {
+            setSubmitting(false);
+          }
+        }
         if (warnings.length > 0) {
           setAiConfirm(warnings);
           return;

@@ -353,7 +353,6 @@ class AdClient {
     }
   }
 
-
   /// Background-stage one ad photo the moment it is picked, so posting later
   /// only sends ids (instant). Returns the stagedId, or null on any error —
   /// the caller then falls back to the classic full upload (fail-open).
@@ -415,6 +414,47 @@ class AdClient {
     } catch (e) {
       developer.log('AI draft unavailable: $e', name: 'AdClient');
       return (draft: null, rateLimited: false);
+    }
+  }
+
+  /// Pre-post AI check on manually-typed fields: returns warning codes
+  /// ('category_mismatch' | 'spelling'). Advisory only — any failure returns
+  /// an empty list and posting proceeds exactly as today.
+  Future<List<String>> precheckAd({
+    required String title,
+    String? description,
+    String? categoryName,
+    double? price,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/ads/ai-precheck',
+        data: {
+          'title': title,
+          'description': description,
+          'categoryName': categoryName,
+          'price': price,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+      final body = response.data;
+      if (body is Map<String, dynamic> && body['success'] == true) {
+        final warnings = body['data']?['warnings'];
+        if (warnings is List) {
+          return warnings
+              .whereType<Map<String, dynamic>>()
+              .map((w) => w['code'])
+              .whereType<String>()
+              .toList();
+        }
+      }
+      return const [];
+    } catch (e) {
+      developer.log('AI precheck unavailable: $e', name: 'AdClient');
+      return const [];
     }
   }
 

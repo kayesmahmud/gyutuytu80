@@ -14,6 +14,8 @@ const WARNING_META: Record<string, { key: string; icon: string }> = {
   junkSelfie: { key: 'aiCouldNotFillSelfie', icon: '🤳' },
   price: { key: 'aiWarnPrice', icon: '💰' },
   aiFilled: { key: 'aiWarnFilled', icon: '✨' },
+  categoryMismatch: { key: 'aiWarnCategoryMismatch', icon: '🏷️' },
+  spelling: { key: 'aiWarnSpelling', icon: '✏️' },
 };
 
 /**

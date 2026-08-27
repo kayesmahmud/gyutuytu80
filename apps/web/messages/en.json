@@ -255,6 +255,8 @@
     "aiWarnJunk": "Your photos don't seem to show an item for sale. Ads like this are usually rejected.",
     "aiWarnPrice": "Your price looks very different from similar items. Is it correct?",
     "aiWarnFilled": "Some details were filled automatically from your photos. Did you check that the title, category and description are correct?",
+    "aiWarnCategoryMismatch": "Your title doesn't seem to match the selected category — double-check the category before posting.",
+    "aiWarnSpelling": "Your title may have a spelling mistake — please re-read it before posting.",
     "aiReviewAgain": "Review again",
     "aiPostAnyway": "Post anyway",
     "selectSubcategory": "Select Subcategory",

@@ -137,6 +137,27 @@ export function createAdMethods(client: AxiosInstance) {
       return response.data;
     },
 
+    /**
+     * Pre-post AI check on manually-typed fields. Advisory only — an empty
+     * warnings array (including on any server/AI trouble) means post as usual.
+     */
+    async precheckAd(input: {
+      title: string;
+      description?: string | null;
+      categoryName?: string | null;
+      price?: number | null;
+    }): Promise<
+      ApiResponse<{
+        warnings: Array<
+          | { code: 'category_mismatch'; suggestedCategory: string | null }
+          | { code: 'spelling'; correctedTitle: string | null }
+        >;
+      }>
+    > {
+      const response = await client.post('/api/ads/ai-precheck', input);
+      return response.data;
+    },
+
     async getAdEditContext(
       id: number
     ): Promise<ApiResponse<{

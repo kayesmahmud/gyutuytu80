@@ -37,6 +37,7 @@ import {
 } from '../services/adLimits.service.js';
 import { sendNotification, notifyEditors } from '../services/notification.service.js';
 import { moderateNewAd, buildEditContext } from '../services/moderation.service.js';
+import { shouldPrecheck, precheckAd } from '../services/precheck.service.js';
 import { isAutofillAvailable, draftFromImages } from '../services/autofill.service.js';
 import { reportAiViolation } from '../services/userReport.service.js';
 import { imageBuffersToDataUrls } from '../lib/ai/images.js';
@@ -265,6 +266,34 @@ router.post(
       );
     }
     res.json({ success: true, data: draft });
+  })
+);
+
+/**
+ * POST /api/ads/ai-precheck
+ * Pre-post AI check on manually-typed fields: category mismatch + clear
+ * spelling mistakes, returned as advisory warnings for the confirm dialog.
+ * Fail-open: switch off / AI trouble = empty warnings, posting unaffected.
+ */
+router.post(
+  '/ai-precheck',
+  authenticateToken,
+  rateLimiters.aiDraft,
+  catchAsync(async (req: Request, res: Response) => {
+    if (!(await shouldPrecheck())) {
+      return res.json({ success: true, data: { warnings: [] } });
+    }
+    const { title, description, categoryName, price } = req.body ?? {};
+    if (typeof title !== 'string' || !title.trim()) {
+      return res.json({ success: true, data: { warnings: [] } });
+    }
+    const warnings = await precheckAd({
+      title: title.slice(0, 150),
+      description: typeof description === 'string' ? description.slice(0, 1000) : null,
+      categoryName: typeof categoryName === 'string' ? categoryName.slice(0, 60) : null,
+      price: typeof price === 'number' && Number.isFinite(price) ? price : null,
+    });
+    res.json({ success: true, data: { warnings } });
   })
 );
 
