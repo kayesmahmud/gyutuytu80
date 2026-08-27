@@ -36,7 +36,7 @@ import {
   getBooleanSetting,
 } from '../services/adLimits.service.js';
 import { sendNotification, notifyEditors } from '../services/notification.service.js';
-import { moderateNewAd } from '../services/moderation.service.js';
+import { moderateNewAd, buildEditContext } from '../services/moderation.service.js';
 import { isAutofillAvailable, draftFromImages } from '../services/autofill.service.js';
 import { reportAiViolation } from '../services/userReport.service.js';
 import { imageBuffersToDataUrls } from '../lib/ai/images.js';
@@ -669,7 +669,28 @@ router.put(
           ownerUserId: userId,
           imagePaths: images.map((img) => `uploads/ads/${img.filename}`),
           adUpdatedAt: ad.updated_at,
-          edit: { firstPublishedAt: existingAd.published_at ?? null },
+          edit: {
+            firstPublishedAt: existingAd.published_at ?? null,
+            // Tell the model where this ad came from and what changed — a
+            // live ad with swapped photos gets scrutiny, a typo fix gets a
+            // confident publish, a rejected resubmit is judged against the
+            // editor's rejection reason.
+            context: buildEditContext({
+              previousStatus: existingAd.status ?? null,
+              liveSince: existingAd.published_at ?? null,
+              rejectionReason:
+                existingAd.status === 'rejected' ? (existingAd.status_reason ?? null) : null,
+              oldTitle: existingAd.title,
+              newTitle: ad.title,
+              oldPrice: existingAd.price ? Number(existingAd.price) : null,
+              newPrice: ad.price ? Number(ad.price) : null,
+              descriptionChanged: (ad.description ?? '') !== (existingAd.description ?? ''),
+              categoryChanged: ad.category_id !== existingAd.category_id,
+              photosKept: imagesToKeep.length,
+              photosRemoved: Math.max(0, existingAd.ad_images.length - imagesToKeep.length),
+              photosAdded: (req.files as Express.Multer.File[] | undefined)?.length ?? 0,
+            }),
+          },
         });
       })().catch((err) => console.error('AI edit re-moderation error:', err));
     }
