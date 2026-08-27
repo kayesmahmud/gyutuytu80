@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -17,7 +19,13 @@ class TicketDetailScreen extends StatefulWidget {
   State<TicketDetailScreen> createState() => _TicketDetailScreenState();
 }
 
-class _TicketDetailScreenState extends State<TicketDetailScreen> {
+// Support has no socket on mobile, so an open ticket quietly re-fetches while
+// the user is looking at it. Replies (from the AI assistant in seconds, or from
+// an editor later) would otherwise only appear after leaving and reopening.
+const _kTicketPollInterval = Duration(seconds: 6);
+
+class _TicketDetailScreenState extends State<TicketDetailScreen>
+    with WidgetsBindingObserver {
   final _client = SupportClient();
   final _messageController = TextEditingController();
   final _csatCommentController = TextEditingController();
@@ -29,19 +37,59 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   bool _isSubmittingCsat = false;
   int _selectedStar = 0;
   String? _error;
+  Timer? _pollTimer;
+  bool _isPolling = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadTicket();
+    _startPolling();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _pollTimer?.cancel();
     _messageController.dispose();
     _csatCommentController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Don't poll in the background; catch up immediately on return.
+    if (state == AppLifecycleState.resumed) {
+      _pollOnce();
+      _startPolling();
+    } else {
+      _pollTimer?.cancel();
+    }
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_kTicketPollInterval, (_) => _pollOnce());
+  }
+
+  /// Silent refresh: no spinner, no error banner, never fights an in-flight send.
+  Future<void> _pollOnce() async {
+    if (_isPolling || _isSending || !mounted) return;
+    _isPolling = true;
+    try {
+      final response = await _client.getTicketDetail(widget.ticketId);
+      if (!mounted || !response.hasData) return;
+      final fresh = response.data!;
+      final hasNewMessage = fresh.messages.length != (_ticket?.messages.length ?? 0);
+      final statusChanged = fresh.status != _ticket?.status;
+      if (!hasNewMessage && !statusChanged) return;
+      setState(() => _ticket = fresh);
+      if (hasNewMessage) _scrollToBottom();
+    } finally {
+      _isPolling = false;
+    }
   }
 
   Future<void> _loadTicket() async {
@@ -351,8 +399,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                       ),
                     ],
                   )
-                : ListView.builder(
+                : RefreshIndicator(
+                    onRefresh: _pollOnce,
+                    child: ListView.builder(
                     controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
@@ -373,6 +424,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                         ],
                       );
                     },
+                    ),
                   ),
           ),
         ),
@@ -540,7 +592,12 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      'support.supportTeam'.tr(),
+                      // Show who actually replied. The AI assistant must not
+                      // hide behind a generic "Support Team" label — users are
+                      // told plainly when an AI is answering.
+                      msg.sender.fullName.isNotEmpty
+                          ? msg.sender.fullName
+                          : 'support.supportTeam'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
