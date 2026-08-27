@@ -308,6 +308,7 @@ export async function createAd(userId: number, input: CreateAdInput, images: Fil
       maxHeight: 1920,
       quality: 85,
       format: 'jpeg',
+      watermark: true,
     });
   }
 
