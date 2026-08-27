@@ -163,11 +163,17 @@ export function censorProfanity(text: string): string {
       : word;
   });
 
-  // Devanagari: substring replacement (no word boundaries in Devanagari)
+  // Devanagari: only as a standalone word. Raw substring replacement mangles
+  // innocent words that merely contain a pattern (मसाला "spice" contains साला,
+  // चाकु "knife" contains चाक) — the Express censor is boundary-aware too.
   for (const pattern of DEVANAGARI_PATTERNS) {
-    if (result.includes(pattern)) {
-      result = result.split(pattern).join('*'.repeat(pattern.length));
-    }
+    if (!result.includes(pattern)) continue;
+    const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const bounded = new RegExp(
+      `(^|[\\s,.!?;:'"()\\[\\]{}<>])${escaped}(?=[\\s,.!?;:'"()\\[\\]{}<>]|$)`,
+      'g'
+    );
+    result = result.replace(bounded, (_m, lead: string) => lead + '*'.repeat(pattern.length));
   }
 
   return result;

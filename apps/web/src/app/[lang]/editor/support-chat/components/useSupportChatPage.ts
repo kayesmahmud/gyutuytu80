@@ -110,6 +110,14 @@ export function useSupportChatPage(lang: string) {
     );
   }, [selectedTicket]);
 
+  // A brand-new ticket arrives on the staff room; reload so it appears in the
+  // queue immediately (and respects the active filters) instead of only after
+  // a manual refresh.
+  const loadTicketsRef = useRef<(() => Promise<void>) | null>(null);
+  const handleTicketCreated = useCallback(() => {
+    loadTicketsRef.current?.();
+  }, []);
+
   const handleTyping = useCallback((data: { ticketId: number; userId: number; isTyping: boolean }) => {
     if (selectedTicket && data.ticketId === selectedTicket.id && data.userId !== staff?.id) {
       setIsOtherTyping(data.isTyping);
@@ -136,6 +144,7 @@ export function useSupportChatPage(lang: string) {
     onNewMessage: handleNewMessage,
     onTicketUpdated: handleTicketUpdated,
     onTicketStatusChanged: handleTicketStatusChanged,
+    onTicketCreated: handleTicketCreated,
     onTyping: handleTyping,
   });
 
@@ -180,6 +189,10 @@ export function useSupportChatPage(lang: string) {
       setLoading(false);
     }
   }, [token, statusFilter, priorityFilter, assignedFilter]);
+
+  // Kept current so the socket handler (declared earlier) always calls the
+  // latest filter-aware loader.
+  loadTicketsRef.current = loadTickets;
 
   useEffect(() => {
     loadTickets();

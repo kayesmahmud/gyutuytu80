@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
     const editors = await prisma.users.findMany({
       where: {
         role: { in: ['editor', 'super_admin'] },
+        // Seeded system senders (team inbox, AI support assistant) carry the
+        // editor role for display only — they are not staff members.
+        email: { notIn: ['team@thulobazaar.com.np', 'assistant@thulobazaar.com.np'] },
       },
       select: {
         id: true,

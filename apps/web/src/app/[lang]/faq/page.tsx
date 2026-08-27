@@ -13,7 +13,7 @@ interface FAQPageProps {
 }
 
 const FAQ_Q_KEYS = [
-  'generalQ1', 'generalQ2', 'generalQ3',
+  'generalQ1', 'generalQ2', 'generalQ3', 'generalQ4', 'generalQ5',
   'buyingQ1', 'buyingQ2', 'buyingQ3',
   'sellingQ1', 'sellingQ2', 'sellingQ3', 'sellingQ4',
   'paymentsQ1', 'paymentsQ2', 'paymentsQ3',

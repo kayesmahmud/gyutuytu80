@@ -471,7 +471,7 @@ export function createApp(): Express {
   // those routes now report what happened here and Express fans it out exactly
   // like its own paths do.
   app.post('/api/internal/support-event', async (req, res) => {
-    const { secret, event, ticketId, messageId } = req.body ?? {};
+    const { secret, event, ticketId, messageId, statusChangedTo } = req.body ?? {};
 
     // 🔒 Same fail-closed secret check as /api/internal/broadcast-message.
     const internalSecret = process.env.INTERNAL_API_SECRET;
@@ -496,6 +496,9 @@ export function createApp(): Express {
           status: true,
           created_at: true,
           updated_at: true,
+          users_support_tickets_assigned_toTousers: {
+            select: { id: true, full_name: true, avatar: true },
+          },
         },
       });
       if (!ticket) {
@@ -547,14 +550,23 @@ export function createApp(): Express {
           }).catch((err) => console.error('Support bridge owner notification error:', err));
         }
       } else if (event === 'ticket-updated') {
+        const assigned = ticket.users_support_tickets_assigned_toTousers;
         emitTicketUpdate({
           ticketId: ticket.id,
           ticketNumber: ticket.ticket_number,
           status: ticket.status,
           priority: ticket.priority,
+          // Without this, a reassignment made through the HTTP fallback leaves
+          // every other staff view showing the previous assignee.
+          assignedTo: assigned
+            ? { id: assigned.id, fullName: assigned.full_name, avatar: assigned.avatar }
+            : null,
           updatedAt: ticket.updated_at,
         });
-        if (ticket.status === 'resolved') {
+        // Only when THIS update resolved the ticket. Keying off the stored
+        // status re-sent "Ticket resolved" on every later priority or
+        // assignment edit of an already-resolved ticket.
+        if (statusChangedTo === 'resolved' && ticket.status === 'resolved') {
           notifyTicketOwner({
             ticketId: ticket.id,
             ownerUserId: ticket.user_id,

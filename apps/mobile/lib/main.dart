@@ -29,6 +29,8 @@ import 'features/messages/chat_screen.dart';
 import 'features/notifications/notification_screen.dart';
 import 'features/ad_detail/ad_detail_screen.dart';
 import 'features/verification/verification_screen.dart';
+import 'features/support/ticket_detail_screen.dart';
+import 'features/support/support_tickets_screen.dart';
 
 /// Global navigator key for notification navigation
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -245,6 +247,16 @@ void _handleNotificationTap(String? route, Map<String, dynamic>? data) {
     case '/notifications':
       navigator.push(
         MaterialPageRoute(builder: (_) => const NotificationScreen()),
+      );
+      break;
+    case '/support':
+      final ticketId = int.tryParse(data?['ticketId']?.toString() ?? '');
+      navigator.push(
+        MaterialPageRoute(
+          builder: (_) => ticketId != null
+              ? TicketDetailScreen(ticketId: ticketId)
+              : const SupportTicketsScreen(),
+        ),
       );
       break;
     default:

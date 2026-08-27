@@ -48,6 +48,8 @@ export interface TicketDetail extends SupportTicket {
   csatScore?: number | null;
   csatComment?: string | null;
   closedAt?: string | null;
+  /** Extra details the user filled in on the new-ticket form (ad link, transaction id). */
+  customFields?: Record<string, string> | null;
 }
 
 export type StatusFilter = 'all' | 'open' | 'in_progress' | 'waiting_on_user' | 'resolved' | 'closed';

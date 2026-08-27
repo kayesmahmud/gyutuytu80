@@ -11,7 +11,7 @@ interface FAQSectionDef {
 }
 
 const FAQ_SECTION_DEFS: FAQSectionDef[] = [
-  { titleKey: 'generalTitle', icon: '📋', qKeys: ['generalQ1', 'generalQ2', 'generalQ3'] },
+  { titleKey: 'generalTitle', icon: '📋', qKeys: ['generalQ1', 'generalQ2', 'generalQ3', 'generalQ4', 'generalQ5'] },
   { titleKey: 'buyingTitle', icon: '🛒', qKeys: ['buyingQ1', 'buyingQ2', 'buyingQ3'] },
   { titleKey: 'sellingTitle', icon: '💰', qKeys: ['sellingQ1', 'sellingQ2', 'sellingQ3', 'sellingQ4'] },
   { titleKey: 'paymentsTitle', icon: '💳', qKeys: ['paymentsQ1', 'paymentsQ2', 'paymentsQ3'] },

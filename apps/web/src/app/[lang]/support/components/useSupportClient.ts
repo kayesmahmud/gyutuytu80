@@ -182,7 +182,10 @@ export function useSupportClient(): UseSupportClientReturn {
     stopTyping,
   } = useSupportSocket({
     token: backendToken,
-    isStaff: false,
+    // This page is also a staff surface (staff see every ticket and can write
+    // internal notes). Internal notes are broadcast only to the staff room, so
+    // hardcoding false hid other editors' notes until a reload.
+    isStaff: !!session?.user && (session.user as any).role !== 'user',
     onNewMessage: handleNewMessage,
     onTicketStatusChanged: handleTicketStatusChanged,
     onTyping: handleTyping,

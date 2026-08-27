@@ -19,9 +19,9 @@ interface FAQCategory {
 
 const FAQ_CATEGORY_DEFS: FAQCategory[] = [
   { id: 'getting-started', titleKey: 'gettingStartedTitle', icon: '🚀', descKey: 'gettingStartedDesc', qKeys: ['gettingStartedQ1', 'gettingStartedQ2', 'gettingStartedQ3', 'gettingStartedQ4'] },
-  { id: 'posting-ads', titleKey: 'postingAdsTitle', icon: '📝', descKey: 'postingAdsDesc', qKeys: ['postingAdsQ1', 'postingAdsQ2', 'postingAdsQ3', 'postingAdsQ4', 'postingAdsQ5'] },
+  { id: 'posting-ads', titleKey: 'postingAdsTitle', icon: '📝', descKey: 'postingAdsDesc', qKeys: ['postingAdsQ1', 'postingAdsQ2', 'postingAdsQ3', 'postingAdsQ4', 'postingAdsQ5', 'postingAdsQ6'] },
   { id: 'buying', titleKey: 'buyingTitle', icon: '🛒', descKey: 'buyingDesc', qKeys: ['buyingQ1', 'buyingQ2', 'buyingQ3', 'buyingQ4'] },
-  { id: 'account', titleKey: 'accountTitle', icon: '👤', descKey: 'accountDesc', qKeys: ['accountQ1', 'accountQ2', 'accountQ3', 'accountQ4'] },
+  { id: 'account', titleKey: 'accountTitle', icon: '👤', descKey: 'accountDesc', qKeys: ['accountQ1', 'accountQ2', 'accountQ3', 'accountQ4', 'accountQ5'] },
   { id: 'payments', titleKey: 'paymentsTitle', icon: '💳', descKey: 'paymentsDesc', qKeys: ['paymentsQ1', 'paymentsQ2', 'paymentsQ3', 'paymentsQ4'] },
   { id: 'safety', titleKey: 'safetyTitle', icon: '🔒', descKey: 'safetyDesc', qKeys: ['safetyQ1', 'safetyQ2', 'safetyQ3', 'safetyQ4'] },
 ];

@@ -102,6 +102,7 @@ export async function GET(request: NextRequest) {
           created_at: true,
           updated_at: true,
           resolved_at: true,
+          sla_breach_at: true,
           users_support_tickets_user_idTousers: {
             select: {
               id: true,
@@ -147,6 +148,7 @@ export async function GET(request: NextRequest) {
       createdAt: ticket.created_at,
       updatedAt: ticket.updated_at,
       resolvedAt: ticket.resolved_at,
+      slaBreachAt: ticket.sla_breach_at,
       user: {
         id: ticket.users_support_tickets_user_idTousers.id,
         fullName: ticket.users_support_tickets_user_idTousers.full_name,

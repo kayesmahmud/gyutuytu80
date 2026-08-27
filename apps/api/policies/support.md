@@ -12,7 +12,7 @@ Nepal's online classifieds marketplace (thulobazaar.com.np). People buy and sell
 
 ## Editing ads
 - Pending ads can be edited freely; edits are reviewed again.
-- LIVE ads can be edited up to 3 times per month. Every edit goes through review again (photos and title changes included).
+- LIVE ads can be edited up to 3 times per month. Edits are checked again (photos and title changes included) — for most sellers the ad returns to review, while verified businesses stay live and are checked right after.
 
 ## Verification
 - Individual verification: submit an ID document (citizenship, license, passport) from the dashboard. Gives a verified badge and more trust.

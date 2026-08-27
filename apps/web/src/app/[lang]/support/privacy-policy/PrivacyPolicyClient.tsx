@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { Shield, Database, Cookie, Users, Lock, Trash2, Baby, RefreshCw, Mail, Smartphone } from 'lucide-react';
+import { Shield, Database, Cookie, Users, Lock, Trash2, Baby, RefreshCw, Mail, Smartphone, Sparkles } from 'lucide-react';
 
 export default function PrivacyPolicyClient() {
   const t = useTranslations('privacyPolicy');
@@ -82,6 +82,12 @@ export default function PrivacyPolicyClient() {
           <p className="text-gray-500 text-sm italic">{t('thirdPartyNote')}</p>
         </div>
       ),
+    },
+    {
+      id: 'ai-processing',
+      icon: <Sparkles className="w-5 h-5" />,
+      title: t('aiProcessing'),
+      content: <p className="text-gray-600">{t('aiProcessingDesc')}</p>,
     },
     {
       id: 'data-retention',
@@ -178,7 +184,7 @@ export default function PrivacyPolicyClient() {
           <Shield className="w-12 h-12 mx-auto mb-4 opacity-90" />
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3">{t('title')}</h1>
           <p className="text-sm sm:text-base opacity-80">
-            {t('lastUpdated', { date: '2026-04-02' })}
+            {t('lastUpdated', { date: '2026-08-27' })}
           </p>
         </div>
       </div>

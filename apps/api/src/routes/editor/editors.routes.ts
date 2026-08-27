@@ -6,8 +6,28 @@ import { authenticateToken } from '../../middleware/auth.js';
 import { SECURITY } from '../../config/constants.js';
 import { uploadAvatar } from '../../middleware/upload.js';
 import { optimizeImage } from '../../middleware/optimizeImage.js';
+import { TEAM_ACCOUNT_EMAIL } from '../../utils/teamAccount.js';
+import { SUPPORT_ASSISTANT_EMAIL } from '../../utils/supportAssistant.js';
 
 const router = Router();
+
+/**
+ * Seeded system senders (shared team inbox, AI support assistant). They carry
+ * the editor role so clients render their messages as staff, but they are not
+ * people: they never log in, and deleting one would cascade-delete every
+ * message it ever sent. Hidden from the editor manager and refused by writes.
+ */
+const SYSTEM_ACCOUNT_EMAILS = [TEAM_ACCOUNT_EMAIL, SUPPORT_ASSISTANT_EMAIL];
+
+async function assertNotSystemAccount(userId: number): Promise<void> {
+  const target = await prisma.users.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  if (target && SYSTEM_ACCOUNT_EMAILS.includes(target.email)) {
+    throw new ValidationError('This is a system account and cannot be modified or deleted');
+  }
+}
 
 /**
  * GET /api/editor/editors
@@ -24,6 +44,7 @@ router.get(
     const editors = await prisma.users.findMany({
       where: {
         role: 'editor',
+        email: { notIn: SYSTEM_ACCOUNT_EMAILS },
       },
       select: {
         id: true,
@@ -143,6 +164,8 @@ router.put(
     const { id } = req.params;
     const { fullName, email, password, isActive } = req.body;
 
+    await assertNotSystemAccount(parseInt(id as string, 10));
+
     console.log('📝 Updating editor:', {
       id,
       fullName,
@@ -210,6 +233,10 @@ router.delete(
     }
 
     const { id } = req.params;
+
+    // Deleting a system sender would cascade-delete every message it sent
+    // (all AI support replies / team-inbox history).
+    await assertNotSystemAccount(parseInt(id as string, 10));
 
     // 🔒 API-M3: only editor accounts may be deleted here.
     await prisma.users.delete({

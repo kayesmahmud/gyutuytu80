@@ -55,6 +55,8 @@ export async function GET(
         closed_at: true,
         csat_score: true,
         csat_comment: true,
+        sla_breach_at: true,
+        custom_fields: true,
         users_support_tickets_user_idTousers: {
           select: {
             id: true,
@@ -144,6 +146,10 @@ export async function GET(
         closedAt: ticket.closed_at,
         csatScore: ticket.csat_score,
         csatComment: ticket.csat_comment,
+        slaBreachAt: ticket.sla_breach_at,
+        // Ad link / transaction id the user typed in the new-ticket form —
+        // collected and stored, but previously never shown to any staff member.
+        customFields: ticket.custom_fields,
         user: {
           id: ticket.users_support_tickets_user_idTousers.id,
           fullName: ticket.users_support_tickets_user_idTousers.full_name,
@@ -253,7 +259,7 @@ export async function PATCH(
 
     // Broadcast the change to open views and, on resolve, notify the owner —
     // this HTTP fallback used to leave every other client stale.
-    notifySupportEvent('ticket-updated', ticketId);
+    notifySupportEvent('ticket-updated', ticketId, undefined, status || undefined);
 
     return NextResponse.json({
       success: true,
@@ -373,9 +379,10 @@ export async function POST(
       },
     });
 
-    // Update ticket status if needed
+    // Update ticket status if needed. Internal notes are invisible to the
+    // customer, so they must not move the ticket to "waiting on user".
     const newStatus = isStaff ? 'waiting_on_user' : 'in_progress';
-    if (ticket.status === 'open' || (isStaff && ticket.status === 'in_progress') || (!isStaff && ticket.status === 'waiting_on_user')) {
+    if (!actualIsInternal && (ticket.status === 'open' || (isStaff && ticket.status === 'in_progress') || (!isStaff && ticket.status === 'waiting_on_user'))) {
       await prisma.support_tickets.update({
         where: { id: ticketId },
         data: {

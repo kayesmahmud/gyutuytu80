@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import {
   FileText, UserCheck, Megaphone, Ban, CreditCard, Star,
   ShieldCheck, Trash2, MessageSquare, Eye, Scale, Gavel,
-  RefreshCw, Mail, AlertTriangle,
+  RefreshCw, Mail, AlertTriangle, Sparkles,
 } from 'lucide-react';
 
 export default function TermsOfServiceClient() {
@@ -131,6 +131,12 @@ export default function TermsOfServiceClient() {
       content: <p className="text-gray-600">{t('contentModerationDesc')}</p>,
     },
     {
+      id: 'ai-features',
+      icon: <Sparkles className="w-5 h-5" />,
+      title: t('aiFeatures'),
+      content: <p className="text-gray-600">{t('aiFeaturesDesc')}</p>,
+    },
+    {
       id: 'intellectual-property',
       icon: <Scale className="w-5 h-5" />,
       title: t('intellectualProperty'),
@@ -177,7 +183,7 @@ export default function TermsOfServiceClient() {
           <FileText className="w-12 h-12 mx-auto mb-4 opacity-90" />
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3">{t('title')}</h1>
           <p className="text-sm sm:text-base opacity-80">
-            {t('lastUpdated', { date: '2026-04-02' })}
+            {t('lastUpdated', { date: '2026-08-27' })}
           </p>
         </div>
       </div>

@@ -18,7 +18,9 @@ export type SupportBridgeEvent =
 export function notifySupportEvent(
   event: SupportBridgeEvent,
   ticketId: number,
-  messageId?: number
+  messageId?: number,
+  /** For 'ticket-updated': the status THIS request set, if it set one. */
+  statusChangedTo?: string
 ): void {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -30,6 +32,19 @@ export function notifySupportEvent(
       event,
       ticketId,
       ...(messageId ? { messageId } : {}),
+      ...(statusChangedTo ? { statusChangedTo } : {}),
     }),
-  }).catch((err) => console.error('Support event bridge failed (non-critical):', err.message));
+  })
+    // A 403 (missing/mismatched secret) resolves normally, so without this the
+    // whole fan-out can be dead in production with no log line anywhere —
+    // exactly how the chat broadcast bridge stayed silently broken before.
+    .then((res) => {
+      if (!res.ok) {
+        console.error(
+          `Support event bridge rejected: ${res.status} for ${event} on ticket ${ticketId}` +
+            (res.status === 403 ? ' — check INTERNAL_API_SECRET in the web container' : '')
+        );
+      }
+    })
+    .catch((err) => console.error('Support event bridge failed (non-critical):', err.message));
 }

@@ -122,10 +122,14 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
       });
 
       const wantedStatus = isStaff ? 'waiting_on_user' : 'in_progress';
+      // An internal note is invisible to the customer, so it must not move the
+      // ticket to "waiting on user" — that status change would never reach
+      // their screen and would wrongly imply the team had answered.
       const shouldTransition =
-        ticket.status === 'open' ||
-        (isStaff && ticket.status === 'in_progress') ||
-        (!isStaff && ticket.status === 'waiting_on_user');
+        !actualIsInternal &&
+        (ticket.status === 'open' ||
+          (isStaff && ticket.status === 'in_progress') ||
+          (!isStaff && ticket.status === 'waiting_on_user'));
       if (shouldTransition) {
         await prisma.support_tickets.update({
           where: { id: ticketId },

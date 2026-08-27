@@ -158,6 +158,21 @@ function ChatHeader({ ticket, staffId, onUpdateTicket, onBack }: ChatHeaderProps
           <div className="text-xs text-gray-500">{ticket.ticketNumber}</div>
         </div>
       </div>
+      {ticket.customFields && Object.keys(ticket.customFields).length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {Object.entries(ticket.customFields)
+            .filter(([, value]) => value)
+            .map(([key, value]) => (
+              <span
+                key={key}
+                className="text-xs bg-blue-50 text-blue-800 border border-blue-200 px-2 py-1 rounded"
+              >
+                {key === 'adLinkOrId' ? 'Ad' : key === 'transactionId' ? 'Transaction' : key}:{' '}
+                <span className="font-medium">{value}</span>
+              </span>
+            ))}
+        </div>
+      )}
       <div className="flex items-center gap-2 flex-wrap">
         <select
           value={ticket.status}

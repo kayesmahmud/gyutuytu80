@@ -652,7 +652,11 @@
     "q24": "How does Thulo Bazaar protect my data?",
     "a24": "We use industry-standard encryption and security practices to protect your personal information. Read our Privacy Policy for details.",
     "q25": "Why do some users have verification badges?",
-    "a25": "Verification badges indicate the user has verified their identity or business registration. This helps build trust between buyers and sellers."
+    "a25": "Verification badges indicate the user has verified their identity or business registration. This helps build trust between buyers and sellers.",
+    "q26": "Does Thulo Bazaar use AI?",
+    "a26": "Yes. AI helps review new and edited ads, can suggest a title, category, description and price when you post from photos, warns you about likely mistakes before you submit, and answers support chats first. Humans always make the final call — AI never permanently rejects your ad or your account.",
+    "q27": "Who answers my support messages?",
+    "a27": "Our AI assistant replies first — instantly, in English or Nepali — and solves most common questions. Anything it can't solve (payments, refunds, verification decisions, account changes) is forwarded to the Thulo Bazaar team automatically. You can also ask for a human at any time."
   },
   "contact": {
     "title": "Contact Us",

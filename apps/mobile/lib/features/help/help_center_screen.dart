@@ -38,6 +38,8 @@ final _categories = <_FaqCategory>[
       _FaqItem(questionKey: 'help.q2', answerKey: 'help.a2'),
       _FaqItem(questionKey: 'help.q3', answerKey: 'help.a3'),
       _FaqItem(questionKey: 'help.q4', answerKey: 'help.a4'),
+      _FaqItem(questionKey: 'help.q26', answerKey: 'help.a26'),
+      _FaqItem(questionKey: 'help.q27', answerKey: 'help.a27'),
     ],
   ),
   const _FaqCategory(
