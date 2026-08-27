@@ -411,31 +411,36 @@ export function TicketChat({
             accept="image/*,.pdf,.doc,.docx"
           />
 
-          <div className="flex gap-4 mb-2 px-1">
-            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-              <input
-                type="radio"
-                name="messageType"
-                checked={!isInternal}
-                onChange={() => setIsInternal(false)}
-                className="sr-only"
-              />
-              <span className={`px-3 py-1.5 rounded-full font-medium transition-colors ${!isInternal ? 'bg-gray-200 text-gray-800' : 'text-gray-500 hover:bg-gray-100'}`}>Public Reply</span>
-            </label>
-            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-              <input
-                type="radio"
-                name="messageType"
-                checked={isInternal}
-                onChange={() => setIsInternal(true)}
-                className="sr-only"
-              />
-              <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-colors ${isInternal ? 'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-300' : 'text-gray-500 hover:bg-gray-100'}`}>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                Internal Note
-              </span>
-            </label>
-          </div>
+          {/* Staff-only: the server forces isInternal=false for customers, so
+              showing them a lock-badged "Internal Note" option promised a
+              privacy it never had. */}
+          {selectedTicket.isStaff && (
+            <div className="flex gap-4 mb-2 px-1">
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                <input
+                  type="radio"
+                  name="messageType"
+                  checked={!isInternal}
+                  onChange={() => setIsInternal(false)}
+                  className="sr-only"
+                />
+                <span className={`px-3 py-1.5 rounded-full font-medium transition-colors ${!isInternal ? 'bg-gray-200 text-gray-800' : 'text-gray-500 hover:bg-gray-100'}`}>Public Reply</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                <input
+                  type="radio"
+                  name="messageType"
+                  checked={isInternal}
+                  onChange={() => setIsInternal(true)}
+                  className="sr-only"
+                />
+                <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-colors ${isInternal ? 'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-300' : 'text-gray-500 hover:bg-gray-100'}`}>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  Internal Note
+                </span>
+              </label>
+            </div>
+          )}
 
           <div className={`flex items-end gap-2 p-2 rounded-xl border shadow-sm transition-all
             ${isInternal

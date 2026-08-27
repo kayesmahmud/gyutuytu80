@@ -58,6 +58,8 @@ export interface TicketMessage {
 
 export interface TicketDetail extends Ticket {
   messages: TicketMessage[];
+  /** True when the VIEWER is staff — gates the internal-note composer. */
+  isStaff?: boolean;
   user: {
     id: number;
     fullName: string;
