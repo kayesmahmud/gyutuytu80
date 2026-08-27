@@ -221,7 +221,16 @@
     "adDeleted": "Ad deleted successfully",
     "failedToDelete": "Failed to delete",
     "noAdsFound": "No ads found",
-    "startSelling": "Start selling by posting your first ad!"
+    "startSelling": "Start selling by posting your first ad!",
+    "aiHold": {
+      "generic": "Our AI couldn't approve this ad automatically. A team member will review it soon.",
+      "stock_photo": "Our AI couldn't approve this ad automatically — the photos look like stock images, not your actual item. A team member will review it soon. Tip: real photos usually get approved faster.",
+      "unclear_photos": "Our AI couldn't approve this ad automatically — the photos don't clearly show the item. A team member will review it soon. Tip: clear photos of the actual item get approved faster.",
+      "details_mismatch": "Our AI couldn't approve this ad automatically — the title or description doesn't seem to match the photos. A team member will review it soon.",
+      "suspicious_price": "Our AI couldn't approve this ad automatically — the price looks unusual for this item. A team member will review it soon.",
+      "duplicate": "Our AI couldn't approve this ad automatically — it looks similar to an ad that already exists. A team member will review it soon.",
+      "policy_check": "Our AI couldn't approve this ad automatically — it needs a manual check against our posting rules. A team member will review it soon."
+    }
   },
   "myAds": {
     "title": "My Ads",

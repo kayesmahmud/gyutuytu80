@@ -51,6 +51,11 @@ class Ad {
   // Location type (district, municipality, area, etc.)
   final String? locationType;
 
+  // AI moderation surface (owner-only; populated by my-ads responses).
+  // aiReasonCode maps to a bilingual message; raw AI text stays editor-only.
+  final bool aiHeld;
+  final String? aiReasonCode;
+
   Ad({
     required this.id,
     required this.userId,
@@ -83,6 +88,8 @@ class Ad {
     this.condition,
     this.favoritesCount = 0,
     this.locationType,
+    this.aiHeld = false,
+    this.aiReasonCode,
   });
 
   factory Ad.fromJson(Map<String, dynamic> json) {
@@ -110,6 +117,8 @@ class Ad {
             json['googleMapsLink'] as String? ??
             json['google_maps_link'] as String?,
         viewCount: json['viewCount'] as int? ?? json['view_count'] as int? ?? 0,
+        aiHeld: json['aiHeld'] as bool? ?? false,
+        aiReasonCode: json['aiReasonCode'] as String?,
         isNegotiable:
             json['isNegotiable'] as bool? ??
             json['is_negotiable'] as bool? ??
@@ -193,6 +202,8 @@ class Ad {
       'condition': condition,
       'favoritesCount': favoritesCount,
       'locationType': locationType,
+      'aiHeld': aiHeld,
+      'aiReasonCode': aiReasonCode,
     };
   }
 
@@ -234,6 +245,8 @@ class Ad {
     String? condition,
     int? favoritesCount,
     String? locationType,
+    bool? aiHeld,
+    String? aiReasonCode,
   }) {
     return Ad(
       id: id ?? this.id,
@@ -266,6 +279,8 @@ class Ad {
       condition: condition ?? this.condition,
       favoritesCount: favoritesCount ?? this.favoritesCount,
       locationType: locationType ?? this.locationType,
+      aiHeld: aiHeld ?? this.aiHeld,
+      aiReasonCode: aiReasonCode ?? this.aiReasonCode,
     );
   }
 }
@@ -355,6 +370,8 @@ class AdWithDetails extends Ad {
     super.condition,
     super.favoritesCount,
     super.locationType,
+    super.aiHeld,
+    super.aiReasonCode,
     required this.userName,
     this.userAvatar,
     this.userPhone,
@@ -411,6 +428,10 @@ class AdWithDetails extends Ad {
       condition: ad.condition,
       favoritesCount: ad.favoritesCount,
       locationType: ad.locationType,
+      // Owner-only AI moderation surface — dropping these here would silently
+      // hide the hold-reason banner (same trap as reviewedAt above).
+      aiHeld: ad.aiHeld,
+      aiReasonCode: ad.aiReasonCode,
       userName:
           json['userName'] as String? ??
           json['user_name'] as String? ??

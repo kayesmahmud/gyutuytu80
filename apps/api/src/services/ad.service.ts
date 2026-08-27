@@ -114,6 +114,11 @@ export function transformAdForDashboard(ad: any) {
     price: ad.price,
     condition: ad.condition,
     status: ad.status === 'approved' ? 'active' : ad.status,
+    // Owner-only surface (my-ads): seller-facing AI hold category. The raw
+    // ai_reason text stays editor-only; clients map the code to a bilingual
+    // message. Old app versions simply ignore these fields.
+    aiHeld: ad.ai_verdict === 'held',
+    aiReasonCode: ad.ai_verdict === 'held' ? (ad.ai_reason_code ?? null) : null,
     slug: ad.slug,
     views: ad.view_count,
     viewCount: ad.view_count,

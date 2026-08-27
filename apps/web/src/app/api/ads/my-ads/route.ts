@@ -46,6 +46,8 @@ export async function GET(request: NextRequest) {
         condition: true,
         status: true,
         status_reason: true,
+        ai_verdict: true,
+        ai_reason_code: true,
         slug: true,
         view_count: true,
         is_featured: true,
@@ -99,6 +101,9 @@ export async function GET(request: NextRequest) {
       actualStatus: ad.status, // Preserve original status for logic checks
       isApproved: ad.status === 'approved', // Flag for approved ads
       statusReason: ad.status_reason || null, // Include rejection reason
+      // Owner-only surface: seller-facing AI hold category (raw ai_reason stays editor-only)
+      aiHeld: ad.ai_verdict === 'held',
+      aiReasonCode: ad.ai_verdict === 'held' ? ad.ai_reason_code : null,
       slug: ad.slug,
       views: ad.view_count, // Map view_count to views for dashboard
       viewCount: ad.view_count,

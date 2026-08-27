@@ -592,6 +592,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Codes with a dedicated translation; anything else gets the generic line.
+  static const _aiHoldCodes = {
+    'stock_photo',
+    'unclear_photos',
+    'details_mismatch',
+    'suspicious_price',
+    'duplicate',
+    'policy_check',
+  };
+
+  String _aiHoldMessage(String? code) =>
+      code != null && _aiHoldCodes.contains(code)
+      ? 'dashboard.aiHold.$code'.tr()
+      : 'dashboard.aiHold.generic'.tr();
+
   Widget _buildErrorState() {
     return LoadErrorView(isOffline: _isOffline, onRetry: _fetchAds);
   }
@@ -737,6 +752,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
+
+          // AI hold-reason banner: the AI couldn't auto-approve this ad and
+          // says why — mapped from the whitelisted code, never raw AI text.
+          if (ad.status == AdStatus.pending && ad.aiHeld) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F3FF),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFDDD6FE)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    LucideIcons.sparkles,
+                    size: 16,
+                    color: Color(0xFF7C3AED),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _aiHoldMessage(ad.aiReasonCode),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: const Color(0xFF5B21B6),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           const SizedBox(height: 12),
 

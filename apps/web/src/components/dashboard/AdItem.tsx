@@ -17,6 +17,16 @@ interface AdItemProps {
   onDelete: (adId: number) => Promise<void>;
 }
 
+/** Codes with a dedicated translation; anything else gets the generic line. */
+const AI_HOLD_CODES = new Set([
+  'stock_photo',
+  'unclear_photos',
+  'details_mismatch',
+  'suspicious_price',
+  'duplicate',
+  'policy_check',
+]);
+
 export function AdItem({ ad, lang, onDelete }: AdItemProps) {
   const router = useRouter();
   const [showPromoteModal, setShowPromoteModal] = useState(false);
@@ -96,6 +106,22 @@ export function AdItem({ ad, lang, onDelete }: AdItemProps) {
             <span>{ad.views || 0}</span>
           </div>
         </div>
+
+        {/* AI hold reason: the AI couldn't auto-approve and says why — mapped
+            from the whitelisted code (never raw AI text). Editors act next. */}
+        {ad.status === 'pending' && ad.aiHeld && (
+          <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-violet-200 bg-violet-50 p-3">
+            <span className="shrink-0 text-base leading-5">✨</span>
+            <p className="m-0 text-sm leading-relaxed text-violet-900">
+              {t(
+                ad.aiReasonCode &&
+                  AI_HOLD_CODES.has(ad.aiReasonCode)
+                  ? `aiHold_${ad.aiReasonCode}`
+                  : 'aiHold_generic'
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Rejection Reason - Enhanced */}
         {ad.status === 'rejected' && ad.statusReason && (

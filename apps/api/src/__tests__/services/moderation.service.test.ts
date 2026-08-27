@@ -79,7 +79,7 @@ describe('parseVerdict', () => {
     const result = parseVerdict(
       JSON.stringify({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.98 })
     );
-    expect(result).toEqual({ verdict: 'publish', reason: 'Genuine listing', confidence: 0.98, explicit: false, prohibited: false });
+    expect(result).toEqual({ verdict: 'publish', reason: 'Genuine listing', reasonCode: null, confidence: 0.98, explicit: false, prohibited: false });
   });
 
   it('holds a publish verdict below the 0.95 threshold', () => {
@@ -170,6 +170,40 @@ describe('parseVerdict', () => {
     const empty = parseVerdict(JSON.stringify({ verdict: 'hold', confidence: 0.5 }));
     expect(empty.reason).toBe('No reason given');
   });
+
+  it('passes a whitelisted reason_code through on hold', () => {
+    const r = parseVerdict(
+      JSON.stringify({ verdict: 'hold', reason: 'x', reason_code: 'stock_photo', confidence: 0.5 })
+    );
+    expect(r.reasonCode).toBe('stock_photo');
+  });
+
+  it('nulls out unknown or non-string reason_codes (whitelist only)', () => {
+    for (const bad of ['weapons_detected', '', 42, null, { a: 1 }]) {
+      const r = parseVerdict(
+        JSON.stringify({ verdict: 'hold', reason: 'x', reason_code: bad, confidence: 0.5 })
+      );
+      expect(r.reasonCode).toBeNull();
+    }
+  });
+
+  it('forces policy_check on explicit/prohibited — the seller-facing code never leaks the detection', () => {
+    const prohibited = parseVerdict(
+      JSON.stringify({ verdict: 'hold', reason: 'gun', reason_code: 'stock_photo', confidence: 0.9, prohibited: true })
+    );
+    expect(prohibited.reasonCode).toBe('policy_check');
+    const explicit = parseVerdict(
+      JSON.stringify({ verdict: 'hold', reason: 'nudity', reason_code: 'suspicious_price', confidence: 0.9, explicit: true })
+    );
+    expect(explicit.reasonCode).toBe('policy_check');
+  });
+
+  it('publish verdicts carry no reason code even if the model sends one', () => {
+    const r = parseVerdict(
+      JSON.stringify({ verdict: 'publish', reason: 'ok', reason_code: 'other', confidence: 0.99 })
+    );
+    expect(r.reasonCode).toBeNull();
+  });
 });
 
 describe('shouldModerateNewAds', () => {
@@ -228,19 +262,19 @@ describe('moderateAd', () => {
   it('holds with ai_unavailable on HTTP errors', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500, text: async () => 'boom' });
     const result = await moderateAd(testAd, images);
-    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false, prohibited: false });
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, reasonCode: null, confidence: 0, explicit: false, prohibited: false });
   });
 
   it('holds with ai_unavailable on timeout/network failure', async () => {
     mockFetch.mockRejectedValueOnce(new Error('The operation was aborted due to timeout'));
     const result = await moderateAd(testAd, images);
-    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false, prohibited: false });
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, reasonCode: null, confidence: 0, explicit: false, prohibited: false });
   });
 
   it('holds with ai_unavailable when the reply has no content', async () => {
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [] }) });
     const result = await moderateAd(testAd, images);
-    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, confidence: 0, explicit: false, prohibited: false });
+    expect(result).toEqual({ verdict: 'hold', reason: AI_UNAVAILABLE_REASON, reasonCode: null, confidence: 0, explicit: false, prohibited: false });
   });
 });
 

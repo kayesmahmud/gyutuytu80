@@ -11,6 +11,10 @@ export interface Ad {
   actualStatus?: string;
   isApproved?: boolean;
   statusReason?: string;
+  /** AI moderation held this ad for manual review (owner-only surface) */
+  aiHeld?: boolean;
+  /** Whitelisted seller-facing hold category; null → generic message */
+  aiReasonCode?: string | null;
   views: number;
   createdAt: string;
   images?: Array<{
