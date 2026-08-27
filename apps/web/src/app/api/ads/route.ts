@@ -5,6 +5,8 @@ import {
   createAd,
   parseCustomFields,
   normalizeCondition,
+  AD_DUPLICATE_PENDING_MESSAGE,
+  AD_DUPLICATE_LIVE_MESSAGE,
 } from '@/lib/services/ad.service';
 import {
   getAdLimits,
@@ -230,6 +232,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (error.message?.includes('Image processing failed')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 400 }
+      );
+    }
+
+    // Impatient-repost guard — surface the bilingual explanation, not a 500
+    if (
+      error.message === AD_DUPLICATE_PENDING_MESSAGE ||
+      error.message === AD_DUPLICATE_LIVE_MESSAGE
+    ) {
       return NextResponse.json(
         { success: false, message: error.message },
         { status: 400 }

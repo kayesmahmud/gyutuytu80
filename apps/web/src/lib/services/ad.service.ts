@@ -271,7 +271,32 @@ export async function listAds(filters: AdFilters) {
 // Ad Creation
 // ============================================================================
 
+// Keep in sync with apps/api/src/services/ad.service.ts (the Express copy) —
+// bilingual single strings so every client shows both languages verbatim.
+export const AD_DUPLICATE_PENDING_MESSAGE =
+  'You already posted this ad — it is waiting for review and will go live once approved. Posting it again will not speed it up. तपाईंले यो विज्ञापन पहिले नै पोस्ट गर्नुभएको छ — यो समीक्षामा छ र स्वीकृत भएपछि लाइभ हुनेछ। फेरि पोस्ट गर्दा छिटो हुँदैन।';
+export const AD_DUPLICATE_LIVE_MESSAGE =
+  'You already have a live ad with this title. Edit the existing ad instead of posting it again. यो शीर्षकको विज्ञापन पहिले नै लाइभ छ। फेरि पोस्ट गर्नुको सट्टा भइरहेको विज्ञापन सम्पादन गर्नुहोस्।';
+
 export async function createAd(userId: number, input: CreateAdInput, images: File[]) {
+  // Impatient-repost guard: same seller, same title, first copy still pending
+  // or already live → refuse instead of creating a duplicate. Near-duplicates
+  // with reworded titles are the AI moderation's job.
+  const duplicate = await prisma.ads.findFirst({
+    where: {
+      user_id: userId,
+      deleted_at: null,
+      status: { in: ['pending', 'approved'] },
+      title: { equals: input.title.trim(), mode: 'insensitive' },
+    },
+    select: { status: true },
+  });
+  if (duplicate) {
+    throw new Error(
+      duplicate.status === 'pending' ? AD_DUPLICATE_PENDING_MESSAGE : AD_DUPLICATE_LIVE_MESSAGE
+    );
+  }
+
   // Get user details if seller info not provided
   let sellerName = input.sellerName;
   let sellerPhone = input.sellerPhone;

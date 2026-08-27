@@ -26,6 +26,9 @@ import {
   getAdEditHistoryForOwner,
   MAX_LIVE_EDITS_PER_MONTH,
   validateAdLocation,
+  findDuplicateAdForUser,
+  AD_DUPLICATE_PENDING_MESSAGE,
+  AD_DUPLICATE_LIVE_MESSAGE,
 } from '../services/ad.service.js';
 import { logReviewHistory } from '../utils/responseHelpers.js';
 import {
@@ -342,6 +345,15 @@ router.post(
     const locationError = await validateAdLocation(parseInt(locationId));
     if (locationError) {
       throw new ValidationError(locationError);
+    }
+
+    // Impatient-repost guard: same seller, same title, first copy still
+    // pending or already live → refuse instead of creating a duplicate.
+    const duplicate = await findDuplicateAdForUser(userId, String(title));
+    if (duplicate) {
+      throw new ValidationError(
+        duplicate.status === 'pending' ? AD_DUPLICATE_PENDING_MESSAGE : AD_DUPLICATE_LIVE_MESSAGE
+      );
     }
 
     // Enforce ad limits from site_settings (tiered by verification status)

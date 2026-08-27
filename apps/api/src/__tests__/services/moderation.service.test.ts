@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('@thulobazaar/database', () => ({
   prisma: {
     site_settings: { findUnique: vi.fn() },
-    ads: { count: vi.fn(), updateMany: vi.fn() },
+    ads: { count: vi.fn(), updateMany: vi.fn(), findMany: vi.fn() },
   },
 }));
 
@@ -69,6 +69,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockFetch.mockReset();
   process.env.DEEPSEEK_API_KEY = 'test-key';
+  // Seller's recent-ads lookup (duplicate context) defaults to none
+  vi.mocked(prisma.ads.findMany).mockResolvedValue([] as any);
 });
 
 afterEach(() => {
@@ -388,6 +390,48 @@ describe('moderateNewAd', () => {
       expect.objectContaining({
         data: expect.objectContaining({ published_at: expect.any(Date) }),
       })
+    );
+  });
+
+  it("shows the seller's other recent ads to the model for duplicate detection", async () => {
+    enableModeration();
+    vi.mocked(prisma.ads.findMany).mockResolvedValue([
+      { title: 'iPhone 13 Pro 256GB like new', price: 95000, status: 'pending' },
+    ] as any);
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(
+        JSON.stringify({ verdict: 'hold', reason: 'Repost of pending ad', reason_code: 'duplicate', confidence: 0.4 })
+      )
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    const body = JSON.parse(vi.mocked(mockFetch).mock.calls[0][1]!.body as string);
+    const text = body.messages
+      .find((m: any) => m.role === 'user')
+      .content.find((c: any) => c.type === 'text').text;
+    expect(text).toContain("SELLER'S OTHER RECENT ADS");
+    expect(text).toContain('iPhone 13 Pro 256GB like new');
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ ai_verdict: 'held', ai_reason_code: 'duplicate' }),
+      })
+    );
+  });
+
+  it('a recent-ads lookup failure never blocks the check itself', async () => {
+    enableModeration();
+    vi.mocked(prisma.ads.findMany).mockRejectedValue(new Error('db down'));
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'Genuine', confidence: 0.99 }))
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await moderateNewAd(params);
+
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: 'approved' }) })
     );
   });
 

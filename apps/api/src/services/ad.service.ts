@@ -834,6 +834,31 @@ export async function getDirectPublishInfo(userId: number) {
   return { canDirectPublish: computeCanDirectPublish(user) };
 }
 
+// Bilingual like the location-validation messages: old app versions show
+// these server strings verbatim, so both languages ride in one string.
+export const AD_DUPLICATE_PENDING_MESSAGE =
+  'You already posted this ad — it is waiting for review and will go live once approved. Posting it again will not speed it up. तपाईंले यो विज्ञापन पहिले नै पोस्ट गर्नुभएको छ — यो समीक्षामा छ र स्वीकृत भएपछि लाइभ हुनेछ। फेरि पोस्ट गर्दा छिटो हुँदैन।';
+export const AD_DUPLICATE_LIVE_MESSAGE =
+  'You already have a live ad with this title. Edit the existing ad instead of posting it again. यो शीर्षकको विज्ञापन पहिले नै लाइभ छ। फेरि पोस्ट गर्नुको सट्टा भइरहेको विज्ञापन सम्पादन गर्नुहोस्।';
+
+/**
+ * The impatient-repost guard: the same seller re-posting the same title while
+ * the first copy is pending (didn't read "our team will review") or already
+ * live. Case-insensitive exact title match — near-duplicates with reworded
+ * titles are the AI moderation's job (the 'duplicate' reason code).
+ */
+export async function findDuplicateAdForUser(userId: number, title: string) {
+  return prisma.ads.findFirst({
+    where: {
+      user_id: userId,
+      deleted_at: null,
+      status: { in: ['pending', 'approved'] },
+      title: { equals: title.trim(), mode: 'insensitive' },
+    },
+    select: { id: true, status: true },
+  });
+}
+
 /** Live-ad edits are limited per calendar month to prevent bait-and-switch churn (owner policy: 3). */
 export const MAX_LIVE_EDITS_PER_MONTH = 3;
 
