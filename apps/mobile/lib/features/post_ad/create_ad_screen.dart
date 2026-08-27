@@ -1032,16 +1032,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
       }
     }
 
-    // AFTER category selection — selecting a category clears attribute values.
-    // Only when the AI applied the category (fresh attrs) and nothing already
-    // set a condition: the AI must never override a user's dropdown choice,
-    // nor inject an orphan key into templates without a condition field.
-    final condition = draft.condition;
-    if (condition != null &&
-        marks.contains('category') &&
-        !_attributeValues.containsKey('condition')) {
-      _attributeValues['condition'] = condition;
-    }
+    // Condition (Brand New/Used) is deliberately NOT applied (owner,
+    // 2026-08-27): the seller judges it themselves — like price.
 
     setState(() => _aiFilled.addAll(marks));
     _applyingAiDraft = false;
