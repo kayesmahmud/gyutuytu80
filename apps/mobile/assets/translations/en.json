@@ -229,7 +229,8 @@
       "details_mismatch": "Our AI couldn't approve this ad automatically — the title or description doesn't seem to match the photos. A team member will review it soon.",
       "suspicious_price": "Our AI couldn't approve this ad automatically — the price looks unusual for this item. A team member will review it soon.",
       "duplicate": "Our AI couldn't approve this ad automatically — it looks similar to an ad that already exists. A team member will review it soon.",
-      "policy_check": "Our AI couldn't approve this ad automatically — it needs a manual check against our posting rules. A team member will review it soon."
+      "policy_check": "Our AI couldn't approve this ad automatically — it needs a manual check against our posting rules. A team member will review it soon.",
+      "editNudge": "You can fix this yourself — tap Edit below to update your ad."
     }
   },
   "myAds": {

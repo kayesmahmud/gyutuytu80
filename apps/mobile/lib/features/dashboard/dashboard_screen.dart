@@ -774,13 +774,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      _aiHoldMessage(ad.aiReasonCode),
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        height: 1.4,
-                        color: const Color(0xFF5B21B6),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _aiHoldMessage(ad.aiReasonCode),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            height: 1.4,
+                            color: const Color(0xFF5B21B6),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        // Nudge toward the Edit button right below this card's
+                        // banner — fixing the ad beats waiting for review.
+                        Text(
+                          'dashboard.aiHold.editNudge'.tr(),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            height: 1.4,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF6D28D9),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

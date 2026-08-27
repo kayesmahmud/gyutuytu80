@@ -112,14 +112,22 @@ export function AdItem({ ad, lang, onDelete }: AdItemProps) {
         {ad.status === 'pending' && ad.aiHeld && (
           <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-violet-200 bg-violet-50 p-3">
             <span className="shrink-0 text-base leading-5">✨</span>
-            <p className="m-0 text-sm leading-relaxed text-violet-900">
-              {t(
-                ad.aiReasonCode &&
-                  AI_HOLD_CODES.has(ad.aiReasonCode)
-                  ? `aiHold_${ad.aiReasonCode}`
-                  : 'aiHold_generic'
-              )}
-            </p>
+            <div>
+              <p className="m-0 text-sm leading-relaxed text-violet-900">
+                {t(
+                  ad.aiReasonCode &&
+                    AI_HOLD_CODES.has(ad.aiReasonCode)
+                    ? `aiHold_${ad.aiReasonCode}`
+                    : 'aiHold_generic'
+                )}
+              </p>
+              <Link
+                href={`/${lang}/edit-ad/${ad.id}`}
+                className="mt-1.5 inline-block text-sm font-semibold text-violet-700 hover:text-violet-900 hover:underline"
+              >
+                {t('aiHold_editNudge')}
+              </Link>
+            </div>
           </div>
         )}
 
