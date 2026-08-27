@@ -18,7 +18,7 @@ const LOGO = path.join(REPO_ROOT, 'apps/web/public/logo White.png');
 const OUT = path.join(__dirname, 'ad-watermark.png');
 
 const MASTER_WIDTH = 800;   // master is large; runtime scales DOWN only
-const LOGO_OPACITY = 0.20;  // subtle — the seller's photo stays dominant
+const LOGO_OPACITY = 0.30;  // subtle — the seller's photo stays dominant
 const SHADOW_OPACITY = 0.10;
 const SHADOW_BLUR = 8;      // sigma at 800px width
 const SHADOW_OFFSET = 4;    // px down-right at 800px width
