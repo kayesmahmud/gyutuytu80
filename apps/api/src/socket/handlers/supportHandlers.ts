@@ -3,6 +3,16 @@ import { prisma } from '@thulobazaar/database';
 import type { AuthenticatedSocket } from '../types.js';
 import { censorProfanity } from '../../utils/profanityFilter.js';
 import { notifyEditors } from '../../services/notification.service.js';
+import { isStaffRole } from '../../utils/staffRoles.js';
+import {
+  emitSupportMessage,
+  emitTicketUpdate,
+  notifyTicketOwner,
+  SUPPORT_REPLY_PUSH_TITLE,
+  SUPPORT_RESOLVED_PUSH_TITLE,
+  SUPPORT_RESOLVED_PUSH_BODY,
+} from '../../services/supportEvents.service.js';
+import { queueSupportAiReply } from '../../services/supportAi.service.js';
 
 // Cooldown (minutes) for support-message editor alerts, per editor per ticket.
 const SUPPORT_ALERT_COOLDOWN_MINUTES = 2;
@@ -27,7 +37,7 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
         return callback({ error: 'Ticket not found' });
       }
 
-      const isStaff = userRole === 'editor' || userRole === 'super_admin' || userRole === 'root';
+      const isStaff = isStaffRole(userRole);
 
       if (!isStaff && ticket.user_id !== userId) {
         return callback({ error: 'Access denied' });
@@ -73,7 +83,7 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
         return callback({ error: 'Ticket not found' });
       }
 
-      const isStaff = userRole === 'editor' || userRole === 'super_admin' || userRole === 'root';
+      const isStaff = isStaffRole(userRole);
 
       if (!isStaff && ticket.user_id !== userId) {
         return callback({ error: 'Access denied' });
@@ -111,16 +121,24 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
         },
       });
 
-      const newStatus = isStaff ? 'waiting_on_user' : 'in_progress';
-      if (ticket.status === 'open' || (isStaff && ticket.status === 'in_progress') || (!isStaff && ticket.status === 'waiting_on_user')) {
+      const wantedStatus = isStaff ? 'waiting_on_user' : 'in_progress';
+      const shouldTransition =
+        ticket.status === 'open' ||
+        (isStaff && ticket.status === 'in_progress') ||
+        (!isStaff && ticket.status === 'waiting_on_user');
+      if (shouldTransition) {
         await prisma.support_tickets.update({
           where: { id: ticketId },
           data: {
-            status: newStatus,
+            status: wantedStatus,
             updated_at: new Date(),
           },
         });
       }
+      // Broadcast the status actually in effect — emitting the wished-for
+      // status when the guarded update didn't run (e.g. resolved tickets)
+      // desynced clients from the DB.
+      const currentStatus = shouldTransition ? wantedStatus : ticket.status;
 
       const messageData = {
         id: message.id,
@@ -128,7 +146,7 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
         content: message.content,
         type: message.type,
         attachmentUrl: message.attachment_url,
-        isInternal: message.is_internal,
+        isInternal: message.is_internal ?? false,
         createdAt: message.created_at,
         sender: {
           id: message.users.id,
@@ -138,24 +156,13 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
         },
       };
 
-      io.to(`support:${ticketId}`).emit('support:message-new', {
-        ticketId,
-        message: messageData,
-        newStatus,
-      });
+      // Routes internal notes to staff only (the per-ticket room includes the
+      // customer) and updates the staff queue with a leak-safe preview.
+      emitSupportMessage(ticketId, messageData, currentStatus);
 
-      io.to('support:staff').emit('support:ticket-updated', {
-        ticketId,
-        status: newStatus,
-        lastMessage: {
-          content: actualIsInternal ? '[Internal note]' : content.substring(0, 100),
-          createdAt: message.created_at,
-        },
-      });
-
-      // Push/desktop-bell alert to editors only for inbound customer messages
-      // (online staff already got the real-time socket event above).
       if (!isStaff && !actualIsInternal) {
+        // Push/desktop-bell alert to editors for inbound customer messages
+        // (online staff already got the real-time socket event above).
         notifyEditors({
           type: 'support_message',
           title: 'New support reply',
@@ -164,6 +171,19 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
           referenceId: ticketId,
           cooldownMinutes: SUPPORT_ALERT_COOLDOWN_MINUTES,
         }).catch((err) => console.error('Support socket editor notification error:', err));
+
+        // Let the AI assistant answer (no-op unless ai_support_enabled).
+        queueSupportAiReply(ticketId);
+      } else if (isStaff && !actualIsInternal) {
+        // Staff replied: tell the ticket owner (push + bell + in-app row) —
+        // customers previously learned of replies only by reopening the ticket.
+        notifyTicketOwner({
+          ticketId,
+          ownerUserId: ticket.user_id,
+          title: SUPPORT_REPLY_PUSH_TITLE,
+          body: sanitizedContent.slice(0, 140),
+          cooldownMinutes: 2,
+        }).catch((err) => console.error('Support owner notification error:', err));
       }
 
       callback({ success: true, message: messageData });
@@ -185,9 +205,7 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
     try {
       const { ticketId, status, priority, assignedTo } = payload;
 
-      const isStaff = userRole === 'editor' || userRole === 'super_admin' || userRole === 'root';
-
-      if (!isStaff) {
+      if (!isStaffRole(userRole)) {
         return callback({ error: 'Only staff can update tickets' });
       }
 
@@ -218,6 +236,7 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
         select: {
           id: true,
           ticket_number: true,
+          user_id: true,
           status: true,
           priority: true,
           assigned_to: true,
@@ -247,8 +266,18 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
         updatedAt: ticket.updated_at,
       };
 
-      io.to(`support:${ticketId}`).emit('support:ticket-status-changed', updatePayload);
-      io.to('support:staff').emit('support:ticket-updated', updatePayload);
+      emitTicketUpdate(updatePayload);
+
+      // Resolving a ticket is invisible to a customer who isn't watching the
+      // socket — tell them so they can come back and rate the support.
+      if (status === 'resolved') {
+        notifyTicketOwner({
+          ticketId,
+          ownerUserId: ticket.user_id,
+          title: SUPPORT_RESOLVED_PUSH_TITLE,
+          body: SUPPORT_RESOLVED_PUSH_BODY,
+        }).catch((err) => console.error('Support resolve notification error:', err));
+      }
 
       callback({ success: true, data: updatePayload });
     } catch (error) {
@@ -261,9 +290,7 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
    * Staff joins the staff room to receive all ticket updates
    */
   socket.on('support:join-staff-room', (callback) => {
-    const isStaff = userRole === 'editor' || userRole === 'super_admin' || userRole === 'root';
-
-    if (!isStaff) {
+    if (!isStaffRole(userRole)) {
       return callback({ error: 'Only staff can join this room' });
     }
 

@@ -550,7 +550,10 @@ export type NotificationType =
   | 'ad_live_posted'
   | 'ad_live_edited'
   | 'verification_requested'
-  | 'support_message';
+  | 'support_message'
+  // Staff or AI assistant replied on / resolved the user's support ticket.
+  // Transactional: deliberately NOT in the engagement frequency-cap allowlist.
+  | 'support_reply';
 
 export interface AppNotification {
   id: number;

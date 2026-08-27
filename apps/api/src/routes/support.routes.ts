@@ -4,20 +4,21 @@ import { catchAsync } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { censorProfanity } from '../utils/profanityFilter.js';
 import { notifyEditors } from '../services/notification.service.js';
+// 🔒 API-M4: define staff POSITIVELY. Checking `role === 'user'` treats a null/
+// unknown role as staff (IDOR — a user with a null role could read others' tickets
+// and internal messages). The canonical list lives in utils/staffRoles (incl. root).
+import { isStaffRole } from '../utils/staffRoles.js';
+import {
+  emitSupportMessage,
+  emitTicketCreated,
+} from '../services/supportEvents.service.js';
+import { queueSupportAiReply } from '../services/supportAi.service.js';
 
 const router = Router();
 
 // Cooldown (minutes) for support-message editor alerts, per editor per ticket,
 // so a burst of messages on one ticket doesn't spam every editor's phone.
 const SUPPORT_ALERT_COOLDOWN_MINUTES = 2;
-
-// 🔒 API-M4: define staff POSITIVELY. Checking `role === 'user'` treats a null/
-// unknown role as staff (IDOR — a user with a null role could read others' tickets
-// and internal messages). Only these roles are staff; everything else is a user.
-const STAFF_ROLES = ['editor', 'admin', 'super_admin'];
-function isStaffRole(role?: string | null): boolean {
-  return STAFF_ROLES.includes(role ?? '');
-}
 
 function generateTicketNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
@@ -75,6 +76,9 @@ router.get(
           updated_at: true,
           sla_breach_at: true,
           support_messages: {
+            // Owner-only route: an internal staff note must never become the
+            // customer's list preview.
+            where: { is_internal: false },
             select: {
               id: true,
               content: true,
@@ -176,6 +180,19 @@ router.post(
       referenceId: ticket.id,
       cooldownMinutes: SUPPORT_ALERT_COOLDOWN_MINUTES,
     }).catch((err) => console.error('Support ticket editor notification error:', err));
+
+    // Real-time insert into the staff queue + let the AI assistant take the
+    // first look. Both fire-and-forget — ticket creation never waits on them.
+    emitTicketCreated({
+      id: ticket.id,
+      ticketNumber: ticket.ticket_number,
+      subject: ticket.subject,
+      category: ticket.category,
+      priority: ticket.priority,
+      status: ticket.status,
+      createdAt: ticket.created_at,
+    });
+    queueSupportAiReply(ticket.id);
 
     res.status(201).json({
       success: true,
@@ -405,17 +422,36 @@ router.post(
     });
 
     // Update ticket status and timestamp
-    if (ticket.status === 'waiting_on_user' || ticket.status === 'open') {
-      await prisma.support_tickets.update({
-        where: { id: ticketId },
-        data: { status: 'in_progress', updated_at: new Date() },
-      });
-    } else {
-      await prisma.support_tickets.update({
-        where: { id: ticketId },
-        data: { updated_at: new Date() },
-      });
-    }
+    const shouldTransition = ticket.status === 'waiting_on_user' || ticket.status === 'open';
+    await prisma.support_tickets.update({
+      where: { id: ticketId },
+      data: shouldTransition
+        ? { status: 'in_progress', updated_at: new Date() }
+        : { updated_at: new Date() },
+    });
+    const currentStatus = shouldTransition ? 'in_progress' : ticket.status;
+
+    // Real-time delivery to anyone viewing the ticket (this REST path is how
+    // mobile customers reply — without this, editors only saw it on reload).
+    emitSupportMessage(
+      ticketId,
+      {
+        id: message.id,
+        senderId: message.sender_id,
+        content: message.content,
+        type: message.type,
+        attachmentUrl: null,
+        isInternal: false,
+        createdAt: message.created_at,
+        sender: {
+          id: message.users.id,
+          fullName: message.users.full_name,
+          avatar: message.users.avatar,
+          isStaff: message.users.role !== 'user',
+        },
+      },
+      currentStatus
+    );
 
     // This route is owner-only (403 above), so every message here is from a
     // customer → notify editors (editor APK push + desktop bell)
@@ -427,6 +463,9 @@ router.post(
       referenceId: ticketId,
       cooldownMinutes: SUPPORT_ALERT_COOLDOWN_MINUTES,
     }).catch((err) => console.error('Support message editor notification error:', err));
+
+    // Let the AI assistant answer (no-op unless ai_support_enabled).
+    queueSupportAiReply(ticketId);
 
     res.status(201).json({
       success: true,

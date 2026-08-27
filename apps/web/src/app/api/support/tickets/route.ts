@@ -7,12 +7,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { requireAuth } from '@/lib/auth';
+import { censorProfanity } from '@/utils/profanityCheck';
+import { notifySupportEvent } from '@/lib/supportBridge';
 
 // Generate unique ticket number
 function generateTicketNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `TB-${timestamp}${random}`;
+}
+
+// SLA deadline by priority — kept in sync with calculateSlaBreach in
+// apps/api/src/routes/support.routes.ts (urgent 2h / high 8h / normal 24h / low 48h).
+function calculateSlaBreach(priority: string): Date {
+  const now = new Date();
+  switch (priority) {
+    case 'urgent':
+      now.setHours(now.getHours() + 2);
+      break;
+    case 'high':
+      now.setHours(now.getHours() + 8);
+      break;
+    case 'normal':
+      now.setHours(now.getHours() + 24);
+      break;
+    case 'low':
+    default:
+      now.setHours(now.getHours() + 48);
+      break;
+  }
+  return now;
 }
 
 /**
@@ -94,6 +118,8 @@ export async function GET(request: NextRequest) {
             },
           },
           support_messages: {
+            // An internal staff note must never become a customer's list preview
+            ...(isStaff ? {} : { where: { is_internal: false } }),
             select: {
               id: true,
               content: true,
@@ -177,7 +203,7 @@ export async function POST(request: NextRequest) {
     const userId = await requireAuth(request);
 
     const body = await request.json();
-    const { subject, category = 'general', priority = 'normal', message } = body;
+    const { subject, category = 'general', priority = 'normal', message, customFields } = body;
 
     if (!subject || subject.trim().length === 0) {
       return NextResponse.json(
@@ -203,10 +229,12 @@ export async function POST(request: NextRequest) {
         subject: subject.trim(),
         category,
         priority,
+        custom_fields: customFields || null,
+        sla_breach_at: calculateSlaBreach(priority),
         support_messages: {
           create: {
             sender_id: userId,
-            content: message.trim(),
+            content: censorProfanity(message.trim()),
             type: 'text',
           },
         },
@@ -228,6 +256,10 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Editor alerts, staff-queue socket insert, and the AI assistant all run
+    // Express-side — without this, web-created tickets alerted nobody.
+    notifySupportEvent('ticket-created', ticket.id);
 
     return NextResponse.json(
       {

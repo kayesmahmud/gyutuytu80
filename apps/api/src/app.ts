@@ -8,7 +8,18 @@ import passport from './config/passport.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { httpLoggerMiddleware } from './lib/logger.js';
 import { prisma } from '@thulobazaar/database';
-import { sendNotification, canSendNotification } from './services/notification.service.js';
+import { sendNotification, canSendNotification, notifyEditors } from './services/notification.service.js';
+import {
+  buildSupportMessagePayload,
+  emitSupportMessage,
+  emitTicketCreated,
+  emitTicketUpdate,
+  notifyTicketOwner,
+  SUPPORT_REPLY_PUSH_TITLE,
+  SUPPORT_RESOLVED_PUSH_TITLE,
+  SUPPORT_RESOLVED_PUSH_BODY,
+} from './services/supportEvents.service.js';
+import { queueSupportAiReply } from './services/supportAi.service.js';
 
 // Import routes (will be added as we migrate them)
 import authRoutes from './routes/auth.routes.js';
@@ -451,6 +462,115 @@ export function createApp(): Express {
     }
 
     return res.json({ success: true });
+  });
+
+  // Internal endpoint: Next.js → Express support-system bridge.
+  // The Next.js support routes write to the DB directly, which used to mean
+  // web-originated tickets/messages had NO side effects: no editor alert, no
+  // socket broadcast, no owner notification, no AI assistant. After saving,
+  // those routes now report what happened here and Express fans it out exactly
+  // like its own paths do.
+  app.post('/api/internal/support-event', async (req, res) => {
+    const { secret, event, ticketId, messageId } = req.body ?? {};
+
+    // 🔒 Same fail-closed secret check as /api/internal/broadcast-message.
+    const internalSecret = process.env.INTERNAL_API_SECRET;
+    if (!internalSecret || secret !== internalSecret) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    const id = Number(ticketId);
+    if (!Number.isInteger(id) || typeof event !== 'string') {
+      return res.status(400).json({ success: false, message: 'event and ticketId are required' });
+    }
+
+    try {
+      const ticket = await prisma.support_tickets.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          ticket_number: true,
+          user_id: true,
+          subject: true,
+          category: true,
+          priority: true,
+          status: true,
+          created_at: true,
+          updated_at: true,
+        },
+      });
+      if (!ticket) {
+        return res.status(404).json({ success: false, message: 'Ticket not found' });
+      }
+
+      if (event === 'ticket-created') {
+        emitTicketCreated({
+          id: ticket.id,
+          ticketNumber: ticket.ticket_number,
+          subject: ticket.subject,
+          category: ticket.category,
+          priority: ticket.priority,
+          status: ticket.status,
+          createdAt: ticket.created_at,
+        });
+        const firstMessage = messageId ? await buildSupportMessagePayload(Number(messageId)) : null;
+        notifyEditors({
+          type: 'support_message',
+          title: `New support ticket: ${ticket.subject}`.slice(0, 120),
+          body: (firstMessage?.content ?? ticket.subject).slice(0, 140),
+          data: { route: '/editor/support-chat', ticketId: String(ticket.id) },
+          referenceId: ticket.id,
+          cooldownMinutes: 2,
+        }).catch((err) => console.error('Support bridge ticket alert error:', err));
+        queueSupportAiReply(ticket.id);
+      } else if (event === 'customer-message' || event === 'staff-reply') {
+        const built = messageId ? await buildSupportMessagePayload(Number(messageId)) : null;
+        if (built) {
+          emitSupportMessage(ticket.id, built, ticket.status);
+        }
+        if (event === 'customer-message') {
+          notifyEditors({
+            type: 'support_message',
+            title: 'New support reply',
+            body: (built?.content ?? '').slice(0, 140),
+            data: { route: '/editor/support-chat', ticketId: String(ticket.id) },
+            referenceId: ticket.id,
+            cooldownMinutes: 2,
+          }).catch((err) => console.error('Support bridge reply alert error:', err));
+          queueSupportAiReply(ticket.id);
+        } else if (built && !built.isInternal) {
+          notifyTicketOwner({
+            ticketId: ticket.id,
+            ownerUserId: ticket.user_id,
+            title: SUPPORT_REPLY_PUSH_TITLE,
+            body: built.content.slice(0, 140),
+            cooldownMinutes: 2,
+          }).catch((err) => console.error('Support bridge owner notification error:', err));
+        }
+      } else if (event === 'ticket-updated') {
+        emitTicketUpdate({
+          ticketId: ticket.id,
+          ticketNumber: ticket.ticket_number,
+          status: ticket.status,
+          priority: ticket.priority,
+          updatedAt: ticket.updated_at,
+        });
+        if (ticket.status === 'resolved') {
+          notifyTicketOwner({
+            ticketId: ticket.id,
+            ownerUserId: ticket.user_id,
+            title: SUPPORT_RESOLVED_PUSH_TITLE,
+            body: SUPPORT_RESOLVED_PUSH_BODY,
+          }).catch((err) => console.error('Support bridge resolve notification error:', err));
+        }
+      } else {
+        return res.status(400).json({ success: false, message: `Unknown event: ${event}` });
+      }
+
+      return res.json({ success: true });
+    } catch (error) {
+      console.error('Support bridge error:', error);
+      return res.status(500).json({ success: false, message: 'Support event failed' });
+    }
   });
 
   // 404 handler

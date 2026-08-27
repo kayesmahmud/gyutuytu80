@@ -8,6 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { requireAuth } from '@/lib/auth';
+import { censorProfanity } from '@/utils/profanityCheck';
+import { notifySupportEvent } from '@/lib/supportBridge';
 
 /**
  * GET - Get ticket details with messages
@@ -249,6 +251,10 @@ export async function PATCH(
       },
     });
 
+    // Broadcast the change to open views and, on resolve, notify the owner —
+    // this HTTP fallback used to leave every other client stale.
+    notifySupportEvent('ticket-updated', ticketId);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -343,7 +349,7 @@ export async function POST(
       data: {
         ticket_id: ticketId,
         sender_id: userId,
-        content: content?.trim() || '',
+        content: censorProfanity(content?.trim() || ''),
         type,
         attachment_url: attachmentUrl || null,
         is_internal: actualIsInternal,
@@ -378,6 +384,11 @@ export async function POST(
         },
       });
     }
+
+    // Express-side fan-out: socket broadcast to open views, editor alert /
+    // owner push, and the AI assistant. This route is the socket-down fallback
+    // AND the attachment path, which used to be invisible in real time.
+    notifySupportEvent(isStaff ? 'staff-reply' : 'customer-message', ticketId, message.id);
 
     return NextResponse.json(
       {

@@ -47,6 +47,11 @@ export function getCorePolicy(): Promise<string | null> {
   return readPolicyFile('core.md');
 }
 
+/** support.md — knowledge base for the AI support assistant, or null. */
+export function getSupportPolicy(): Promise<string | null> {
+  return readPolicyFile('support.md');
+}
+
 /** categories/<slug>.md for a PARENT category slug, or null. */
 export function getCategoryPolicy(slug: string | null): Promise<string | null> {
   if (!slug || !/^[a-z0-9-]+$/.test(slug)) return Promise.resolve(null);

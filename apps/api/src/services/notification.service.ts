@@ -9,6 +9,10 @@ import type { NotificationType } from '@thulobazaar/types';
 import { transformDbNotificationToApi } from '@thulobazaar/types';
 import { getIO } from '../socket/index.js';
 import { isEngagementType, hasRecentEngagementPush } from './notificationPolicy.js';
+import { TEAM_ACCOUNT_EMAIL } from '../utils/teamAccount.js';
+import { SUPPORT_ASSISTANT_EMAIL } from '../utils/supportAssistant.js';
+
+const SYSTEM_ACCOUNT_EMAILS = [TEAM_ACCOUNT_EMAIL, SUPPORT_ASSISTANT_EMAIL];
 
 interface SendNotificationParams {
   recipientUserIds: number[];
@@ -116,7 +120,9 @@ export async function sendNotification({
  */
 export async function getEditorRecipientIds(): Promise<number[]> {
   const rows = await prisma.users.findMany({
-    where: { role: 'editor' },
+    // Seeded system senders (team account, AI support assistant) carry the
+    // editor role for display purposes but must never receive staff alerts.
+    where: { role: 'editor', email: { notIn: SYSTEM_ACCOUNT_EMAILS } },
     select: { id: true },
   });
   return rows.map((r) => r.id);

@@ -147,6 +147,32 @@ const DEVANAGARI_PATTERNS = DEVANAGARI_WORDS;
  * Check if text contains profanity. Returns detected words.
  * Checks both word-boundary matches (Roman) and substring matches (Devanagari).
  */
+/**
+ * Replace profane words with asterisks. Server-side safety net for the Next.js
+ * support routes — mirrors censorProfanity in apps/api/src/utils/profanityFilter.ts.
+ */
+export function censorProfanity(text: string): string {
+  if (!text?.trim()) return text;
+
+  // Roman-script words: token-wise so lengths and surrounding punctuation survive
+  let result = text.replace(/[^\s,.!?;:'"()\[\]{}<>]+/g, (word) => {
+    const lower = word.toLowerCase();
+    const cleaned = lower.replace(/[._-]/g, '');
+    return ALL_WORDS_SET.has(cleaned) || ALL_WORDS_SET.has(lower)
+      ? '*'.repeat(word.length)
+      : word;
+  });
+
+  // Devanagari: substring replacement (no word boundaries in Devanagari)
+  for (const pattern of DEVANAGARI_PATTERNS) {
+    if (result.includes(pattern)) {
+      result = result.split(pattern).join('*'.repeat(pattern.length));
+    }
+  }
+
+  return result;
+}
+
 export function checkProfanity(text: string): { hasProfanity: boolean; detectedWords: string[] } {
   if (!text?.trim()) return { hasProfanity: false, detectedWords: [] };
 
