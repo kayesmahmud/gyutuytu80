@@ -15,6 +15,7 @@ import 'package:mobile/features/profile/profile_screen.dart';
 import 'package:mobile/features/help/help_center_screen.dart';
 import 'package:mobile/features/contact/contact_screen.dart';
 import 'package:mobile/features/support/support_tickets_screen.dart';
+import 'package:mobile/features/support/live_chat_screen.dart';
 
 class MainDrawer extends StatefulWidget {
   const MainDrawer({super.key});
@@ -276,6 +277,19 @@ class _MainDrawerState extends State<MainDrawer> {
                     ),
                     const SizedBox(height: 12),
 
+                    _buildMenuItem(
+                      'drawer.liveChat'.tr(),
+                      icon: LucideIcons.headphones,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LiveChatScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     _buildMenuItem(
                       'drawer.helpCenter'.tr(),
                       icon: LucideIcons.helpCircle,

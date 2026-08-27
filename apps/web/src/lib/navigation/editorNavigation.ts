@@ -11,6 +11,7 @@ interface BadgeCounts {
   businessVerifications?: number;
   individualVerifications?: number;
   supportChat?: number;
+  liveChat?: number;
 }
 
 export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}) {
@@ -89,6 +90,14 @@ export function getEditorNavSections(lang: string, badgeCounts: BadgeCounts = {}
     {
       title: 'Support',
       items: [
+        {
+          // Escalated live chats: the AI answers first and pings us here when
+          // it cannot help, so this queue is humans-needed by definition.
+          href: `/${lang}/editor/live-chat`,
+          icon: 'Headphones',
+          label: 'Live Chat',
+          badge: badgeCounts.liveChat,
+        },
         {
           href: `/${lang}/editor/support-chat`,
           icon: 'MessageCircle',

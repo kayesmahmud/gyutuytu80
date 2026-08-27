@@ -23,6 +23,11 @@ interface ChatAreaProps {
   onDismissProfanityWarning?: () => void;
   /** Mobile master-detail: return to the ticket list (hidden on lg+). */
   onBack?: () => void;
+  /**
+   * Live Chat is a rolling conversation with no open/resolved/closed workflow
+   * the user ever sees, so its editor view hides the status control.
+   */
+  showStatusControl?: boolean;
 }
 
 export function ChatArea({
@@ -42,6 +47,7 @@ export function ChatArea({
   profanityWarning,
   onDismissProfanityWarning,
   onBack,
+  showStatusControl = true,
 }: ChatAreaProps) {
   if (!selectedTicket) {
     return (
@@ -64,6 +70,7 @@ export function ChatArea({
         staffId={staffId}
         onUpdateTicket={onUpdateTicket}
         onBack={onBack}
+        showStatusControl={showStatusControl}
       />
 
       {/* Messages */}
@@ -128,9 +135,10 @@ interface ChatHeaderProps {
   staffId?: number;
   onUpdateTicket: (updates: { status?: string; priority?: string; assignedTo?: number | null }) => void;
   onBack?: () => void;
+  showStatusControl?: boolean;
 }
 
-function ChatHeader({ ticket, staffId, onUpdateTicket, onBack }: ChatHeaderProps) {
+function ChatHeader({ ticket, staffId, onUpdateTicket, onBack, showStatusControl = true }: ChatHeaderProps) {
   return (
     <div className="p-4 border-b border-gray-200 bg-gray-50">
       <div className="flex items-start justify-between mb-3 gap-2">
@@ -174,17 +182,19 @@ function ChatHeader({ ticket, staffId, onUpdateTicket, onBack }: ChatHeaderProps
         </div>
       )}
       <div className="flex items-center gap-2 flex-wrap">
-        <select
-          value={ticket.status}
-          onChange={(e) => onUpdateTicket({ status: e.target.value })}
-          className="text-xs px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-        >
-          <option value="open">Open</option>
-          <option value="in_progress">In Progress</option>
-          <option value="waiting_on_user">Waiting on User</option>
-          <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
-        </select>
+        {showStatusControl && (
+          <select
+            value={ticket.status}
+            onChange={(e) => onUpdateTicket({ status: e.target.value })}
+            className="text-xs px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+          >
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="waiting_on_user">Waiting on User</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+        )}
         <select
           value={ticket.priority}
           onChange={(e) => onUpdateTicket({ priority: e.target.value })}

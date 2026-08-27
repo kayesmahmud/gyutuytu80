@@ -151,8 +151,10 @@ export async function notifyTicketOwner(params: {
   title: string;
   body: string;
   cooldownMinutes?: number;
+  /** '/support' (ticket) or '/live-chat'; clients route the tap on this. */
+  route?: string;
 }): Promise<void> {
-  const { ticketId, ownerUserId, title, body, cooldownMinutes } = params;
+  const { ticketId, ownerUserId, title, body, cooldownMinutes, route } = params;
   if (
     cooldownMinutes &&
     !(await canSendNotification(ownerUserId, 'support_reply', ticketId, cooldownMinutes))
@@ -164,7 +166,7 @@ export async function notifyTicketOwner(params: {
     type: 'support_reply',
     title,
     body,
-    data: { route: '/support', ticketId: String(ticketId) },
+    data: { route: route ?? '/support', ticketId: String(ticketId) },
     referenceId: ticketId,
   });
 }

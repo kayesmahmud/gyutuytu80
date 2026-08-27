@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:mobile/features/help/help_center_screen.dart';
 import 'package:mobile/features/support/support_tickets_screen.dart';
+import 'package:mobile/features/support/live_chat_screen.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -114,6 +115,16 @@ class ContactScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
+            _ActionButton(
+              icon: LucideIcons.headphones,
+              title: 'contact.startLiveChat'.tr(),
+              subtitle: 'contact.liveChatSubtitle'.tr(),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LiveChatScreen()),
+              ),
+            ),
+            const SizedBox(height: 8),
             _ActionButton(
               icon: LucideIcons.ticket,
               title: 'contact.createSupportTicket'.tr(),

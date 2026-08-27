@@ -898,6 +898,8 @@ model support_tickets {
   custom_fields                            Json?
   /// Set when the AI assistant escalated this ticket to the human team; the AI stays silent afterwards
   ai_escalated_at                          DateTime?                @db.Timestamp(6)
+  /// Where the thread came from: 'ticket' (support form) or 'live_chat' (continuous chat surface)
+  source                                   String                   @default("ticket") @db.VarChar(20)
   support_messages                         support_messages[]
   users_support_tickets_assigned_toTousers users?                   @relation("support_tickets_assigned_toTousers", fields: [assigned_to], references: [id], onUpdate: NoAction)
   users_support_tickets_user_idTousers     users                    @relation("support_tickets_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)

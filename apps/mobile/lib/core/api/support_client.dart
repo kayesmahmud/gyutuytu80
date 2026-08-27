@@ -137,4 +137,48 @@ class SupportClient {
       );
     }
   }
+
+  /// Live Chat: the user's single ongoing conversation.
+  Future<ApiResponse<LiveChatThread>> getLiveChat() async {
+    try {
+      final response = await _dio.get('/support/live-chat');
+
+      if (response.data['success'] == true) {
+        return ApiResponse.success(
+          LiveChatThread.fromMap(response.data['data'] as Map<String, dynamic>),
+        );
+      }
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to load live chat',
+      );
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to load live chat',
+      );
+    }
+  }
+
+  /// Sends a live chat message, starting the conversation if there is none yet.
+  Future<ApiResponse<SupportMessage>> sendLiveChatMessage(String content) async {
+    try {
+      final response = await _dio.post(
+        '/support/live-chat/messages',
+        data: {'content': content},
+      );
+
+      if (response.data['success'] == true) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        return ApiResponse.success(
+          SupportMessage.fromMap(data['message'] as Map<String, dynamic>),
+        );
+      }
+      return ApiResponse.failure(
+        response.data['message'] ?? 'Failed to send message',
+      );
+    } on DioException catch (e) {
+      return ApiResponse.failure(
+        e.response?.data?['message'] ?? 'Failed to send message',
+      );
+    }
+  }
 }

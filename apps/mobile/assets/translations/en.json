@@ -517,7 +517,8 @@
     "helpCenter": "Help Center",
     "faq": "FAQ",
     "supportTickets": "Support Tickets",
-    "contactUs": "Contact Us"
+    "contactUs": "Contact Us",
+    "liveChat": "Live Chat"
   },
   "shop": {
     "errorPickingImage": "Error picking image: {}",
@@ -674,7 +675,9 @@
     "createSupportTicket": "Create Support Ticket",
     "supportSubtitle": "Get help from our support team",
     "browseFaqs": "Browse FAQs",
-    "faqSubtitle": "Find answers to common questions"
+    "faqSubtitle": "Find answers to common questions",
+    "startLiveChat": "Start Live Chat",
+    "liveChatSubtitle": "Chat with us now — instant answers"
   },
   "chat": {
     "reportUser": "Report user",
@@ -716,5 +719,14 @@
     "missYouBody": "Thousands of new ads every week — or post your own for free in 2 minutes.",
     "postAdTitle": "Have something to sell? 💰",
     "postAdBody": "Post your ad for free in 2 minutes — thousands of buyers browse Thulo Bazaar daily."
+  },
+  "liveChat": {
+    "title": "Live Chat",
+    "subtitle": "Instant answers, real people when needed",
+    "emptyTitle": "Start a conversation",
+    "emptyBody": "Ask anything about buying, selling, ads, verification or payments.",
+    "inputPlaceholder": "Type your message...",
+    "aiNotice": "Our AI assistant answers first and passes you to the team when needed.",
+    "profanityWarning": "Please use respectful language."
   }
 }

@@ -7,7 +7,7 @@ import { checkProfanity } from '@/utils/profanityCheck';
 import { useSupportSocket } from '@/hooks/useSupportSocket';
 import type { SupportTicket, TicketDetail, StatusFilter, PriorityFilter, TicketStats } from './types';
 
-export function useSupportChatPage(lang: string) {
+export function useSupportChatPage(lang: string, source?: string) {
   const router = useRouter();
   const { staff, isLoading: authLoading, isEditor, logout } = useStaffAuth();
   const token = (staff as any)?.backendToken;
@@ -171,6 +171,7 @@ export function useSupportChatPage(lang: string) {
       if (statusFilter !== 'all') queryParams.set('status', statusFilter);
       if (priorityFilter !== 'all') queryParams.set('priority', priorityFilter);
       if (assignedFilter !== 'all') queryParams.set('assigned', assignedFilter);
+      if (source) queryParams.set('source', source);
 
       const response = await fetch(`/api/support/tickets?${queryParams}`, {
         headers: {
@@ -188,7 +189,7 @@ export function useSupportChatPage(lang: string) {
     } finally {
       setLoading(false);
     }
-  }, [token, statusFilter, priorityFilter, assignedFilter]);
+  }, [token, statusFilter, priorityFilter, assignedFilter, source]);
 
   // Kept current so the socket handler (declared earlier) always calls the
   // latest filter-aware loader.

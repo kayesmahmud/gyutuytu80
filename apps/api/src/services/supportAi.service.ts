@@ -138,6 +138,7 @@ async function respondToTicketInner(ticketId: number): Promise<boolean> {
       category: true,
       priority: true,
       status: true,
+      source: true,
       ai_escalated_at: true,
       support_messages: {
         where: { is_internal: false },
@@ -203,9 +204,15 @@ async function respondToTicketInner(ticketId: number): Promise<boolean> {
       return `${who}: ${JSON.stringify(m.content)}`;
     })
     .join('\n');
+  // Live Chat is a rolling conversation with no ticket workflow the user can
+  // see, so the assistant must not talk about tickets or "resolving" there.
+  const isLiveChat = ticket.source === 'live_chat';
+  const surfaceNote = isLiveChat
+    ? '\n\nThis is a LIVE CHAT conversation, not a ticket: never use the "resolve" action, and never mention tickets, ticket numbers, ratings or closing. Just keep chatting or escalate.'
+    : '';
   const user = `Ticket subject: ${JSON.stringify(ticket.subject)}\nCategory: ${
     ticket.category ?? 'general'
-  }\n\nConversation (oldest first, one JSON-quoted message per line):\n${transcript}`;
+  }${surfaceNote}\n\nConversation (oldest first, one JSON-quoted message per line):\n${transcript}`;
 
   const result = await chatCompletion({
     system,
@@ -253,6 +260,10 @@ async function respondToTicketInner(ticketId: number): Promise<boolean> {
   // still deserves an answer — signal a re-run rather than going silent.
   if (fresh.support_messages[0]?.id !== lastMessage.id) return true;
 
+  // Guard the instruction above: a live chat must never be auto-resolved.
+  const action =
+    isLiveChat && decision.action === 'resolve' ? 'answer' : decision.action;
+
   const now = new Date();
   const message = await prisma.support_messages.create({
     data: {
@@ -274,13 +285,13 @@ async function respondToTicketInner(ticketId: number): Promise<boolean> {
   });
 
   let currentStatus = fresh.status;
-  if (decision.action === 'resolve') {
+  if (action === 'resolve') {
     await prisma.support_tickets.update({
       where: { id: ticketId },
       data: { status: 'resolved', resolved_at: now, updated_at: now },
     });
     currentStatus = 'resolved';
-  } else if (decision.action === 'escalate') {
+  } else if (action === 'escalate') {
     await prisma.support_tickets.update({
       where: { id: ticketId },
       data: { ai_escalated_at: now, updated_at: now },
@@ -289,7 +300,11 @@ async function respondToTicketInner(ticketId: number): Promise<boolean> {
       type: 'support_message',
       title: `AI escalated: ${ticket.subject}`.slice(0, 120),
       body: (lastMessage.content ?? '').slice(0, 140),
-      data: { route: '/editor/support-chat', ticketId: String(ticketId) },
+      data: {
+        // Live chats are worked in their own editor queue.
+        route: ticket.source === 'live_chat' ? '/editor/live-chat' : '/editor/support-chat',
+        ticketId: String(ticketId),
+      },
       referenceId: ticketId,
     }).catch((err) => console.error('Support AI escalation alert error:', err));
   } else {
@@ -324,7 +339,7 @@ async function respondToTicketInner(ticketId: number): Promise<boolean> {
     currentStatus
   );
 
-  if (decision.action === 'resolve') {
+  if (action === 'resolve') {
     emitTicketUpdate({
       ticketId,
       ticketNumber: ticket.ticket_number,
@@ -345,11 +360,12 @@ async function respondToTicketInner(ticketId: number): Promise<boolean> {
       title: SUPPORT_REPLY_PUSH_TITLE,
       body: message.content.slice(0, 140),
       cooldownMinutes: 2,
+      route: isLiveChat ? '/live-chat' : '/support',
     }).catch((err) => console.error('Support AI reply notification error:', err));
   }
 
   console.log(
-    `🤖 Support AI ${decision.action} on ticket ${ticketId} (${usedToday + 1}/${dailyCap} today)`
+    `🤖 Support AI ${action} on ticket ${ticketId} (${usedToday + 1}/${dailyCap} today)`
   );
   return false;
 }

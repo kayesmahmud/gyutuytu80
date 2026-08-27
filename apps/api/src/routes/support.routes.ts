@@ -46,6 +46,208 @@ function calculateSlaBreach(priority: string): Date {
   return now;
 }
 
+// Live Chat is the same support system shown as one rolling conversation.
+// Threads stay separate from form-filed tickets via support_tickets.source.
+const LIVE_CHAT_SOURCE = 'live_chat';
+const LIVE_CHAT_SUBJECT = 'Live Chat';
+const LIVE_CHAT_ACTIVE_STATUSES = ['open', 'in_progress', 'waiting_on_user'];
+
+/** The chat the user is currently in, or null when they need a fresh one. */
+async function findActiveLiveChat(userId: number) {
+  return prisma.support_tickets.findFirst({
+    where: {
+      user_id: userId,
+      source: LIVE_CHAT_SOURCE,
+      status: { in: LIVE_CHAT_ACTIVE_STATUSES as any },
+    },
+    orderBy: { created_at: 'desc' },
+    select: { id: true, ticket_number: true, status: true, created_at: true },
+  });
+}
+
+/**
+ * The newest live chat whatever its state, so a finished conversation stays
+ * readable instead of vanishing; the next message opens a fresh thread.
+ */
+async function findLatestLiveChat(userId: number) {
+  return prisma.support_tickets.findFirst({
+    where: { user_id: userId, source: LIVE_CHAT_SOURCE },
+    orderBy: { created_at: 'desc' },
+    select: { id: true, ticket_number: true, status: true, created_at: true },
+  });
+}
+
+function serializeLiveChatMessage(msg: {
+  id: number;
+  sender_id: number;
+  content: string;
+  created_at: Date | null;
+  users: { id: number; full_name: string | null; avatar: string | null; role: string | null };
+}, viewerId: number) {
+  return {
+    id: msg.id,
+    senderId: msg.sender_id,
+    content: msg.content,
+    createdAt: msg.created_at,
+    isOwnMessage: msg.sender_id === viewerId,
+    sender: {
+      id: msg.users.id,
+      fullName: msg.users.full_name,
+      avatar: msg.users.avatar,
+      isStaff: isStaffRole(msg.users.role),
+    },
+  };
+}
+
+/**
+ * GET /api/support/live-chat
+ * The user's current live chat with its messages (empty when none yet).
+ */
+router.get(
+  '/live-chat',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const chat = await findLatestLiveChat(userId);
+
+    if (!chat) {
+      res.json({
+        success: true,
+        data: { ticketId: null, status: null, isActive: true, messages: [] },
+      });
+      return;
+    }
+
+    const messages = await prisma.support_messages.findMany({
+      where: { ticket_id: chat.id, is_internal: false },
+      orderBy: { created_at: 'asc' },
+      select: {
+        id: true,
+        sender_id: true,
+        content: true,
+        created_at: true,
+        users: { select: { id: true, full_name: true, avatar: true, role: true } },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        ticketId: chat.id,
+        ticketNumber: chat.ticket_number,
+        status: chat.status,
+        // false once resolved/closed: the transcript stays readable and the
+        // next message starts a fresh conversation.
+        isActive: LIVE_CHAT_ACTIVE_STATUSES.includes(chat.status ?? ''),
+        messages: messages.map((m) => serializeLiveChatMessage(m, userId)),
+      },
+    });
+  })
+);
+
+/**
+ * POST /api/support/live-chat/messages
+ * Send a message; starts a new chat when there is no active one.
+ */
+router.post(
+  '/live-chat/messages',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const { content } = req.body;
+
+    if (!content?.trim()) {
+      res.status(400).json({ success: false, message: 'Message content is required' });
+      return;
+    }
+    const sanitized = censorProfanity(content.trim());
+
+    // One continuous conversation per user: reuse the existing thread even if
+    // it was resolved, so the transcript never disappears from the user's
+    // screen. Live Chat deliberately shows no status/closed states.
+    let chat = await findLatestLiveChat(userId);
+    let isNewChat = false;
+
+    if (!chat) {
+      const created = await prisma.support_tickets.create({
+        data: {
+          ticket_number: generateTicketNumber(),
+          user_id: userId,
+          subject: LIVE_CHAT_SUBJECT,
+          category: 'general',
+          priority: 'normal',
+          source: LIVE_CHAT_SOURCE,
+          sla_breach_at: calculateSlaBreach('normal'),
+        },
+        select: { id: true, ticket_number: true, status: true, created_at: true },
+      });
+      chat = created;
+      isNewChat = true;
+    }
+
+    const message = await prisma.support_messages.create({
+      data: {
+        ticket_id: chat.id,
+        sender_id: userId,
+        content: sanitized,
+        type: 'text',
+      },
+      select: {
+        id: true,
+        sender_id: true,
+        content: true,
+        created_at: true,
+        users: { select: { id: true, full_name: true, avatar: true, role: true } },
+      },
+    });
+
+    // Customer spoke, so the thread is live again — this also reopens a chat
+    // an editor or the AI had marked resolved, keeping one endless thread.
+    const shouldTransition = chat.status !== 'in_progress';
+    await prisma.support_tickets.update({
+      where: { id: chat.id },
+      data: shouldTransition
+        ? { status: 'in_progress', resolved_at: null, closed_at: null, updated_at: new Date() }
+        : { updated_at: new Date() },
+    });
+    const currentStatus = shouldTransition ? 'in_progress' : chat.status;
+
+    const payload = serializeLiveChatMessage(message, userId);
+    emitSupportMessage(
+      chat.id,
+      { ...payload, type: 'text', attachmentUrl: null, isInternal: false },
+      currentStatus
+    );
+    if (isNewChat) {
+      emitTicketCreated({
+        id: chat.id,
+        ticketNumber: chat.ticket_number,
+        subject: LIVE_CHAT_SUBJECT,
+        category: 'general',
+        priority: 'normal',
+        status: currentStatus,
+        createdAt: chat.created_at,
+      });
+    }
+
+    notifyEditors({
+      type: 'support_message',
+      title: isNewChat ? 'New live chat' : 'New live chat message',
+      body: sanitized.slice(0, 140),
+      data: { route: '/editor/live-chat', ticketId: String(chat.id) },
+      referenceId: chat.id,
+      cooldownMinutes: SUPPORT_ALERT_COOLDOWN_MINUTES,
+    }).catch((err) => console.error('Live chat editor notification error:', err));
+
+    queueSupportAiReply(chat.id);
+
+    res.status(201).json({
+      success: true,
+      data: { ticketId: chat.id, status: currentStatus, message: payload },
+    });
+  })
+);
+
 /**
  * GET /api/support/tickets
  * List user's support tickets
@@ -59,7 +261,8 @@ router.get(
     const offset = parseInt(req.query.offset as string || '0', 10);
     const status = req.query.status as string | undefined;
 
-    const where: any = { user_id: userId };
+    // Live Chat has its own screen; its threads must not clutter the ticket list.
+    const where: any = { user_id: userId, source: { not: LIVE_CHAT_SOURCE } };
     if (status) where.status = status;
 
     const [tickets, total] = await Promise.all([

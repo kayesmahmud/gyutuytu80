@@ -50,7 +50,8 @@ export default function Footer({ lang }: FooterProps) {
               <ul className="space-y-2">
                 <li><Link href={`/${lang}/help`} className="text-sm text-gray-400 hover:text-rose-400">{t('helpCenter')}</Link></li>
                 <li><Link href={`/${lang}/faq`} className="text-sm text-gray-400 hover:text-rose-400">{t('faq')}</Link></li>
-                <li><Link href={`/${lang}/support`} className="text-sm text-gray-400 hover:text-rose-400">{t('supportTickets')}</Link></li>
+                <li><Link href={`/${lang}/live-chat`} className="text-sm text-gray-400 hover:text-rose-400">{t('liveChat')}</Link></li>
+              <li><Link href={`/${lang}/support`} className="text-sm text-gray-400 hover:text-rose-400">{t('supportTickets')}</Link></li>
                 <li><Link href={`/${lang}/contact`} className="text-sm text-gray-400 hover:text-rose-400">{t('contactUs')}</Link></li>
               </ul>
             </div>
@@ -234,6 +235,15 @@ export default function Footer({ lang }: FooterProps) {
                 >
                   <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                   {t('faq')}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`/${lang}/live-chat`}
+                  className="text-gray-400 hover:text-rose-400 transition-colors duration-200 flex items-center group"
+                >
+                  <span className="mr-2 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  {t('liveChat')}
                 </Link>
               </li>
               <li>

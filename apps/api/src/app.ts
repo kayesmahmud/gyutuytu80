@@ -494,6 +494,7 @@ export function createApp(): Express {
           category: true,
           priority: true,
           status: true,
+          source: true,
           created_at: true,
           updated_at: true,
           users_support_tickets_assigned_toTousers: {
@@ -547,6 +548,7 @@ export function createApp(): Express {
             title: SUPPORT_REPLY_PUSH_TITLE,
             body: built.content.slice(0, 140),
             cooldownMinutes: 2,
+            route: ticket.source === 'live_chat' ? '/live-chat' : '/support',
           }).catch((err) => console.error('Support bridge owner notification error:', err));
         }
       } else if (event === 'ticket-updated') {

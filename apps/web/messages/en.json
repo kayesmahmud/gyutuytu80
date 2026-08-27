@@ -108,7 +108,8 @@
     "companyDescription": "Nepal's leading classifieds marketplace. Buy, sell, and rent across Nepal with ease.",
     "kathmandu": "Kathmandu, Nepal",
     "blog": "Blog",
-    "workWithUs": "Work With Us"
+    "workWithUs": "Work With Us",
+    "liveChat": "Live Chat"
   },
   "auth": {
     "signIn": "Sign In",
@@ -771,7 +772,8 @@
     "subjectPlaceholder": "Brief subject of your message",
     "message": "Message",
     "messagePlaceholder": "Please describe your inquiry in detail...",
-    "sending": "Sending..."
+    "sending": "Sending...",
+    "liveChat": "Live Chat"
   },
   "faq": {
     "title": "Frequently Asked Questions",
@@ -1017,7 +1019,9 @@
     "privacyPolicyTitle": "Privacy Policy | Thulo Bazaar",
     "privacyPolicyDescription": "Learn how Thulo Bazaar collects, uses, and protects your personal information. Read our privacy policy for details on data handling and your rights.",
     "termsOfServiceTitle": "Terms of Service | Thulo Bazaar",
-    "termsOfServiceDescription": "Read the terms and conditions for using Thulo Bazaar. Understand our policies on payments, refunds, account deletion, and user responsibilities."
+    "termsOfServiceDescription": "Read the terms and conditions for using Thulo Bazaar. Understand our policies on payments, refunds, account deletion, and user responsibilities.",
+    "liveChatTitle": "Live Chat | Thulo Bazaar",
+    "liveChatDescription": "Chat with Thulo Bazaar support. Get instant answers from our AI assistant, with our team ready to step in."
   },
   "formFields": {
     "additionalDetails": "Additional Details",
@@ -1135,5 +1139,18 @@
     "changesToTermsDesc": "We reserve the right to update these Terms at any time. Significant changes will be communicated through the platform. Your continued use after changes are posted constitutes acceptance of the updated Terms.",
     "contactUs": "Contact Us",
     "contactUsDesc": "If you have any questions about these Terms of Service, please contact us through our Contact page or Support Ticket system."
+  },
+  "liveChat": {
+    "title": "Live Chat",
+    "subtitle": "Instant answers — a real person joins when needed",
+    "emptyTitle": "Start a conversation",
+    "emptyBody": "Ask anything about buying, selling, ads, verification or payments.",
+    "inputPlaceholder": "Type your message...",
+    "send": "Send",
+    "aiNotice": "Answered by our AI assistant first. It passes you to the Thulo Bazaar team whenever it cannot help.",
+    "profanityWarning": "Please use respectful language. Offensive words are not allowed on Thulo Bazaar.",
+    "signInRequired": "Please sign in",
+    "signInMessage": "Sign in to start chatting with us.",
+    "signIn": "Sign In"
   }
 }

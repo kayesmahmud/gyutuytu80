@@ -52,6 +52,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
     const assigned = searchParams.get('assigned'); // 'me', 'unassigned', or user ID
+    // 'live_chat' for the Live Chat queue, 'ticket' for filed support tickets
+    const source = searchParams.get('source');
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
@@ -86,6 +88,13 @@ export async function GET(request: NextRequest) {
 
     if (priority) {
       where.priority = priority;
+    }
+
+    if (source) {
+      where.source = source;
+    } else if (!isStaff) {
+      // Live Chat has its own screen; keep it out of the user's ticket list.
+      where.source = { not: 'live_chat' };
     }
 
     // Fetch tickets

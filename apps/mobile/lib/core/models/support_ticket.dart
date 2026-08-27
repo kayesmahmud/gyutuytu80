@@ -318,3 +318,22 @@ class SupportTicketDetail {
     );
   }
 }
+
+/// Live Chat thread: one endless conversation, so it deliberately carries no
+/// status/priority/CSAT — just the messages.
+class LiveChatThread {
+  final int? ticketId;
+  final List<SupportMessage> messages;
+
+  const LiveChatThread({required this.ticketId, required this.messages});
+
+  factory LiveChatThread.fromMap(Map<String, dynamic> json) {
+    final rawMessages = json['messages'] as List<dynamic>? ?? [];
+    return LiveChatThread(
+      ticketId: json['ticketId'] as int?,
+      messages: rawMessages
+          .map((m) => SupportMessage.fromMap(m as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}

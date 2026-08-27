@@ -11,6 +11,7 @@ import '../../features/messages/chat_screen.dart';
 import '../../features/verification/verification_screen.dart';
 import '../../features/support/ticket_detail_screen.dart';
 import '../../features/support/support_tickets_screen.dart';
+import '../../features/support/live_chat_screen.dart';
 import '../../core/widgets/load_error_view.dart';
 
 class NotificationScreen extends StatefulWidget {
@@ -270,6 +271,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const VerificationScreen()),
+      );
+    } else if (route == '/live-chat') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LiveChatScreen()),
       );
     } else if (route == '/support') {
       final ticketId = int.tryParse(

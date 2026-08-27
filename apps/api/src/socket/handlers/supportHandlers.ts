@@ -76,7 +76,7 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
 
       const ticket = await prisma.support_tickets.findUnique({
         where: { id: ticketId },
-        select: { id: true, user_id: true, status: true },
+        select: { id: true, user_id: true, status: true, source: true },
       });
 
       if (!ticket) {
@@ -187,6 +187,7 @@ export function initializeSupportHandlers(io: Server, socket: AuthenticatedSocke
           title: SUPPORT_REPLY_PUSH_TITLE,
           body: sanitizedContent.slice(0, 140),
           cooldownMinutes: 2,
+          route: ticket.source === 'live_chat' ? '/live-chat' : '/support',
         }).catch((err) => console.error('Support owner notification error:', err));
       }
 
