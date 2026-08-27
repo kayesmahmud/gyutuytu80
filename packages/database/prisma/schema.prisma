@@ -225,7 +225,7 @@ model ads {
   reviewed_at                  DateTime?          @db.Timestamp(6)
   /// First time the ad went live; never bumped by re-approval/unsuspend — public feeds sort by this
   published_at                 DateTime?          @db.Timestamp(6)
-  /// AI first-pass moderation: 'published' | 'held' | 'skipped' (verified business, not screened); NULL = not evaluated
+  /// AI first-pass moderation: 'published' | 'held' | 'audited' (verified-business ad reviewed after going live) | 'skipped' (audit unavailable); NULL = not evaluated
   ai_verdict                   String?            @db.VarChar(20)
   ai_reason                    String?
   /// Seller-facing hold category chosen by the AI (stock_photo | unclear_photos | details_mismatch | suspicious_price | duplicate | policy_check | other); policy violations always collapse to policy_check

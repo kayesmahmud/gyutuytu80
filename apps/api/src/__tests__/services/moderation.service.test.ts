@@ -38,6 +38,7 @@ import {
   shouldModerateNewAds,
   moderateAd,
   moderateNewAd,
+  auditLiveAd,
   buildEditContext,
   AI_UNAVAILABLE_REASON,
   EDITED_DURING_CHECK_REASON,
@@ -685,5 +686,106 @@ describe('moderateNewAd', () => {
     vi.mocked(prisma.ads.updateMany).mockRejectedValue(new Error('db down'));
 
     await expect(moderateNewAd(params)).resolves.toBeUndefined();
+  });
+});
+
+describe('auditLiveAd', () => {
+  const auditParams = {
+    adId: 99,
+    title: 'Business iPhone Stock',
+    description: 'Shop listing',
+    price: 90000,
+    categoryName: 'Mobile Phones',
+    ownerUserId: 12,
+    imagePaths: ['/tmp/a.avif'],
+    adUpdatedAt: new Date('2026-08-27T05:00:00.000Z'),
+  };
+
+  function enableModeration() {
+    mockSettings({ ai_moderation_enabled: 'true', ai_moderation_daily_cap: '500' });
+    vi.mocked(prisma.ads.count).mockResolvedValue(0);
+    vi.mocked(imagesToDataUrls).mockResolvedValue(['data:image/jpeg;base64,aaaa']);
+  }
+
+  it('records a clean pass quietly as audited — the live ad is untouched', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'Genuine shop listing', confidence: 0.99 }))
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await auditLiveAd(auditParams);
+
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ ai_verdict: 'audited', ai_reason: 'Genuine shop listing' }),
+      })
+    );
+    const data = vi.mocked(prisma.ads.updateMany).mock.calls[0][0].data as Record<string, unknown>;
+    expect(data.status).toBeUndefined();
+    expect(notifyEditors).not.toHaveBeenCalled();
+    expect(reportAiViolation).not.toHaveBeenCalled();
+  });
+
+  it('pulls a prohibited live ad back to pending, reports the seller, alerts editors + owner', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(
+        JSON.stringify({ verdict: 'hold', reason: 'Rifle for sale', reason_code: 'stock_photo', confidence: 0.9, prohibited: true })
+      )
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await auditLiveAd(auditParams);
+
+    expect(prisma.ads.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        // TOCTOU: only unpublish the exact content the model reviewed
+        where: expect.objectContaining({ status: 'approved', updated_at: auditParams.adUpdatedAt }),
+        data: expect.objectContaining({
+          status: 'pending',
+          ai_verdict: 'held',
+          // policy violations always collapse to the vague policy_check
+          ai_reason_code: 'policy_check',
+        }),
+      })
+    );
+    expect(reportAiViolation).toHaveBeenCalledWith(12, 'ad-moderation', 'prohibited', 'Rifle for sale');
+    expect(vi.mocked(notifyEditors).mock.calls[0][0]).toMatchObject({
+      title: 'URGENT: live business ad pulled by AI',
+    });
+    expect(vi.mocked(sendNotification).mock.calls[0][0]).toMatchObject({
+      recipientUserIds: [12],
+      type: 'ad_held',
+    });
+  });
+
+  it('mere doubt leaves the ad live and only pings editors', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce(
+      deepseekReply(JSON.stringify({ verdict: 'hold', reason: 'Photos look like stock images', confidence: 0.4 }))
+    );
+    vi.mocked(prisma.ads.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    await auditLiveAd(auditParams);
+
+    const data = vi.mocked(prisma.ads.updateMany).mock.calls[0][0].data as Record<string, unknown>;
+    expect(data.ai_verdict).toBe('audited');
+    expect(data.status).toBeUndefined();
+    expect(reportAiViolation).not.toHaveBeenCalled();
+    expect(vi.mocked(notifyEditors).mock.calls[0][0]).toMatchObject({
+      title: 'AI doubts a live business ad',
+    });
+    expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it('AI unavailable changes nothing — the ad stays live as skipped', async () => {
+    enableModeration();
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) });
+
+    await auditLiveAd(auditParams);
+
+    expect(prisma.ads.updateMany).not.toHaveBeenCalled();
+    expect(notifyEditors).not.toHaveBeenCalled();
   });
 });

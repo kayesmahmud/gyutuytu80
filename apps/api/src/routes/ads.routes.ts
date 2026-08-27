@@ -39,7 +39,7 @@ import {
   getBooleanSetting,
 } from '../services/adLimits.service.js';
 import { sendNotification, notifyEditors } from '../services/notification.service.js';
-import { moderateNewAd, buildEditContext } from '../services/moderation.service.js';
+import { moderateNewAd, auditLiveAd, buildEditContext } from '../services/moderation.service.js';
 import { shouldPrecheck, precheckAd } from '../services/precheck.service.js';
 import { isAutofillAvailable, draftFromImages } from '../services/autofill.service.js';
 import { reportAiViolation } from '../services/userReport.service.js';
@@ -470,6 +470,20 @@ router.post(
         imagePaths: files && files.length > 0 ? files.map((f) => f.path) : stagedPaths,
         adUpdatedAt: ad.updated_at,
       }).catch((err) => console.error('AI moderation error:', err));
+    } else {
+      // Verified business: published instantly, audited right after —
+      // everyone is screened, trust only changes the order (owner policy).
+      auditLiveAd({
+        adId: ad.id,
+        title: ad.title,
+        description: ad.description,
+        price: parsedPrice ?? null,
+        categoryName: ad.categories?.name ?? null,
+        categoryId: ad.category_id ?? null,
+        ownerUserId: userId,
+        imagePaths: files && files.length > 0 ? files.map((f) => f.path) : stagedPaths,
+        adUpdatedAt: ad.updated_at,
+      }).catch((err) => console.error('AI audit error:', err));
     }
   })
 );
@@ -682,10 +696,12 @@ router.put(
       resultingStatus: newStatus,
     });
 
-    if (newStatus === 'pending' && !directPublish) {
+    if ((newStatus === 'pending' && !directPublish) || (directPublish && newStatus === 'approved')) {
       // Edited ads go through the SAME AI screening as new ads (owner rule:
-      // a changed photo/title must never coast on an old approval). Runs
-      // post-response and fire-and-forget, exactly like the create path.
+      // a changed photo/title must never coast on an old approval). Normal
+      // sellers' edits are pending and re-checked like new submissions;
+      // verified-business edits stay live and are audited right after.
+      // Runs post-response and fire-and-forget, exactly like the create path.
       (async () => {
         const [category, images] = await Promise.all([
           ad.category_id
@@ -700,7 +716,25 @@ router.put(
             select: { filename: true },
           }),
         ]);
-        await moderateNewAd({
+        // Tell the model where this ad came from and what changed — a live
+        // ad with swapped photos gets scrutiny, a typo fix gets a confident
+        // publish, a rejected resubmit is judged against the editor's reason.
+        const editContext = buildEditContext({
+          previousStatus: existingAd.status ?? null,
+          liveSince: existingAd.published_at ?? null,
+          rejectionReason:
+            existingAd.status === 'rejected' ? (existingAd.status_reason ?? null) : null,
+          oldTitle: existingAd.title,
+          newTitle: ad.title,
+          oldPrice: existingAd.price ? Number(existingAd.price) : null,
+          newPrice: ad.price ? Number(ad.price) : null,
+          descriptionChanged: (ad.description ?? '') !== (existingAd.description ?? ''),
+          categoryChanged: ad.category_id !== existingAd.category_id,
+          photosKept: imagesToKeep.length,
+          photosRemoved: Math.max(0, existingAd.ad_images.length - imagesToKeep.length),
+          photosAdded: (req.files as Express.Multer.File[] | undefined)?.length ?? 0,
+        });
+        const common = {
           adId: ad.id,
           title: ad.title,
           description: ad.description,
@@ -710,29 +744,16 @@ router.put(
           ownerUserId: userId,
           imagePaths: images.map((img) => `uploads/ads/${img.filename}`),
           adUpdatedAt: ad.updated_at,
-          edit: {
-            firstPublishedAt: existingAd.published_at ?? null,
-            // Tell the model where this ad came from and what changed — a
-            // live ad with swapped photos gets scrutiny, a typo fix gets a
-            // confident publish, a rejected resubmit is judged against the
-            // editor's rejection reason.
-            context: buildEditContext({
-              previousStatus: existingAd.status ?? null,
-              liveSince: existingAd.published_at ?? null,
-              rejectionReason:
-                existingAd.status === 'rejected' ? (existingAd.status_reason ?? null) : null,
-              oldTitle: existingAd.title,
-              newTitle: ad.title,
-              oldPrice: existingAd.price ? Number(existingAd.price) : null,
-              newPrice: ad.price ? Number(ad.price) : null,
-              descriptionChanged: (ad.description ?? '') !== (existingAd.description ?? ''),
-              categoryChanged: ad.category_id !== existingAd.category_id,
-              photosKept: imagesToKeep.length,
-              photosRemoved: Math.max(0, existingAd.ad_images.length - imagesToKeep.length),
-              photosAdded: (req.files as Express.Multer.File[] | undefined)?.length ?? 0,
-            }),
-          },
-        });
+        };
+        if (directPublish) {
+          // Verified business: the edit stayed live — audit it right after.
+          await auditLiveAd({ ...common, editContext });
+        } else {
+          await moderateNewAd({
+            ...common,
+            edit: { firstPublishedAt: existingAd.published_at ?? null, context: editContext },
+          });
+        }
       })().catch((err) => console.error('AI edit re-moderation error:', err));
     }
   })

@@ -195,6 +195,125 @@ function buildAdText(ad: {
 }
 
 /**
+ * Post-publish audit for direct-publish (verified business) ads — "everyone
+ * screened, trust changes the order" (owner policy 2026-08-27). The ad is
+ * ALREADY LIVE when this runs: a confirmed policy violation (explicit or
+ * prohibited content) pulls it back to pending and reports the seller like
+ * anyone else; mere doubt leaves it live but pings editors; a clean pass is
+ * recorded quietly as ai_verdict 'audited'. Fail-open: any trouble changes
+ * nothing — the ad stays live with ai_verdict 'skipped'. Never throws.
+ */
+export async function auditLiveAd(params: {
+  adId: number;
+  title: string;
+  description: string | null;
+  price: number | null;
+  categoryName: string | null;
+  categoryId?: number | null;
+  ownerUserId: number;
+  imagePaths: string[];
+  /** TOCTOU snapshot: never unpublish content the model did not review. */
+  adUpdatedAt: Date | null;
+  /** buildEditContext output when auditing an edit of a live ad. */
+  editContext?: string | null;
+}): Promise<void> {
+  const { adId, title, ownerUserId } = params;
+  try {
+    if (!(await shouldModerateNewAds())) return;
+    if (params.imagePaths.length === 0) return;
+    const images = await imagesToDataUrls(params.imagePaths.slice(0, MAX_IMAGES_PER_CHECK));
+    if (images.length === 0) return;
+
+    const categorySlug = await resolveParentCategorySlug(params.categoryId ?? null);
+    const decision = await moderateAd(
+      {
+        title,
+        description: params.description,
+        categoryName: params.categoryName,
+        price: params.price,
+      },
+      images,
+      categorySlug,
+      params.editContext ?? null
+    );
+    if (decision.reason === AI_UNAVAILABLE_REASON) return;
+
+    const now = new Date();
+    if (decision.explicit || decision.prohibited) {
+      // Confirmed violation: same consequences as any other seller.
+      if (decision.explicit) {
+        reportAiViolation(ownerUserId, 'ad-moderation', 'explicit').catch((err) =>
+          console.error('AI violation report error:', err)
+        );
+      } else {
+        reportAiViolation(ownerUserId, 'ad-moderation', 'prohibited', decision.reason).catch(
+          (err) => console.error('AI violation report error:', err)
+        );
+      }
+      const pulled = await prisma.ads.updateMany({
+        where: { id: adId, status: 'approved', deleted_at: null, updated_at: params.adUpdatedAt },
+        data: {
+          status: 'pending',
+          ai_verdict: 'held',
+          ai_reason: decision.reason,
+          ai_reason_code: decision.reasonCode,
+          ai_checked_at: now,
+        },
+      });
+      if (pulled.count === 1) {
+        logReviewHistory(
+          adId,
+          'ai_unpublish',
+          ownerUserId,
+          'ai',
+          decision.reason,
+          'Pulled from live by the AI audit (policy violation)'
+        ).catch((err) => console.error('Review history error:', err));
+        notifyEditors({
+          type: 'new_ad_pending',
+          title: 'URGENT: live business ad pulled by AI',
+          body: `"${title}" (verified seller) was unpublished by the AI audit. AI: ${decision.reason}`,
+          data: { route: '/editor/ad-management', adId: String(adId) },
+          referenceId: adId,
+        }).catch((err) => console.error('AI-audit editor notification error:', err));
+        sendNotification({
+          recipientUserIds: [ownerUserId],
+          type: 'ad_held',
+          title: 'Ad under review',
+          body: `Your ad "${title}" needs a manual check by our team and is temporarily unpublished.`,
+          data: { route: '/dashboard', adId: String(adId) },
+          referenceId: adId,
+        }).catch((err) => console.error('AI-audit owner notification error:', err));
+      }
+    } else if (decision.verdict === 'hold') {
+      // Doubt, not proof: the verified seller keeps the benefit — the ad
+      // stays live, editors get a heads-up to glance at it.
+      await prisma.ads.updateMany({
+        where: { id: adId, deleted_at: null },
+        data: { ai_verdict: 'audited', ai_reason: decision.reason, ai_checked_at: now },
+      });
+      notifyEditors({
+        type: 'ad_live_posted',
+        title: 'AI doubts a live business ad',
+        body: `"${title}" stayed live (verified seller), but the AI flagged: ${decision.reason}`,
+        data: {
+          route: `/editor/ad-management?status=approved&search=${encodeURIComponent(title)}`,
+          adId: String(adId),
+        },
+        referenceId: adId,
+      }).catch((err) => console.error('AI-audit editor notification error:', err));
+    } else {
+      await prisma.ads.updateMany({
+        where: { id: adId, deleted_at: null },
+        data: { ai_verdict: 'audited', ai_reason: decision.reason, ai_checked_at: now },
+      });
+    }
+  } catch (err) {
+    console.error(`AI audit error for ad ${adId}:`, err);
+  }
+}
+
+/**
  * Compose the edit summary the model sees when re-checking an edited ad.
  * The story matters: a live ad whose photos were all swapped is the classic
  * bait-and-switch, while a pending ad with a typo fix is nothing — telling

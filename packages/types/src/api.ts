@@ -511,6 +511,10 @@ export interface BlogPostListItem {
 
 export type NotificationType =
   | 'ad_approved'
+  // Pulled back to pending by the AI audit of a live (direct-publish) ad.
+  // Transactional (status change): deliberately NOT in the engagement
+  // frequency-cap allowlist in notificationPolicy.ts.
+  | 'ad_held'
   | 'ad_rejected'
   | 'ad_suspended'
   | 'ad_unsuspended'
