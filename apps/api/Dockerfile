@@ -86,6 +86,8 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/
 # AI moderation policy library (.md files live outside src/, see lib/ai/policies.ts)
 COPY --from=builder /app/apps/api/policies ./apps/api/policies
+# Ad watermark asset (lives outside src/, see lib/watermark.ts)
+COPY --from=builder /app/apps/api/assets ./apps/api/assets
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 COPY --from=builder /app/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
 COPY --from=builder /app/packages/types/dist ./packages/types/dist

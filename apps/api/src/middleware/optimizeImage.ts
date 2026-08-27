@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 import { Request, Response, NextFunction } from 'express';
+import { adWatermarkOverlay } from '../lib/watermark.js';
 
 type OutputFormat = 'jpeg' | 'avif';
 
@@ -11,6 +12,8 @@ interface OptimizeOptions {
   quality: number;
   effort?: number;
   format: OutputFormat;
+  // Ad photos only — avatars, chat images and verification docs must stay clean
+  watermark?: boolean;
 }
 
 const PRESETS: Record<string, OptimizeOptions> = {
@@ -18,7 +21,7 @@ const PRESETS: Record<string, OptimizeOptions> = {
   cover: { maxWidth: 1920, maxHeight: 1080, quality: 85, format: 'jpeg' },
   // effort 2 (not 4): encoding runs inline before the response, and on the
   // shared t3.small effort 4 costs tens of seconds per image for ~5% size gain.
-  ad: { maxWidth: 1920, maxHeight: 1920, quality: 65, effort: 2, format: 'avif' },
+  ad: { maxWidth: 1920, maxHeight: 1920, quality: 65, effort: 2, format: 'avif', watermark: true },
   message: { maxWidth: 1200, maxHeight: 1200, quality: 45, effort: 2, format: 'avif' },
   document: { maxWidth: 1920, maxHeight: 1920, quality: 70, effort: 2, format: 'avif' },
 };
@@ -48,6 +51,21 @@ async function optimizeFile(filePath: string, opts: OptimizeOptions): Promise<vo
       fit: 'inside',
       withoutEnlargement: true,
     });
+  }
+
+  if (opts.watermark && metadata.width && metadata.height) {
+    // sharp applies composite after resize, so size the overlay for the
+    // final dimensions (fit: 'inside' preserves aspect ratio)
+    const scale = needsResize
+      ? Math.min(opts.maxWidth / metadata.width, opts.maxHeight / metadata.height)
+      : 1;
+    const overlay = await adWatermarkOverlay(
+      Math.round(metadata.width * scale),
+      Math.round(metadata.height * scale)
+    );
+    if (overlay.length > 0) {
+      instance = instance.composite(overlay);
+    }
   }
 
   // Compress with the preset's format

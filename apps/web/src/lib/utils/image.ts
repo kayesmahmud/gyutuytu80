@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { adWatermarkOverlay } from './watermark';
 
 export interface ProcessedImage {
   filename: string;
@@ -14,6 +15,8 @@ export interface ImageProcessingOptions {
   maxHeight?: number;
   quality?: number;
   format?: 'jpeg' | 'webp' | 'png';
+  // Ad photos only — never watermark avatars or other upload kinds
+  watermark?: boolean;
 }
 
 const DEFAULT_OPTIONS: ImageProcessingOptions = {
@@ -92,6 +95,23 @@ export async function processAndSaveImage(
       fit: 'inside',
       withoutEnlargement: true,
     });
+  }
+
+  if (opts.watermark && metadata.width && metadata.height) {
+    // sharp applies composite after resize, so size the overlay for the
+    // final dimensions (fit: 'inside' preserves aspect ratio)
+    const scale = Math.min(
+      opts.maxWidth ? opts.maxWidth / metadata.width : 1,
+      opts.maxHeight ? opts.maxHeight / metadata.height : 1,
+      1
+    );
+    const overlay = await adWatermarkOverlay(
+      Math.round(metadata.width * scale),
+      Math.round(metadata.height * scale)
+    );
+    if (overlay.length > 0) {
+      sharpInstance = sharpInstance.composite(overlay);
+    }
   }
 
   // Convert format and optimize
