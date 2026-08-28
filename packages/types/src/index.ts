@@ -24,3 +24,6 @@ export * from './guards';
 
 // Export upload types and constants (platform-agnostic for web + mobile)
 export * from './upload';
+
+// Export category policy (negotiable / COD / condition / price label per category slug)
+export * from './categoryPolicy';
