@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile/features/post_ad/submit_failure.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,7 +14,6 @@ import 'package:dio/dio.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/core/providers/auth_provider.dart';
 import 'package:mobile/features/profile/phone_verification_screen.dart';
-import 'package:mobile/features/verification/verification_screen.dart';
 import 'package:mobile/core/widgets/app_cached_image.dart';
 import 'package:mobile/core/api/ad_client.dart';
 import 'package:mobile/core/api/api_config.dart';
@@ -1483,44 +1483,8 @@ class _CreateAdScreenState extends State<CreateAdScreen> {
         }
       }
     } else {
-      if (mounted) _showSubmitFailure(result);
+      if (mounted) showAdSubmitFailure(context, result);
     }
-  }
-
-  /// The ad-cap refusal gets localized copy and, for unverified sellers, a
-  /// tap-through to verification. Every other failure shows the server text.
-  void _showSubmitFailure(AdSubmitResult result) {
-    if (result.errorCode != adLimitReachedCode) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(result.errorMessage)));
-      return;
-    }
-    final details = result.errorDetails ?? const <String, dynamic>{};
-    final verified = details['verified'] == true;
-    final args = {
-      'limit': '${details['limit'] ?? ''}',
-      'verifiedLimit': '${details['verifiedLimit'] ?? ''}',
-    };
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 8),
-        content: Text(
-          (verified ? 'postAd.adLimitVerified' : 'postAd.adLimitUnverified').tr(
-            namedArgs: args,
-          ),
-        ),
-        action: verified
-            ? null
-            : SnackBarAction(
-                label: 'postAd.adLimitCta'.tr(),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const VerificationScreen()),
-                ),
-              ),
-      ),
-    );
   }
 
   /// Polls briefly after posting: did the AI publish the ad already?
