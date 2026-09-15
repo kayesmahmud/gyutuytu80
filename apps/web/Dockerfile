@@ -27,13 +27,16 @@ RUN npm install
 # sharp packages are PINNED to match sharp@0.34.5 in the lockfile — leaving them
 # unversioned pulls @latest, and a newer libvips (e.g. cpp.so.8.17.3) mismatches
 # the installed binary, breaking `next build` (ERR_DLOPEN_FAILED on sharp).
-RUN npm install --no-save \
-    @next/swc-linux-x64-musl \
-    lightningcss-linux-x64-musl \
-    @tailwindcss/oxide-linux-x64-musl \
-    @unrs/resolver-binding-linux-x64-musl \
-    @img/sharp-linuxmusl-x64@0.34.5 \
-    @img/sharp-libvips-linuxmusl-x64@1.2.4
+# TARGETARCH is set by Docker (amd64 | arm64); npm names the same arches x64 | arm64.
+ARG TARGETARCH
+RUN NODE_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) && \
+    npm install --no-save \
+    @next/swc-linux-${NODE_ARCH}-musl \
+    lightningcss-linux-${NODE_ARCH}-musl \
+    @tailwindcss/oxide-linux-${NODE_ARCH}-musl \
+    @unrs/resolver-binding-linux-${NODE_ARCH}-musl \
+    @img/sharp-linuxmusl-${NODE_ARCH}@0.34.5 \
+    @img/sharp-libvips-linuxmusl-${NODE_ARCH}@1.2.4
 
 # ---- Stage 2: Build shared packages + Next.js ----
 FROM node:20-alpine AS builder
