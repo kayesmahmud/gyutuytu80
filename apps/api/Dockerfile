@@ -28,9 +28,12 @@ RUN npm install
 # newer libvips (cpp.so.8.17.3) mismatches the binary, so `import sharp` throws
 # ERR_DLOPEN_FAILED at startup and the API crash-loops (optimizeImage is imported
 # at module load by editors.routes.ts and others).
-RUN npm install --no-save \
-    @img/sharp-linuxmusl-x64@0.34.5 \
-    @img/sharp-libvips-linuxmusl-x64@1.2.4
+# TARGETARCH is set by Docker (amd64 | arm64); npm names the same arches x64 | arm64.
+ARG TARGETARCH
+RUN NODE_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) && \
+    npm install --no-save \
+    @img/sharp-linuxmusl-${NODE_ARCH}@0.34.5 \
+    @img/sharp-libvips-linuxmusl-${NODE_ARCH}@1.2.4
 
 # ---- Stage 2: Build shared packages + API ----
 FROM node:20-alpine AS builder
