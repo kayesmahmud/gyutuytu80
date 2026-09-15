@@ -9,6 +9,7 @@
 - **IP:** `52.66.73.213`
 - **SSH key:** `/Users/elw/Documents/Web/thulobazaar/monorepo/thulobazaar-key.pem`
 - **User:** `ubuntu` | **App dir:** `/opt/thulobazaar` | **Region:** `ap-south-1`
+- **Instance:** `i-0499c38cf408d1eff` — **t4g.medium, arm64 (Graviton)** since 2026-09-15. Images are multi-arch; see `GRAVITON_MIGRATION_PLAN.md`
 - **Security group:** `sg-0628b345587d2887c`
 - **Connect:** `ssh -i /Users/elw/Documents/Web/thulobazaar/monorepo/thulobazaar-key.pem ubuntu@52.66.73.213`
 - **Deploy:** push to `main` → GitHub Actions auto-deploys via ECR → EC2
