@@ -1,6 +1,13 @@
 # Graviton (arm64) Migration Plan — EC2 t3a.medium → t4g.medium
 
-Status: Phase 0 implemented + verified locally 2026-09-15 (arm64 API/web images boot on the M3). Written 2026-09-15.
+Status: **CUT OVER 2026-09-15 18:30 UTC.** Production = `i-0499c38cf408d1eff` (t4g.medium, arm64) behind the EIP.
+Downtime 2 min. Old `i-07cffd6ca1fd4468e` left RUNNING (web/api stopped, public IP 13.200.207.15) as
+rollback until ~2026-09-22, then Phase 3/4 cleanup. Written 2026-09-15.
+
+**Rollback (while old box exists):** `aws ec2 associate-address --region ap-south-1 --allocation-id eipalloc-0b1f1f10166d111c1 --instance-id i-07cffd6ca1fd4468e --allow-reassociation`
+then on old: `docker compose -f docker-compose.prod.yml start web api`. Data written after cutover would be lost — dump the new box first.
+
+**Found during rehearsal:** repo compose lacked nginx `443:443` + `./ssl` mount (fixed in 871a70cf).
 
 ## Honest numbers first
 
