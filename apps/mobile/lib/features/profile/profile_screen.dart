@@ -288,7 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 16),
           Text(
             context.locale.languageCode == 'ne'
-                ? 'थुलो बजारमा स्वागत छ'
+                ? 'ठुलो बजारमा स्वागत छ'
                 : "Welcome to Thulo Bazaar",
             style: AppFont.inter(
               fontSize: 18,

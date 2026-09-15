@@ -188,7 +188,7 @@ class _FreeCard extends StatelessWidget {
                       ),
                       Text(
                         lang == 'ne'
-                            ? 'थुलो बजारमा स्वागत छ!'
+                            ? 'ठुलो बजारमा स्वागत छ!'
                             : 'Welcome to Thulo Bazaar!',
                         style: TextStyle(
                           fontSize: 12,
