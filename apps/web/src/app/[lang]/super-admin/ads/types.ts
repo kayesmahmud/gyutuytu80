@@ -1,24 +1,19 @@
+// Shape of one row from GET /api/editor/ads (camelCase — see
+// apps/api/src/routes/editor/ads.routes.ts). Only the fields this page reads.
 export interface Ad {
   id: number;
   title: string;
   description: string;
   price: number;
-  condition: string;
   status: string;
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-  deleted_by: number | null;
-  deletion_reason: string | null;
-  reviewed_by: number | null;
-  reviewed_at: string | null;
-  category_name: string;
-  location_name: string;
-  seller_name: string;
-  seller_email: string;
-  reviewer_name: string | null;
-  deleted_by_name: string | null;
+  createdAt: string;
+  categoryName: string | null;
+  locationName: string | null;
+  user: {
+    id: number;
+    fullName: string | null;
+    email: string | null;
+  } | null;
 }
 
 export const STATUS_FILTERS = ['all', 'pending', 'approved', 'rejected'] as const;

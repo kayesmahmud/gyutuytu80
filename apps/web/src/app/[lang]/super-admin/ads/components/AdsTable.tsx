@@ -56,18 +56,18 @@ export default function AdsTable({
                       <div className="text-sm text-gray-500 line-clamp-2">{ad.description}</div>
                       <div className="flex gap-2 mt-2">
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                          {ad.category_name}
+                          {ad.categoryName}
                         </span>
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                          {ad.location_name}
+                          {ad.locationName}
                         </span>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm">
-                      <div className="font-semibold text-gray-900">{ad.seller_name}</div>
-                      <div className="text-gray-500">{ad.seller_email}</div>
+                      <div className="font-semibold text-gray-900">{ad.user?.fullName}</div>
+                      <div className="text-gray-500">{ad.user?.email}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -81,7 +81,7 @@ export default function AdsTable({
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-600">{formatDate(ad.created_at)}</div>
+                    <div className="text-sm text-gray-600">{formatDate(ad.createdAt)}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
