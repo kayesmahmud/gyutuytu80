@@ -90,7 +90,7 @@ services:
       - TYPESENSE_HOST=typesense
       - TYPESENSE_PORT=8108
       - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
-      - CORS_ORIGIN=${CORS_ORIGIN:-https://thulobazaar.com.np}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://thulobazaar.com.np,https://www.thulobazaar.com.np}
       - FRONTEND_URL=${FRONTEND_URL:-https://thulobazaar.com.np}
       - BACKEND_URL=${BACKEND_URL:-https://api.thulobazaar.com.np}
       - UPLOAD_DIR=/app/uploads
