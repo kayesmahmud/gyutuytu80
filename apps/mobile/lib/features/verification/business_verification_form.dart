@@ -361,234 +361,239 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
 
   Widget _buildFormStep() {
     final lang = context.locale.languageCode;
+    // Not a ListView: a lazy list unmounts the name field once it scrolls
+    // off-screen, and the Form then validates and saves without it.
     return Form(
       key: _formKey,
-      child: ListView(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        children: [
-          // Plan summary
-          PlanSummaryCard(
-            type: 'business',
-            durationDays: widget.durationDays,
-            price: widget.price,
-            isFree: widget.isFreeVerification,
-            isResubmission: widget.isResubmission,
-          ),
-
-          // Step indicator (paid flows only)
-          if (!widget.isFreeVerification && !widget.isResubmission)
-            VerificationStepIndicator(
-              currentStep: 1,
-              accentColor: Colors.pink.shade600,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Plan summary
+            PlanSummaryCard(
+              type: 'business',
+              durationDays: widget.durationDays,
+              price: widget.price,
+              isFree: widget.isFreeVerification,
+              isResubmission: widget.isResubmission,
             ),
 
-          // Business Name
-          _buildLabel(lang == 'ne' ? 'व्यापारको नाम' : 'Business Name'),
-          TextFormField(
-            decoration: _inputDecoration(
-              lang == 'ne'
-                  ? 'व्यापार लाइसेन्समा भएको नाम जस्ताको तस्तै लेख्नुहोस्'
-                  : 'Enter your business name exactly as shown on your trade license',
-            ),
-            validator: (v) => v?.isEmpty == true
-                ? (lang == 'ne'
-                      ? 'व्यापारको नाम आवश्यक छ'
-                      : 'Business name is required')
-                : null,
-            onSaved: (v) => _businessName = v ?? '',
-          ),
-          const SizedBox(height: 16),
+            // Step indicator (paid flows only)
+            if (!widget.isFreeVerification && !widget.isResubmission)
+              VerificationStepIndicator(
+                currentStep: 1,
+                accentColor: Colors.pink.shade600,
+              ),
 
-          // Document Type
-          _buildLabel(lang == 'ne' ? 'कागजातको प्रकार *' : 'Document Type *'),
-          DropdownButtonFormField<String>(
-            value: _documentType.isEmpty ? null : _documentType,
-            decoration: _inputDecoration(
-              lang == 'ne'
-                  ? 'कागजातको प्रकार छान्नुहोस्'
-                  : 'Select document type',
+            // Business Name
+            _buildLabel(lang == 'ne' ? 'व्यापारको नाम' : 'Business Name'),
+            TextFormField(
+              decoration: _inputDecoration(
+                lang == 'ne'
+                    ? 'व्यापार लाइसेन्समा भएको नाम जस्ताको तस्तै लेख्नुहोस्'
+                    : 'Enter your business name exactly as shown on your trade license',
+              ),
+              validator: (v) => v?.isEmpty == true
+                  ? (lang == 'ne'
+                        ? 'व्यापारको नाम आवश्यक छ'
+                        : 'Business name is required')
+                  : null,
+              onSaved: (v) => _businessName = v ?? '',
             ),
-            items: [
-              DropdownMenuItem(
-                value: 'business_license',
-                child: Text(
-                  lang == 'ne' ? 'व्यापार लाइसेन्स' : 'Business License',
+            const SizedBox(height: 16),
+
+            // Document Type
+            _buildLabel(lang == 'ne' ? 'कागजातको प्रकार *' : 'Document Type *'),
+            DropdownButtonFormField<String>(
+              value: _documentType.isEmpty ? null : _documentType,
+              decoration: _inputDecoration(
+                lang == 'ne'
+                    ? 'कागजातको प्रकार छान्नुहोस्'
+                    : 'Select document type',
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'business_license',
+                  child: Text(
+                    lang == 'ne' ? 'व्यापार लाइसेन्स' : 'Business License',
+                  ),
                 ),
-              ),
-              DropdownMenuItem(
-                value: 'pan_card',
-                child: Text(lang == 'ne' ? 'प्यान कार्ड' : 'Pan Card'),
-              ),
-            ],
-            validator: (v) => v == null || v.isEmpty
-                ? (lang == 'ne'
-                      ? 'कागजातको प्रकार आवश्यक छ'
-                      : 'Document type is required')
-                : null,
-            onChanged: (v) => setState(() => _documentType = v ?? ''),
-            onSaved: (v) => _documentType = v ?? '',
-          ),
-          const SizedBox(height: 16),
+                DropdownMenuItem(
+                  value: 'pan_card',
+                  child: Text(lang == 'ne' ? 'प्यान कार्ड' : 'Pan Card'),
+                ),
+              ],
+              validator: (v) => v == null || v.isEmpty
+                  ? (lang == 'ne'
+                        ? 'कागजातको प्रकार आवश्यक छ'
+                        : 'Document type is required')
+                  : null,
+              onChanged: (v) => setState(() => _documentType = v ?? ''),
+              onSaved: (v) => _documentType = v ?? '',
+            ),
+            const SizedBox(height: 16),
 
-          // Document Number
-          _buildLabel(
-            _documentType == 'pan_card'
-                ? (lang == 'ne' ? 'प्यान नम्बर *' : 'PAN Number *')
-                : _documentType == 'business_license'
-                ? (lang == 'ne' ? 'लाइसेन्स नम्बर *' : 'License Number *')
-                : (lang == 'ne' ? 'कागजात नम्बर *' : 'Document Number *'),
-          ),
-          TextFormField(
-            decoration: _inputDecoration(
+            // Document Number
+            _buildLabel(
+              _documentType == 'pan_card'
+                  ? (lang == 'ne' ? 'प्यान नम्बर *' : 'PAN Number *')
+                  : _documentType == 'business_license'
+                  ? (lang == 'ne' ? 'लाइसेन्स नम्बर *' : 'License Number *')
+                  : (lang == 'ne' ? 'कागजात नम्बर *' : 'Document Number *'),
+            ),
+            TextFormField(
+              decoration: _inputDecoration(
+                _documentType == 'pan_card'
+                    ? (lang == 'ne'
+                          ? 'आफ्नो प्यान नम्बर लेख्नुहोस्'
+                          : 'Enter your PAN number')
+                    : (lang == 'ne'
+                          ? 'आफ्नो लाइसेन्स नम्बर लेख्नुहोस्'
+                          : 'Enter your trade license number'),
+              ),
+              validator: (v) => v?.isEmpty == true
+                  ? (lang == 'ne'
+                        ? 'कागजात नम्बर आवश्यक छ'
+                        : 'Document number is required')
+                  : null,
+              onSaved: (v) => _documentNumber = v ?? '',
+            ),
+            const SizedBox(height: 24),
+
+            // Document Upload
+            _buildLabel(
               _documentType == 'pan_card'
                   ? (lang == 'ne'
-                        ? 'आफ्नो प्यान नम्बर लेख्नुहोस्'
-                        : 'Enter your PAN number')
+                        ? 'प्यान कार्ड अपलोड गर्नुहोस् *'
+                        : 'Upload Pan Card *')
+                  : _documentType == 'business_license'
+                  ? (lang == 'ne'
+                        ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस् *'
+                        : 'Upload Business License *')
                   : (lang == 'ne'
-                        ? 'आफ्नो लाइसेन्स नम्बर लेख्नुहोस्'
-                        : 'Enter your trade license number'),
+                        ? 'कागजात अपलोड गर्नुहोस् *'
+                        : 'Upload Document *'),
             ),
-            validator: (v) => v?.isEmpty == true
-                ? (lang == 'ne'
-                      ? 'कागजात नम्बर आवश्यक छ'
-                      : 'Document number is required')
-                : null,
-            onSaved: (v) => _documentNumber = v ?? '',
-          ),
-          const SizedBox(height: 24),
-
-          // Document Upload
-          _buildLabel(
-            _documentType == 'pan_card'
-                ? (lang == 'ne'
-                      ? 'प्यान कार्ड अपलोड गर्नुहोस् *'
-                      : 'Upload Pan Card *')
-                : _documentType == 'business_license'
-                ? (lang == 'ne'
-                      ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस् *'
-                      : 'Upload Business License *')
-                : (lang == 'ne'
-                      ? 'कागजात अपलोड गर्नुहोस् *'
-                      : 'Upload Document *'),
-          ),
-          GestureDetector(
-            onTap: _pickDocument,
-            child: Container(
-              height: _licenseDocument != null ? 180 : 100,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _licenseDocument != null
-                      ? Colors.green.shade300
-                      : Colors.grey.shade300,
-                  width: 1.5,
+            GestureDetector(
+              onTap: _pickDocument,
+              child: Container(
+                height: _licenseDocument != null ? 180 : 100,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _licenseDocument != null
+                        ? Colors.green.shade300
+                        : Colors.grey.shade300,
+                    width: 1.5,
+                  ),
                 ),
-              ),
-              child: _licenseDocument != null
-                  ? Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.file(
-                            _licenseDocument!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: 180,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.green,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              LucideIcons.check,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                child: _licenseDocument != null
+                    ? Stack(
                         children: [
-                          Icon(
-                            LucideIcons.upload,
-                            color: Colors.grey[400],
-                            size: 28,
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              _licenseDocument!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: 180,
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _documentType == 'pan_card'
-                                ? (lang == 'ne'
-                                      ? 'प्यान कार्ड अपलोड गर्नुहोस्'
-                                      : 'Upload your Pan Card')
-                                : _documentType == 'business_license'
-                                ? (lang == 'ne'
-                                      ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस्'
-                                      : 'Upload your Business License')
-                                : (lang == 'ne'
-                                      ? 'कागजात अपलोड गर्नुहोस्'
-                                      : 'Upload your document'),
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 13,
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                LucideIcons.check,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ),
                           ),
                         ],
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              LucideIcons.upload,
+                              color: Colors.grey[400],
+                              size: 28,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _documentType == 'pan_card'
+                                  ? (lang == 'ne'
+                                        ? 'प्यान कार्ड अपलोड गर्नुहोस्'
+                                        : 'Upload your Pan Card')
+                                  : _documentType == 'business_license'
+                                  ? (lang == 'ne'
+                                        ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस्'
+                                        : 'Upload your Business License')
+                                  : (lang == 'ne'
+                                        ? 'कागजात अपलोड गर्नुहोस्'
+                                        : 'Upload your document'),
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Submit button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
               ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      widget.isFreeVerification || widget.isResubmission
-                          ? (lang == 'ne'
-                                ? 'प्रमाणीकरण पेश गर्नुहोस्'
-                                : 'Submit Verification')
-                          : (lang == 'ne'
-                                ? 'भुक्तानीमा जानुहोस्'
-                                : 'Proceed to Payment'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
             ),
-          ),
-          const SizedBox(height: 40),
-        ],
+            const SizedBox(height: 32),
+
+            // Submit button
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        widget.isFreeVerification || widget.isResubmission
+                            ? (lang == 'ne'
+                                  ? 'प्रमाणीकरण पेश गर्नुहोस्'
+                                  : 'Submit Verification')
+                            : (lang == 'ne'
+                                  ? 'भुक्तानीमा जानुहोस्'
+                                  : 'Proceed to Payment'),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }

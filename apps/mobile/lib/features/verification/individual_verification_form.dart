@@ -378,195 +378,200 @@ class _IndividualVerificationFormState
 
   Widget _buildFormStep() {
     final lang = context.locale.languageCode;
+    // Not a ListView: a lazy list unmounts the name field once it scrolls
+    // off-screen, and the Form then validates and saves without it.
     return Form(
       key: _formKey,
-      child: ListView(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        children: [
-          // Plan summary
-          PlanSummaryCard(
-            type: 'individual',
-            durationDays: widget.durationDays,
-            price: widget.price,
-            isFree: widget.isFreeVerification,
-            isResubmission: widget.isResubmission,
-          ),
-
-          // Step indicator (paid flows only)
-          if (!widget.isFreeVerification && !widget.isResubmission)
-            const VerificationStepIndicator(
-              currentStep: 1,
-              accentColor: Colors.indigo,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Plan summary
+            PlanSummaryCard(
+              type: 'individual',
+              durationDays: widget.durationDays,
+              price: widget.price,
+              isFree: widget.isFreeVerification,
+              isResubmission: widget.isResubmission,
             ),
 
-          // Full Name
-          _buildLabel(
-            lang == 'ne'
-                ? 'पूरा नाम (परिचयपत्रमा जस्तो) *'
-                : 'Full Name (as on ID document) *',
-          ),
-          TextFormField(
-            decoration: _inputDecoration(
-              lang == 'ne'
-                  ? 'आफ्नो पूरा नाम परिचयपत्रमा देखिए जस्तै लेख्नुहोस्'
-                  : 'Enter your full name exactly as shown on ID',
-            ),
-            validator: (v) => v?.isEmpty == true
-                ? (lang == 'ne'
-                      ? 'कृपया आफ्नो पूरा नाम लेख्नुहोस्'
-                      : 'Please enter your full name')
-                : null,
-            onSaved: (v) => _fullName = v ?? '',
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              lang == 'ne'
-                  ? 'यो नाम प्रमाणित गरिनेछ र तपाईंको निलो ब्याजसँग देखाइनेछ'
-                  : 'This name will be verified and displayed with your blue badge',
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ID Type
-          _buildLabel(
-            lang == 'ne' ? 'परिचयपत्र प्रकार *' : 'ID Document Type *',
-          ),
-          DropdownButtonFormField<String>(
-            value: _idType,
-            decoration: _inputDecoration(''),
-            items: [
-              DropdownMenuItem(
-                value: 'citizenship',
-                child: Text(lang == 'ne' ? 'नागरिकता' : 'Citizenship'),
+            // Step indicator (paid flows only)
+            if (!widget.isFreeVerification && !widget.isResubmission)
+              const VerificationStepIndicator(
+                currentStep: 1,
+                accentColor: Colors.indigo,
               ),
-              DropdownMenuItem(
-                value: 'passport',
-                child: Text(lang == 'ne' ? 'राहदानी' : 'Passport'),
+
+            // Full Name
+            _buildLabel(
+              lang == 'ne'
+                  ? 'पूरा नाम (परिचयपत्रमा जस्तो) *'
+                  : 'Full Name (as on ID document) *',
+            ),
+            TextFormField(
+              decoration: _inputDecoration(
+                lang == 'ne'
+                    ? 'आफ्नो पूरा नाम परिचयपत्रमा देखिए जस्तै लेख्नुहोस्'
+                    : 'Enter your full name exactly as shown on ID',
               ),
-              DropdownMenuItem(
-                value: 'driving_license',
-                child: Text(
-                  lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License',
+              validator: (v) => v?.isEmpty == true
+                  ? (lang == 'ne'
+                        ? 'कृपया आफ्नो पूरा नाम लेख्नुहोस्'
+                        : 'Please enter your full name')
+                  : null,
+              onSaved: (v) => _fullName = v ?? '',
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                lang == 'ne'
+                    ? 'यो नाम प्रमाणित गरिनेछ र तपाईंको निलो ब्याजसँग देखाइनेछ'
+                    : 'This name will be verified and displayed with your blue badge',
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ID Type
+            _buildLabel(
+              lang == 'ne' ? 'परिचयपत्र प्रकार *' : 'ID Document Type *',
+            ),
+            DropdownButtonFormField<String>(
+              value: _idType,
+              decoration: _inputDecoration(''),
+              items: [
+                DropdownMenuItem(
+                  value: 'citizenship',
+                  child: Text(lang == 'ne' ? 'नागरिकता' : 'Citizenship'),
                 ),
-              ),
-            ],
-            onChanged: (v) => setState(() => _idType = v ?? 'citizenship'),
-          ),
-          const SizedBox(height: 16),
-
-          // ID Number
-          _buildLabel(
-            lang == 'ne' ? 'परिचयपत्र नम्बर *' : 'ID Document Number *',
-          ),
-          TextFormField(
-            decoration: _inputDecoration(
-              lang == 'ne'
-                  ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्'
-                  : 'Enter your ID number',
-            ),
-            validator: (v) => v?.isEmpty == true
-                ? (lang == 'ne'
-                      ? 'कृपया आफ्नो परिचयपत्र नम्बर लेख्नुहोस्'
-                      : 'Please enter your ID document number')
-                : null,
-            onSaved: (v) => _idNumber = v ?? '',
-          ),
-          const SizedBox(height: 24),
-
-          // Documents
-          _buildLabel(
-            lang == 'ne' ? 'परिचयपत्र अगाडिको छवि *' : 'ID Front Image *',
-          ),
-          _buildDocUpload(
-            _idFront,
-            'front',
-            lang == 'ne'
-                ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्'
-                : 'Upload front of your ID',
-          ),
-          _buildFileHint(lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
-          const SizedBox(height: 12),
-
-          _buildLabel(
-            lang == 'ne'
-                ? 'परिचयपत्र पछाडिको छवि ${_idType != 'passport' ? '*' : ''}'
-                : 'ID Back Image ${_idType != 'passport' ? '*' : ''}',
-          ),
-          _buildDocUpload(
-            _idBack,
-            'back',
-            lang == 'ne'
-                ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस्'
-                : 'Upload back of your ID',
-          ),
-          _buildFileHint(
-            _idType == 'passport'
-                ? (lang == 'ne' ? 'ऐच्छिक' : 'Optional')
-                : (lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
-          ),
-          const SizedBox(height: 12),
-
-          _buildLabel(
-            lang == 'ne'
-                ? 'परिचयपत्रसहित सेल्फी *'
-                : 'Selfie with ID Document *',
-          ),
-          _buildDocUpload(
-            _selfie,
-            'selfie',
-            lang == 'ne'
-                ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्'
-                : 'Upload a selfie holding your ID',
-          ),
-          _buildFileHint(
-            lang == 'ne'
-                ? 'आफ्नो अनुहारको छेउमा परिचयपत्र समातेको स्पष्ट सेल्फी'
-                : 'Clear selfie holding your ID next to your face',
-          ),
-          const SizedBox(height: 32),
-
-          // Submit button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                DropdownMenuItem(
+                  value: 'passport',
+                  child: Text(lang == 'ne' ? 'राहदानी' : 'Passport'),
                 ),
-                elevation: 0,
-              ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      widget.isFreeVerification || widget.isResubmission
-                          ? (lang == 'ne'
-                                ? 'प्रमाणीकरणको लागि पेश गर्नुहोस्'
-                                : 'Submit for Verification')
-                          : (lang == 'ne'
-                                ? 'भुक्तानीमा जानुहोस्'
-                                : 'Proceed to Payment'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                DropdownMenuItem(
+                  value: 'driving_license',
+                  child: Text(
+                    lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License',
+                  ),
+                ),
+              ],
+              onChanged: (v) => setState(() => _idType = v ?? 'citizenship'),
             ),
-          ),
-          const SizedBox(height: 40),
-        ],
+            const SizedBox(height: 16),
+
+            // ID Number
+            _buildLabel(
+              lang == 'ne' ? 'परिचयपत्र नम्बर *' : 'ID Document Number *',
+            ),
+            TextFormField(
+              decoration: _inputDecoration(
+                lang == 'ne'
+                    ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्'
+                    : 'Enter your ID number',
+              ),
+              validator: (v) => v?.isEmpty == true
+                  ? (lang == 'ne'
+                        ? 'कृपया आफ्नो परिचयपत्र नम्बर लेख्नुहोस्'
+                        : 'Please enter your ID document number')
+                  : null,
+              onSaved: (v) => _idNumber = v ?? '',
+            ),
+            const SizedBox(height: 24),
+
+            // Documents
+            _buildLabel(
+              lang == 'ne' ? 'परिचयपत्र अगाडिको छवि *' : 'ID Front Image *',
+            ),
+            _buildDocUpload(
+              _idFront,
+              'front',
+              lang == 'ne'
+                  ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्'
+                  : 'Upload front of your ID',
+            ),
+            _buildFileHint(lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
+            const SizedBox(height: 12),
+
+            _buildLabel(
+              lang == 'ne'
+                  ? 'परिचयपत्र पछाडिको छवि ${_idType != 'passport' ? '*' : ''}'
+                  : 'ID Back Image ${_idType != 'passport' ? '*' : ''}',
+            ),
+            _buildDocUpload(
+              _idBack,
+              'back',
+              lang == 'ne'
+                  ? 'आफ्नो परिचयपत्रको पछाडिको भाग अपलोड गर्नुहोस्'
+                  : 'Upload back of your ID',
+            ),
+            _buildFileHint(
+              _idType == 'passport'
+                  ? (lang == 'ne' ? 'ऐच्छिक' : 'Optional')
+                  : (lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
+            ),
+            const SizedBox(height: 12),
+
+            _buildLabel(
+              lang == 'ne'
+                  ? 'परिचयपत्रसहित सेल्फी *'
+                  : 'Selfie with ID Document *',
+            ),
+            _buildDocUpload(
+              _selfie,
+              'selfie',
+              lang == 'ne'
+                  ? 'आफ्नो परिचयपत्र समातेको सेल्फी अपलोड गर्नुहोस्'
+                  : 'Upload a selfie holding your ID',
+            ),
+            _buildFileHint(
+              lang == 'ne'
+                  ? 'आफ्नो अनुहारको छेउमा परिचयपत्र समातेको स्पष्ट सेल्फी'
+                  : 'Clear selfie holding your ID next to your face',
+            ),
+            const SizedBox(height: 32),
+
+            // Submit button
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        widget.isFreeVerification || widget.isResubmission
+                            ? (lang == 'ne'
+                                  ? 'प्रमाणीकरणको लागि पेश गर्नुहोस्'
+                                  : 'Submit for Verification')
+                            : (lang == 'ne'
+                                  ? 'भुक्तानीमा जानुहोस्'
+                                  : 'Proceed to Payment'),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
