@@ -31,7 +31,7 @@ export function VerificationCard({
           <div className="flex-shrink-0">
             <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center">
               <span className="text-5xl">
-                {verification.fullName ? verification.fullName.charAt(0).toUpperCase() : '👤'}
+                {(verification.fullName || verification.accountName)?.charAt(0).toUpperCase() || '👤'}
               </span>
             </div>
           </div>
@@ -43,9 +43,20 @@ export function VerificationCard({
                 <div className="text-xs font-semibold text-purple-700 uppercase tracking-wide">
                   Name to be verified:
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  {verification.fullName}
-                </h3>
+                {verification.fullName ? (
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{verification.fullName}</h3>
+                ) : (
+                  // Older app builds could submit without a name; approving keeps
+                  // the account name, so that is what the badge would show.
+                  <div className="mb-1">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {verification.accountName || '—'}
+                    </h3>
+                    <div className="text-xs text-amber-700">
+                      No name on the request — this is the account name
+                    </div>
+                  </div>
+                )}
                 {verification.verifiedSellerName && (
                   <div className="text-sm text-purple-700 font-medium mb-2 flex items-center gap-1">
                     <span>✨</span> Seller Name: {verification.verifiedSellerName}

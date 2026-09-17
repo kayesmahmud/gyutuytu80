@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { browserRequest } from '../helpers/browserRequest.js';
 import { createApp } from '../../app.js';
+import jwt from 'jsonwebtoken';
 
 // Mock Prisma
 vi.mock('@thulobazaar/database', () => ({
   prisma: {
+    $transaction: vi.fn(),
     users: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -16,8 +18,10 @@ vi.mock('@thulobazaar/database', () => ({
     individual_verification_requests: {
       findFirst: vi.fn(),
       create: vi.fn(),
+      deleteMany: vi.fn(),
     },
     verification_pricing: {
+      findFirst: vi.fn(),
       findMany: vi.fn(),
     },
     verification_campaigns: {
@@ -29,7 +33,14 @@ vi.mock('@thulobazaar/database', () => ({
   },
 }));
 
+vi.mock('../../services/notification.service.js', () => ({
+  notifyEditors: vi.fn().mockResolvedValue(undefined),
+}));
+
 const app = createApp();
+
+const userToken = (userId: number) =>
+  `Bearer ${jwt.sign({ userId, email: `user${userId}@test.local`, role: 'user' }, process.env.JWT_SECRET!, { expiresIn: '1h' })}`;
 
 describe('Verification Routes', () => {
   beforeEach(() => {
@@ -86,6 +97,49 @@ describe('Verification Routes', () => {
         .send({ documentUrls: ['doc1.pdf'] });
 
       expect(response.status).toBe(401);
+    });
+
+    it('stores the name and ID number exactly as the Flutter client posts them', async () => {
+      const { prisma } = await import('@thulobazaar/database');
+      // Eligible: nothing pending, never verified.
+      vi.mocked(prisma.users.findUnique).mockResolvedValue({
+        business_verification_status: null,
+        business_verification_expires_at: null,
+        individual_verified: false,
+        individual_verification_expires_at: null,
+        individual_verified_at: null,
+        business_verified_at: null,
+      } as any);
+      vi.mocked(prisma.business_verification_requests.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.individual_verification_requests.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.verification_pricing.findFirst).mockResolvedValue({ price: 500 } as any);
+      vi.mocked(prisma.site_settings.findMany).mockResolvedValue([] as any);
+      vi.mocked(prisma.users.update).mockResolvedValue({} as any);
+      vi.mocked(prisma.individual_verification_requests.create).mockReturnValue('create-op' as any);
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 0 }, { id: 77 }] as any);
+
+      // The payload shape of VerificationClient.submitIndividualVerification.
+      const response = await browserRequest(app)
+        .post('/api/verification/individual')
+        .set('Authorization', userToken(4955))
+        .send({
+          documentUrls: { id_document_front: { filename: 'front.avif' } },
+          fullName: 'Bidhneshwar Kumar Singh',
+          idDocumentType: 'passport',
+          idDocumentNumber: '19-01-82-12838',
+          durationDays: 180,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toEqual({ requestId: 77 });
+      expect(prisma.individual_verification_requests.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          user_id: 4955,
+          full_name: 'Bidhneshwar Kumar Singh',
+          id_document_type: 'passport',
+          id_document_number: '19-01-82-12838',
+        }),
+      });
     });
   });
 

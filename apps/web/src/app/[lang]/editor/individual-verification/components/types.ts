@@ -3,6 +3,7 @@ export interface IndividualVerification {
   userId: number;
   email: string;
   fullName: string;
+  accountName?: string | null;
   verifiedSellerName?: string;
   phone?: string;
   location?: string;

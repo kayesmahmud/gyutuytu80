@@ -136,6 +136,7 @@ export async function GET(request: NextRequest) {
       users_individual_verification_requests_user_idTousers: {
         select: {
           email: true,
+          full_name: true,
           shop_slug: true,
           custom_shop_slug: true,
         },
@@ -224,6 +225,8 @@ export async function GET(request: NextRequest) {
       paymentStatus: iv.payment_status,
       rejectionReason: iv.rejection_reason,
       email: iv.users_individual_verification_requests_user_idTousers?.email,
+      // What the badge will carry if this request is approved without a name
+      accountName: iv.users_individual_verification_requests_user_idTousers?.full_name || null,
       shopSlug:
         iv.users_individual_verification_requests_user_idTousers?.custom_shop_slug ||
         iv.users_individual_verification_requests_user_idTousers?.shop_slug ||
