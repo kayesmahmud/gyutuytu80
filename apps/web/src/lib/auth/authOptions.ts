@@ -200,8 +200,11 @@ export const authOptions: NextAuthOptions = {
           try {
             const user = await findUserForAuth(undefined, credentials.phone);
 
+            // Same message as a wrong password, deliberately: the Express
+            // phone-login route already refuses to reveal whether a number has
+            // an account (AUTH-M2), and this path must not undo that.
             if (!user) {
-              throw new Error('No account found with this phone number');
+              throw new Error('Invalid phone number or password');
             }
 
             const statusError = validateUserStatus(user);

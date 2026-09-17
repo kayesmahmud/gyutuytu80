@@ -343,6 +343,9 @@ router.post(
       if (/no account found|not found|invalid password/i.test(err)) {
         return res.status(401).json({
           success: false,
+          // `code` lets the app show translated copy (with the "did you change
+          // your number?" hint) instead of echoing this English message.
+          code: 'INVALID_CREDENTIALS',
           message: 'Invalid phone number or password',
         });
       }
@@ -527,10 +530,13 @@ router.post(
     // Proof that the caller may move THIS account — the verificationToken only
     // proves control of the NEW number. Dropping it here was the bug: every
     // request looked proof-less and canChangePhone denied it.
-    const result = await updatePhone(userId, phone, verificationToken, {
-      currentPassword,
-      oldNumberOtpToken,
-    });
+    const result = await updatePhone(
+      userId,
+      phone,
+      verificationToken,
+      { currentPassword, oldNumberOtpToken },
+      'api'
+    );
 
     if (!result.success) {
       return res.status(400).json({

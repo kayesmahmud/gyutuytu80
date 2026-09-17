@@ -107,6 +107,24 @@ model ad_edit_history {
 }
 
 /// Phone OTPs - for phone number verification
+/// Phone number history - one row per change of users.phone, written by
+/// auth-core updatePhone() (the only verified path). Lets support answer
+/// "which account used to have number X?" with one query instead of
+/// correlating phone_otps timestamps.
+model user_phone_history {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  old_phone  String?  @db.VarChar(20)
+  new_phone  String   @db.VarChar(20)
+  source     String   @db.VarChar(20)
+  changed_at DateTime @default(now()) @db.Timestamp(6)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_phone_history_user")
+
+  @@index([user_id], map: "idx_user_phone_history_user_id")
+  @@index([old_phone], map: "idx_user_phone_history_old_phone")
+  @@index([new_phone], map: "idx_user_phone_history_new_phone")
+}
+
 model phone_otps {
   id         Int      @id @default(autoincrement())
   phone      String   @db.VarChar(20)
@@ -619,6 +637,7 @@ model users {
   ad_promotions                                                                        ad_promotions[]
   ad_reports                                                                           ad_reports[]
   ad_review_history                                                                    ad_review_history[]
+  user_phone_history                                                                   user_phone_history[]
   admin_activity_logs                                                                  admin_activity_logs[]
   ads_ads_deleted_byTousers                                                            ads[]                              @relation("ads_deleted_byTousers")
   ads_ads_reviewed_byTousers                                                           ads[]                              @relation("ads_reviewed_byTousers")

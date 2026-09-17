@@ -160,7 +160,8 @@ export async function PUT(request: NextRequest) {
     const updateData: any = {};
 
     if (body.fullName) updateData.full_name = body.fullName;
-    if (body.phone) updateData.phone = body.phone;
+    // phone is deliberately NOT accepted here: changing it requires OTP proof
+    // and is recorded in user_phone_history — see /api/auth/update-phone.
     if (body.bio !== undefined) updateData.bio = body.bio;
     if (body.locationId) updateData.location_id = body.locationId;
 

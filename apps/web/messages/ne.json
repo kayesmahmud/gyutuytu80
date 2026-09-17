@@ -144,6 +144,7 @@
     "termsAndConditions": "नियम र सर्तहरू",
     "privacyPolicy": "गोपनीयता नीति",
     "loginFailed": "लगइन असफल भयो। कृपया पुन: प्रयास गर्नुहोस्।",
+    "invalidCredentialsHint": "फोन नम्बर वा पासवर्ड मिलेन। हालै फोन नम्बर परिवर्तन गर्नुभएको छ भने नयाँ नम्बरबाट साइन इन गर्नुहोस्।",
     "googleLoginFailed": "गुगल लगइन असफल भयो",
     "errorOccurred": "त्रुटि भयो",
     "pleaseEnterPhoneAndPassword": "कृपया फोन र पासवर्ड हाल्नुहोस्",

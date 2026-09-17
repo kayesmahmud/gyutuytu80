@@ -144,6 +144,7 @@
     "termsAndConditions": "Terms & Conditions",
     "privacyPolicy": "Privacy Policy",
     "loginFailed": "Login failed. Please try again.",
+    "invalidCredentialsHint": "Phone number or password is incorrect. If you recently changed your phone number, sign in with your new number.",
     "googleLoginFailed": "Google Login failed",
     "errorOccurred": "An error occurred",
     "pleaseEnterPhoneAndPassword": "Please enter phone and password",

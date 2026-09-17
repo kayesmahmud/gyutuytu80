@@ -10,6 +10,14 @@ interface LoginFormProps {
   lang: string;
 }
 
+// Server-side credential errors are English strings; show them translated. The
+// invalid-credentials copy carries the "did you change your number?" hint
+// because that is what most of these actually are (support case 2026-09-17).
+const CREDENTIALS_ERROR_KEYS: Record<string, string> = {
+  'Invalid phone number or password': 'invalidCredentialsHint',
+  'Invalid 2FA code': 'invalid2FACode',
+};
+
 const OAUTH_ERROR_KEYS: Record<string, string> = {
   OAuthCallback: 'oauthCallbackError',
   OAuthSignin: 'oauthSigninError',
@@ -149,10 +157,9 @@ export default function LoginForm({ lang }: LoginFormProps) {
         if (result.error === '2FA_REQUIRED') {
           setRequires2FA(true);
           setError('');
-        } else if (result.error === 'Invalid 2FA code') {
-          setError(t('invalid2FACode'));
         } else {
-          setError(result.error);
+          const key = CREDENTIALS_ERROR_KEYS[result.error];
+          setError(key ? t(key) : result.error);
         }
       } else if (result?.ok) {
         router.push(callbackUrl || `/${lang}`);
