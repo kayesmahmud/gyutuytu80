@@ -77,6 +77,34 @@ describe('GET /api/admin/verifications ?search=', () => {
     expect(mockIndividualCount.mock.calls[0][0].where).toEqual(individualWhere);
   });
 
+  it('returns the account name beside a request that was submitted without one', async () => {
+    mockIndividualCount.mockResolvedValue(1);
+    mockIndividualFindMany.mockResolvedValue([
+      {
+        id: 9,
+        user_id: 4955,
+        full_name: null,
+        status: 'pending',
+        created_at: new Date('2026-09-17'),
+        users_individual_verification_requests_user_idTousers: {
+          email: 'singh@example.com',
+          full_name: 'Bidhneshwar Kumar Singh',
+        },
+      },
+    ]);
+
+    const res = await GET(getRequest({ status: 'pending', type: 'individual' }));
+    const { data } = await res.json();
+
+    expect(mockIndividualFindMany.mock.calls[0][0].select
+      .users_individual_verification_requests_user_idTousers.select.full_name).toBe(true);
+    expect(data[0]).toMatchObject({
+      fullName: null,
+      accountName: 'Bidhneshwar Kumar Singh',
+      email: 'singh@example.com',
+    });
+  });
+
   it('does not add an OR clause when search is empty or whitespace', async () => {
     await GET(getRequest({ status: 'all', search: '   ' }));
     expect(mockBusinessFindMany.mock.calls[0][0].where).toEqual({});

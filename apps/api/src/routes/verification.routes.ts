@@ -582,7 +582,11 @@ router.post(
       });
     }
 
-    const { documentUrls, fullName, idType, idNumber, durationDays } = req.body;
+    const { documentUrls, fullName, durationDays } = req.body;
+    // The Flutter client has always sent idDocumentType/idDocumentNumber; the
+    // short names are kept so nothing else that posts them breaks.
+    const idType = req.body.idDocumentType ?? req.body.idType;
+    const idNumber = req.body.idDocumentNumber ?? req.body.idNumber;
 
     const resolvedDurationDays = Number(durationDays) || 365;
     const payment = await resolveSubmitPayment(userId, 'individual', resolvedDurationDays);

@@ -40,6 +40,7 @@ export function useIndividualVerificationPage(lang: string) {
           userId: v.userId,
           email: v.email || '',
           fullName: v.fullName || '',
+          accountName: v.accountName,
           verifiedSellerName: v.verifiedSellerName,
           phone: v.phone,
           location: v.location,
