@@ -64,6 +64,7 @@
     "sendOtp": "Send OTP",
     "resendIn": "Resend in {}s",
     "invalidPhone": "Invalid phone number. Must be 10 digits starting with 97 or 98.",
+    "invalidCredentialsHint": "Phone number or password is incorrect. If you recently changed your phone number, sign in with your new number.",
     "otpSentSuccess": "OTP sent successfully! Check your phone.",
     "otpSentTo": "OTP sent to +977 {}",
     "expiresIn": "Expires in {}",

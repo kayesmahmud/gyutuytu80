@@ -403,15 +403,17 @@ class _SignInScreenState extends State<SignInScreen> {
         await _saveCredentials(rawPhone);
         await _proceedAfterLogin(result['token'], result);
       } else {
+        // The API answers unknown-number and wrong-password identically
+        // (anti-enumeration) and tags it with a code; translate that here and
+        // include the "changed your number?" hint, which is the usual cause.
+        final message = result['code'] == 'INVALID_CREDENTIALS'
+            ? 'auth.invalidCredentialsHint'.tr()
+            : (result['message'] ??
+                (context.locale.languageCode == 'ne'
+                    ? 'लगइन असफल'
+                    : 'Login failed'));
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result['message'] ??
-                  (context.locale.languageCode == 'ne'
-                      ? 'लगइन असफल'
-                      : 'Login failed'),
-            ),
-          ),
+          SnackBar(content: Text(message)),
         );
       }
     } catch (e, stack) {
