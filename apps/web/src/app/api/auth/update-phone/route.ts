@@ -47,10 +47,13 @@ export async function POST(request: NextRequest) {
 
     // Twin of the Express route — dropping the proof here would deny every
     // verified user once require_phone_change_proof is switched on.
-    const result = await updatePhone(userId, phone, verificationToken, {
-      currentPassword,
-      oldNumberOtpToken,
-    });
+    const result = await updatePhone(
+      userId,
+      phone,
+      verificationToken,
+      { currentPassword, oldNumberOtpToken },
+      'web'
+    );
 
     if (!result.success) {
       return NextResponse.json(

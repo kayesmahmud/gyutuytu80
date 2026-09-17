@@ -410,7 +410,9 @@ export async function updatePhone(
    * merely controlling the destination number. Required only when the account
    * already has a verified phone — see canChangePhone.
    */
-  proof?: { currentPassword?: string; oldNumberOtpToken?: string }
+  proof?: { currentPassword?: string; oldNumberOtpToken?: string },
+  /** Which client made the change — recorded in user_phone_history for support. */
+  source: 'web' | 'api' = 'api'
 ): Promise<UpdatePhoneResult> {
   // Entitlement first: the verificationToken below only proves control of the
   // NEW number, which is not the same as being allowed to move the account.
@@ -445,20 +447,38 @@ export async function updatePhone(
     return { success: false, error: 'This phone number is already in use. Please use another number.' };
   }
 
-  const updated = await prisma.users.update({
+  // Record old → new in the same transaction as the change itself, so support
+  // can answer "which account used to have number X?" with one query instead
+  // of correlating phone_otps timestamps (how user 1009 was traced on 2026-09-17).
+  const current = await prisma.users.findUnique({
     where: { id: userId },
-    data: {
-      phone: formattedPhone,
-      phone_verified: true,
-      phone_verified_at: new Date(),
-      updated_at: new Date(),
-    },
-    select: {
-      phone: true,
-      phone_verified: true,
-      phone_verified_at: true,
-    },
+    select: { phone: true },
   });
+
+  const [updated] = await prisma.$transaction([
+    prisma.users.update({
+      where: { id: userId },
+      data: {
+        phone: formattedPhone,
+        phone_verified: true,
+        phone_verified_at: new Date(),
+        updated_at: new Date(),
+      },
+      select: {
+        phone: true,
+        phone_verified: true,
+        phone_verified_at: true,
+      },
+    }),
+    prisma.user_phone_history.create({
+      data: {
+        user_id: userId,
+        old_phone: current?.phone ?? null,
+        new_phone: formattedPhone,
+        source,
+      },
+    }),
+  ]);
 
   // Consume any remaining OTPs for this number/purpose
   await prisma.phone_otps.updateMany({
