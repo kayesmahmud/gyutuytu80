@@ -330,9 +330,11 @@ async function notifyApplicant(userId: number, kind: VerificationKind, code: str
     recipientUserIds: [userId],
     type: 'verification_needs_changes',
     title: 'Verification needs changes / प्रमाणीकरणमा सुधार आवश्यक',
+    // App builds older than the edit feature have no Edit button, so point at
+    // the website as the alternative; harmless once everyone has updated.
     body:
-      `Your ${kind} verification will not be approved as submitted — ${hint.en}. Please edit your submission. ` +
-      `तपाईंको प्रमाणीकरण यसरी स्वीकृत हुनेछैन — ${hint.ne}। कृपया आफ्नो आवेदन सम्पादन गर्नुहोस्।`,
+      `Your ${kind} verification will not be approved as submitted — ${hint.en}. Please edit your submission in the latest app or on thulobazaar.com.np. ` +
+      `तपाईंको प्रमाणीकरण यसरी स्वीकृत हुनेछैन — ${hint.ne}। कृपया पछिल्लो एपमा वा thulobazaar.com.np मा आफ्नो आवेदन सम्पादन गर्नुहोस्।`,
     data: { route: '/verification', verificationType: kind, reasonCode: code },
   });
 }
