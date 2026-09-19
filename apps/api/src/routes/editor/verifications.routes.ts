@@ -7,6 +7,16 @@ import { sendNotification } from '../../services/notification.service.js';
 const router = Router();
 
 /**
+ * Editor queue order (owner, 2026-09-19): AI-positive first so quick approvals
+ * go out fast, then everything the AI could not judge, then requests that are
+ * waiting on the applicant to fix something. Newest first within a group.
+ */
+const AI_VERDICT_RANK: Record<string, number> = { looks_good: 0, needs_changes: 2 };
+export function aiQueueRank(verdict: string | null | undefined): number {
+  return AI_VERDICT_RANK[verdict ?? ''] ?? 1;
+}
+
+/**
  * GET /api/editor/verifications
  * Get pending verifications (both business and individual)
  */
@@ -87,6 +97,12 @@ router.get(
         payment_amount: v.payment_amount ? Number(v.payment_amount) : null,
         payment_reference: v.payment_reference,
         payment_status: v.payment_status,
+        ai_verdict: v.ai_verdict,
+        ai_reason_code: v.ai_reason_code,
+        ai_reason: v.ai_reason,
+        ai_name_on_document: v.ai_name_on_document,
+        ai_checked_at: v.ai_checked_at,
+        edited_at: v.edited_at,
       })),
       ...individualVerifications.map((v) => ({
         id: v.id,
@@ -112,8 +128,18 @@ router.get(
         payment_amount: v.payment_amount ? Number(v.payment_amount) : null,
         payment_reference: v.payment_reference,
         payment_status: v.payment_status,
+        ai_verdict: v.ai_verdict,
+        ai_reason_code: v.ai_reason_code,
+        ai_reason: v.ai_reason,
+        ai_name_on_document: v.ai_name_on_document,
+        ai_checked_at: v.ai_checked_at,
+        edited_at: v.edited_at,
       })),
-    ];
+    ].sort((a, b) => {
+      const rank = aiQueueRank(a.ai_verdict) - aiQueueRank(b.ai_verdict);
+      if (rank !== 0) return rank;
+      return (b.created_at?.getTime() ?? 0) - (a.created_at?.getTime() ?? 0);
+    });
 
     res.json({
       success: true,
@@ -131,8 +157,12 @@ router.post(
   authenticateToken,
   catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { type } = req.body;
+    const { type, fullName, businessName } = req.body;
     const reviewerId = req.user!.userId;
+    // Editors may correct the name (typo, capitalisation) as part of approving;
+    // the corrected value is what the badge carries.
+    const correctedBusinessName = typeof businessName === 'string' && businessName.trim() ? businessName.trim() : null;
+    const correctedFullName = typeof fullName === 'string' && fullName.trim() ? fullName.trim() : null;
 
     if (type === 'business') {
       const request = await prisma.business_verification_requests.update({
@@ -141,6 +171,7 @@ router.post(
           status: 'approved',
           reviewed_by: reviewerId,
           reviewed_at: new Date(),
+          ...(correctedBusinessName ? { business_name: correctedBusinessName } : {}),
         },
       });
 
@@ -173,6 +204,7 @@ router.post(
           status: 'approved',
           reviewed_by: reviewerId,
           reviewed_at: new Date(),
+          ...(correctedFullName ? { full_name: correctedFullName } : {}),
         },
       });
 

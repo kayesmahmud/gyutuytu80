@@ -103,6 +103,12 @@ export async function GET(request: NextRequest) {
       payment_status: true,
       rejection_reason: true,
       reviewed_at: true,
+      ai_verdict: true,
+      ai_reason_code: true,
+      ai_reason: true,
+      ai_name_on_document: true,
+      ai_checked_at: true,
+      edited_at: true,
       users_business_verification_requests_user_idTousers: {
         select: {
           email: true,
@@ -133,6 +139,12 @@ export async function GET(request: NextRequest) {
       payment_status: true,
       rejection_reason: true,
       reviewed_at: true,
+      ai_verdict: true,
+      ai_reason_code: true,
+      ai_reason: true,
+      ai_name_on_document: true,
+      ai_checked_at: true,
+      edited_at: true,
       users_individual_verification_requests_user_idTousers: {
         select: {
           email: true,
@@ -204,6 +216,12 @@ export async function GET(request: NextRequest) {
       reviewedAt: bv.reviewed_at,
       reviewedByName: bv.users_business_verification_requests_reviewed_byTousers?.full_name || null,
       reviewedByRole: bv.users_business_verification_requests_reviewed_byTousers?.role || null,
+      aiVerdict: bv.ai_verdict,
+      aiReasonCode: bv.ai_reason_code,
+      aiReason: bv.ai_reason,
+      aiNameOnDocument: bv.ai_name_on_document,
+      aiCheckedAt: bv.ai_checked_at,
+      editedAt: bv.edited_at,
       type: 'business',
     }));
 
@@ -234,12 +252,25 @@ export async function GET(request: NextRequest) {
       reviewedAt: iv.reviewed_at,
       reviewedByName: iv.users_individual_verification_requests_reviewed_byTousers?.full_name || null,
       reviewedByRole: iv.users_individual_verification_requests_reviewed_byTousers?.role || null,
+      aiVerdict: iv.ai_verdict,
+      aiReasonCode: iv.ai_reason_code,
+      aiReason: iv.ai_reason,
+      aiNameOnDocument: iv.ai_name_on_document,
+      aiCheckedAt: iv.ai_checked_at,
+      editedAt: iv.edited_at,
       type: 'individual',
     }));
 
-    // Combine and sort by creation date
+    // Queue order (owner, 2026-09-19): AI-positive first so quick approvals go
+    // out fast, then requests the AI could not judge, then ones waiting on the
+    // applicant to fix something. Newest first within a group. Only the
+    // pending tab is a work queue; other tabs stay purely chronological.
+    const aiRank = (verdict: string | null) =>
+      statusParam !== 'pending' ? 0 : verdict === 'looks_good' ? 0 : verdict === 'needs_changes' ? 2 : 1;
     const allVerifications = [...businessData, ...individualData].sort(
       (a, b) => {
+        const rank = aiRank(a.aiVerdict) - aiRank(b.aiVerdict);
+        if (rank !== 0) return rank;
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;

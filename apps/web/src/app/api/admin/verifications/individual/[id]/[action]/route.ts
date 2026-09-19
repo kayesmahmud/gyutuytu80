@@ -37,10 +37,15 @@ export async function POST(
       );
     }
 
-    // Get request body for rejection reason
+    // Body: reason (reject) or an optional corrected fullName (approve —
+    // editors fix typos/capitalisation instead of bouncing the applicant).
     let reason: string | null = null;
+    let correctedName: string | null = null;
+    const body = await request.json().catch(() => ({}));
+    if (action === 'approve') {
+      correctedName = typeof body?.fullName === 'string' && body.fullName.trim() ? body.fullName.trim() : null;
+    }
     if (action === 'reject') {
-      const body = await request.json();
       reason = body.reason;
 
       if (!reason) {
@@ -79,7 +84,7 @@ export async function POST(
     if (action === 'approve') {
       // Verified name comes from the request; fall back to a user-scoped value
       // so a missing name can never crash the approval (root cause of orphaned approvals).
-      const verifiedName = (verificationRequest.full_name || '').trim();
+      const verifiedName = correctedName || (verificationRequest.full_name || '').trim();
 
       // Generate a slug; if the name is empty after sanitizing, use a stable fallback
       const baseSlug =
@@ -122,6 +127,7 @@ export async function POST(
             rejection_reason: null,
             reviewed_by: admin.userId,
             reviewed_at: new Date(),
+            ...(correctedName ? { full_name: correctedName } : {}),
           },
         }),
         prisma.users.update({

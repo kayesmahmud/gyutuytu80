@@ -333,6 +333,8 @@ class _NotificationScreenState extends State<NotificationScreen>
         return LucideIcons.shieldCheck;
       case 'verification_rejected':
         return LucideIcons.shieldOff;
+      case 'verification_needs_changes':
+        return LucideIcons.shieldAlert;
       case 'payment_confirmed':
         return LucideIcons.creditCard;
       case 'new_message':
@@ -405,6 +407,7 @@ class _NotificationScreenState extends State<NotificationScreen>
       case 'ad_expired':
       case 'verification_expiring':
       case 'verification_expired':
+      case 'verification_needs_changes':
       case 'promotion_expiring':
       case 'promotion_expired':
         return const Color(0xFFF59E0B); // amber

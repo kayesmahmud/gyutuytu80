@@ -645,7 +645,32 @@
     "individualExpires": "Individual verification expires in {} days",
     "businessExpires": "Business verification expires in {} days",
     "failedToLoad": "Failed to load verification",
-    "unknownError": "Unknown error"
+    "unknownError": "Unknown error",
+    "takePhoto": "Take photo",
+    "chooseFromGallery": "Choose from gallery",
+    "editSubmission": "Edit submission",
+    "editSubmissionHint": "Your request stays in the queue with the same plan. Only re-upload the photos you want to replace — the others are kept.",
+    "keepCurrentPhoto": "Leave empty to keep the current photo",
+    "saveChanges": "Save changes",
+    "editSaved": "Your submission has been updated. We will review it shortly.",
+    "idTypePan": "PAN Card (individual)",
+    "ai": {
+      "needsChangesTitle": "Needs changes before it can be approved",
+      "looksGoodTitle": "Documents look good",
+      "underReviewTitle": "Under review",
+      "looksGood": "Waiting for final review by our team.",
+      "underReview": "A team member will review your documents soon. You can still edit them.",
+      "needsChanges": {
+        "wrong_document_type": "The document you uploaded is not an accepted type for this verification. Please upload a citizenship certificate, passport, driving licence or your own PAN card (business: registration certificate or business PAN).",
+        "missing_back": "The back side of your ID is missing. Please add a clear photo of the back.",
+        "missing_selfie": "We need a selfie of you holding your ID so the card is visible in your hand.",
+        "selfie_mismatch": "The selfie doesn't seem to match the ID. Please take a new selfie holding the same document.",
+        "unreadable": "The document photo is blurry, cropped or too dark to read. Please retake it in good light.",
+        "name_mismatch": "The name you entered doesn't match the name on the document. Please enter it exactly as printed.",
+        "suspected_fake": "This document could not be accepted. Please upload a clear photo of your original document.",
+        "other": "Something in your submission needs to be fixed. Please review your documents and re-upload."
+      }
+    }
   },
   "help": {
     "title": "Help Center",

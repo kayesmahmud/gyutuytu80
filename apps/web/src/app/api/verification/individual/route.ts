@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@thulobazaar/database';
 import { requireAuth, createToken } from '@/lib/auth';
 import { sendNotificationByUserId } from '@/lib/notifications';
+import { requestVerificationScreen, forwardVerificationEdit } from '@/lib/verificationBridge';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -16,7 +17,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
  *
  * Body:
  * - full_name (required)
- * - id_document_type (required) - 'citizenship' | 'passport' | 'driving_license'
+ * - id_document_type (required) - 'citizenship' | 'passport' | 'driving_license' | 'pan'
  * - id_document_number (optional)
  * - duration_days (required) - 30 | 90 | 180 | 365
  * - payment_amount (required) - price from verification_pricing table
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate document type
-    const validDocTypes = ['citizenship', 'passport', 'driving_license'];
+    const validDocTypes = ['citizenship', 'passport', 'driving_license', 'pan'];
     if (!idDocumentType || !validDocTypes.includes(idDocumentType)) {
       return NextResponse.json(
         {
@@ -534,6 +535,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // AI document screening (advisory) — Express owns the AI core.
+    requestVerificationScreen('individual', verificationRequest.id);
+
     // Send SMS/email notification that application is submitted and pending
     // Only send if status is 'pending' (ready for review, not waiting for payment)
     if (verificationStatus === 'pending') {
@@ -579,5 +583,28 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * PUT /api/verification/individual
+ * Owner corrects their own PENDING request (re-taken photos, name, document
+ * type/number). Forwarded to Express, which owns the edit + AI re-screen.
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    const userId = await requireAuth(request);
+    const formData = await request.formData();
+    const incomingToken =
+      request.headers.get('authorization')?.replace('Bearer ', '') ||
+      request.cookies.get('editorToken')?.value;
+    const result = await forwardVerificationEdit('individual', userId, formData, incomingToken);
+    return NextResponse.json(result.body, { status: result.status });
+  } catch (error: any) {
+    console.error('Individual verification edit error:', error);
+    if (error.message === 'Unauthorized') {
+      return NextResponse.json({ success: false, message: 'Authentication required' }, { status: 401 });
+    }
+    return NextResponse.json({ success: false, message: 'Failed to update verification request' }, { status: 500 });
   }
 }

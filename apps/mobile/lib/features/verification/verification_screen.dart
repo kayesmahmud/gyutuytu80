@@ -254,12 +254,27 @@ class _VerificationScreenState extends State<VerificationScreen>
     );
   }
 
+  /// Pending request → same form, prefilled, photos optional, saved via PUT.
+  void _openEdit(String type) {
+    final request = type == 'individual' ? _ind?.request : _biz?.request;
+    if (request == null || !request.canEdit) return;
+    _navigateToForm(
+      type: type,
+      durationDays: request.durationDays ?? 180,
+      price: 0,
+      isFree: true,
+      isResubmission: false,
+      editRequest: request,
+    );
+  }
+
   void _navigateToForm({
     required String type,
     required int durationDays,
     required double price,
     required bool isFree,
     required bool isResubmission,
+    VerificationRequestDetails? editRequest,
   }) async {
     final result = await Navigator.push(
       context,
@@ -270,12 +285,14 @@ class _VerificationScreenState extends State<VerificationScreen>
                 price: price,
                 isFreeVerification: isFree,
                 isResubmission: isResubmission,
+                editRequest: editRequest,
               )
             : BusinessVerificationForm(
                 durationDays: durationDays,
                 price: price,
                 isFreeVerification: isFree,
                 isResubmission: isResubmission,
+                editRequest: editRequest,
               ),
       ),
     );
@@ -505,8 +522,16 @@ class _VerificationScreenState extends State<VerificationScreen>
   List<Widget> _buildDetailStrips() {
     final strips = <Widget>[];
 
-    // Rejection reasons
+    // AI screening feedback + edit entry for pending requests
     final lang = context.locale.languageCode;
+    if (_individualStatus == 'pending' && _ind?.request != null) {
+      strips.add(_buildPendingStrip('individual', _ind!.request!));
+    }
+    if (_businessStatus == 'pending' && _biz?.request != null) {
+      strips.add(_buildPendingStrip('business', _biz!.request!));
+    }
+
+    // Rejection reasons
     if (_individualStatus == 'rejected' && _individualRejectionReason != null) {
       strips.add(
         _buildRejectionStrip(
@@ -547,6 +572,107 @@ class _VerificationScreenState extends State<VerificationScreen>
     }
 
     return strips;
+  }
+
+  /// Pending request: what the AI screening said (advisory — staff still
+  /// decide) and the way to fix it in place.
+  Widget _buildPendingStrip(String type, VerificationRequestDetails request) {
+    final needsChanges = request.aiNeedsChanges;
+    final looksGood = request.aiLooksGood;
+    final Color bg = needsChanges
+        ? Colors.amber.shade50
+        : looksGood
+        ? Colors.green.shade50
+        : Colors.grey.shade100;
+    final Color border = needsChanges
+        ? Colors.amber.shade200
+        : looksGood
+        ? Colors.green.shade200
+        : Colors.grey.shade300;
+    final Color fg = needsChanges
+        ? Colors.amber.shade900
+        : looksGood
+        ? Colors.green.shade800
+        : Colors.grey.shade800;
+    final String label = type == 'individual'
+        ? 'verification.individual'.tr()
+        : 'verification.business'.tr();
+    final String title = needsChanges
+        ? 'verification.ai.needsChangesTitle'.tr()
+        : looksGood
+        ? 'verification.ai.looksGoodTitle'.tr()
+        : 'verification.ai.underReviewTitle'.tr();
+    final String body = needsChanges
+        ? 'verification.ai.needsChanges.${request.aiReasonCode ?? 'other'}'.tr()
+        : looksGood
+        ? 'verification.ai.looksGood'.tr()
+        : 'verification.ai.underReview'.tr();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                needsChanges ? LucideIcons.alertTriangle : LucideIcons.sparkles,
+                size: 16,
+                color: fg,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$label · $title',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        color: fg,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(body, style: TextStyle(fontSize: 12, color: fg)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (request.canEdit) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                height: 44,
+                child: needsChanges
+                    ? FilledButton.icon(
+                        onPressed: () => _openEdit(type),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.amber.shade700,
+                        ),
+                        icon: const Icon(LucideIcons.pencil, size: 16),
+                        label: Text('verification.editSubmission'.tr()),
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: () => _openEdit(type),
+                        icon: const Icon(LucideIcons.pencil, size: 16),
+                        label: Text('verification.editSubmission'.tr()),
+                      ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _buildRejectionStrip(String label, String reason) {

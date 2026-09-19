@@ -1,3 +1,5 @@
+export type VerificationAiVerdict = 'looks_good' | 'needs_changes' | 'unsure' | 'skipped';
+
 export interface VerificationRequest {
   id: number;
   status: string;
@@ -6,6 +8,18 @@ export interface VerificationRequest {
   paymentAmount?: number;
   durationDays?: number;
   canResubmitFree?: boolean;
+  /** Pending requests can be corrected in place (photos/name re-submitted). */
+  canEdit?: boolean;
+  /** AI document screening — advisory; staff still decide. */
+  aiVerdict?: VerificationAiVerdict | null;
+  aiReasonCode?: string | null;
+  // Prefill for the edit form
+  fullName?: string;
+  idDocumentType?: string;
+  idDocumentNumber?: string;
+  businessName?: string;
+  documentType?: string | null;
+  documentNumber?: string | null;
 }
 
 export interface VerificationStatusData {

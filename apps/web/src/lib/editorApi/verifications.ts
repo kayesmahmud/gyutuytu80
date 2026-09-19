@@ -46,13 +46,23 @@ export async function handleVerificationAction(
   verificationId: number,
   action: VerificationAction,
   reason?: string,
-  token?: string
+  token?: string,
+  /** approve only: corrected name the badge should carry (typo/capitalisation fixes) */
+  correctedName?: string
 ): Promise<ApiResponse<unknown>> {
+  const body =
+    action === 'reject'
+      ? { reason }
+      : correctedName
+        ? type === 'business'
+          ? { businessName: correctedName }
+          : { fullName: correctedName }
+        : {};
   return apiRequest<ApiResponse<unknown>>(
     `/api/admin/verifications/${type}/${verificationId}/${action}`,
     {
       method: 'POST',
-      body: action === 'reject' ? { reason } : undefined,
+      body,
       token,
       useRelativeUrl: true,
     }
@@ -63,14 +73,14 @@ export async function handleVerificationAction(
 // Backwards-compatible wrapper functions
 // ============================================
 
-export const approveBusinessVerification = (verificationId: number, token?: string) =>
-  handleVerificationAction('business', verificationId, 'approve', undefined, token);
+export const approveBusinessVerification = (verificationId: number, correctedName?: string, token?: string) =>
+  handleVerificationAction('business', verificationId, 'approve', undefined, token, correctedName);
 
 export const rejectBusinessVerification = (verificationId: number, reason: string, token?: string) =>
   handleVerificationAction('business', verificationId, 'reject', reason, token);
 
-export const approveIndividualVerification = (verificationId: number, token?: string) =>
-  handleVerificationAction('individual', verificationId, 'approve', undefined, token);
+export const approveIndividualVerification = (verificationId: number, correctedName?: string, token?: string) =>
+  handleVerificationAction('individual', verificationId, 'approve', undefined, token, correctedName);
 
 export const rejectIndividualVerification = (verificationId: number, reason: string, token?: string) =>
   handleVerificationAction('individual', verificationId, 'reject', reason, token);

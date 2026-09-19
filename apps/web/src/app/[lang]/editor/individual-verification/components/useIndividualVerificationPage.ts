@@ -61,6 +61,11 @@ export function useIndividualVerificationPage(lang: string) {
           reviewedAt: v.reviewedAt,
           reviewedByName: v.reviewedByName,
           reviewedByRole: v.reviewedByRole,
+          aiVerdict: v.aiVerdict,
+          aiReasonCode: v.aiReasonCode,
+          aiReason: v.aiReason,
+          aiNameOnDocument: v.aiNameOnDocument,
+          editedAt: v.editedAt,
         }));
         setVerifications(individualVerifications);
       } else {
@@ -83,12 +88,14 @@ export function useIndividualVerificationPage(lang: string) {
     loadVerifications();
   }, [authLoading, staff, isEditor, lang, router, loadVerifications]);
 
-  const handleApprove = async (verificationId: number) => {
-    if (!confirm('Are you sure you want to approve this individual verification?')) return;
+  // correctedName: what the editor typed in the card's name field (may equal the original)
+  const handleApprove = async (verificationId: number, correctedName?: string) => {
+    const name = correctedName?.trim();
+    if (!confirm(name ? `Approve and verify the name "${name}"?` : 'Are you sure you want to approve this individual verification?')) return;
 
     try {
       setActionLoading(true);
-      const response = await approveIndividualVerification(verificationId);
+      const response = await approveIndividualVerification(verificationId, name || undefined);
 
       if (response.success) {
         alert('Individual verification approved successfully!');

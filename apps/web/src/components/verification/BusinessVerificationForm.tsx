@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, useRef, ChangeEvent, FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
+import { Camera } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { PaymentMethodSelector } from '@/components/payment';
 import { useVerificationForm } from '@/hooks/useVerificationForm';
@@ -27,6 +29,8 @@ interface BusinessVerificationFormProps {
   price: number;
   isFreeVerification: boolean;
   isResubmission?: boolean;
+  /** Present when correcting a PENDING request: fields prefill, the document is optional. */
+  editRequest?: { businessName?: string | null; documentType?: string | null; documentNumber?: string | null } | null;
 }
 
 const initialFormData: FormData = {
@@ -43,7 +47,11 @@ export default function BusinessVerificationForm({
   price,
   isFreeVerification,
   isResubmission = false,
+  editRequest = null,
 }: BusinessVerificationFormProps) {
+  const t = useTranslations('verification');
+  const isEdit = !!editRequest;
+  const cameraRef = useRef<HTMLInputElement>(null);
   const {
     formData,
     setFormData,
@@ -56,8 +64,18 @@ export default function BusinessVerificationForm({
     handleProceedToPayment,
     handleBackToForm,
     submitFreeVerification,
+    submitEdit,
     submitPaidVerification,
-  } = useVerificationForm<FormData>(initialFormData, {
+  } = useVerificationForm<FormData>(
+    editRequest
+      ? {
+          ...initialFormData,
+          businessName: editRequest.businessName ?? '',
+          documentType: editRequest.documentType ?? '',
+          documentNumber: editRequest.documentNumber ?? '',
+        }
+      : initialFormData,
+    {
     type: 'business',
     durationDays,
     price,
@@ -131,7 +149,7 @@ export default function BusinessVerificationForm({
       setError(`Please enter your ${formData.documentType === 'pan_card' ? 'PAN number' : 'license number'}`);
       return false;
     }
-    if (!formData.licenseFile) {
+    if (!formData.licenseFile && !isEdit) {
       setError(`Please upload your ${formData.documentType === 'pan_card' ? 'Pan Card' : 'Business License'}`);
       return false;
     }
@@ -144,7 +162,9 @@ export default function BusinessVerificationForm({
     submitData.append('business_name', formData.businessName.trim());
     submitData.append('document_type', formData.documentType);
     submitData.append('document_number', formData.documentNumber.trim());
-    submitData.append('business_license_document', formData.licenseFile!);
+    if (formData.licenseFile) {
+      submitData.append('business_license_document', formData.licenseFile);
+    }
 
     return submitData;
   };
@@ -155,7 +175,9 @@ export default function BusinessVerificationForm({
 
     if (!validateForm()) return;
 
-    if (isFreeVerification || isResubmission) {
+    if (isEdit) {
+      await submitEdit(buildSubmitData(), '/api/verification/business');
+    } else if (isFreeVerification || isResubmission) {
       const submitData = buildSubmitData();
       await submitFreeVerification(submitData, '/api/verification/business');
     } else {
@@ -187,6 +209,7 @@ export default function BusinessVerificationForm({
       durationDays={durationDays}
       step={step}
       isFreeVerification={isFreeVerification}
+      title={isEdit ? t('editSubmission') : undefined}
       onClose={onCancel}
     >
       {/* Error Alert */}
@@ -194,14 +217,15 @@ export default function BusinessVerificationForm({
 
       {step === 'form' ? (
         <form onSubmit={handleSubmit}>
+          {isEdit && <FormAlert message={t('editSubmissionHint')} type="info" />}
           {/* Plan Summary */}
-          <PlanSummary
+          {!isEdit && <PlanSummary
             type="business"
             durationDays={durationDays}
             price={price}
             isFreeVerification={isFreeVerification}
             isResubmission={isResubmission}
-          />
+          />}
 
           {/* Business Name */}
           <div className="mb-5">
@@ -271,8 +295,9 @@ export default function BusinessVerificationForm({
               htmlFor="licenseFile"
               className="block mb-2 font-semibold text-gray-900 text-sm sm:text-base"
             >
-              {formData.documentType === 'pan_card' ? 'Upload Pan Card *' : formData.documentType === 'business_license' ? 'Upload Business License *' : 'Upload Document *'}
+              {formData.documentType === 'pan_card' ? 'Upload Pan Card' : formData.documentType === 'business_license' ? 'Upload Business License' : 'Upload Document'}{isEdit ? '' : ' *'}
             </label>
+            {isEdit && <p className="text-xs text-gray-500 mb-2">{t('keepCurrentPhoto')}</p>}
 
             {/* File Upload Area */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-rose-500 transition-colors">
@@ -312,14 +337,34 @@ export default function BusinessVerificationForm({
                     </svg>
                     Choose File
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => cameraRef.current?.click()}
+                    className="ml-2 inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-lg border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 text-sm sm:text-base"
+                  >
+                    <Camera className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden />
+                    {t('takePhoto')}
+                  </button>
                   <input
                     type="file"
                     id="licenseFile"
                     name="licenseFile"
                     accept="image/*,.pdf"
                     onChange={handleFileChange}
-                    required
+                    required={!isEdit}
                     className="hidden"
+                  />
+                  {/* Camera-only picker (capture on the main input would hide the gallery on iOS) */}
+                  <input
+                    ref={cameraRef}
+                    type="file"
+                    name="licenseFile"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    tabIndex={-1}
+                    aria-hidden
                   />
                   <p className="text-xs sm:text-sm text-gray-500 mt-2">PNG, JPG, or PDF (Max 5MB)</p>
                 </>
@@ -421,9 +466,11 @@ export default function BusinessVerificationForm({
             >
               {loading
                 ? 'Submitting...'
-                : isFreeVerification || isResubmission
-                  ? 'Submit for Verification'
-                  : 'Proceed to Payment'}
+                : isEdit
+                  ? t('saveChanges')
+                  : isFreeVerification || isResubmission
+                    ? 'Submit for Verification'
+                    : 'Proceed to Payment'}
             </Button>
             <Button
               type="button"

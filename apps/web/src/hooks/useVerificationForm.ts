@@ -35,6 +35,8 @@ export interface UseVerificationFormReturn<T> {
 
   // Submission helpers
   submitFreeVerification: (submitData: FormData, endpoint: string) => Promise<void>;
+  /** Owner edit of a PENDING request — PUT to the same endpoint, no payment step. */
+  submitEdit: (submitData: FormData, endpoint: string) => Promise<void>;
   submitPaidVerification: (
     submitData: FormData,
     endpoint: string,
@@ -137,6 +139,30 @@ export function useVerificationForm<T>(
       setLoading(false);
     }
   }, [type, durationDays, onSuccess, checkPhoneVerification]);
+
+  // Edit a pending submission (re-taken photos / corrected name). No payment
+  // fields: the original request's plan and payment stay as they are.
+  const submitEdit = useCallback(async (submitData: FormData, endpoint: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        credentials: 'include',
+        body: submitData,
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to update verification');
+      }
+      onSuccess();
+    } catch (err: unknown) {
+      console.error('Verification edit error:', err);
+      setError((err as Error)?.message || 'Failed to update verification request');
+    } finally {
+      setLoading(false);
+    }
+  }, [onSuccess]);
 
   // Submit paid verification
   const submitPaidVerification = useCallback(async (
@@ -247,6 +273,7 @@ export function useVerificationForm<T>(
     handleProceedToPayment,
     handleBackToForm,
     submitFreeVerification,
+    submitEdit,
     submitPaidVerification,
   };
 }

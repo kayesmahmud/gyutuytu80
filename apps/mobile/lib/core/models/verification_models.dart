@@ -120,6 +120,20 @@ class VerificationRequestDetails {
   final double? paymentAmount;
   final bool canResubmitFree;
 
+  /// A pending request can be corrected in place (photos/name re-submitted).
+  final bool canEdit;
+
+  /// AI document screening — advisory only, staff still decide:
+  /// 'looks_good' | 'needs_changes' | 'unsure' | 'skipped' | null.
+  final String? aiVerdict;
+  final String? aiReasonCode;
+
+  // Prefill for the edit form
+  final String? idDocumentType;
+  final String? idDocumentNumber;
+  final String? documentType;
+  final String? documentNumber;
+
   VerificationRequestDetails({
     required this.id,
     required this.status,
@@ -131,7 +145,17 @@ class VerificationRequestDetails {
     this.paymentStatus,
     this.paymentAmount,
     this.canResubmitFree = false,
+    this.canEdit = false,
+    this.aiVerdict,
+    this.aiReasonCode,
+    this.idDocumentType,
+    this.idDocumentNumber,
+    this.documentType,
+    this.documentNumber,
   });
+
+  bool get aiNeedsChanges => aiVerdict == 'needs_changes';
+  bool get aiLooksGood => aiVerdict == 'looks_good';
 
   factory VerificationRequestDetails.fromJson(Map<String, dynamic> json) {
     return VerificationRequestDetails(
@@ -147,6 +171,13 @@ class VerificationRequestDetails {
           ? (json['paymentAmount'] as num).toDouble()
           : null,
       canResubmitFree: json['canResubmitFree'] == true,
+      canEdit: json['canEdit'] == true,
+      aiVerdict: json['aiVerdict'] as String?,
+      aiReasonCode: json['aiReasonCode'] as String?,
+      idDocumentType: json['idDocumentType'] as String?,
+      idDocumentNumber: json['idDocumentNumber'] as String?,
+      documentType: json['documentType'] as String?,
+      documentNumber: json['documentNumber'] as String?,
     );
   }
 }

@@ -24,6 +24,11 @@ export interface IndividualVerification {
   reviewedAt?: string | null;
   reviewedByName?: string | null;
   reviewedByRole?: string | null;
+  aiVerdict?: string | null;
+  aiReasonCode?: string | null;
+  aiReason?: string | null;
+  aiNameOnDocument?: string | null;
+  editedAt?: string | null;
 }
 
 export type TabStatus = 'pending' | 'rejected' | 'approved';

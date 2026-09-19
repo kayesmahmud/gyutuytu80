@@ -90,20 +90,24 @@ class VerificationClient {
     }
   }
 
-  /// Upload individual verification documents
+  /// Upload individual verification documents. Every slot is optional so an
+  /// EDIT can re-upload only the photos that changed; a new submission passes
+  /// front + selfie (the form enforces that).
   Future<VerificationUploadResponse> uploadIndividualDocuments({
-    required File idFront,
+    File? idFront,
     File? idBack,
-    required File selfie,
+    File? selfie,
     String idType = 'citizenship',
   }) async {
     try {
       final Map<String, dynamic> fileMap = {};
 
-      fileMap['id_document_front'] = await MultipartFile.fromFile(
-        idFront.path,
-        filename: idFront.path.split('/').last,
-      );
+      if (idFront != null) {
+        fileMap['id_document_front'] = await MultipartFile.fromFile(
+          idFront.path,
+          filename: idFront.path.split('/').last,
+        );
+      }
 
       if (idBack != null) {
         fileMap['id_document_back'] = await MultipartFile.fromFile(
@@ -112,10 +116,12 @@ class VerificationClient {
         );
       }
 
-      fileMap['selfie_with_id'] = await MultipartFile.fromFile(
-        selfie.path,
-        filename: selfie.path.split('/').last,
-      );
+      if (selfie != null) {
+        fileMap['selfie_with_id'] = await MultipartFile.fromFile(
+          selfie.path,
+          filename: selfie.path.split('/').last,
+        );
+      }
 
       FormData formData = FormData.fromMap(fileMap);
 
@@ -185,11 +191,82 @@ class VerificationClient {
     }
   }
 
+  /// Owner edit of a PENDING business request: pass only what changed.
+  /// The server marks it edited for editors and re-runs the AI screening.
+  Future<VerificationSubmitResponse> updateBusinessVerification({
+    String? licenseDocument,
+    String? businessName,
+    String? documentType,
+    String? documentNumber,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '/verification/business',
+        data: {
+          if (licenseDocument != null) 'licenseDocument': licenseDocument,
+          if (businessName != null) 'businessName': businessName,
+          if (documentType != null) 'documentType': documentType,
+          if (documentNumber != null) 'documentNumber': documentNumber,
+        },
+      );
+      if (response.data['success'] == true) {
+        return VerificationSubmitResponse.fromJson(response.data);
+      }
+      return VerificationSubmitResponse(
+        success: false,
+        error: apiMessage(response.data) ?? 'Update failed',
+      );
+    } on DioException catch (e) {
+      return VerificationSubmitResponse(
+        success: false,
+        error: apiMessage(e.response?.data) ?? e.message ?? 'Network error',
+      );
+    } catch (e) {
+      return VerificationSubmitResponse(success: false, error: e.toString());
+    }
+  }
+
+  /// Owner edit of a PENDING individual request: [documentUrls] holds only
+  /// the slots that were re-uploaded (from [uploadIndividualDocuments]).
+  Future<VerificationSubmitResponse> updateIndividualVerification({
+    Map<String, dynamic>? documentUrls,
+    String? fullName,
+    String? idType,
+    String? idNumber,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '/verification/individual',
+        data: {
+          'documentUrls': documentUrls ?? {},
+          if (fullName != null) 'fullName': fullName,
+          if (idType != null) 'idDocumentType': idType,
+          if (idNumber != null) 'idDocumentNumber': idNumber,
+        },
+      );
+      if (response.data['success'] == true) {
+        return VerificationSubmitResponse.fromJson(response.data);
+      }
+      return VerificationSubmitResponse(
+        success: false,
+        error: apiMessage(response.data) ?? 'Update failed',
+      );
+    } on DioException catch (e) {
+      return VerificationSubmitResponse(
+        success: false,
+        error: apiMessage(e.response?.data) ?? e.message ?? 'Network error',
+      );
+    } catch (e) {
+      return VerificationSubmitResponse(success: false, error: e.toString());
+    }
+  }
+
   /// Submit individual verification request
   Future<VerificationSubmitResponse> submitIndividualVerification({
     required Map<String, dynamic> documentUrls,
     required String fullName,
-    required String idType, // 'citizenship', 'passport', 'driving_license'
+    required String
+    idType, // 'citizenship', 'passport', 'driving_license', 'pan'
     required String idNumber,
     int? durationDays,
     String? paymentStatus,

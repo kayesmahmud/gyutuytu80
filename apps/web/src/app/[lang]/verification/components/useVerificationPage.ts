@@ -25,6 +25,8 @@ export function useVerificationPage(lang: string) {
   const [selectedDuration, setSelectedDuration] = useState<PricingOption | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isResubmission, setIsResubmission] = useState(false);
+  // Editing a PENDING request in place (after AI feedback or a mistake)
+  const [isEditing, setIsEditing] = useState(false);
   const [resubmissionDuration, setResubmissionDuration] = useState<number | null>(null);
   // 'free' | 'paid' | null. When eligible for free, user picks. Otherwise auto-set to 'paid'.
   const [selectedOffer, setSelectedOffer] = useState<'free' | 'paid' | null>(null);
@@ -129,6 +131,7 @@ export function useVerificationPage(lang: string) {
     setSelectedDuration(null);
     setShowForm(false);
     setIsResubmission(false);
+    setIsEditing(false);
     setResubmissionDuration(null);
     setSelectedOffer(null);
 
@@ -161,6 +164,19 @@ export function useVerificationPage(lang: string) {
     }
   };
 
+  // Pending request → open the same form prefilled, photos optional, PUT on save.
+  const handleEdit = (type: VerificationType) => {
+    const data = type === 'business' ? verificationStatus?.business : verificationStatus?.individual;
+    if (data?.status !== 'pending' || !data.request?.canEdit) return;
+    setSelectedType(type);
+    setSelectedDuration(null);
+    setSelectedOffer(null);
+    setIsResubmission(false);
+    setResubmissionDuration(data.request.durationDays ?? null);
+    setIsEditing(true);
+    setShowForm(true);
+  };
+
   // Eligible user picked the FREE card → auto-pick the free-duration tier and open form.
   const handleSelectFreeOffer = () => {
     if (!selectedType || !pricing) return;
@@ -191,16 +207,26 @@ export function useVerificationPage(lang: string) {
   };
 
   const handleFormSuccess = async () => {
-    success(`${selectedType === 'individual' ? 'Individual' : 'Business'} verification submitted successfully! We will review it shortly.`);
+    success(
+      isEditing
+        ? 'Your verification submission has been updated. We will review it shortly.'
+        : `${selectedType === 'individual' ? 'Individual' : 'Business'} verification submitted successfully! We will review it shortly.`
+    );
     setShowForm(false);
     setSelectedType(null);
     setSelectedDuration(null);
     setSelectedOffer(null);
+    setIsEditing(false);
     await loadData();
   };
 
   const handleFormCancel = () => {
     setShowForm(false);
+    if (isEditing) {
+      setIsEditing(false);
+      setSelectedType(null);
+      return;
+    }
     // If they came from the free offer and cancel, drop back to OfferCards
     if (selectedOffer === 'free') {
       setSelectedOffer(null);
@@ -237,11 +263,13 @@ export function useVerificationPage(lang: string) {
     selectedDuration,
     showForm,
     isResubmission,
+    isEditing,
     resubmissionDuration,
     isFreeVerification,
     selectedOffer,
     showOfferCards,
     handleTypeSelect,
+    handleEdit,
     handleDurationSelect,
     handleProceedToForm,
     handleFormSuccess,

@@ -11,6 +11,8 @@ interface VerificationModalProps {
   durationDays: number;
   step: Step;
   isFreeVerification: boolean;
+  /** Overrides the form-step heading (e.g. when editing a pending submission). */
+  title?: string;
   onClose: () => void;
   children: ReactNode;
 }
@@ -35,6 +37,7 @@ export default function VerificationModal({
   durationDays,
   step,
   isFreeVerification,
+  title,
   onClose,
   children,
 }: VerificationModalProps) {
@@ -48,7 +51,7 @@ export default function VerificationModal({
           <div className="flex justify-between items-center">
             <div className="min-w-0 flex-1">
               <h2 className="text-xl sm:text-2xl font-bold">
-                {step === 'form' ? theme.formTitle : theme.paymentTitle}
+                {step === 'form' ? title ?? theme.formTitle : theme.paymentTitle}
               </h2>
               <p className="text-sm opacity-90 mt-1">
                 {formatDurationLabel(durationDays)} Plan

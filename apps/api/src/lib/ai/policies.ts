@@ -3,6 +3,7 @@
  *
  *   apps/api/policies/core.md               universal rules (the system prompt)
  *   apps/api/policies/categories/<slug>.md  per-parent-category guidance
+ *   apps/api/policies/verification.md       ID / business document screening
  *
  * The files are plain markdown so the owner can read and edit the AI's rules
  * directly; they ship with the image (Dockerfile copies apps/api/policies).
@@ -50,6 +51,11 @@ export function getCorePolicy(): Promise<string | null> {
 /** support.md — knowledge base for the AI support assistant, or null. */
 export function getSupportPolicy(): Promise<string | null> {
   return readPolicyFile('support.md');
+}
+
+/** verification.md — rules for screening ID/business documents, or null. */
+export function getVerificationPolicy(): Promise<string | null> {
+  return readPolicyFile('verification.md');
 }
 
 /** categories/<slug>.md for a PARENT category slug, or null. */

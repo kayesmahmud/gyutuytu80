@@ -346,6 +346,16 @@ model business_verification_requests {
   payment_status                                          String?   @default("pending") @db.VarChar(20)
   document_type                                           String?   @db.VarChar(20)
   document_number                                         String?   @db.VarChar(50)
+  /// AI document screening (verificationScreen.service): 'looks_good' | 'needs_changes' | 'unsure' | 'skipped'.
+  /// Advisory only — editors approve/reject; never read by public endpoints.
+  ai_verdict                                              String?   @db.VarChar(20)
+  ai_reason_code                                          String?   @db.VarChar(30)
+  ai_reason                                               String?
+  /// Business name as the AI read it off the document — editors can adopt it with one click.
+  ai_name_on_document                                     String?   @db.VarChar(255)
+  ai_checked_at                                           DateTime? @db.Timestamp(6)
+  /// Owner edited a PENDING request (documents/name re-submitted) — re-screened, shown to editors.
+  edited_at                                               DateTime? @db.Timestamp(6)
   users_business_verification_requests_reviewed_byTousers users?    @relation("business_verification_requests_reviewed_byTousers", fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_business_verification_requests_user_idTousers     users     @relation("business_verification_requests_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -449,6 +459,16 @@ model individual_verification_requests {
   payment_amount                                            Decimal?  @db.Decimal(10, 2)
   payment_reference                                         String?   @db.VarChar(255)
   payment_status                                            String?   @default("pending") @db.VarChar(20)
+  /// AI document screening (verificationScreen.service): 'looks_good' | 'needs_changes' | 'unsure' | 'skipped'.
+  /// Advisory only — editors approve/reject; never read by public endpoints.
+  ai_verdict                                                String?   @db.VarChar(20)
+  ai_reason_code                                            String?   @db.VarChar(30)
+  ai_reason                                                 String?
+  /// Name as the AI read it off the ID — editors can adopt it with one click.
+  ai_name_on_document                                       String?   @db.VarChar(255)
+  ai_checked_at                                             DateTime? @db.Timestamp(6)
+  /// Owner edited a PENDING request (documents/name re-submitted) — re-screened, shown to editors.
+  edited_at                                                 DateTime? @db.Timestamp(6)
   users_individual_verification_requests_reviewed_byTousers users?    @relation("individual_verification_requests_reviewed_byTousers", fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_individual_verification_requests_user_idTousers     users     @relation("individual_verification_requests_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 

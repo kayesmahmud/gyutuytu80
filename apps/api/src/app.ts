@@ -8,6 +8,7 @@ import passport from './config/passport.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { httpLoggerMiddleware } from './lib/logger.js';
 import { prisma } from '@thulobazaar/database';
+import { screenVerificationRequest } from './services/verificationScreen.service.js';
 import { sendNotification, canSendNotification, notifyEditors } from './services/notification.service.js';
 import {
   buildSupportMessagePayload,
@@ -461,6 +462,25 @@ export function createApp(): Express {
         .catch((err: Error) => console.error('Error creating message notifications:', err));
     }
 
+    return res.json({ success: true });
+  });
+
+  // Internal endpoint: Next.js → Express verification-screening bridge.
+  // The Next.js verification routes create the request rows directly; the AI
+  // core lives here, so they ask Express to screen the row after saving.
+  app.post('/api/internal/verification-screen', async (req, res) => {
+    const { secret, kind, requestId, edited } = req.body ?? {};
+    const internalSecret = process.env.INTERNAL_API_SECRET;
+    if (!internalSecret || secret !== internalSecret) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    const id = Number(requestId);
+    if (!Number.isInteger(id) || (kind !== 'individual' && kind !== 'business')) {
+      return res.status(400).json({ success: false, message: 'kind and requestId are required' });
+    }
+    screenVerificationRequest(kind, id, { edited: edited === true }).catch((err) =>
+      console.error('Verification screen bridge error:', err)
+    );
     return res.json({ success: true });
   });
 

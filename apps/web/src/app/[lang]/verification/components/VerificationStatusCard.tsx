@@ -9,7 +9,9 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  Pencil
 } from 'lucide-react';
 import type { VerificationStatusData, VerificationType } from './types';
 
@@ -20,6 +22,8 @@ interface VerificationStatusCardProps {
   isSelected: boolean;
   showForm: boolean;
   onClick: () => void;
+  /** Pending request → open the edit form (photos/name re-submitted in place). */
+  onEdit?: () => void;
 }
 
 export function VerificationStatusCard({
@@ -29,11 +33,15 @@ export function VerificationStatusCard({
   isSelected,
   showForm,
   onClick,
+  onEdit,
 }: VerificationStatusCardProps) {
   const t = useTranslations('verification');
   const isIndividual = type === 'individual';
   const status = data?.status || 'unverified';
   const canSelect = !data || ['unverified', 'rejected'].includes(status);
+  const canEdit = status === 'pending' && !!data?.request?.canEdit && !!onEdit;
+  const aiVerdict = status === 'pending' ? data?.request?.aiVerdict : null;
+  const aiReasonCode = data?.request?.aiReasonCode || 'other';
 
   const getIconGradient = () => {
     if (status === 'verified') return 'from-green-400 to-emerald-500';
@@ -157,10 +165,46 @@ export function VerificationStatusCard({
             </div>
           )}
 
+          {/* AI screening feedback (advisory — staff still decide) */}
+          {aiVerdict === 'needs_changes' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 sm:p-3 mb-2 sm:mb-3">
+              <div className="flex items-start gap-2">
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <div className="font-bold text-amber-900 text-[10px] sm:text-xs">{t('aiNeedsChangesTitle')}</div>
+                  <div className="text-amber-800 text-[10px] sm:text-xs">{t(`aiNeedsChanges_${aiReasonCode}`)}</div>
+                </div>
+              </div>
+            </div>
+          )}
+          {aiVerdict === 'looks_good' && (
+            <div className="flex items-center gap-2 text-green-700 text-[10px] sm:text-xs font-medium mb-2 sm:mb-3">
+              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span>{t('aiLooksGood')}</span>
+            </div>
+          )}
+
           {status === 'pending' && (
-            <div className="flex items-center gap-2 text-amber-600 text-xs sm:text-sm font-medium">
-              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{t('underReview')}</span>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 text-amber-600 text-xs sm:text-sm font-medium">
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span>{t('underReview')}</span>
+              </div>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.();
+                  }}
+                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg text-xs sm:text-sm font-semibold text-white shadow-sm ${
+                    aiVerdict === 'needs_changes' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-gray-700 hover:bg-gray-800'
+                  }`}
+                >
+                  <Pencil className="w-3 h-3 sm:w-4 sm:h-4" />
+                  {t('editSubmission')}
+                </button>
+              )}
             </div>
           )}
 

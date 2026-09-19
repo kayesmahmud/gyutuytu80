@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { MessageUserButton } from '../../components/MessageUserButton';
+import { VerificationAiPanel } from '../../components/VerificationAiPanel';
 import type { IndividualVerification, TabStatus } from './types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -11,7 +13,7 @@ interface VerificationCardProps {
   activeTab: TabStatus;
   lang: string;
   actionLoading: boolean;
-  onApprove: (id: number) => void;
+  onApprove: (id: number, correctedName?: string) => void;
   onReject: (verification: IndividualVerification) => void;
 }
 
@@ -23,6 +25,8 @@ export function VerificationCard({
   onApprove,
   onReject,
 }: VerificationCardProps) {
+  // Editors can fix spelling/capitalisation here and approve in one go.
+  const [nameToVerify, setNameToVerify] = useState(verification.fullName || verification.accountName || '');
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
       <div className="p-4 sm:p-6">
@@ -96,6 +100,15 @@ export function VerificationCard({
               </div>
             </div>
 
+            {/* AI screening + editable name (pending only) */}
+            <VerificationAiPanel
+              fields={verification}
+              nameLabel="Name to be verified"
+              name={nameToVerify}
+              onNameChange={setNameToVerify}
+              editable={activeTab === 'pending'}
+            />
+
             {/* Payment & Duration Info */}
             <PaymentDurationInfo verification={verification} />
 
@@ -119,7 +132,7 @@ export function VerificationCard({
               activeTab={activeTab}
               lang={lang}
               actionLoading={actionLoading}
-              onApprove={onApprove}
+              onApprove={(id) => onApprove(id, nameToVerify)}
               onReject={onReject}
             />
           </div>

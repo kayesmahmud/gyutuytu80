@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/api/verification_client.dart';
 import '../../core/models/payment.dart';
+import '../../core/models/verification_models.dart';
 import '../../core/utils/localized_helpers.dart';
 import '../payment/payment_screen.dart';
 import 'verification_widgets.dart';
@@ -15,13 +16,20 @@ class BusinessVerificationForm extends StatefulWidget {
   final bool isFreeVerification;
   final bool isResubmission;
 
+  /// Present when correcting a PENDING request (after AI feedback or a
+  /// mistake): fields prefill, the document is optional, save = PUT, no payment.
+  final VerificationRequestDetails? editRequest;
+
   const BusinessVerificationForm({
     super.key,
     required this.durationDays,
     required this.price,
     required this.isFreeVerification,
     required this.isResubmission,
+    this.editRequest,
   });
+
+  bool get isEdit => editRequest != null;
 
   @override
   State<BusinessVerificationForm> createState() =>
@@ -44,9 +52,48 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
   String _documentType = '';
   String _documentNumber = '';
 
+  @override
+  void initState() {
+    super.initState();
+    final edit = widget.editRequest;
+    if (edit != null) {
+      _businessName = edit.businessName ?? '';
+      _documentType = edit.documentType ?? '';
+      _documentNumber = edit.documentNumber ?? '';
+    }
+  }
+
+  /// Camera or gallery — same sheet as Post Ad.
   Future<void> _pickDocument() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(LucideIcons.camera),
+                title: Text('verification.takePhoto'.tr()),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(LucideIcons.image),
+                title: Text('verification.chooseFromGallery'.tr()),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source == null) return;
     final picked = await _picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
       maxWidth: 1200,
       imageQuality: 85,
     );
@@ -93,6 +140,12 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         return;
       }
 
+      if (widget.isEdit) {
+        // The document stays as it is unless a new one was picked.
+        await _submitEdit();
+        return;
+      }
+
       if (_licenseDocument == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -132,6 +185,52 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         return;
       }
       await _submitPaidVerification();
+    }
+  }
+
+  Future<void> _submitEdit() async {
+    setState(() => _isSubmitting = true);
+    try {
+      String? licenseDocument;
+      if (_licenseDocument != null) {
+        final uploadResult = await _client.uploadBusinessDocument(
+          _licenseDocument!,
+        );
+        if (!uploadResult.success || uploadResult.data == null) {
+          throw Exception(uploadResult.error ?? 'Document upload failed');
+        }
+        licenseDocument = uploadResult.data!['filename'] as String?;
+      }
+
+      final result = await _client.updateBusinessVerification(
+        licenseDocument: licenseDocument,
+        businessName: _businessName,
+        documentType: _documentType,
+        documentNumber: _documentNumber,
+      );
+      if (!result.success) {
+        throw Exception(result.error ?? 'Update failed');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('verification.editSaved'.tr())));
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -322,7 +421,9 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _step == 'form'
+              widget.isEdit
+                  ? 'verification.editSubmission'.tr()
+                  : _step == 'form'
                   ? (lang == 'ne'
                         ? 'व्यापार प्रमाणीकरण'
                         : 'Business Verification')
@@ -332,7 +433,11 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
-              widget.isFreeVerification || widget.isResubmission
+              widget.isEdit
+                  ? (lang == 'ne'
+                        ? 'व्यापार प्रमाणीकरण'
+                        : 'Business Verification')
+                  : widget.isFreeVerification || widget.isResubmission
                   ? '${lang == 'ne' ? 'निःशुल्क' : 'Free'} — ${_formatDuration(widget.durationDays, lang)}'
                   : '${formatLocalizedPrice(widget.price, lang)} — ${_formatDuration(widget.durationDays, lang)}',
               style: TextStyle(
@@ -370,17 +475,22 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Plan summary
-            PlanSummaryCard(
-              type: 'business',
-              durationDays: widget.durationDays,
-              price: widget.price,
-              isFree: widget.isFreeVerification,
-              isResubmission: widget.isResubmission,
-            ),
+            // Plan summary (an edit keeps the original plan — show the hint instead)
+            if (widget.isEdit)
+              _buildEditHint()
+            else
+              PlanSummaryCard(
+                type: 'business',
+                durationDays: widget.durationDays,
+                price: widget.price,
+                isFree: widget.isFreeVerification,
+                isResubmission: widget.isResubmission,
+              ),
 
             // Step indicator (paid flows only)
-            if (!widget.isFreeVerification && !widget.isResubmission)
+            if (!widget.isFreeVerification &&
+                !widget.isResubmission &&
+                !widget.isEdit)
               VerificationStepIndicator(
                 currentStep: 1,
                 accentColor: Colors.pink.shade600,
@@ -389,6 +499,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
             // Business Name
             _buildLabel(lang == 'ne' ? 'व्यापारको नाम' : 'Business Name'),
             TextFormField(
+              initialValue: _businessName,
               decoration: _inputDecoration(
                 lang == 'ne'
                     ? 'व्यापार लाइसेन्समा भएको नाम जस्ताको तस्तै लेख्नुहोस्'
@@ -443,6 +554,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                   : (lang == 'ne' ? 'कागजात नम्बर *' : 'Document Number *'),
             ),
             TextFormField(
+              initialValue: _documentNumber,
               decoration: _inputDecoration(
                 _documentType == 'pan_card'
                     ? (lang == 'ne'
@@ -463,18 +575,27 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
 
             // Document Upload
             _buildLabel(
-              _documentType == 'pan_card'
-                  ? (lang == 'ne'
-                        ? 'प्यान कार्ड अपलोड गर्नुहोस् *'
-                        : 'Upload Pan Card *')
-                  : _documentType == 'business_license'
-                  ? (lang == 'ne'
-                        ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस् *'
-                        : 'Upload Business License *')
-                  : (lang == 'ne'
-                        ? 'कागजात अपलोड गर्नुहोस् *'
-                        : 'Upload Document *'),
+              (_documentType == 'pan_card'
+                      ? (lang == 'ne'
+                            ? 'प्यान कार्ड अपलोड गर्नुहोस्'
+                            : 'Upload Pan Card')
+                      : _documentType == 'business_license'
+                      ? (lang == 'ne'
+                            ? 'व्यापार लाइसेन्स अपलोड गर्नुहोस्'
+                            : 'Upload Business License')
+                      : (lang == 'ne'
+                            ? 'कागजात अपलोड गर्नुहोस्'
+                            : 'Upload Document')) +
+                  (widget.isEdit ? '' : ' *'),
             ),
+            if (widget.isEdit)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'verification.keepCurrentPhoto'.tr(),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ),
             GestureDetector(
               onTap: _pickDocument,
               child: Container(
@@ -524,7 +645,7 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              LucideIcons.upload,
+                              LucideIcons.camera,
                               color: Colors.grey[400],
                               size: 28,
                             ),
@@ -577,7 +698,9 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
                         ),
                       )
                     : Text(
-                        widget.isFreeVerification || widget.isResubmission
+                        widget.isEdit
+                            ? 'verification.saveChanges'.tr()
+                            : widget.isFreeVerification || widget.isResubmission
                             ? (lang == 'ne'
                                   ? 'प्रमाणीकरण पेश गर्नुहोस्'
                                   : 'Submit Verification')
@@ -824,6 +947,31 @@ class _BusinessVerificationFormState extends State<BusinessVerificationForm> {
               Icon(LucideIcons.circle, color: Colors.grey[400], size: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEditHint() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.shade100),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(LucideIcons.info, size: 16, color: Colors.blue.shade700),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'verification.editSubmissionHint'.tr(),
+              style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+            ),
+          ),
+        ],
       ),
     );
   }

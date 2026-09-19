@@ -5,6 +5,7 @@ import { authenticateToken, optionalAuth, requireEditorOrAdmin } from '../middle
 import { uploadBusinessVerification, uploadIndividualVerification } from '../middleware/upload.js';
 import { optimizeImage } from '../middleware/optimizeImage.js';
 import { notifyEditors } from '../services/notification.service.js';
+import { screenVerificationRequest } from '../services/verificationScreen.service.js';
 
 const router = Router();
 
@@ -45,11 +46,15 @@ router.get(
           id: true,
           status: true,
           business_name: true,
+          document_type: true,
+          document_number: true,
           rejection_reason: true,
           duration_days: true,
           created_at: true,
           payment_status: true,
           payment_amount: true,
+          ai_verdict: true,
+          ai_reason_code: true,
         },
       }),
       // Get the most recent individual verification request
@@ -61,11 +66,14 @@ router.get(
           status: true,
           full_name: true,
           id_document_type: true,
+          id_document_number: true,
           rejection_reason: true,
           duration_days: true,
           created_at: true,
           payment_status: true,
           payment_amount: true,
+          ai_verdict: true,
+          ai_reason_code: true,
         },
       }),
     ]);
@@ -112,6 +120,8 @@ router.get(
           id: businessRequest.id,
           status: businessRequest.status,
           businessName: businessRequest.business_name,
+          documentType: businessRequest.document_type,
+          documentNumber: businessRequest.document_number,
           rejectionReason: businessRequest.rejection_reason,
           durationDays: businessRequest.duration_days,
           createdAt: businessRequest.created_at?.toISOString(),
@@ -119,6 +129,11 @@ router.get(
           paymentAmount: businessRequest.payment_amount ? Number(businessRequest.payment_amount) : null,
           canResubmitFree: businessRequest.status === 'rejected' &&
             (businessRequest.payment_status === 'paid' || businessRequest.payment_status === 'free'),
+          // A pending submission can be corrected in place (documents/name re-uploaded)
+          canEdit: businessRequest.status === 'pending',
+          // AI screening (advisory): 'looks_good' | 'needs_changes' | 'unsure' | 'skipped' | null
+          aiVerdict: businessRequest.ai_verdict,
+          aiReasonCode: businessRequest.ai_reason_code,
         }
         : undefined,
     };
@@ -162,6 +177,7 @@ router.get(
           status: individualRequest.status,
           fullName: individualRequest.full_name,
           idDocumentType: individualRequest.id_document_type,
+          idDocumentNumber: individualRequest.id_document_number,
           rejectionReason: individualRequest.rejection_reason,
           durationDays: individualRequest.duration_days,
           createdAt: individualRequest.created_at?.toISOString(),
@@ -169,6 +185,9 @@ router.get(
           paymentAmount: individualRequest.payment_amount ? Number(individualRequest.payment_amount) : null,
           canResubmitFree: individualRequest.status === 'rejected' &&
             (individualRequest.payment_status === 'paid' || individualRequest.payment_status === 'free'),
+          canEdit: individualRequest.status === 'pending',
+          aiVerdict: individualRequest.ai_verdict,
+          aiReasonCode: individualRequest.ai_reason_code,
         }
         : undefined,
     };
@@ -554,6 +573,11 @@ router.post(
       referenceId: businessRequest.id,
     }).catch((err) => console.error('Business verification editor notification error:', err));
 
+    // AI document screening runs after the response (advisory; never blocks).
+    screenVerificationRequest('business', businessRequest.id).catch((err) =>
+      console.error('Business verification AI screen error:', err)
+    );
+
     res.json({
       success: true,
       message: 'Business verification request submitted successfully',
@@ -641,11 +665,143 @@ router.post(
       referenceId: individualRequest.id,
     }).catch((err) => console.error('Individual verification editor notification error:', err));
 
+    screenVerificationRequest('individual', individualRequest.id).catch((err) =>
+      console.error('Individual verification AI screen error:', err)
+    );
+
     res.json({
       success: true,
       message: 'Individual verification request submitted successfully',
       data: { requestId: individualRequest.id },
     });
+  })
+);
+
+/**
+ * PUT /api/verification/individual
+ * Owner corrects their own PENDING individual request in place (after AI
+ * feedback, or simply a mistake). Files are uploaded first via
+ * /individual/upload; only the slots present in documentUrls are replaced.
+ * The request stays 'pending', is marked edited for editors, and is re-screened.
+ */
+router.put(
+  '/individual',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const existing = await prisma.individual_verification_requests.findFirst({
+      where: { user_id: userId, status: 'pending' },
+      select: { id: true },
+    });
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'No pending individual verification request to edit' });
+    }
+
+    const { documentUrls, fullName } = req.body;
+    const idType = req.body.idDocumentType ?? req.body.idType;
+    const idNumber = req.body.idDocumentNumber ?? req.body.idNumber;
+    const fileOf = (slot: string): string | undefined =>
+      documentUrls?.[slot]?.filename || documentUrls?.[slot]?.url || undefined;
+
+    await prisma.individual_verification_requests.update({
+      where: { id: existing.id },
+      data: {
+        ...(typeof fullName === 'string' && fullName.trim() ? { full_name: fullName.trim() } : {}),
+        ...(typeof idType === 'string' && idType ? { id_document_type: idType } : {}),
+        ...(typeof idNumber === 'string' ? { id_document_number: idNumber.trim() } : {}),
+        ...(fileOf('id_document_front') ? { id_document_front: fileOf('id_document_front') } : {}),
+        ...(fileOf('id_document_back') ? { id_document_back: fileOf('id_document_back') } : {}),
+        ...(fileOf('selfie_with_id') ? { selfie_with_id: fileOf('selfie_with_id') } : {}),
+        // The previous verdict was about the previous documents.
+        ai_verdict: null,
+        ai_reason_code: null,
+        ai_reason: null,
+        ai_name_on_document: null,
+        edited_at: new Date(),
+        updated_at: new Date(),
+      },
+    });
+
+    console.log(`✏️ Individual verification #${existing.id} edited by user ${userId}`);
+
+    notifyEditors({
+      type: 'verification_requested',
+      title: 'Individual verification edited',
+      body: `${(typeof fullName === 'string' && fullName.trim()) || 'An applicant'} updated their pending verification documents.`,
+      data: { route: '/editor/individual-verification', kind: 'individual' },
+      referenceId: existing.id,
+    }).catch((err) => console.error('Individual verification edit notification error:', err));
+
+    screenVerificationRequest('individual', existing.id, { edited: true }).catch((err) =>
+      console.error('Individual verification AI re-screen error:', err)
+    );
+
+    res.json({ success: true, message: 'Verification request updated', data: { requestId: existing.id } });
+  })
+);
+
+/**
+ * PUT /api/verification/business
+ * Owner corrects their own PENDING business request in place. The document is
+ * uploaded first via /business/upload; licenseDocument is optional here.
+ */
+router.put(
+  '/business',
+  authenticateToken,
+  catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const existing = await prisma.business_verification_requests.findFirst({
+      where: { user_id: userId, status: 'pending' },
+      select: { id: true },
+    });
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'No pending business verification request to edit' });
+    }
+
+    const { businessName, licenseDocument, documentType, documentNumber } = req.body;
+    const name = typeof businessName === 'string' && businessName.trim() ? businessName.trim() : null;
+
+    await prisma.business_verification_requests.update({
+      where: { id: existing.id },
+      data: {
+        ...(name ? { business_name: name } : {}),
+        ...(typeof licenseDocument === 'string' && licenseDocument ? { business_license_document: licenseDocument } : {}),
+        ...(typeof documentType === 'string' && documentType ? { document_type: documentType } : {}),
+        ...(typeof documentNumber === 'string' ? { document_number: documentNumber.trim() || null } : {}),
+        ai_verdict: null,
+        ai_reason_code: null,
+        ai_reason: null,
+        ai_name_on_document: null,
+        edited_at: new Date(),
+        updated_at: new Date(),
+      },
+    });
+    // The user row mirrors the pending business name/document (set at submit).
+    if (name || (typeof licenseDocument === 'string' && licenseDocument)) {
+      await prisma.users.update({
+        where: { id: userId },
+        data: {
+          ...(name ? { business_name: name } : {}),
+          ...(typeof licenseDocument === 'string' && licenseDocument ? { business_license_document: licenseDocument } : {}),
+        },
+      });
+    }
+
+    console.log(`✏️ Business verification #${existing.id} edited by user ${userId}`);
+
+    notifyEditors({
+      type: 'verification_requested',
+      title: 'Business verification edited',
+      body: `${name || 'A business'} updated their pending verification documents.`,
+      data: { route: '/editor/business-verification', kind: 'business' },
+      referenceId: existing.id,
+    }).catch((err) => console.error('Business verification edit notification error:', err));
+
+    screenVerificationRequest('business', existing.id, { edited: true }).catch((err) =>
+      console.error('Business verification AI re-screen error:', err)
+    );
+
+    res.json({ success: true, message: 'Verification request updated', data: { requestId: existing.id } });
   })
 );
 

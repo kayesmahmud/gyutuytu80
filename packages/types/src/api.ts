@@ -387,15 +387,40 @@ export interface Conversation {
   adId?: number;
 }
 
+/** AI document-screening verdict on a verification request (advisory only). */
+export type VerificationAiVerdict = 'looks_good' | 'needs_changes' | 'unsure' | 'skipped';
+
+/** Applicant-facing reason codes for a 'needs_changes' verdict; clients map them to bilingual copy. */
+export const VERIFICATION_AI_REASON_CODES = [
+  'wrong_document_type',
+  'missing_back',
+  'missing_selfie',
+  'selfie_mismatch',
+  'unreadable',
+  'name_mismatch',
+  'suspected_fake',
+  'other',
+] as const;
+export type VerificationAiReasonCode = (typeof VERIFICATION_AI_REASON_CODES)[number];
+
 export interface VerificationRequestInfo {
   id: number;
   status: string;
   businessName?: string;
   fullName?: string;
   idDocumentType?: string;
+  idDocumentNumber?: string;
+  documentType?: string | null;
+  documentNumber?: string | null;
   rejectionReason?: string | null;
   durationDays?: number;
   createdAt?: string;
+  paymentStatus?: string | null;
+  canResubmitFree?: boolean;
+  /** A pending request can be corrected in place by its owner. */
+  canEdit?: boolean;
+  aiVerdict?: VerificationAiVerdict | null;
+  aiReasonCode?: VerificationAiReasonCode | string | null;
 }
 
 export interface VerificationStatusResponse {
@@ -520,6 +545,9 @@ export type NotificationType =
   | 'ad_unsuspended'
   | 'verification_approved'
   | 'verification_rejected'
+  // AI screening found something the applicant must fix in a PENDING
+  // verification request. Transactional: NOT in the engagement cap allowlist.
+  | 'verification_needs_changes'
   | 'new_inquiry'
   | 'payment_confirmed'
   | 'new_message'

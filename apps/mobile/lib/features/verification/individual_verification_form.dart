@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/api/verification_client.dart';
 import '../../core/models/payment.dart';
+import '../../core/models/verification_models.dart';
 import '../../core/utils/localized_helpers.dart';
 import '../payment/payment_screen.dart';
 import 'verification_widgets.dart';
@@ -15,13 +16,20 @@ class IndividualVerificationForm extends StatefulWidget {
   final bool isFreeVerification;
   final bool isResubmission;
 
+  /// Present when correcting a PENDING request (after AI feedback or a
+  /// mistake): fields prefill, photos are optional, save = PUT, no payment.
+  final VerificationRequestDetails? editRequest;
+
   const IndividualVerificationForm({
     super.key,
     required this.durationDays,
     required this.price,
     required this.isFreeVerification,
     required this.isResubmission,
+    this.editRequest,
   });
+
+  bool get isEdit => editRequest != null;
 
   @override
   State<IndividualVerificationForm> createState() =>
@@ -47,9 +55,54 @@ class _IndividualVerificationFormState
   String _idType = 'citizenship';
   String _idNumber = '';
 
+  /// Passport and PAN are single-sided; the others need front and back.
+  bool get _backRequired => _idType != 'passport' && _idType != 'pan';
+
+  @override
+  void initState() {
+    super.initState();
+    final edit = widget.editRequest;
+    if (edit != null) {
+      _fullName = edit.fullName ?? '';
+      _idType = edit.idDocumentType ?? 'citizenship';
+      _idNumber = edit.idDocumentNumber ?? '';
+    }
+  }
+
+  /// Camera or gallery — same sheet as Post Ad. The selfie opens the front camera.
   Future<void> _pickImage(String type) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(LucideIcons.camera),
+                title: Text('verification.takePhoto'.tr()),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(LucideIcons.image),
+                title: Text('verification.chooseFromGallery'.tr()),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source == null) return;
     final picked = await _picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
+      preferredCameraDevice: type == 'selfie'
+          ? CameraDevice.front
+          : CameraDevice.rear,
       maxWidth: 1200,
       imageQuality: 85,
     );
@@ -92,6 +145,12 @@ class _IndividualVerificationFormState
     if (_step == 'form') {
       if (!_formKey.currentState!.validate()) return;
       _formKey.currentState!.save();
+
+      if (widget.isEdit) {
+        // Photos that were not re-picked stay as they are on the server.
+        await _submitEdit();
+        return;
+      }
 
       if (_idFront == null) {
         if (mounted) {
@@ -147,6 +206,55 @@ class _IndividualVerificationFormState
         return;
       }
       await _submitPaidVerification();
+    }
+  }
+
+  Future<void> _submitEdit() async {
+    setState(() => _isSubmitting = true);
+    try {
+      Map<String, dynamic> documentUrls = {};
+      if (_idFront != null || _idBack != null || _selfie != null) {
+        final uploadResult = await _client.uploadIndividualDocuments(
+          idFront: _idFront,
+          idBack: _idBack,
+          selfie: _selfie,
+          idType: _idType,
+        );
+        if (!uploadResult.success || uploadResult.data == null) {
+          throw Exception(uploadResult.error ?? 'Document upload failed');
+        }
+        documentUrls = uploadResult.data!;
+      }
+
+      final result = await _client.updateIndividualVerification(
+        documentUrls: documentUrls,
+        fullName: _fullName,
+        idType: _idType,
+        idNumber: _idNumber,
+      );
+      if (!result.success) {
+        throw Exception(result.error ?? 'Update failed');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('verification.editSaved'.tr())));
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${context.locale.languageCode == 'ne' ? 'त्रुटि' : 'Error'}: ${e.toString()}',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -339,7 +447,9 @@ class _IndividualVerificationFormState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _step == 'form'
+              widget.isEdit
+                  ? 'verification.editSubmission'.tr()
+                  : _step == 'form'
                   ? (lang == 'ne'
                         ? 'व्यक्तिगत प्रमाणीकरण'
                         : 'Individual Verification')
@@ -349,7 +459,11 @@ class _IndividualVerificationFormState
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
-              widget.isFreeVerification || widget.isResubmission
+              widget.isEdit
+                  ? (lang == 'ne'
+                        ? 'व्यक्तिगत प्रमाणीकरण'
+                        : 'Individual Verification')
+                  : widget.isFreeVerification || widget.isResubmission
                   ? '${lang == 'ne' ? 'निःशुल्क' : 'Free'} — ${_formatDuration(widget.durationDays, lang)}'
                   : '${formatLocalizedPrice(widget.price, lang)} — ${_formatDuration(widget.durationDays, lang)}',
               style: TextStyle(
@@ -387,17 +501,22 @@ class _IndividualVerificationFormState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Plan summary
-            PlanSummaryCard(
-              type: 'individual',
-              durationDays: widget.durationDays,
-              price: widget.price,
-              isFree: widget.isFreeVerification,
-              isResubmission: widget.isResubmission,
-            ),
+            // Plan summary (an edit keeps the original plan — show the hint instead)
+            if (widget.isEdit)
+              _buildEditHint()
+            else
+              PlanSummaryCard(
+                type: 'individual',
+                durationDays: widget.durationDays,
+                price: widget.price,
+                isFree: widget.isFreeVerification,
+                isResubmission: widget.isResubmission,
+              ),
 
             // Step indicator (paid flows only)
-            if (!widget.isFreeVerification && !widget.isResubmission)
+            if (!widget.isFreeVerification &&
+                !widget.isResubmission &&
+                !widget.isEdit)
               const VerificationStepIndicator(
                 currentStep: 1,
                 accentColor: Colors.indigo,
@@ -410,6 +529,7 @@ class _IndividualVerificationFormState
                   : 'Full Name (as on ID document) *',
             ),
             TextFormField(
+              initialValue: _fullName,
               decoration: _inputDecoration(
                 lang == 'ne'
                     ? 'आफ्नो पूरा नाम परिचयपत्रमा देखिए जस्तै लेख्नुहोस्'
@@ -455,6 +575,10 @@ class _IndividualVerificationFormState
                     lang == 'ne' ? 'सवारी चालक अनुमतिपत्र' : 'Driving License',
                   ),
                 ),
+                DropdownMenuItem(
+                  value: 'pan',
+                  child: Text('verification.idTypePan'.tr()),
+                ),
               ],
               onChanged: (v) => setState(() => _idType = v ?? 'citizenship'),
             ),
@@ -465,6 +589,7 @@ class _IndividualVerificationFormState
               lang == 'ne' ? 'परिचयपत्र नम्बर *' : 'ID Document Number *',
             ),
             TextFormField(
+              initialValue: _idNumber,
               decoration: _inputDecoration(
                 lang == 'ne'
                     ? 'आफ्नो परिचयपत्र नम्बर लेख्नुहोस्'
@@ -481,7 +606,9 @@ class _IndividualVerificationFormState
 
             // Documents
             _buildLabel(
-              lang == 'ne' ? 'परिचयपत्र अगाडिको छवि *' : 'ID Front Image *',
+              lang == 'ne'
+                  ? 'परिचयपत्र अगाडिको छवि ${widget.isEdit ? '' : '*'}'
+                  : 'ID Front Image ${widget.isEdit ? '' : '*'}',
             ),
             _buildDocUpload(
               _idFront,
@@ -490,13 +617,17 @@ class _IndividualVerificationFormState
                   ? 'आफ्नो परिचयपत्रको अगाडिको भाग अपलोड गर्नुहोस्'
                   : 'Upload front of your ID',
             ),
-            _buildFileHint(lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
+            _buildFileHint(
+              widget.isEdit
+                  ? 'verification.keepCurrentPhoto'.tr()
+                  : (lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
+            ),
             const SizedBox(height: 12),
 
             _buildLabel(
               lang == 'ne'
-                  ? 'परिचयपत्र पछाडिको छवि ${_idType != 'passport' ? '*' : ''}'
-                  : 'ID Back Image ${_idType != 'passport' ? '*' : ''}',
+                  ? 'परिचयपत्र पछाडिको छवि ${_backRequired && !widget.isEdit ? '*' : ''}'
+                  : 'ID Back Image ${_backRequired && !widget.isEdit ? '*' : ''}',
             ),
             _buildDocUpload(
               _idBack,
@@ -506,7 +637,9 @@ class _IndividualVerificationFormState
                   : 'Upload back of your ID',
             ),
             _buildFileHint(
-              _idType == 'passport'
+              widget.isEdit
+                  ? 'verification.keepCurrentPhoto'.tr()
+                  : !_backRequired
                   ? (lang == 'ne' ? 'ऐच्छिक' : 'Optional')
                   : (lang == 'ne' ? 'अधिकतम ५MB' : 'Max 5MB'),
             ),
@@ -514,8 +647,8 @@ class _IndividualVerificationFormState
 
             _buildLabel(
               lang == 'ne'
-                  ? 'परिचयपत्रसहित सेल्फी *'
-                  : 'Selfie with ID Document *',
+                  ? 'परिचयपत्रसहित सेल्फी ${widget.isEdit ? '' : '*'}'
+                  : 'Selfie with ID Document ${widget.isEdit ? '' : '*'}',
             ),
             _buildDocUpload(
               _selfie,
@@ -555,7 +688,9 @@ class _IndividualVerificationFormState
                         ),
                       )
                     : Text(
-                        widget.isFreeVerification || widget.isResubmission
+                        widget.isEdit
+                            ? 'verification.saveChanges'.tr()
+                            : widget.isFreeVerification || widget.isResubmission
                             ? (lang == 'ne'
                                   ? 'प्रमाणीकरणको लागि पेश गर्नुहोस्'
                                   : 'Submit for Verification')
@@ -850,6 +985,31 @@ class _IndividualVerificationFormState
     );
   }
 
+  Widget _buildEditHint() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.shade100),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(LucideIcons.info, size: 16, color: Colors.blue.shade700),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'verification.editSubmissionHint'.tr(),
+              style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDocUpload(File? file, String type, String label) {
     return GestureDetector(
       onTap: () => _pickImage(type),
@@ -897,7 +1057,7 @@ class _IndividualVerificationFormState
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.upload, color: Colors.grey[400], size: 28),
+                    Icon(LucideIcons.camera, color: Colors.grey[400], size: 28),
                     const SizedBox(height: 8),
                     Text(
                       label,

@@ -116,6 +116,8 @@ export default function VerificationPage({ params }: VerificationPageProps) {
     selectedDuration,
     showForm,
     isResubmission,
+    isEditing,
+    handleEdit,
     resubmissionDuration,
     isFreeVerification,
     selectedOffer,
@@ -188,6 +190,7 @@ export default function VerificationPage({ params }: VerificationPageProps) {
             isSelected={selectedType === 'individual'}
             showForm={showForm}
             onClick={() => handleTypeSelect('individual')}
+            onEdit={() => handleEdit('individual')}
           />
           <VerificationStatusCard
             type="business"
@@ -196,6 +199,7 @@ export default function VerificationPage({ params }: VerificationPageProps) {
             isSelected={selectedType === 'business'}
             showForm={showForm}
             onClick={() => handleTypeSelect('business')}
+            onEdit={() => handleEdit('business')}
           />
         </div>
 
@@ -227,27 +231,29 @@ export default function VerificationPage({ params }: VerificationPageProps) {
         <FaqSection />
       </div>
 
-      {/* Business Verification Form Modal */}
-      {showForm && selectedType === 'business' && (selectedDuration || isResubmission) && (
+      {/* Business Verification Form Modal (new, free resubmission, or edit of a pending request) */}
+      {showForm && selectedType === 'business' && (selectedDuration || isResubmission || isEditing) && (
         <BusinessVerificationForm
           onSuccess={handleFormSuccess}
           onCancel={handleFormCancel}
-          durationDays={isResubmission && resubmissionDuration ? resubmissionDuration : selectedDuration!.durationDays}
-          price={isResubmission ? 0 : (isFreeVerification ? 0 : selectedDuration!.finalPrice)}
-          isFreeVerification={isResubmission || isFreeVerification || false}
+          durationDays={(isResubmission || isEditing) && resubmissionDuration ? resubmissionDuration : selectedDuration?.durationDays ?? 365}
+          price={isResubmission || isEditing ? 0 : (isFreeVerification ? 0 : selectedDuration!.finalPrice)}
+          isFreeVerification={isResubmission || isEditing || isFreeVerification || false}
           isResubmission={isResubmission}
+          editRequest={isEditing ? verificationStatus?.business?.request ?? null : null}
         />
       )}
 
-      {/* Individual Verification Form Modal */}
-      {showForm && selectedType === 'individual' && (selectedDuration || isResubmission) && (
+      {/* Individual Verification Form Modal (new, free resubmission, or edit of a pending request) */}
+      {showForm && selectedType === 'individual' && (selectedDuration || isResubmission || isEditing) && (
         <IndividualVerificationForm
           onSuccess={handleFormSuccess}
           onCancel={handleFormCancel}
-          durationDays={isResubmission && resubmissionDuration ? resubmissionDuration : selectedDuration!.durationDays}
-          price={isResubmission ? 0 : (isFreeVerification ? 0 : selectedDuration!.finalPrice)}
-          isFreeVerification={isResubmission || isFreeVerification || false}
+          durationDays={(isResubmission || isEditing) && resubmissionDuration ? resubmissionDuration : selectedDuration?.durationDays ?? 365}
+          price={isResubmission || isEditing ? 0 : (isFreeVerification ? 0 : selectedDuration!.finalPrice)}
+          isFreeVerification={isResubmission || isEditing || isFreeVerification || false}
           isResubmission={isResubmission}
+          editRequest={isEditing ? verificationStatus?.individual?.request ?? null : null}
         />
       )}
     </div>

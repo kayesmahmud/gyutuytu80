@@ -37,10 +37,15 @@ export async function POST(
       );
     }
 
-    // Get request body for rejection reason
+    // Body: reason (reject) or an optional corrected businessName (approve —
+    // editors fix typos/capitalisation instead of bouncing the applicant).
     let reason: string | null = null;
+    let correctedName: string | null = null;
+    const body = await request.json().catch(() => ({}));
+    if (action === 'approve') {
+      correctedName = typeof body?.businessName === 'string' && body.businessName.trim() ? body.businessName.trim() : null;
+    }
     if (action === 'reject') {
-      const body = await request.json();
       reason = body.reason;
 
       if (!reason) {
@@ -78,7 +83,7 @@ export async function POST(
     if (action === 'approve') {
       // Business name should always be present, but guard anyway so a missing
       // value can never crash the approval (root cause of orphaned approvals).
-      const businessName = (verificationRequest.business_name || '').trim();
+      const businessName = correctedName || (verificationRequest.business_name || '').trim();
 
       const baseSlug =
         businessName
@@ -120,6 +125,7 @@ export async function POST(
             rejection_reason: null,
             reviewed_by: admin.userId,
             reviewed_at: new Date(),
+            ...(correctedName ? { business_name: correctedName } : {}),
           },
         }),
         prisma.users.update({

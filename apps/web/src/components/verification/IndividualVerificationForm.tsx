@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { PaymentMethodSelector } from '@/components/payment';
 import { useVerificationForm } from '@/hooks/useVerificationForm';
@@ -11,10 +12,11 @@ import {
   FormTips,
   OrderSummary,
 } from '@/components/verification';
+import DocumentFileInput from './DocumentFileInput';
 
 interface FormData {
   fullName: string;
-  idType: 'citizenship' | 'passport' | 'driving_license';
+  idType: 'citizenship' | 'passport' | 'driving_license' | 'pan';
   idNumber: string;
   idFrontFile: File | null;
   idBackFile: File | null;
@@ -28,6 +30,8 @@ interface IndividualVerificationFormProps {
   price: number;
   isFreeVerification: boolean;
   isResubmission?: boolean;
+  /** Present when correcting a PENDING request: fields prefill, photos are optional. */
+  editRequest?: { fullName?: string | null; idDocumentType?: string | null; idDocumentNumber?: string | null } | null;
 }
 
 const initialFormData: FormData = {
@@ -46,7 +50,10 @@ export default function IndividualVerificationForm({
   price,
   isFreeVerification,
   isResubmission = false,
+  editRequest = null,
 }: IndividualVerificationFormProps) {
+  const t = useTranslations('verification');
+  const isEdit = !!editRequest;
   const {
     formData,
     setFormData,
@@ -59,8 +66,18 @@ export default function IndividualVerificationForm({
     handleProceedToPayment,
     handleBackToForm,
     submitFreeVerification,
+    submitEdit,
     submitPaidVerification,
-  } = useVerificationForm<FormData>(initialFormData, {
+  } = useVerificationForm<FormData>(
+    editRequest
+      ? {
+          ...initialFormData,
+          fullName: editRequest.fullName ?? '',
+          idType: (editRequest.idDocumentType as FormData['idType']) || 'citizenship',
+          idNumber: editRequest.idDocumentNumber ?? '',
+        }
+      : initialFormData,
+    {
     type: 'individual',
     durationDays,
     price,
@@ -95,6 +112,7 @@ export default function IndividualVerificationForm({
       setError('Please enter your ID document number');
       return false;
     }
+    if (isEdit) return true; // keep the photos that were not re-uploaded
     if (!formData.idFrontFile) {
       setError('Please upload front image of your ID document');
       return false;
@@ -112,11 +130,15 @@ export default function IndividualVerificationForm({
     submitData.append('full_name', formData.fullName.trim());
     submitData.append('id_document_type', formData.idType);
     submitData.append('id_document_number', formData.idNumber.trim());
-    submitData.append('id_document_front', formData.idFrontFile!);
+    if (formData.idFrontFile) {
+      submitData.append('id_document_front', formData.idFrontFile);
+    }
     if (formData.idBackFile) {
       submitData.append('id_document_back', formData.idBackFile);
     }
-    submitData.append('selfie_with_id', formData.selfieFile!);
+    if (formData.selfieFile) {
+      submitData.append('selfie_with_id', formData.selfieFile);
+    }
     return submitData as unknown as FormData;
   };
 
@@ -126,7 +148,9 @@ export default function IndividualVerificationForm({
 
     if (!validateForm()) return;
 
-    if (isFreeVerification || isResubmission) {
+    if (isEdit) {
+      await submitEdit(buildSubmitData() as unknown as globalThis.FormData, '/api/verification/individual');
+    } else if (isFreeVerification || isResubmission) {
       const submitData = buildSubmitData() as unknown as globalThis.FormData;
       await submitFreeVerification(submitData, '/api/verification/individual');
     } else {
@@ -158,6 +182,7 @@ export default function IndividualVerificationForm({
       durationDays={durationDays}
       step={step}
       isFreeVerification={isFreeVerification}
+      title={isEdit ? t('editSubmission') : undefined}
       onClose={onCancel}
     >
       {/* Error Alert */}
@@ -165,14 +190,18 @@ export default function IndividualVerificationForm({
 
       {step === 'form' ? (
         <form onSubmit={handleSubmit}>
-          {/* Plan Summary */}
-          <PlanSummary
-            type="individual"
-            durationDays={durationDays}
-            price={price}
-            isFreeVerification={isFreeVerification}
-            isResubmission={isResubmission}
-          />
+          {/* Plan Summary — an edit keeps the original plan, so show the hint instead */}
+          {isEdit ? (
+            <FormAlert message={t('editSubmissionHint')} type="info" />
+          ) : (
+            <PlanSummary
+              type="individual"
+              durationDays={durationDays}
+              price={price}
+              isFreeVerification={isFreeVerification}
+              isResubmission={isResubmission}
+            />
+          )}
 
           {/* Full Name */}
           <div className="mb-5">
@@ -209,6 +238,7 @@ export default function IndividualVerificationForm({
               <option value="citizenship">Citizenship</option>
               <option value="passport">Passport</option>
               <option value="driving_license">Driving License</option>
+              <option value="pan">PAN Card (individual)</option>
             </select>
           </div>
 
@@ -231,60 +261,41 @@ export default function IndividualVerificationForm({
 
           {/* File Upload Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-            {/* ID Document Front Image */}
-            <div>
-              <label htmlFor="idFrontFile" className="block mb-2 font-semibold text-gray-900 text-sm">
-                ID Front Image *
-              </label>
-              <input
-                type="file"
-                id="idFrontFile"
-                name="idFrontFile"
-                accept="image/*,.pdf"
-                onChange={handleFileChange}
-                required
-                className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-              />
-              <p className="text-xs text-gray-500 mt-1">Max 5MB</p>
-            </div>
-
-            {/* ID Document Back Image */}
-            <div>
-              <label htmlFor="idBackFile" className="block mb-2 font-semibold text-gray-900 text-sm">
-                ID Back Image {formData.idType !== 'passport' && '*'}
-              </label>
-              <input
-                type="file"
-                id="idBackFile"
-                name="idBackFile"
-                accept="image/*,.pdf"
-                onChange={handleFileChange}
-                required={formData.idType !== 'passport'}
-                className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {formData.idType === 'passport' ? 'Optional' : 'Max 5MB'}
-              </p>
-            </div>
+            <DocumentFileInput
+              id="idFrontFile"
+              name="idFrontFile"
+              label={`ID Front Image ${isEdit ? '' : '*'}`}
+              accept="image/*,.pdf"
+              required={!isEdit}
+              fileName={formData.idFrontFile?.name}
+              hint={isEdit ? t('keepCurrentPhoto') : 'Max 5MB'}
+              onChange={handleFileChange}
+            />
+            <DocumentFileInput
+              id="idBackFile"
+              name="idBackFile"
+              label={`ID Back Image ${!isEdit && formData.idType !== 'passport' && formData.idType !== 'pan' ? '*' : ''}`}
+              accept="image/*,.pdf"
+              required={!isEdit && formData.idType !== 'passport' && formData.idType !== 'pan'}
+              fileName={formData.idBackFile?.name}
+              hint={isEdit ? t('keepCurrentPhoto') : formData.idType === 'passport' || formData.idType === 'pan' ? 'Optional' : 'Max 5MB'}
+              onChange={handleFileChange}
+            />
           </div>
 
           {/* Selfie with ID */}
           <div className="mb-5">
-            <label htmlFor="selfieFile" className="block mb-2 font-semibold text-gray-900 text-sm sm:text-base">
-              Selfie with ID Document *
-            </label>
-            <input
-              type="file"
+            <DocumentFileInput
               id="selfieFile"
               name="selfieFile"
+              label={`Selfie with ID Document ${isEdit ? '' : '*'}`}
               accept="image/*"
+              capture="user"
+              required={!isEdit}
+              fileName={formData.selfieFile?.name}
+              hint={isEdit ? t('keepCurrentPhoto') : 'Clear selfie holding your ID next to your face'}
               onChange={handleFileChange}
-              required
-              className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
             />
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Clear selfie holding your ID next to your face
-            </p>
           </div>
 
           {/* Tips */}
@@ -301,9 +312,11 @@ export default function IndividualVerificationForm({
             >
               {loading
                 ? 'Submitting...'
-                : isFreeVerification || isResubmission
-                  ? 'Submit for Verification'
-                  : 'Proceed to Payment'}
+                : isEdit
+                  ? t('saveChanges')
+                  : isFreeVerification || isResubmission
+                    ? 'Submit for Verification'
+                    : 'Proceed to Payment'}
             </Button>
             <Button
               type="button"

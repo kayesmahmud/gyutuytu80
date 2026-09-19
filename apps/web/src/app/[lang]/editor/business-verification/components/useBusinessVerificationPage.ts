@@ -56,6 +56,11 @@ export function useBusinessVerificationPage(lang: string) {
           reviewedAt: v.reviewedAt,
           reviewedByName: v.reviewedByName,
           reviewedByRole: v.reviewedByRole,
+          aiVerdict: v.aiVerdict,
+          aiReasonCode: v.aiReasonCode,
+          aiReason: v.aiReason,
+          aiNameOnDocument: v.aiNameOnDocument,
+          editedAt: v.editedAt,
         }));
         setVerifications(businessVerifications);
       } else {
@@ -78,12 +83,14 @@ export function useBusinessVerificationPage(lang: string) {
     loadVerifications();
   }, [authLoading, staff, isEditor, lang, router, loadVerifications]);
 
-  const handleApprove = async (verificationId: number) => {
-    if (!confirm('Are you sure you want to approve this business verification?')) return;
+  // correctedName: what the editor typed in the card's name field (may equal the original)
+  const handleApprove = async (verificationId: number, correctedName?: string) => {
+    const name = correctedName?.trim();
+    if (!confirm(name ? `Approve and verify the business name "${name}"?` : 'Are you sure you want to approve this business verification?')) return;
 
     try {
       setActionLoading(true);
-      const response = await approveBusinessVerification(verificationId);
+      const response = await approveBusinessVerification(verificationId, name || undefined);
 
       if (response.success) {
         alert('Business verification approved successfully!');
