@@ -4,6 +4,7 @@ import { publicVerification } from '@thulobazaar/types';
 import { catchAsync, NotFoundError, ValidationError } from '../middleware/errorHandler.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { PAGINATION } from '../config/constants.js';
+import { adCardLocationSelect, resolveDistrictName } from '../services/ad.service.js';
 
 const router = Router();
 
@@ -193,7 +194,9 @@ router.get(
         where: { user_id: user.id, status: 'approved' },
         include: {
           categories: { select: { name: true, name_ne: true } },
-          locations: { select: { name: true, name_ne: true } },
+          // Location chain (leaf → district), so the card can show the district
+          // like every other ad list does.
+          locations: { select: adCardLocationSelect },
           ad_images: {
             orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
             take: 1,
@@ -266,6 +269,8 @@ router.get(
             category_name_ne: ad.categories?.name_ne,
             location_name: ad.locations?.name,
             location_name_ne: ad.locations?.name_ne,
+            // What the ad card shows (same rule as /api/ads and /api/search)
+            districtName: resolveDistrictName(ad.locations),
             primary_image: ad.ad_images[0]?.filename,
             // Same display-time contract as /api/ads and /api/search: the
             // stable first-publish time, not the last moderation stamp.

@@ -26,6 +26,8 @@ interface ShopAdCardProps {
     urgentUntil?: string | Date | null;
     stickyUntil?: string | Date | null;
     condition?: string | null;
+    /** District shown on the card (resolved from the ad's location chain). */
+    districtName?: string | null;
     slug?: string;
     accountType?: string;
     businessVerificationStatus?: string;

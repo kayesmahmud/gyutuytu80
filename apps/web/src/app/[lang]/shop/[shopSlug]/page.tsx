@@ -12,6 +12,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { ShopJsonLd } from '@/components/seo/ShopJsonLd';
 import { BreadcrumbJsonLd } from '@/components/seo/BreadcrumbJsonLd';
 import { ensureHttps, buildSocialUrl, extractSocialUsername } from '@/utils/socialMedia';
+import { AD_CARD_LOCATION_SELECT, resolveDistrictName } from '@/lib/location/district';
 import { getImageUrl } from '@/lib/images/imageUrl';
 
 interface ShopProfilePageProps {
@@ -77,6 +78,9 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
           icon: true,
         },
       },
+      // Location chain (leaf → district) — the card shows the district, like
+      // the home and search listings do.
+      locations: { select: AD_CARD_LOCATION_SELECT },
     },
     orderBy: [
       // Promotions first (Urgent > Sticky), then newest-approved. Featured is a
@@ -238,6 +242,7 @@ export default async function ShopProfilePage({ params }: ShopProfilePageProps) 
                       urgentUntil: ad.urgent_until || null,
                       stickyUntil: ad.sticky_until || null,
                       condition: ad.condition || null,
+                      districtName: resolveDistrictName(ad.locations),
                       slug: ad.slug || undefined,
                       accountType: shop.accountType || undefined,
                       businessVerificationStatus: shop.businessVerificationStatus || undefined,

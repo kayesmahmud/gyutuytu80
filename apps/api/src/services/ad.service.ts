@@ -719,7 +719,7 @@ export async function generateAdSlug(title: string, locationId?: number): Promis
  * Location plus two ancestors — enough to reach the district from the deepest
  * tier we store (area → municipality → district).
  */
-const adCardLocationSelect = {
+export const adCardLocationSelect = {
   name: true,
   name_ne: true,
   type: true,
