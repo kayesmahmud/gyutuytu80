@@ -63,6 +63,7 @@ const testAd = {
   title: 'iPhone 13 Pro 256GB',
   description: 'Lightly used, box included',
   categoryName: 'Mobile Phones',
+  condition: 'Used',
   price: 95000,
 };
 
@@ -308,6 +309,23 @@ describe('moderateAd', () => {
     expect(userContent[0]).toEqual({ type: 'image_url', image_url: { url: images[0] } });
     expect(userContent[1].text).toContain('iPhone 13 Pro 256GB');
     expect(userContent[1].text).toContain('untrusted user data');
+  });
+
+  // The catalog-photo rule is decided per condition (Brand New may use
+  // manufacturer images, Used must show the actual unit), so the model has
+  // to be told which one it is looking at.
+  it('tells the model the condition, or "not specified" when the category has none', async () => {
+    mockFetch.mockResolvedValue(
+      deepseekReply(JSON.stringify({ verdict: 'publish', reason: 'ok', confidence: 0.99 }))
+    );
+
+    await moderateAd(testAd, images);
+    const withCondition = JSON.parse(mockFetch.mock.calls[0][1].body).messages[1].content[1].text;
+    expect(withCondition).toContain('Condition: Used');
+
+    await moderateAd({ ...testAd, condition: null }, images);
+    const withoutCondition = JSON.parse(mockFetch.mock.calls[1][1].body).messages[1].content[1].text;
+    expect(withoutCondition).toContain('Condition: not specified');
   });
 
   it('holds with ai_unavailable on HTTP errors', async () => {

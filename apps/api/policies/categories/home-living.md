@@ -21,6 +21,6 @@ Big-ticket furniture (sofa sets, beds, wardrobes — normally 15,000–90,000) p
 A good listing names the specific item type plus a brand, material, or condition detail, at a price inside its subcategory band. Emoji-heavy bilingual (English/Nepali) reseller-style titles are common and routinely approved here — do not hold on formatting alone.
 
 ## Category-specific hold signals
-- The only editor rejection in this category was "fake": hold when photos look like stock/catalog images and the listing reads as a fictitious product rather than a real household item for sale (especially high-value furniture with no specifics).
+- The only editor rejection in this category was "fake": hold when catalog/brand images are paired with a price far below the band, or the listing reads as a fictitious product rather than a real household item for sale (especially high-value furniture with no specifics). Catalog images at a realistic price are fine — furniture shops post them routinely.
 - A premium furniture set or major household item listed at a token price (e.g., a bed + wardrobe combo for a few hundred NPR) is placeholder or bait pricing → hold and ask for the real price.
 - Titles too vague to identify any item at a non-trivial price (e.g., a bare single word like "torso" or a name alone at NPR 5,000) → hold for clarification; buyers cannot tell what is being sold.
